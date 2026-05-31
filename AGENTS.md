@@ -1,0 +1,372 @@
+# Академия Кванта — AGENTS.md
+
+Файл для AI-агентов, работающих с проектом. Читатель предполагается ничего не знающим о проекте.
+
+---
+
+## Обзор проекта
+
+**Академия Кванта** — веб-приложение для изучения школьной физики. Платформа объединяет:
+
+- Курс теории по 12 темам физики (кинематика, динамика, электричество, оптика, квантовая физика и др.)
+- Интерактивные виртуальные лабораторные работы (закон Ома, маятник, дифракция, фотоэффект и др.)
+- Банк задач с разбором (только для администраторов)
+- Систему отслеживания прогресса для учеников
+- Управление учениками администратором/учителем
+
+Проект — полнофулстековое монолитное приложение в директории `app/`. Фронтенд и бэкенд запускаются единым Vite dev-сервером.
+
+---
+
+## Стек технологий
+
+| Слой | Технология |
+|------|-----------|
+| Фронтенд | React 19, TypeScript, Vite 7 |
+| Бэкенд | Hono 4, tRPC 11, Node.js 20 |
+| База данных | MySQL 8, Drizzle ORM |
+| Стили | Tailwind CSS 3.4, shadcn/ui |
+| Аутентификация | OAuth 2.0 через Kimi Platform + собственная JWT-сессия для учеников |
+| Сериализация | superjson |
+| Валидация | Zod |
+| Тестирование | Vitest |
+| Сборка | Vite (фронтенд) + esbuild (бэкенд) |
+
+---
+
+## Структура проекта
+
+```
+app/
+├── api/                    # Бэкенд (Hono + tRPC)
+│   ├── boot.ts             # Точка входа сервера
+│   ├── router.ts           # Корневой tRPC-роутер
+│   ├── middleware.ts       # Процедуры tRPC (public, authed, admin, student)
+│   ├── context.ts          # Создание tRPC-контекста (аутентификация)
+│   ├── auth-router.ts      # Роутер аутентификации (me, logout, claimAdmin)
+│   ├── course-router.ts    # Публичные данные курса (темы, подтемы, лабы, ресурсы)
+│   ├── progress-router.ts  # Прогресс пользователя (OAuth)
+│   ├── problems-router.ts  # Управление задачами (admin-only)
+│   ├── admin-router.ts     # CRUD для тем, подтем, задач
+│   ├── student-router.ts   # Аутентификация и прогресс учеников
+│   ├── student-session.ts  # JWT-токены для учеников
+│   ├── kimi/               # Интеграция с Kimi Platform
+│   │   ├── auth.ts         # OAuth callback, обмен code → token
+│   │   ├── platform.ts     # API-запросы к Kimi Open
+│   │   ├── session.ts      # Подпись/верификация сессионных JWT
+│   │   └── types.ts        # Типы Kimi API
+│   ├── queries/            # SQL-запросы через Drizzle
+│   │   ├── connection.ts   # Инициализация Drizzle
+│   │   ├── users.ts        # Запросы к таблице users
+│   │   └── students.ts     # Запросы к таблице students
+│   └── lib/                # Утилиты бэкенда
+│       ├── env.ts          # Переменные окружения
+│       ├── cookies.ts      # Настройки сессионных cookie
+│       └── vite.ts         # Раздача статики в production
+├── src/                    # Фронтенд (React)
+│   ├── main.tsx            # Точка входа (StrictMode + HashRouter + TRPCProvider)
+│   ├── App.tsx             # Корневой компонент с маршрутизацией
+│   ├── const.ts            # Константы фронтенда (LOGIN_PATH)
+│   ├── pages/              # Страницы приложения
+│   │   ├── Home.tsx
+│   │   ├── Course.tsx
+│   │   ├── Labs.tsx
+│   │   ├── Login.tsx
+│   │   ├── StudentLogin.tsx
+│   │   ├── StudentDashboard.tsx
+│   │   ├── LabPendulum.tsx, OhmsLawLab.tsx, ProjectileLab.tsx ...
+│   │   └── admin/AdminProblems.tsx
+│   ├── components/         # React-компоненты
+│   │   ├── Header.tsx
+│   │   ├── AuthLayout.tsx
+│   │   └── ui/             # 50+ компонентов shadcn/ui
+│   ├── hooks/              # Кастомные хуки
+│   │   ├── useAuth.ts      # Хук аутентификации преподавателя
+│   │   ├── useStudentAuth.ts
+│   │   └── use-mobile.ts
+│   ├── providers/          # React-провайдеры
+│   │   └── trpc.tsx        # Настройка tRPC-клиента
+│   ├── contexts/           # React-контексты
+│   │   └── ViewAsStudentContext.tsx
+│   ├── data/               # Статические данные
+│   │   ├── courseTopics.ts
+│   │   └── labs.ts
+│   └── lib/                # Утилиты фронтенда
+│       └── utils.ts        # cn() — merge clsx + tailwind-merge
+├── contracts/              # Общие типы и константы
+│   ├── constants.ts        # Session.cookieName, Paths, ErrorMessages
+│   ├── errors.ts           # Фабрика ошибок приложения
+│   └── types.ts            # Реэкспорт типов из db/schema
+├── db/                     # Схема БД и миграции
+│   ├── schema.ts           # Описание всех таблиц Drizzle
+│   ├── relations.ts        # Отношения между таблицами
+│   ├── seed.ts             # Начальные данные (12 тем, 48 подтем, 6 лаб, ресурсы)
+│   ├── migrations/         # SQL-миграции Drizzle Kit
+│   └── problems-seed.ts    # Сид задач
+├── public/                 # Статические ассеты (изображения)
+└── scripts/                # Вспомогательные скрипты
+```
+
+---
+
+## Запуск и разработка
+
+### Предварительные требования
+
+- Node.js 20+
+- MySQL (устанавливается через `brew install mysql`)
+- Файл `.env` на основе `.env.example`
+
+### Переменные окружения (`.env`)
+
+```bash
+# ── Бэкенд ──
+APP_ID=                   # ID приложения Kimi
+APP_SECRET=               # Секрет для подписи JWT
+
+# ── База данных ──
+DATABASE_URL=             # mysql://user:pass@host:port/db
+
+# ── Фронтенд (доступны в браузере через Vite) ──
+VITE_KIMI_AUTH_URL=       # URL OAuth-сервера Kimi
+VITE_APP_ID=              # OAuth app ID
+
+# ── Бэкенд (Auth) ──
+KIMI_AUTH_URL=            # URL OAuth-сервера Kimi (бэкенд)
+KIMI_OPEN_URL=            # URL Kimi Open Platform
+
+# ── Админ ──
+OWNER_UNION_ID=           # Union ID создателя; получает роль admin при первом входе
+```
+
+### Команды
+
+```bash
+cd app/
+
+# Установка зависимостей
+npm install
+
+# Запуск dev-сервера (порт 3000)
+npm run dev
+
+# Сборка production
+npm run build
+
+# Запуск production-сервера
+npm run start
+
+# Проверка типов
+npm run check
+
+# Линтинг
+npm run lint
+
+# Форматирование
+npm run format
+
+# Тесты
+npm run test
+
+# Миграции базы данных
+npm run db:generate   # Сгенерировать миграции
+npm run db:migrate    # Применить миграции
+npm run db:push       # Push схемы (для разработки)
+```
+
+### Первый запуск
+
+1. Запустить MySQL: `brew services start mysql`
+2. Установить зависимости: `npm install`
+3. Применить миграции: `npm run db:migrate`
+4. Заполнить начальные данные: `npx tsx db/seed.ts`
+5. Запустить dev: `npm run dev`
+6. Открыть http://localhost:3000
+
+---
+
+## Архитектура
+
+### Полнофулстековый режим
+
+В development режиме Vite одновременно:
+- Раздаёт фронтенд (React SPA)
+- Обрабатывает API-запросы через Hono (`api/boot.ts`)
+
+В production:
+- Фронтенд собирается в `dist/public/`
+- Бэкенд бандлится esbuild в `dist/boot.js`
+- Hono node-server раздаёт статику из `dist/public/` и обрабатывает API
+
+### Двойная система аутентификации
+
+1. **Преподаватели/админы** — OAuth 2.0 через Kimi Platform:
+   - Авторизация через внешний OAuth-сервер
+   - Сессия в httpOnly cookie (`kimi_sid`)
+   - Роли: `user` | `admin`
+   - Первый пользователь с `OWNER_UNION_ID` автоматически становится admin
+
+2. **Ученики** — локальная аутентификация:
+   - Логин/пароль (SHA-256 + соль)
+   - JWT-токен сохраняется в `localStorage` (`student_token`)
+   - Передаётся в заголовке `x-student-token`
+
+### tRPC-роутеры и middleware
+
+| Процедура | Описание |
+|-----------|----------|
+| `publicQuery` | Без авторизации |
+| `authedQuery` | Требуется OAuth-сессия (преподаватель) |
+| `adminQuery` | Требуется роль `admin` |
+| `studentQuery` | Требуется ученический JWT-токен |
+
+### База данных (MySQL + Drizzle ORM)
+
+Основные таблицы:
+- `users` — преподаватели (OAuth через Kimi)
+- `students` — ученики (логин/пароль, создаются админом)
+- `topics` — темы курса физики (12 тем)
+- `subtopics` — подтемы (48 подтем)
+- `labs` — лабораторные работы
+- `progress` — прогресс преподавателей по подтемам
+- `lab_results` — результаты лабораторных работ
+- `problem_types` — типы задач
+- `problems` — задачи с решениями
+- `resources` — дополнительные ресурсы
+- `student_progress` — прогресс учеников (theory/practice/lab)
+
+---
+
+## Стиль кода
+
+### TypeScript
+
+- Строгий режим (`strict: true`)
+- Запрещены неиспользуемые переменные и параметры (`noUnusedLocals`, `noUnusedParameters`)
+- `verbatimModuleSyntax` — импорты типов через `type`
+- `allowImportingTsExtensions` — расширения `.ts` в импортах
+
+### Пути (alias)
+
+| Alias | Путь |
+|-------|------|
+| `@/` | `./src/` |
+| `@contracts/` | `./contracts/` |
+| `@db/` | `./db/` |
+
+### Prettier (`.prettierrc`)
+
+- `semi: true`
+- `singleQuote: false` (двойные кавычки)
+- `printWidth: 80`
+- `tabWidth: 2` (пробелы)
+- `trailingComma: "es5"`
+- `arrowParens: "avoid"`
+
+### ESLint
+
+- `@eslint/js` recommended
+- `typescript-eslint` recommended
+- `eslint-plugin-react-hooks` recommended
+- `eslint-plugin-react-refresh`
+- Игнорируется директория `dist/`
+
+---
+
+## Тестирование
+
+- **Фреймворк**: Vitest
+- **Среда**: node
+- **Поиск тестов**: `api/**/*.test.ts`, `api/**/*.spec.ts`
+- Запуск: `npm run test`
+- На текущий момент тестовые файлы в проекте отсутствуют
+
+---
+
+## Маршруты фронтенда (React Router, HashRouter)
+
+| Путь | Страница | Доступ |
+|------|----------|--------|
+| `/` | Главная | Публичный |
+| `/course` | Курс физики | Публичный |
+| `/labs` | Список лабораторных | Публичный |
+| `/labs/:slug` | Детальная лабораторной | Публичный |
+| `/labs/ohms-law` | Закон Ома (интерактив) | Публичный |
+| `/labs/pendulum` | Маятник (интерактив) | Публичный |
+| `/labs/projectile` | Баллистика (интерактив) | Публичный |
+| `/labs/spring` | Пружинный маятник | Публичный |
+| `/labs/energy` | Сохранение энергии | Публичный |
+| `/resources` | Ресурсы | Публичный |
+| `/about` | О проекте | Публичный |
+| `/login` | Вход для преподавателя | Публичный |
+| `/profile` | Профиль преподавателя | Требуется OAuth |
+| `/admin/problems` | Управление задачами | Требуется admin |
+| `/student/login` | Вход для ученика | Публичный |
+| `/student/dashboard` | Дашборд ученика | Требуется ученик |
+| `/student/profile` | Профиль ученика | Требуется ученик |
+| `/student/labs` | Протоколы лабораторных | Требуется ученик |
+
+---
+
+## Соглашения по разработке
+
+### Именование
+
+- Компоненты React: PascalCase (`Header.tsx`, `StudentDashboard.tsx`)
+- Хуки: camelCase с префиксом `use` (`useAuth`, `useStudentAuth`)
+- Роутеры tRPC: суффикс `-router.ts` (`auth-router.ts`, `student-router.ts`)
+- Запросы к БД: суффикс `s.ts` в `queries/` (`students.ts`, `users.ts`)
+
+### Аутентификация в tRPC
+
+- Для защиты эндпоинта используй `authedQuery`, `adminQuery` или `studentQuery` из `api/middleware.ts`
+- Никогда не доверяй `ctx.user` или `ctx.student` без middleware
+
+### Работа с БД
+
+- Всегда используй `getDb()` из `api/queries/connection.ts`
+- Схема описана в `db/schema.ts`
+- Для новых таблиц добавь типы в `contracts/types.ts` (реэкспорт из `db/schema`)
+
+### Добавление новой страницы
+
+1. Создать компонент в `src/pages/`
+2. Добавить импорт и маршрут в `src/App.tsx`
+3. При необходимости добавить ссылку в `Header.tsx`
+
+### Добавление нового API-эндпоинта
+
+1. Добавить процедуру в соответствующий `*-router.ts`
+2. Использовать `z.object({...})` для валидации input
+3. Выбрать подходящую middleware (`publicQuery` / `authedQuery` / `adminQuery` / `studentQuery`)
+
+---
+
+## Безопасность
+
+- `APP_SECRET` используется для подписи **всех** JWT-токенов (сессии преподавателей и учеников)
+- Сессионные cookie: `httpOnly`, `secure` (в production), `sameSite: "None"` (в production) / `"Lax"` (localhost)
+- Пароли учеников хешируются SHA-256 с солью `quant-salt-2026`
+- Тело запроса ограничено 50 МБ (`bodyLimit`)
+- Первый вход через OAuth автоматически создаёт пользователя; роль `admin` назначается только при совпадении `unionId` с `OWNER_UNION_ID`
+
+---
+
+## Полезные скрипты
+
+| Файл | Назначение |
+|------|-----------|
+| `create_tables.cjs` | Создание таблиц (устаревший, используйте миграции Drizzle) |
+| `make-admin.cjs` | Назначение роли admin пользователю по unionId |
+| `seed_problems.cjs` | Сид задач кинематики |
+| `scripts/create-student-tables.mjs` | Создание таблиц для учеников |
+| `db/seed.ts` | Полный сид начальных данных (темы, подтемы, лабы, ресурсы) |
+
+---
+
+## Язык проекта
+
+- Основной язык интерфейса: **русский**
+- Код и комментарии: русский/английский (смешанно)
+- Названия переменных: camelCase на английском
+- Документация пользователя: `ЗАПУСК.md` (русский)

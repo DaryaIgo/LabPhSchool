@@ -1,0 +1,377 @@
+import {
+  mysqlTable,
+  mysqlEnum,
+  serial,
+  varchar,
+  text,
+  timestamp,
+  int,
+  bigint,
+  json,
+  boolean,
+  index,
+  uniqueIndex,
+} from "drizzle-orm/mysql-core";
+
+// ═══════════════════════════════════════════════════════════════
+// RBAC Core Tables
+// ═══════════════════════════════════════════════════════════════
+
+// ── ROLES ──
+export const roles = mysqlTable("roles", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 50 }).notNull().unique(),
+  description: varchar("description", { length: 255 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type Role = typeof roles.$inferSelect;
+
+// ── PERMISSIONS ──
+export const permissions = mysqlTable(
+  "permissions",
+  {
+    id: serial("id").primaryKey(),
+    name: varchar("name", { length: 100 }).notNull().unique(),
+    resource: varchar("resource", { length: 50 }).notNull(),
+    action: varchar("action", { length: 50 }).notNull(),
+    description: varchar("description", { length: 255 }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    resourceActionIdx: index("resource_action_idx").on(
+      table.resource,
+      table.action
+    ),
+  })
+);
+
+export type Permission = typeof permissions.$inferSelect;
+
+// ── ROLE PERMISSIONS (junction) ──
+export const rolePermissions = mysqlTable(
+  "role_permissions",
+  {
+    id: serial("id").primaryKey(),
+    roleId: bigint("role_id", { mode: "number", unsigned: true })
+      .notNull()
+      .references(() => roles.id),
+    permissionId: bigint("permission_id", { mode: "number", unsigned: true })
+      .notNull()
+      .references(() => permissions.id),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    uniqueRolePermission: uniqueIndex("unique_role_permission").on(
+      table.roleId,
+      table.permissionId
+    ),
+  })
+);
+
+export type RolePermission = typeof rolePermissions.$inferSelect;
+
+// ═══════════════════════════════════════════════════════════════
+// User Tables
+// ═══════════════════════════════════════════════════════════════
+
+// ── USERS (OAuth — Teachers/Admins) ──
+export const users = mysqlTable("users", {
+  id: serial("id").primaryKey(),
+  unionId: varchar("union_id", { length: 255 }).notNull().unique(),
+  name: varchar("name", { length: 255 }),
+  email: varchar("email", { length: 320 }),
+  avatar: text("avatar"),
+  roleId: bigint("role_id", { mode: "number", unsigned: true })
+    .notNull()
+    .references(() => roles.id)
+    .default(1),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
+  lastSignInAt: timestamp("last_sign_in_at").defaultNow().notNull(),
+});
+
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
+
+// ── LOCAL USERS (Password-based — Students) ──
+export const localUsers = mysqlTable(
+  "local_users",
+  {
+    id: serial("id").primaryKey(),
+    login: varchar("login", { length: 100 }).notNull().unique(),
+    passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+    name: varchar("name", { length: 255 }).notNull(),
+    roleId: bigint("role_id", { mode: "number", unsigned: true })
+      .notNull()
+      .references(() => roles.id)
+      .default(2),
+    createdBy: bigint("created_by", { mode: "number", unsigned: true })
+      .notNull()
+      .references(() => users.id),
+    status: mysqlEnum("status", ["active", "inactive", "suspended"])
+      .default("active")
+      .notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
+    lastLoginAt: timestamp("last_login_at"),
+  },
+  (table) => ({
+    statusIdx: index("local_user_status_idx").on(table.status),
+    createdByIdx: index("local_user_created_by_idx").on(table.createdBy),
+  })
+);
+
+export type LocalUser = typeof localUsers.$inferSelect;
+export type InsertLocalUser = typeof localUsers.$inferInsert;
+
+// ═══════════════════════════════════════════════════════════════
+// Course Content Tables
+// ═══════════════════════════════════════════════════════════════
+
+// ── TOPICS ──
+export const topics = mysqlTable("topics", {
+  id: serial("id").primaryKey(),
+  order: int("order").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  formula: varchar("formula", { length: 500 }),
+  description: text("description"),
+  shortDesc: varchar("short_desc", { length: 500 }),
+  color: varchar("color", { length: 20 }).default("#2eff8c"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type Topic = typeof topics.$inferSelect;
+
+// ── SUBTOPICS ──
+export const subtopics = mysqlTable("subtopics", {
+  id: serial("id").primaryKey(),
+  topicId: bigint("topic_id", { mode: "number", unsigned: true })
+    .notNull()
+    .references(() => topics.id),
+  order: int("order").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  content: text("content"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type Subtopic = typeof subtopics.$inferSelect;
+
+// ── LABS ──
+export const labs = mysqlTable("labs", {
+  id: serial("id").primaryKey(),
+  order: int("order").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  description: text("description"),
+  shortDesc: varchar("short_desc", { length: 500 }),
+  theory: text("theory"),
+  iconType: varchar("icon_type", { length: 50 }),
+  topicId: bigint("topic_id", { mode: "number", unsigned: true }).references(
+    () => topics.id
+  ),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type Lab = typeof labs.$inferSelect;
+
+// ═══════════════════════════════════════════════════════════════
+// Progress & Results Tables
+// ═══════════════════════════════════════════════════════════════
+
+// ── PROGRESS (OAuth users) ──
+export const progress = mysqlTable("progress", {
+  id: serial("id").primaryKey(),
+  userId: bigint("user_id", { mode: "number", unsigned: true })
+    .notNull()
+    .references(() => users.id),
+  subtopicId: bigint("subtopic_id", { mode: "number", unsigned: true })
+    .notNull()
+    .references(() => subtopics.id),
+  status: mysqlEnum("status", ["not_started", "in_progress", "completed"])
+    .default("not_started")
+    .notNull(),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
+});
+
+export type Progress = typeof progress.$inferSelect;
+
+// ── LAB RESULTS ──
+export const labResults = mysqlTable("lab_results", {
+  id: serial("id").primaryKey(),
+  userId: bigint("user_id", { mode: "number", unsigned: true })
+    .notNull()
+    .references(() => users.id),
+  labId: bigint("lab_id", { mode: "number", unsigned: true })
+    .notNull()
+    .references(() => labs.id),
+  result: text("result"),
+  grade: int("grade"),
+  status: mysqlEnum("status", ["pending", "completed"])
+    .default("pending")
+    .notNull(),
+  data: json("data"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type LabResult = typeof labResults.$inferSelect;
+
+// ── STUDENT PROGRESS (local users) ──
+export const studentProgress = mysqlTable("student_progress", {
+  id: serial("id").primaryKey(),
+  localUserId: bigint("local_user_id", { mode: "number", unsigned: true })
+    .notNull()
+    .references(() => localUsers.id, { onDelete: "cascade" }),
+  subtopicId: bigint("subtopic_id", { mode: "number", unsigned: true })
+    .notNull()
+    .references(() => subtopics.id),
+  theoryCompleted: mysqlEnum("theory_completed", ["pending", "completed"])
+    .default("pending")
+    .notNull(),
+  practiceCompleted: mysqlEnum("practice_completed", ["pending", "completed"])
+    .default("pending")
+    .notNull(),
+  labCompleted: mysqlEnum("lab_completed", ["pending", "completed"])
+    .default("pending")
+    .notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
+});
+
+export type StudentProgress = typeof studentProgress.$inferSelect;
+
+// ═══════════════════════════════════════════════════════════════
+// Enrollment Table
+// ═══════════════════════════════════════════════════════════════
+
+export const enrollments = mysqlTable(
+  "enrollments",
+  {
+    id: serial("id").primaryKey(),
+    localUserId: bigint("local_user_id", { mode: "number", unsigned: true })
+      .notNull()
+      .references(() => localUsers.id, { onDelete: "cascade" }),
+    topicId: bigint("topic_id", { mode: "number", unsigned: true })
+      .notNull()
+      .references(() => topics.id),
+    status: mysqlEnum("status", ["active", "completed", "suspended"])
+      .default("active")
+      .notNull(),
+    enrolledAt: timestamp("enrolled_at").defaultNow().notNull(),
+    expiresAt: timestamp("expires_at"),
+    createdBy: bigint("created_by", { mode: "number", unsigned: true })
+      .notNull()
+      .references(() => users.id),
+  },
+  (table) => ({
+    uniqueEnrollment: uniqueIndex("unique_enrollment").on(
+      table.localUserId,
+      table.topicId
+    ),
+    localUserIdx: index("enrollment_local_user_idx").on(table.localUserId),
+    topicIdx: index("enrollment_topic_idx").on(table.topicId),
+  })
+);
+
+export type Enrollment = typeof enrollments.$inferSelect;
+
+// ═══════════════════════════════════════════════════════════════
+// Audit Log Table
+// ═══════════════════════════════════════════════════════════════
+
+export const auditLog = mysqlTable(
+  "audit_log",
+  {
+    id: serial("id").primaryKey(),
+    actorId: bigint("actor_id", { mode: "number", unsigned: true }).notNull(),
+    actorType: mysqlEnum("actor_type", ["user", "local_user"]).notNull(),
+    action: varchar("action", { length: 50 }).notNull(),
+    resource: varchar("resource", { length: 50 }).notNull(),
+    resourceId: bigint("resource_id", { mode: "number", unsigned: true }),
+    details: json("details"),
+    ipAddress: varchar("ip_address", { length: 45 }),
+    userAgent: varchar("user_agent", { length: 500 }),
+    success: boolean("success").default(true).notNull(),
+    errorMessage: varchar("error_message", { length: 500 }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    actorIdx: index("audit_actor_idx").on(table.actorId, table.actorType),
+    resourceIdx: index("audit_resource_idx").on(table.resource, table.resourceId),
+    createdAtIdx: index("audit_created_at_idx").on(table.createdAt),
+  })
+);
+
+export type AuditLogEntry = typeof auditLog.$inferSelect;
+
+// ═══════════════════════════════════════════════════════════════
+// Problem Tables
+// ═══════════════════════════════════════════════════════════════
+
+export const problemTypes = mysqlTable("problem_types", {
+  id: serial("id").primaryKey(),
+  subtopicId: bigint("subtopic_id", { mode: "number", unsigned: true })
+    .notNull()
+    .references(() => subtopics.id),
+  order: int("order").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type ProblemType = typeof problemTypes.$inferSelect;
+
+export const problems = mysqlTable("problems", {
+  id: serial("id").primaryKey(),
+  problemTypeId: bigint("problem_type_id", { mode: "number", unsigned: true })
+    .notNull()
+    .references(() => problemTypes.id),
+  order: int("order").notNull(),
+  level: mysqlEnum("level", ["basic", "intermediate", "advanced"])
+    .default("basic")
+    .notNull(),
+  source: varchar("source", { length: 255 }),
+  condition: text("condition").notNull(),
+  given: text("given"),
+  find: text("find"),
+  solution: text("solution").notNull(),
+  answer: text("answer").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type Problem = typeof problems.$inferSelect;
+
+// ═══════════════════════════════════════════════════════════════
+// Resources Table
+// ═══════════════════════════════════════════════════════════════
+
+export const resources = mysqlTable("resources", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  type: mysqlEnum("type", ["video", "reference", "workbook", "model"]).notNull(),
+  url: varchar("url", { length: 500 }),
+  tags: varchar("tags", { length: 500 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type Resource = typeof resources.$inferSelect;

@@ -1,0 +1,32 @@
+# ── Environment variables ──
+.env
+.env.local
+.env.*.local
+
+# ── Database ──
+*.db
+*.sqlite
+*.sqlite3
+db/migrations/*.sql
+
+# ── Temporary / initialization scripts ──
+scripts/
+*.cjs
+
+# ── TypeScript cache ──
+*.tsbuildinfo
+
+# ── Build outputs ──
+dist/
+build/
+
+# ── Test coverage ──
+coverage/
+.nyc_output/
+
+# ── Misc ──
+.git-credentials
+*.pem
+*.key
+node_modules/
+.secrets
