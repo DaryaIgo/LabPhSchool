@@ -11,6 +11,7 @@ import {
   boolean,
   index,
   uniqueIndex,
+  foreignKey,
 } from "drizzle-orm/mysql-core";
 
 // ═══════════════════════════════════════════════════════════════
@@ -109,9 +110,7 @@ export const localUsers = mysqlTable(
       .notNull()
       .references(() => roles.id)
       .default(2),
-    createdBy: bigint("created_by", { mode: "number", unsigned: true })
-      .notNull()
-      .references(() => users.id),
+    createdBy: bigint("created_by", { mode: "number", unsigned: true }),
     status: mysqlEnum("status", ["active", "inactive", "suspended"])
       .default("active")
       .notNull(),
@@ -125,6 +124,10 @@ export const localUsers = mysqlTable(
   (table) => ({
     statusIdx: index("local_user_status_idx").on(table.status),
     createdByIdx: index("local_user_created_by_idx").on(table.createdBy),
+    createdByFk: foreignKey({
+      columns: [table.createdBy],
+      foreignColumns: [table.id],
+    }),
   })
 );
 
@@ -278,8 +281,7 @@ export const enrollments = mysqlTable(
     enrolledAt: timestamp("enrolled_at").defaultNow().notNull(),
     expiresAt: timestamp("expires_at"),
     createdBy: bigint("created_by", { mode: "number", unsigned: true })
-      .notNull()
-      .references(() => users.id),
+      .references(() => localUsers.id),
   },
   (table) => ({
     uniqueEnrollment: uniqueIndex("unique_enrollment").on(
