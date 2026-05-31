@@ -27,7 +27,7 @@ import AuditLogViewer from "./pages/admin/AuditLogViewer";
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-[#262e33] text-white">
+    <div className="min-h-screen bg-[#262e33] text-white pt-16">
       <Header />
       <Routes>
         <Route path="/" element={<Home />} />
