@@ -7,7 +7,7 @@
 
 import { eq, and, like, desc, count } from "drizzle-orm";
 import { getDb } from "./connection";
-import { localUsers, studentProgress, roles } from "@db/schema";
+import { localUsers, roles } from "@db/schema";
 import type { InsertLocalUser } from "@db/schema";
 
 // ── READ ──
@@ -161,51 +161,4 @@ export async function activateLocalUser(id: number) {
     .where(eq(localUsers.id, id));
 }
 
-// ── PROGRESS ──
 
-export async function getLocalUserProgress(localUserId: number) {
-  return getDb()
-    .select()
-    .from(studentProgress)
-    .where(eq(studentProgress.localUserId, localUserId));
-}
-
-export async function upsertLocalUserProgress(
-  localUserId: number,
-  subtopicId: number,
-  data: {
-    theoryCompleted?: "pending" | "completed";
-    practiceCompleted?: "pending" | "completed";
-    labCompleted?: "pending" | "completed";
-    notes?: string;
-  }
-) {
-  const existing = await getDb()
-    .select()
-    .from(studentProgress)
-    .where(
-      and(
-        eq(studentProgress.localUserId, localUserId),
-        eq(studentProgress.subtopicId, subtopicId)
-      )
-    )
-    .limit(1);
-
-  if (existing.length > 0) {
-    return getDb()
-      .update(studentProgress)
-      .set({
-        ...data,
-        updatedAt: new Date(),
-      })
-      .where(eq(studentProgress.id, existing[0].id));
-  }
-
-  return getDb()
-    .insert(studentProgress)
-    .values({
-      localUserId,
-      subtopicId,
-      ...data,
-    });
-}

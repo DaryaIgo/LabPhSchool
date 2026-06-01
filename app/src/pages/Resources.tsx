@@ -184,6 +184,41 @@ export default function Resources() {
         </div>
       </section>
 
+      {/* Universal Algorithm */}
+      <section className="section-dark py-16 lg:py-24">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl lg:text-3xl font-bold mb-4">
+              Универсальный алгоритм
+            </h2>
+            <p className="text-[#c8cdd1]">
+              Шесть шагов для решения любой физической задачи
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              { num: "1", title: "Прочитать", desc: "Внимательно прочитать условие, выделить вопрос" },
+              { num: "2", title: "Записать данные", desc: "Выписать известные величины, перевести в СИ" },
+              { num: "3", title: "Определить тип", desc: "Классифицировать задачу по теме и типу" },
+              { num: "4", title: "Найти формулу", desc: "Выбрать закон или формулу из справочника" },
+              { num: "5", title: "Решить", desc: "Подставить данные, вычислить ответ" },
+              { num: "6", title: "Проверить", desc: "Проверить размерность и адекватность" },
+            ].map((step) => (
+              <div
+                key={step.num}
+                className="bg-[#2a3237] border border-[#434e54] rounded-xl p-5"
+              >
+                <span className="font-mono-phys text-3xl font-bold text-[#2eff8c]">
+                  {step.num}
+                </span>
+                <h3 className="font-semibold mt-2">{step.title}</h3>
+                <p className="text-sm text-[#798389] mt-1">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Tag Cloud */}
       <section className="section-light py-16">
         <div className="max-w-4xl mx-auto px-6 text-center">

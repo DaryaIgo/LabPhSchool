@@ -86,27 +86,4 @@ export const problemsRouter = createRouter({
       return { id: Number(result[0].insertId) };
     }),
 
-  createType: adminQuery
-    .input(
-      z.object({
-        subtopicId: z.number(),
-        order: z.number(),
-        title: z.string(),
-        slug: z.string(),
-        description: z.string().optional(),
-      })
-    )
-    .mutation(async ({ input }) => {
-      const db = getDb();
-      const result = await db.insert(problemTypes).values([
-        {
-          subtopicId: input.subtopicId,
-          order: input.order,
-          title: input.title,
-          slug: input.slug,
-          description: input.description ?? null,
-        },
-      ]);
-      return { id: Number(result[0].insertId) };
-    }),
 });

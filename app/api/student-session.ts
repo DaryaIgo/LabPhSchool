@@ -78,7 +78,7 @@ export async function getStudentSetCookie(
   const token = await signStudentSession(payload);
   const opts = getSessionCookieOptions(headers);
   return cookie.serialize(STUDENT_COOKIE_NAME, token, {
-    ...opts,
+    ...(opts as Record<string, unknown>),
     maxAge: 30 * 24 * 60 * 60, // 30 days
   });
 }
@@ -89,7 +89,7 @@ export async function getStudentSetCookie(
 export function getStudentClearCookie(headers: Headers): string {
   const opts = getSessionCookieOptions(headers);
   return cookie.serialize(STUDENT_COOKIE_NAME, "", {
-    ...opts,
+    ...(opts as Record<string, unknown>),
     maxAge: 0,
   });
 }

@@ -10,11 +10,10 @@ import { createRouter, adminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import {
   topics,
-  subtopics,
-  labs,
   problems,
-  problemTypes,
   localUsers,
+  topicNodes,
+  labWorks,
 } from "@db/schema";
 import { eq, asc, count } from "drizzle-orm";
 import { createAuditEntry } from "./queries/audit";
@@ -39,8 +38,7 @@ export const adminRouter = createRouter({
       .from(localUsers)
       .where(eq(localUsers.status, "suspended"));
     const [topicCount] = await db.select({ count: count() }).from(topics);
-    const [subtopicCount] = await db.select({ count: count() }).from(subtopics);
-    const [labCount] = await db.select({ count: count() }).from(labs);
+    const [labWorkCount] = await db.select({ count: count() }).from(labWorks);
 
     return {
       students: {
@@ -50,8 +48,7 @@ export const adminRouter = createRouter({
       },
       content: {
         topics: topicCount.count,
-        subtopics: subtopicCount.count,
-        labs: labCount.count,
+        labWorks: labWorkCount.count,
       },
     };
   }),
@@ -157,182 +154,94 @@ export const adminRouter = createRouter({
     }),
 
   // ═══════════════════════════════════════════════════════════
-  // SUBTOPICS CRUD
+  // TOPIC NODES CRUD (hierarchical markdown topics)
   // ═══════════════════════════════════════════════════════════
 
-  listSubtopics: adminQuery
-    .input(z.object({ topicId: z.number().positive() }))
-    .query(async ({ input }) => {
-      return getDb()
-        .select()
-        .from(subtopics)
-        .where(eq(subtopics.topicId, input.topicId))
-        .orderBy(asc(subtopics.order));
-    }),
-
-  createSubtopic: adminQuery
-    .input(
-      z.object({
-        topicId: z.number().positive(),
-        order: z.number().int().min(1),
-        title: z.string().min(1).max(255),
-        description: z.string().max(2000).optional(),
-        content: z.string().max(50000).optional(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const db = getDb();
-      const result = await db.insert(subtopics).values({
-        topicId: input.topicId,
-        order: input.order,
-        title: input.title,
-        description: input.description ?? null,
-        content: input.content ?? null,
-      });
-
-      const id = Number(result[0].insertId);
-
-      await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
-        action: "create",
-        resource: "subtopics",
-        resourceId: id,
-        details: { title: input.title, topicId: input.topicId },
-      });
-
-      return { id, success: true };
-    }),
-
-  updateSubtopic: adminQuery
-    .input(
-      z.object({
-        id: z.number().positive(),
-        title: z.string().min(1).max(255).optional(),
-        description: z.string().max(2000).optional(),
-        content: z.string().max(50000).optional(),
-        order: z.number().int().min(1).optional(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const db = getDb();
-      const { id, ...data } = input;
-      const updateData: Record<string, unknown> = {};
-      if (data.title !== undefined) updateData.title = data.title;
-      if (data.description !== undefined)
-        updateData.description = data.description;
-      if (data.content !== undefined) updateData.content = data.content;
-      if (data.order !== undefined) updateData.order = data.order;
-
-      await db.update(subtopics).set(updateData).where(eq(subtopics.id, id));
-
-      await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
-        action: "update",
-        resource: "subtopics",
-        resourceId: id,
-        details: { fields: Object.keys(data) },
-      });
-
-      return { success: true };
-    }),
-
-  deleteSubtopic: adminQuery
-    .input(z.object({ id: z.number().positive() }))
-    .mutation(async ({ ctx, input }) => {
-      await getDb().delete(subtopics).where(eq(subtopics.id, input.id));
-
-      await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
-        action: "delete",
-        resource: "subtopics",
-        resourceId: input.id,
-      });
-
-      return { success: true };
-    }),
-
-  // ═══════════════════════════════════════════════════════════
-  // LABS CRUD
-  // ═══════════════════════════════════════════════════════════
-
-  listLabs: adminQuery.query(async () => {
-    return getDb().select().from(labs).orderBy(asc(labs.order));
+  listTopicNodes: adminQuery.query(async () => {
+    return getDb().select().from(topicNodes).orderBy(asc(topicNodes.order));
   }),
 
-  createLab: adminQuery
+  getTopicNode: adminQuery
+    .input(z.object({ id: z.number().positive() }))
+    .query(async ({ input }) => {
+      const db = getDb();
+      const node = await db
+        .select()
+        .from(topicNodes)
+        .where(eq(topicNodes.id, input.id))
+        .limit(1);
+      if (!node[0]) return null;
+      const children = await db
+        .select()
+        .from(topicNodes)
+        .where(eq(topicNodes.parentId, input.id))
+        .orderBy(asc(topicNodes.order));
+      return { ...node[0], children };
+    }),
+
+  createTopicNode: adminQuery
     .input(
       z.object({
-        order: z.number().int().min(1),
+        parentId: z.number().positive().optional(),
+        order: z.number().int().min(1).default(1),
         title: z.string().min(1).max(255),
         slug: z.string().min(1).max(255).regex(/^[a-z0-9-]+$/),
-        description: z.string().max(5000).optional(),
-        shortDesc: z.string().max(500).optional(),
-        theory: z.string().max(50000).optional(),
-        iconType: z.string().max(50).optional(),
-        topicId: z.number().positive().optional(),
+        content: z.string().max(100000).optional(),
+        color: z.string().max(20).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const db = getDb();
-      const result = await db.insert(labs).values({
+      const result = await db.insert(topicNodes).values({
+        parentId: input.parentId ?? null,
         order: input.order,
         title: input.title,
         slug: input.slug,
-        description: input.description ?? null,
-        shortDesc: input.shortDesc ?? null,
-        theory: input.theory ?? null,
-        iconType: input.iconType ?? null,
-        topicId: input.topicId ?? null,
+        content: input.content ?? null,
+        color: input.color ?? null,
       });
-
       const id = Number(result[0].insertId);
-
       await createAuditEntry({
         actorId: ctx.localUser!.id,
         actorType: "user",
         action: "create",
-        resource: "labs",
+        resource: "topic_nodes",
         resourceId: id,
-        details: { title: input.title, slug: input.slug },
+        details: { title: input.title, slug: input.slug, parentId: input.parentId },
       });
-
       return { id, success: true };
     }),
 
-  updateLab: adminQuery
+  updateTopicNode: adminQuery
     .input(
       z.object({
         id: z.number().positive(),
-        title: z.string().min(1).max(255).optional(),
-        description: z.string().max(5000).optional(),
-        shortDesc: z.string().max(500).optional(),
-        theory: z.string().max(50000).optional(),
-        iconType: z.string().max(50).optional(),
+        parentId: z.number().positive().optional().nullable(),
         order: z.number().int().min(1).optional(),
+        title: z.string().min(1).max(255).optional(),
+        slug: z.string().min(1).max(255).regex(/^[a-z0-9-]+$/).optional(),
+        content: z.string().max(100000).optional(),
+        color: z.string().max(20).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const db = getDb();
       const { id, ...data } = input;
       const updateData: Record<string, unknown> = {};
-      if (data.title !== undefined) updateData.title = data.title;
-      if (data.description !== undefined)
-        updateData.description = data.description;
-      if (data.shortDesc !== undefined) updateData.shortDesc = data.shortDesc;
-      if (data.theory !== undefined) updateData.theory = data.theory;
-      if (data.iconType !== undefined) updateData.iconType = data.iconType;
+      if (data.parentId !== undefined) updateData.parentId = data.parentId;
       if (data.order !== undefined) updateData.order = data.order;
+      if (data.title !== undefined) updateData.title = data.title;
+      if (data.slug !== undefined) updateData.slug = data.slug;
+      if (data.content !== undefined) updateData.content = data.content;
+      if (data.color !== undefined) updateData.color = data.color;
 
-      await db.update(labs).set(updateData).where(eq(labs.id, id));
+      await db.update(topicNodes).set(updateData).where(eq(topicNodes.id, id));
 
       await createAuditEntry({
         actorId: ctx.localUser!.id,
         actorType: "user",
         action: "update",
-        resource: "labs",
+        resource: "topic_nodes",
         resourceId: id,
         details: { fields: Object.keys(data) },
       });
@@ -340,20 +249,110 @@ export const adminRouter = createRouter({
       return { success: true };
     }),
 
-  deleteLab: adminQuery
+  deleteTopicNode: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
-      await getDb().delete(labs).where(eq(labs.id, input.id));
+      const db = getDb();
+      const allNodes = await db
+        .select({ id: topicNodes.id, parentId: topicNodes.parentId })
+        .from(topicNodes);
+      const childrenMap = new Map<number, number[]>();
+      for (const n of allNodes) {
+        if (n.parentId) {
+          const arr = childrenMap.get(n.parentId) ?? [];
+          arr.push(n.id);
+          childrenMap.set(n.parentId, arr);
+        }
+      }
+      const toDelete: number[] = [];
+      const collect = (nodeId: number) => {
+        toDelete.push(nodeId);
+        const children = childrenMap.get(nodeId) ?? [];
+        for (const childId of children) collect(childId);
+      };
+      collect(input.id);
+      // Delete leaves first to avoid FK constraint violations
+      for (let i = toDelete.length - 1; i >= 0; i--) {
+        await db.delete(topicNodes).where(eq(topicNodes.id, toDelete[i]));
+      }
 
       await createAuditEntry({
         actorId: ctx.localUser!.id,
         actorType: "user",
         action: "delete",
-        resource: "labs",
+        resource: "topic_nodes",
         resourceId: input.id,
+        details: { deletedCount: toDelete.length },
       });
 
-      return { success: true };
+      return { success: true, deletedCount: toDelete.length };
+    }),
+
+  importTopicNode: adminQuery
+    .input(
+      z.object({
+        parentId: z.number().positive().optional(),
+        markdown: z.string().min(1).max(200000),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { default: matter } = await import("gray-matter");
+      const parsed = matter(input.markdown);
+      const front = parsed.data as Record<string, unknown>;
+
+      const title = String(front.title ?? "");
+      const slug = String(front.slug ?? "");
+      if (!title || !slug) {
+        throw new Error("Front matter must include 'title' and 'slug'");
+      }
+
+      const db = getDb();
+      const result = await db.insert(topicNodes).values({
+        parentId: input.parentId ?? null,
+        order: Number(front.order ?? 1),
+        title,
+        slug,
+        content: parsed.content || null,
+        color: front.color ? String(front.color) : null,
+      });
+      const id = Number(result[0].insertId);
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "create",
+        resource: "topic_nodes",
+        resourceId: id,
+        details: { title, slug, source: "import" },
+      });
+
+      return { id, success: true };
+    }),
+
+  exportTopicNode: adminQuery
+    .input(z.object({ id: z.number().positive() }))
+    .query(async ({ input }) => {
+      const db = getDb();
+      const node = await db
+        .select()
+        .from(topicNodes)
+        .where(eq(topicNodes.id, input.id))
+        .limit(1);
+      if (!node[0]) return null;
+      const n = node[0];
+      const frontMatter = [
+        "---",
+        `title: "${n.title}"`,
+        `slug: ${n.slug}`,
+        `order: ${n.order}`,
+        n.color ? `color: "${n.color}"` : null,
+        "---",
+        "",
+        n.content ?? "",
+      ]
+        .filter(Boolean)
+        .join("\n");
+      return { markdown: frontMatter, filename: `${n.slug}.md` };
     }),
 
   // ═══════════════════════════════════════════════════════════
@@ -455,36 +454,4 @@ export const adminRouter = createRouter({
       return { success: true };
     }),
 
-  createProblemType: adminQuery
-    .input(
-      z.object({
-        subtopicId: z.number().positive(),
-        order: z.number().int().min(1),
-        title: z.string().min(1).max(255),
-        slug: z.string().min(1).max(255).regex(/^[a-z0-9-]+$/),
-        description: z.string().max(2000).optional(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const db = getDb();
-      const result = await db.insert(problemTypes).values({
-        subtopicId: input.subtopicId,
-        order: input.order,
-        title: input.title,
-        slug: input.slug,
-        description: input.description ?? null,
-      });
-
-      const id = Number(result[0].insertId);
-
-      await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
-        action: "create",
-        resource: "problem_types",
-        resourceId: id,
-      });
-
-      return { id, success: true };
-    }),
 });

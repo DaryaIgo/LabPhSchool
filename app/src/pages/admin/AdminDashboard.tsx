@@ -19,7 +19,6 @@ import {
   GraduationCap,
   ShieldCheck,
   ClipboardList,
-  Layers,
   Activity,
 } from "lucide-react";
 
@@ -150,16 +149,16 @@ export default function AdminDashboard() {
         <StatCard
           title="Topics"
           value={stats?.content.topics ?? "—"}
-          subtitle={`${stats?.content.subtopics ?? 0} subtopics`}
+          subtitle="Course topics"
           icon={BookOpen}
           onClick={() => navigate("/admin/topics")}
         />
         <StatCard
-          title="Labs"
-          value={stats?.content.labs ?? "—"}
+          title="Virtual Labs"
+          value={stats?.content.labWorks ?? "—"}
           subtitle="Interactive simulations"
           icon={FlaskConical}
-          onClick={() => navigate("/admin/labs")}
+          onClick={() => navigate("/admin/virtual-labs")}
         />
       </div>
 
@@ -177,14 +176,9 @@ export default function AdminDashboard() {
           onClick={() => navigate("/admin/topics")}
         />
         <QuickAction
-          label="Subtopics"
-          icon={Layers}
-          onClick={() => navigate("/admin/subtopics")}
-        />
-        <QuickAction
-          label="Labs"
+          label="Virtual Labs"
           icon={FlaskConical}
-          onClick={() => navigate("/admin/labs")}
+          onClick={() => navigate("/admin/virtual-labs")}
         />
         <QuickAction
           label="Enrollments"

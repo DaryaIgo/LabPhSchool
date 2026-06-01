@@ -46,7 +46,6 @@ import {
   PlayCircle,
   ChevronLeft,
   ChevronRight,
-  BarChart3,
 } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -71,7 +70,7 @@ export default function StudentManagement() {
     name: string;
     status: string;
   } | null>(null);
-  const [viewProgressId, setViewProgressId] = useState<number | null>(null);
+
 
   // Form states
   const [formLogin, setFormLogin] = useState("");
@@ -129,10 +128,6 @@ export default function StudentManagement() {
     onError: (err) => toast(err.message),
   });
 
-  const { data: progressData } = trpc.student.adminGetProgress.useQuery(
-    { studentId: viewProgressId! },
-    { enabled: !!viewProgressId }
-  );
 
   function resetCreateForm() {
     setFormLogin("");
@@ -359,16 +354,6 @@ export default function StudentManagement() {
                               variant="ghost"
                               size="sm"
                               onClick={() => {
-                                setViewProgressId(s.id);
-                              }}
-                              title="View progress"
-                            >
-                              <BarChart3 className="h-4 w-4 text-blue-400" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
                                 setEditStudent({
                                   id: s.id,
                                   name: s.name,
@@ -527,70 +512,7 @@ export default function StudentManagement() {
         </Dialog>
       )}
 
-      {/* Progress Dialog */}
-      {viewProgressId && (
-        <Dialog
-          open={!!viewProgressId}
-          onOpenChange={() => setViewProgressId(null)}
-        >
-          <DialogContent className="bg-[#1e2529] border-[#37474f] text-white max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                Progress: {progressData?.student.name}
-              </DialogTitle>
-            </DialogHeader>
-            {progressData?.topics.map((topic) => (
-              <div key={topic.topicId} className="mt-4">
-                <h3
-                  className="font-semibold mb-2"
-                  style={{ color: topic.topicColor }}
-                >
-                  {topic.topicTitle}
-                </h3>
-                <div className="space-y-1">
-                  {topic.subtopics.map((st) => (
-                    <div
-                      key={st.subtopicId}
-                      className="flex items-center justify-between text-sm py-1 px-2 bg-[#263238] rounded"
-                    >
-                      <span className="text-gray-300">{st.subtopicTitle}</span>
-                      <div className="flex gap-2 text-xs">
-                        <Badge
-                          className={
-                            st.theory === "completed"
-                              ? "bg-green-600"
-                              : "bg-gray-600"
-                          }
-                        >
-                          Theory
-                        </Badge>
-                        <Badge
-                          className={
-                            st.practice === "completed"
-                              ? "bg-green-600"
-                              : "bg-gray-600"
-                          }
-                        >
-                          Practice
-                        </Badge>
-                        <Badge
-                          className={
-                            st.lab === "completed"
-                              ? "bg-green-600"
-                              : "bg-gray-600"
-                          }
-                        >
-                          Lab
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </DialogContent>
-        </Dialog>
-      )}
+
     </div>
   );
 }

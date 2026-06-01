@@ -57,7 +57,9 @@ export function useAuth(options?: UseAuthOptions) {
       avatar: "avatar" in data ? (data.avatar as string | null | undefined) : undefined,
       login: "login" in data ? (data.login as string | undefined) : undefined,
       status: "status" in data ? (data.status as string | undefined) : undefined,
-      permissions: data.permissions ?? [],
+      permissions: (data.permissions ?? []).map((p: unknown) =>
+        typeof p === "string" ? p : (p as { name: string }).name
+      ),
     };
   }, [data]);
 

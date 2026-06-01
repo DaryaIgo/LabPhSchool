@@ -14,7 +14,6 @@ import {
   Star,
   StarHalf,
   AlertCircle,
-  Shield,
 } from "lucide-react";
 
 const levelConfig = {
@@ -39,15 +38,6 @@ export default function AdminProblems() {
 
   const isAdmin = user?.role === "admin";
   const isLoggedIn = !!user;
-
-  const utils = trpc.useUtils();
-
-  const claimAdmin = trpc.auth.claimAdmin.useMutation({
-    onSuccess: async () => {
-      await utils.auth.me.invalidate();
-      await utils.problems.listTypes.invalidate();
-    },
-  });
 
   const { data: types, isLoading: typesLoading } = trpc.problems.listTypes.useQuery(
     undefined,
@@ -102,24 +92,9 @@ export default function AdminProblems() {
                 Войти
               </Link>
             ) : (
-              <>
-                <button
-                  onClick={() => claimAdmin.mutate()}
-                  disabled={claimAdmin.isPending}
-                  className="btn-lime inline-flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  <Shield size={18} />
-                  {claimAdmin.isPending ? "Назначение..." : "Стать администратором"}
-                </button>
-                {claimAdmin.isSuccess && (
-                  <p className="text-sm text-[#2eff8c]">
-                    Роль обновлена! Перезагрузите страницу.
-                  </p>
-                )}
-                <Link to="/" className="text-sm text-[#798389] hover:text-white transition-colors">
-                  На главную
-                </Link>
-              </>
+              <Link to="/" className="text-sm text-[#798389] hover:text-white transition-colors">
+                На главную
+              </Link>
             )}
           </div>
         </div>

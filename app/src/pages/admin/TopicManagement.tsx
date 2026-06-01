@@ -1,368 +1,631 @@
-/**
- * Topic Management — Admin CMS for course topics
- *
- * CRUD operations on topics with form validation.
- */
-
-import { useState } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { trpc } from "@/providers/trpc";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-  DialogDescription,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+import {
+  TreePine,
+  Plus,
 
-import { BookOpen, Plus, Pencil, Trash2 } from "lucide-react";
+  Trash2,
+  Save,
+  Download,
+  Upload,
+  Image as ImageIcon,
+  ChevronRight,
+  ChevronDown,
+  FileText,
+  Loader2,
+  X,
+} from "lucide-react";
+import MDEditor from "@uiw/react-md-editor";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
+import type { TopicNode } from "@db/schema";
 
-export default function TopicManagement() {
-  const { user } = useAuth({ redirectOnUnauthenticated: true });
+interface TreeNode extends TopicNode {
+  children: TreeNode[];
+}
 
-  const utils = trpc.useUtils();
-
-  const [createOpen, setCreateOpen] = useState(false);
-  const [editTopic, setEditTopic] = useState<{
-    id: number;
-    title: string;
-    slug: string;
-    order: number;
-    formula?: string | null;
-    description?: string | null;
-    shortDesc?: string | null;
-    color?: string | null;
-  } | null>(null);
-
-  // Form fields
-  const [form, setForm] = useState({
-    order: 1,
-    title: "",
-    slug: "",
-    formula: "",
-    description: "",
-    shortDesc: "",
-    color: "#2eff8c",
-  });
-
-  const { data: topics, isLoading } = trpc.admin.listTopics.useQuery(undefined, {
-    enabled: !!user && user.role === "admin",
-  });
-
-  const createMutation = trpc.admin.createTopic.useMutation({
-    onSuccess: () => {
-      toast("Topic created");
-      utils.admin.listTopics.invalidate();
-      setCreateOpen(false);
-      resetForm();
-    },
-    onError: (err) => toast(err.message),
-  });
-
-  const updateMutation = trpc.admin.updateTopic.useMutation({
-    onSuccess: () => {
-      toast("Topic updated");
-      utils.admin.listTopics.invalidate();
-      setEditTopic(null);
-    },
-    onError: (err) => toast(err.message),
-  });
-
-  const deleteMutation = trpc.admin.deleteTopic.useMutation({
-    onSuccess: () => {
-      toast("Topic deleted");
-      utils.admin.listTopics.invalidate();
-    },
-    onError: (err) => toast(err.message),
-  });
-
-  function resetForm() {
-    setForm({
-      order: (topics?.length ?? 0) + 1,
-      title: "",
-      slug: "",
-      formula: "",
-      description: "",
-      shortDesc: "",
-      color: "#2eff8c",
-    });
+function buildTree(nodes: TopicNode[]): TreeNode[] {
+  const map = new Map<number, TreeNode>();
+  const roots: TreeNode[] = [];
+  for (const node of nodes) {
+    map.set(node.id, { ...node, children: [] });
   }
-
-  function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
-    createMutation.mutate({
-      order: form.order,
-      title: form.title,
-      slug: form.slug,
-      formula: form.formula || undefined,
-      description: form.description || undefined,
-      shortDesc: form.shortDesc || undefined,
-      color: form.color,
-    });
+  for (const node of nodes) {
+    const treeNode = map.get(node.id)!;
+    if (node.parentId) {
+      const parent = map.get(node.parentId);
+      if (parent) parent.children.push(treeNode);
+    } else {
+      roots.push(treeNode);
+    }
   }
+  return roots;
+}
 
-  function handleUpdate(e: React.FormEvent) {
-    e.preventDefault();
-    if (!editTopic) return;
-    updateMutation.mutate({
-      id: editTopic.id,
-      title: form.title || undefined,
-      formula: form.formula || undefined,
-      description: form.description || undefined,
-      shortDesc: form.shortDesc || undefined,
-      color: form.color || undefined,
-    });
-  }
-
-  if (!user || user.role !== "admin") return null;
+function TreeItem({
+  node,
+  selectedId,
+  onSelect,
+  depth = 0,
+}: {
+  node: TreeNode;
+  selectedId: number | null;
+  onSelect: (id: number) => void;
+  depth?: number;
+}) {
+  const [expanded, setExpanded] = useState(true);
+  const hasChildren = node.children.length > 0;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <BookOpen className="h-7 w-7 text-[#2eff8c]" />
-          <div>
-            <h1 className="text-2xl font-bold">Topic Management</h1>
-            <p className="text-sm text-gray-400">
-              Create and edit course topics
-            </p>
-          </div>
-        </div>
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Topic
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-[#1e2529] border-[#37474f] text-white max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Create Topic</DialogTitle>
-              <DialogDescription className="text-gray-400">
-                Add a new course topic.
-              </DialogDescription>
-            </DialogHeader>
-            <TopicForm
-              form={form}
-              setForm={setForm}
-              onSubmit={handleCreate}
-              isPending={createMutation.isPending}
-              submitLabel="Create Topic"
+    <div>
+      <button
+        onClick={() => {
+          onSelect(node.id);
+          if (hasChildren) setExpanded((e) => !e);
+        }}
+        className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors ${
+          selectedId === node.id
+            ? "bg-[#2eff8c]/20 text-[#2eff8c]"
+            : "text-[#c8cdd1] hover:bg-white/5"
+        }`}
+        style={{ paddingLeft: `${depth * 16 + 8}px` }}
+      >
+        {hasChildren ? (
+          <span
+            onClick={(e) => {
+              e.stopPropagation();
+              setExpanded((e) => !e);
+            }}
+            className="shrink-0"
+          >
+            {expanded ? (
+              <ChevronDown size={14} />
+            ) : (
+              <ChevronRight size={14} />
+            )}
+          </span>
+        ) : (
+          <span className="w-[14px] shrink-0" />
+        )}
+        <FileText size={14} className="shrink-0" />
+        <span className="truncate">{node.title}</span>
+      </button>
+      {hasChildren && expanded && (
+        <div>
+          {node.children.map((child) => (
+            <TreeItem
+              key={child.id}
+              node={child}
+              selectedId={selectedId}
+              onSelect={onSelect}
+              depth={depth + 1}
             />
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {isLoading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 bg-[#37474f]" />
           ))}
         </div>
-      ) : (
-        <div className="space-y-3">
-          {topics?.map((topic) => (
-            <Card
-              key={topic.id}
-              className="bg-[#1e2529] border-[#37474f] hover:border-[#455a64] transition-colors"
-            >
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: topic.color ?? "#2eff8c" }}
-                  />
-                  <div>
-                    <p className="font-medium">{topic.title}</p>
-                    <p className="text-xs text-gray-400">
-                      #{topic.order} · {topic.slug}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setEditTopic(topic);
-                      setForm({
-                        order: topic.order,
-                        title: topic.title,
-                        slug: topic.slug,
-                        formula: topic.formula ?? "",
-                        description: topic.description ?? "",
-                        shortDesc: topic.shortDesc ?? "",
-                        color: topic.color ?? "#2eff8c",
-                      });
-                    }}
-                  >
-                    <Pencil className="h-4 w-4 text-[#2eff8c]" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      if (confirm(`Delete topic "${topic.title}"?`)) {
-                        deleteMutation.mutate({ id: topic.id });
-                      }
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 text-red-400" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Edit Dialog */}
-      {editTopic && (
-        <Dialog open={!!editTopic} onOpenChange={() => setEditTopic(null)}>
-          <DialogContent className="bg-[#1e2529] border-[#37474f] text-white max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Edit Topic</DialogTitle>
-            </DialogHeader>
-            <TopicForm
-              form={form}
-              setForm={setForm}
-              onSubmit={handleUpdate}
-              isPending={updateMutation.isPending}
-              submitLabel="Save Changes"
-            />
-          </DialogContent>
-        </Dialog>
       )}
     </div>
   );
 }
 
-function TopicForm({
-  form,
-  setForm,
-  onSubmit,
-  isPending,
-  submitLabel,
-}: {
-  form: typeof initialForm;
-  setForm: React.Dispatch<React.SetStateAction<typeof initialForm>>;
-  onSubmit: (e: React.FormEvent) => void;
-  isPending: boolean;
-  submitLabel: string;
-}) {
-  return (
-    <form onSubmit={onSubmit} className="space-y-4 mt-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Order</Label>
-          <Input
-            type="number"
-            value={form.order}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, order: Number(e.target.value) }))
-            }
-            className="bg-[#263238] border-[#37474f] mt-1"
-            required
-            min={1}
-          />
-        </div>
-        <div>
-          <Label>Color</Label>
-          <div className="flex gap-2 mt-1">
-            <Input
-              type="color"
-              value={form.color}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, color: e.target.value }))
-              }
-              className="w-12 h-9 p-1 bg-[#263238] border-[#37474f]"
-            />
-            <Input
-              value={form.color}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, color: e.target.value }))
-              }
-              className="flex-1 bg-[#263238] border-[#37474f]"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <Label>Title</Label>
-        <Input
-          value={form.title}
-          onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-          className="bg-[#263238] border-[#37474f] mt-1"
-          required
-          maxLength={255}
-        />
-      </div>
-      <div>
-        <Label>Slug</Label>
-        <Input
-          value={form.slug}
-          onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
-          className="bg-[#263238] border-[#37474f] mt-1"
-          required
-          pattern="[a-z0-9-]+"
-          placeholder="topic-slug"
-        />
-      </div>
-      <div>
-        <Label>Formula (optional)</Label>
-        <Input
-          value={form.formula}
-          onChange={(e) => setForm((f) => ({ ...f, formula: e.target.value }))}
-          className="bg-[#263238] border-[#37474f] mt-1"
-          maxLength={500}
-        />
-      </div>
-      <div>
-        <Label>Short Description</Label>
-        <Input
-          value={form.shortDesc}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, shortDesc: e.target.value }))
-          }
-          className="bg-[#263238] border-[#37474f] mt-1"
-          maxLength={500}
-        />
-      </div>
-      <div>
-        <Label>Description</Label>
-        <textarea
-          value={form.description}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, description: e.target.value }))
-          }
-          className="w-full mt-1 p-2 bg-[#263238] border border-[#37474f] rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2eff8c] min-h-[80px]"
-          maxLength={5000}
-        />
-      </div>
-      <Button
-        type="submit"
-        className="w-full bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
-        disabled={isPending}
-      >
-        {isPending ? "Saving..." : submitLabel}
-      </Button>
-    </form>
-  );
-}
-
 const initialForm = {
-  order: 1,
   title: "",
   slug: "",
-  formula: "",
-  description: "",
-  shortDesc: "",
+  order: 1,
   color: "#2eff8c",
+  content: "",
 };
+
+export default function TopicManagement() {
+  const { user } = useAuth({ redirectOnUnauthenticated: true });
+  const utils = trpc.useUtils();
+
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [creatingChildOf, setCreatingChildOf] = useState<number | null>(null);
+  const [form, setForm] = useState({ ...initialForm });
+  const [isEditing, setIsEditing] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importMd, setImportMd] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const importFileRef = useRef<HTMLInputElement>(null);
+
+  const { data: nodes, isLoading } = trpc.admin.listTopicNodes.useQuery(undefined, {
+    enabled: !!user && user.role === "admin",
+  });
+
+  const tree = useMemo(() => buildTree(nodes || []), [nodes]);
+
+  const selectedNode = useMemo(() => {
+    return nodes?.find((n) => n.id === selectedId) ?? null;
+  }, [nodes, selectedId]);
+
+  useEffect(() => {
+    if (selectedNode) {
+      setForm({
+        title: selectedNode.title,
+        slug: selectedNode.slug,
+        order: selectedNode.order,
+        color: selectedNode.color || "#2eff8c",
+        content: selectedNode.content || "",
+      });
+      setIsEditing(true);
+    } else {
+      setForm({ ...initialForm });
+      setIsEditing(false);
+    }
+  }, [selectedNode]);
+
+  const createMutation = trpc.admin.createTopicNode.useMutation({
+    onSuccess: (res) => {
+      toast("Узел создан");
+      utils.admin.listTopicNodes.invalidate();
+      if (res.id) setSelectedId(res.id);
+      setCreatingChildOf(null);
+    },
+    onError: (err) => toast(err.message),
+  });
+
+  const updateMutation = trpc.admin.updateTopicNode.useMutation({
+    onSuccess: () => {
+      toast("Сохранено");
+      utils.admin.listTopicNodes.invalidate();
+    },
+    onError: (err) => toast(err.message),
+  });
+
+  const deleteMutation = trpc.admin.deleteTopicNode.useMutation({
+    onSuccess: () => {
+      toast("Удалено");
+      utils.admin.listTopicNodes.invalidate();
+      setSelectedId(null);
+    },
+    onError: (err) => toast(err.message),
+  });
+
+  const importMutation = trpc.admin.importTopicNode.useMutation({
+    onSuccess: (res) => {
+      toast("Импорт завершен");
+      utils.admin.listTopicNodes.invalidate();
+      setImportOpen(false);
+      setImportMd("");
+      if (res.id) setSelectedId(res.id);
+    },
+    onError: (err) => toast(err.message),
+  });
+
+  const handleSave = useCallback(() => {
+    if (!form.title || !form.slug) {
+      toast("Заполните название и slug");
+      return;
+    }
+    if (isEditing && selectedId) {
+      updateMutation.mutate({
+        id: selectedId,
+        title: form.title,
+        slug: form.slug,
+        order: form.order,
+        color: form.color,
+        content: form.content,
+      });
+    } else {
+      createMutation.mutate({
+        parentId: creatingChildOf ?? undefined,
+        title: form.title,
+        slug: form.slug,
+        order: form.order,
+        color: form.color,
+        content: form.content,
+      });
+    }
+  }, [form, isEditing, selectedId, creatingChildOf, updateMutation, createMutation]);
+
+  const handleDelete = useCallback(() => {
+    if (!selectedId) return;
+    if (confirm("Удалить узел и все его дочерние элементы?")) {
+      deleteMutation.mutate({ id: selectedId });
+    }
+  }, [selectedId, deleteMutation]);
+
+  const handleAddChild = useCallback(() => {
+    if (!selectedId) return;
+    setCreatingChildOf(selectedId);
+    setSelectedId(null);
+    const siblingCount =
+      nodes?.filter((n) => n.parentId === selectedId).length ?? 0;
+    setForm({ ...initialForm, order: siblingCount + 1 });
+    setIsEditing(false);
+  }, [selectedId, nodes]);
+
+  const handleImageUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const formData = new FormData();
+      formData.append("file", file);
+      try {
+        const res = await fetch("/api/upload/image", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        if (data.url) {
+          const imageMarkdown = `\n![${file.name}](${data.url})\n`;
+          setForm((f) => ({ ...f, content: f.content + imageMarkdown }));
+          toast("Картинка загружена");
+        } else {
+          toast("Ошибка загрузки");
+        }
+      } catch {
+        toast("Ошибка загрузки");
+      }
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    },
+    []
+  );
+
+  const handleImportFile = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const text = await file.text();
+      setImportMd(text);
+      if (importFileRef.current) importFileRef.current.value = "";
+    },
+    []
+  );
+
+  const handleImport = useCallback(() => {
+    if (!importMd.trim()) {
+      toast("Вставьте markdown");
+      return;
+    }
+    importMutation.mutate({
+      parentId: selectedId ?? undefined,
+      markdown: importMd,
+    });
+  }, [importMd, selectedId, importMutation]);
+
+  const handleExport = useCallback(async () => {
+    if (!selectedId) return;
+    try {
+      const data = await utils.admin.exportTopicNode.fetch({ id: selectedId });
+      if (data) {
+        const blob = new Blob([data.markdown], { type: "text/markdown" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = data.filename;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast("Экспорт завершен");
+      }
+    } catch {
+      toast("Ошибка экспорта");
+    }
+  }, [selectedId, utils]);
+
+  if (!user || user.role !== "admin") return null;
+
+  return (
+    <div className="h-[calc(100vh-4rem)] flex flex-col">
+      {/* Header */}
+      <div className="border-b border-[#37474f] bg-[#1e2529] px-6 py-4 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-3">
+          <TreePine className="h-6 w-6 text-[#2eff8c]" />
+          <div>
+            <h1 className="text-xl font-bold">Topic Management</h1>
+            <p className="text-xs text-[#798389]">
+              Иерархические темы с Markdown, формулами и картинками
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-[#37474f] hover:bg-[#2eff8c]/10 text-black"
+            onClick={() => {
+              setSelectedId(null);
+              setCreatingChildOf(null);
+              setForm({ ...initialForm });
+              setIsEditing(false);
+            }}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Новая тема
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-[#37474f] hover:bg-[#2eff8c]/10 text-black"
+            onClick={() => setImportOpen(true)}
+          >
+            <Upload className="h-4 w-4 mr-1" />
+            Импорт MD
+          </Button>
+        </div>
+      </div>
+
+      {/* Main */}
+      <div className="flex flex-1 min-h-0">
+        {/* Tree */}
+        <div className="w-80 border-r border-[#37474f] bg-[#1a1f22] overflow-y-auto p-3">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="animate-spin text-[#2eff8c]" size={20} />
+            </div>
+          ) : tree.length === 0 ? (
+            <div className="text-center text-sm text-[#798389] py-8">
+              Нет тем. Создайте первую.
+            </div>
+          ) : (
+            <div className="space-y-0.5">
+              {tree.map((node) => (
+                <TreeItem
+                  key={node.id}
+                  node={node}
+                  selectedId={selectedId}
+                  onSelect={(id) => {
+                    setSelectedId(id);
+                    setCreatingChildOf(null);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Editor */}
+        <div className="flex-1 overflow-y-auto bg-[#262e33] p-6">
+          {isEditing || creatingChildOf !== null ? (
+            <div className="max-w-4xl mx-auto space-y-5">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">
+                  {isEditing ? "Редактирование" : creatingChildOf !== null ? "Новый дочерний узел" : "Новая тема"}
+                </h2>
+                <div className="flex items-center gap-2">
+                  {isEditing && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-[#37474f] text-black"
+                        onClick={handleAddChild}
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Добавить подтему
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-[#37474f] text-black"
+                        onClick={handleExport}
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        Экспорт MD
+                      </Button>
+                    </>
+                  )}
+                  <Button
+                    size="sm"
+                    className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
+                    onClick={handleSave}
+                    disabled={createMutation.isPending || updateMutation.isPending}
+                  >
+                    <Save className="h-4 w-4 mr-1" />
+                    {createMutation.isPending || updateMutation.isPending
+                      ? "Сохранение..."
+                      : "Сохранить"}
+                  </Button>
+                  {isEditing && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                      onClick={handleDelete}
+                      disabled={deleteMutation.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs text-[#798389]">Название</Label>
+                  <Input
+                    value={form.title}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, title: e.target.value }))
+                    }
+                    className="bg-[#1e2529] border-[#37474f] mt-1"
+                    placeholder="Название темы"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-[#798389]">Slug</Label>
+                  <Input
+                    value={form.slug}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        slug: e.target.value
+                          .toLowerCase()
+                          .replace(/[^a-z0-9-]+/g, "-")
+                          .replace(/^-|-$/g, ""),
+                      }))
+                    }
+                    className="bg-[#1e2529] border-[#37474f] mt-1"
+                    placeholder="topic-slug"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-[120px_1fr] gap-4">
+                <div>
+                  <Label className="text-xs text-[#798389]">Порядок</Label>
+                  <Input
+                    type="number"
+                    value={form.order}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        order: Number(e.target.value),
+                      }))
+                    }
+                    className="bg-[#1e2529] border-[#37474f] mt-1"
+                    min={1}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-[#798389]">Цвет</Label>
+                  <div className="flex gap-2 mt-1">
+                    <Input
+                      type="color"
+                      value={form.color}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, color: e.target.value }))
+                      }
+                      className="w-12 h-9 p-1 bg-[#1e2529] border-[#37474f]"
+                    />
+                    <Input
+                      value={form.color}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, color: e.target.value }))
+                      }
+                      className="flex-1 bg-[#1e2529] border-[#37474f]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="text-xs text-[#798389]">
+                    Содержимое (Markdown с поддержкой $формул$ и $$блоков$$)
+                  </Label>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-[#37474f] h-7 text-xs text-black"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <ImageIcon className="h-3 w-3 mr-1" />
+                      Загрузить картинку
+                    </Button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      className="hidden"
+                      accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+                      onChange={handleImageUpload}
+                    />
+                  </div>
+                </div>
+                <div data-color-mode="dark">
+                  <MDEditor
+                    value={form.content}
+                    onChange={(v) =>
+                      setForm((f) => ({ ...f, content: v || "" }))
+                    }
+                    height={500}
+                    preview="live"
+                    previewOptions={{
+                      remarkPlugins: [remarkGfm, remarkMath],
+                      rehypePlugins: [rehypeKatex],
+                    }}
+                    textareaProps={{
+                      placeholder: "Введите Markdown...",
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center text-[#798389]">
+              <TreePine size={48} className="mb-4 opacity-30" />
+              <p className="text-lg">Выберите тему для редактирования</p>
+              <p className="text-sm mt-2">или создайте новую</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Import Dialog */}
+      <Dialog open={importOpen} onOpenChange={setImportOpen}>
+        <DialogContent className="bg-[#1e2529] border-[#37474f] text-white max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Импорт Markdown</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <p className="text-xs text-[#798389]">
+              Front matter поддерживает: title, slug, order, color. Остальное
+              станет content.
+            </p>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-[#37474f] text-black"
+                onClick={() => importFileRef.current?.click()}
+              >
+                <Upload className="h-4 w-4 mr-1" />
+                Выбрать файл
+              </Button>
+              <input
+                ref={importFileRef}
+                type="file"
+                className="hidden"
+                accept=".md,.markdown"
+                onChange={handleImportFile}
+              />
+            </div>
+            <textarea
+              value={importMd}
+              onChange={(e) => setImportMd(e.target.value)}
+              className="w-full h-64 p-3 bg-[#262e33] border border-[#37474f] rounded-md text-sm font-mono resize-none focus:outline-none focus:ring-2 focus:ring-[#2eff8c]"
+              placeholder={`---\ntitle: "Название"\nslug: "slug"\norder: 1\ncolor: "#2eff8c"\n---\n\nСодержимое в Markdown...`}
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-black"
+                onClick={() => {
+                  setImportOpen(false);
+                  setImportMd("");
+                }}
+              >
+                <X className="h-4 w-4 mr-1" />
+                Отмена
+              </Button>
+              <Button
+                size="sm"
+                className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
+                onClick={handleImport}
+                disabled={importMutation.isPending}
+              >
+                <Upload className="h-4 w-4 mr-1" />
+                {importMutation.isPending ? "Импорт..." : "Импортировать"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

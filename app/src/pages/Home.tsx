@@ -1,15 +1,15 @@
 import { Link } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
-import { trpc } from "@/providers/trpc";
 import {
   FlaskConical,
   BookOpen,
   User,
   ArrowRight,
-  ChevronRight,
-  Target,
-  Lightbulb,
-  CheckCircle,
+  Mail,
+  Send,
+  Calendar,
+  MapPin,
+  ExternalLink,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -170,8 +170,7 @@ function TypewriterText({
 /* ---------- Main Page ---------- */
 export default function Home() {
   const { user } = useAuth();
-  const { data: topics } = trpc.course.topics.useQuery();
-  const { data: labsList } = trpc.course.labs.useQuery();
+
 
   return (
     <div>
@@ -273,264 +272,122 @@ export default function Home() {
                   <div className="text-xs text-[#798389] mt-1">охват курса</div>
                 </div>
               </div>
-              <Link
-                to="/about"
-                className="inline-flex items-center gap-2 mt-6 text-[#1a1a1a] font-medium hover:text-[#2eff8c] transition-colors"
-              >
-                Подробнее обо мне
-                <ArrowRight size={16} />
-              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ====== COURSE STRUCTURE ====== */}
-      <section className="section-dark py-24 lg:py-32">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-              Структура курса
-            </h2>
-            <p className="text-[#c8cdd1] max-w-2xl mx-auto">
-              Полный школьный курс физики — от кинематики до квантовой физики.
-              Каждая тема включает теорию, алгоритмы и примеры.
-            </p>
-          </div>
+      {/* ====== TEACHING METHODOLOGY ====== */}
+      <section className="section-dark py-16 lg:py-24">
+        <div className="max-w-4xl mx-auto px-6">
+          <h2 className="text-2xl lg:text-3xl font-bold mb-10 text-center">
+            Методика преподавания
+          </h2>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {topics?.map((topic) => (
-              <Link
-                key={topic.id}
-                to="/course"
-                className="group relative bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 transition-all duration-300 hover:border-[#2eff8c]/50 hover:-translate-y-1 hover:shadow-xl"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <span
-                    className="font-mono-phys text-2xl font-bold"
-                    style={{ color: topic.color || "#2eff8c" }}
-                  >
-                    {String(topic.order).padStart(2, "0")}
-                  </span>
-                  <ChevronRight
-                    size={18}
-                    className="text-[#798389] group-hover:text-[#2eff8c] transition-colors"
-                  />
-                </div>
-                <h3 className="text-lg font-semibold mb-2 group-hover:text-[#2eff8c] transition-colors">
-                  {topic.title}
-                </h3>
-                {topic.formula && (
-                  <p className="formula-text text-xs mb-2 opacity-70">
-                    {topic.formula}
-                  </p>
-                )}
-                <p className="text-sm text-[#798389]">{topic.shortDesc}</p>
-              </Link>
-            ))}
-          </div>
-
-          <div className="text-center mt-10">
-            <Link to="/course" className="btn-lime inline-flex items-center gap-2">
-              Все темы курса
-              <ArrowRight size={16} />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ====== ALGORITHM STEPS ====== */}
-      <section className="section-light py-24 lg:py-32">
-        <div className="max-w-5xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-[#1a1a1a] mb-4">
-              Алгоритм решения задач
-            </h2>
-            <p className="text-[#434e54]">
-              Трёхшаговая система для решения любой физической задачи
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 relative">
-            {/* Connecting line */}
-            <div className="hidden md:block absolute top-12 left-[20%] right-[20%] h-0.5 border-t-2 border-dashed border-[#2eff8c]/40" />
-
+          <div className="grid sm:grid-cols-2 gap-6">
             {[
               {
                 num: "01",
-                title: "Разобрать условие",
-                desc: "Выделить известные величины, привести к СИ, определить тип задачи",
-                icon: Target,
+                title: "Алгоритмический подход",
+                desc: "Каждая задача решается по чёткому алгоритму: от анализа условия до проверки ответа. Это исключает хаотичные попытки и вырабатывает системное мышление.",
               },
               {
                 num: "02",
-                title: "Найти формулу",
-                desc: "Выбрать закон или формулу из алгоритма, записать в общем виде",
-                icon: Lightbulb,
+                title: "Интерактивные лаборатории",
+                desc: "Вместо статичных описаний — живые симуляции. Ученик может менять параметры эксперимента и наблюдать результат в реальном времени.",
               },
               {
                 num: "03",
-                title: "Решить и проверить",
-                desc: "Подставить данные, вычислить, проверить размерность",
-                icon: CheckCircle,
+                title: "Персональный трекинг",
+                desc: "Каждый ученик видит свой прогресс по всем темам. Система автоматически подсвечивает слабые места и рекомендует материалы для изучения.",
               },
-            ].map((step) => (
-              <div key={step.num} className="relative text-center">
-                <div className="w-24 h-24 mx-auto mb-6 bg-[#2eff8c] rounded-2xl flex items-center justify-center shadow-lg relative z-10">
-                  <step.icon size={32} className="text-black" />
-                </div>
-                <span className="font-mono-phys text-xs text-[#2eff8c] font-bold">
-                  {step.num}
+              {
+                num: "04",
+                title: "От простого к сложному",
+                desc: "Курс построен по принципу нарастающей сложности. Каждая новая тема опирается на предыдущие, создавая цельную картину мира.",
+              },
+            ].map((item) => (
+              <div
+                key={item.num}
+                className="bg-[#2a3237] border border-[#434e54] rounded-xl p-6"
+              >
+                <span className="font-mono-phys text-2xl font-bold text-[#2eff8c]">
+                  {item.num}
                 </span>
-                <h3 className="text-xl font-bold text-[#1a1a1a] mt-2 mb-3">
-                  {step.title}
+                <h3 className="text-lg font-semibold mt-3 mb-3">
+                  {item.title}
                 </h3>
-                <p className="text-sm text-[#434e54]">{step.desc}</p>
+                <p className="text-sm text-[#c8cdd1] leading-relaxed">
+                  {item.desc}
+                </p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ====== LABS PREVIEW ====== */}
-      <section className="section-dark py-24 lg:py-32">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-              Лабораторные работы в цифре
-            </h2>
-            <p className="text-[#c8cdd1] max-w-2xl mx-auto">
-              Каждая лаборатория — это интерактивная симуляция, где ученик
-              может менять параметры и наблюдать результат
-            </p>
+      {/* ====== CONTACT CTA ====== */}
+      <section className="section-light py-16">
+        <div className="max-w-3xl mx-auto px-6 text-center">
+          <h2 className="text-2xl lg:text-3xl font-bold text-[#1a1a1a] mb-4">
+            Свяжитесь со мной
+          </h2>
+          <p className="text-[#434e54] mb-8">
+            Если у вас есть вопросы о курсе или вы хотите записаться на занятия
+          </p>
+
+          <div className="grid sm:grid-cols-3 gap-4 max-w-xl mx-auto">
+            <a
+              href="https://t.me/physics_teacher"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 bg-[#01acff] text-white px-6 py-3 rounded-full font-medium hover:scale-105 transition-transform"
+            >
+              <Send size={18} />
+              Telegram
+            </a>
+            <a
+              href="https://profi.ru/profile/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 bg-[#ff6b6b] text-white px-6 py-3 rounded-full font-medium hover:scale-105 transition-transform"
+            >
+              <ExternalLink size={18} />
+              Profi.ru
+            </a>
+            <a
+              href="mailto:teacher@kvant.physics"
+              className="flex items-center justify-center gap-2 bg-[#262e33] text-white px-6 py-3 rounded-full font-medium hover:scale-105 transition-transform"
+            >
+              <Mail size={18} />
+              Написать письмо
+            </a>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {labsList?.slice(0, 6).map((lab) => {
-              const iconMap: Record<string, string> = {
-                mechanics: "/images/icon_lab_mechanics.png",
-                pendulum: "/images/icon_lab_pendulum.png",
-                circuit: "/images/icon_lab_circuit.png",
-                diffraction: "/images/icon_lab_diffraction.png",
-                lens: "/images/icon_lab_lens.png",
-                photoeffect: "/images/icon_lab_photoeffect.png",
-              };
-              return (
-                <Link
-                  key={lab.id}
-                  to={`/labs/${lab.slug}`}
-                  className="group bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 transition-all duration-300 hover:border-[#2eff8c]/50 hover:-translate-y-1"
-                >
-                  <div className="w-24 h-24 mx-auto mb-4 opacity-80 group-hover:opacity-100 transition-opacity">
-                    <img
-                      src={iconMap[lab.iconType || "mechanics"] || "/images/icon_lab_mechanics.png"}
-                      alt={lab.title}
-                      className="w-full h-full object-contain invert"
-                    />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2 group-hover:text-[#2eff8c] transition-colors">
-                    {lab.title}
-                  </h3>
-                  <p className="text-sm text-[#798389] mb-4">{lab.shortDesc}</p>
-                  <span className="inline-flex items-center gap-1 text-[#2eff8c] text-sm font-medium group-hover:gap-2 transition-all">
-                    Открыть симуляцию
-                    <ArrowRight size={14} />
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-
-          <div className="text-center mt-10">
-            <Link to="/labs" className="btn-lime inline-flex items-center gap-2">
-              Все лаборатории
-              <ArrowRight size={16} />
-            </Link>
+          <div className="mt-8 flex items-center justify-center gap-6 text-sm text-[#798389]">
+            <span className="flex items-center gap-1">
+              <MapPin size={14} />
+              Шанхай
+            </span>
+            <span className="flex items-center gap-1">
+              <Calendar size={14} />
+              Занятия онлайн
+            </span>
           </div>
         </div>
       </section>
 
       {/* ====== FOOTER ====== */}
+
+      {/* ====== FOOTER ====== */}
       <footer className="bg-[#1a1a1a] py-16">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-            <div>
-              <h4 className="font-semibold mb-4 text-white">О курсе</h4>
-              <ul className="space-y-2 text-sm text-[#798389]">
-                <li>
-                  <Link to="/course" className="hover:text-[#2eff8c] transition-colors">
-                    Кинематика
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/course" className="hover:text-[#2eff8c] transition-colors">
-                    Динамика
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/course" className="hover:text-[#2eff8c] transition-colors">
-                    Электричество
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/course" className="hover:text-[#2eff8c] transition-colors">
-                    Оптика
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4 text-white">Лаборатории</h4>
-              <ul className="space-y-2 text-sm text-[#798389]">
-                <li>
-                  <Link to="/labs" className="hover:text-[#2eff8c] transition-colors">
-                    Механика
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/labs" className="hover:text-[#2eff8c] transition-colors">
-                    Термодинамика
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/labs" className="hover:text-[#2eff8c] transition-colors">
-                    Оптика
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/labs" className="hover:text-[#2eff8c] transition-colors">
-                    Атомная физика
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4 text-white">Кабинет</h4>
-              <ul className="space-y-2 text-sm text-[#798389]">
-                <li>
-                  <Link to="/profile" className="hover:text-[#2eff8c] transition-colors">
-                    Мой прогресс
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/profile" className="hover:text-[#2eff8c] transition-colors">
-                    Лаборатории
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/profile" className="hover:text-[#2eff8c] transition-colors">
-                    Обратная связь
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4 text-white">Контакты</h4>
-              <ul className="space-y-2 text-sm text-[#798389]">
-                <li>Telegram: @physics_teacher</li>
-                <li>Email: teacher@kvant.physics</li>
-              </ul>
-            </div>
+          <div className="text-center mb-12">
+            <h4 className="font-semibold mb-4 text-white">Контакты</h4>
+            <ul className="space-y-2 text-sm text-[#798389]">
+              <li>Telegram: @physics_teacher</li>
+              <li>Email: teacher@kvant.physics</li>
+            </ul>
           </div>
           <div className="border-t border-white/5 pt-6 text-center text-xs text-[#798389]">
             Академия Кванта — Школьный курс физики

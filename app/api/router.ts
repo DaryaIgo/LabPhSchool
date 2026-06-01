@@ -4,7 +4,7 @@
  * Routers:
  *   - unifiedAuth: Login/logout/me for all users
  *   - student: Student CRUD + progress (admin) & student self-service
- *   - admin: CMS for topics, subtopics, labs, problems
+ *   - admin: CMS for topics, virtual labs, problems
  *   - audit: Audit log viewing (admin-only)
  *   - enrollment: Course enrollment management
  *   - course: Public course data
@@ -18,6 +18,7 @@ import { studentRouter } from "./student-router";
 import { unifiedAuthRouter } from "./unified-auth-router";
 import { auditRouter } from "./audit-router";
 import { enrollmentRouter } from "./enrollment-router";
+import { virtualLabRouter } from "./virtual-lab-router";
 import { createRouter, publicQuery } from "./middleware";
 
 export const appRouter = createRouter({
@@ -29,6 +30,7 @@ export const appRouter = createRouter({
   student: studentRouter,
   audit: auditRouter,
   enrollment: enrollmentRouter,
+  virtualLab: virtualLabRouter,
 });
 
 export type AppRouter = typeof appRouter;

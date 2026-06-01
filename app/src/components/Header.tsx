@@ -8,7 +8,6 @@ import {
   BookOpen,
   Home,
   Library,
-  Info,
   Shield,
   User,
   LogOut,
@@ -23,7 +22,6 @@ export default function Header() {
     { to: "/", label: "Главная", icon: Home },
     { to: "/course", label: "Курс", icon: BookOpen },
     { to: "/labs", label: "Лаборатории", icon: FlaskConical },
-    { to: "/about", label: "О преподавателе", icon: Info },
     { to: "/resources", label: "Ресурсы", icon: Library },
   ];
 

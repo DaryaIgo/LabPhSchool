@@ -114,8 +114,7 @@ export default function AuditLogViewer() {
             <SelectItem value="auth">Auth</SelectItem>
             <SelectItem value="users">Users</SelectItem>
             <SelectItem value="topics">Topics</SelectItem>
-            <SelectItem value="subtopics">Subtopics</SelectItem>
-            <SelectItem value="labs">Labs</SelectItem>
+            <SelectItem value="virtual_labs">Virtual Labs</SelectItem>
             <SelectItem value="problems">Problems</SelectItem>
             <SelectItem value="enrollments">Enrollments</SelectItem>
             <SelectItem value="progress">Progress</SelectItem>

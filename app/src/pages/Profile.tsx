@@ -5,7 +5,6 @@ import {
   Shield,
   Users,
   BookOpen,
-  GraduationCap,
   FlaskConical,
   ClipboardList,
   Lock,
@@ -57,7 +56,7 @@ export default function Profile() {
 
         <div className="max-w-7xl mx-auto px-6 py-6">
           {/* Stats */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
             <div className="bg-[#2a3237] border border-[#434e54] rounded-xl p-5">
               <div className="flex items-center gap-3 mb-3">
                 <Users size={20} className="text-[#2eff8c]" />
@@ -79,19 +78,10 @@ export default function Profile() {
             <div className="bg-[#2a3237] border border-[#434e54] rounded-xl p-5">
               <div className="flex items-center gap-3 mb-3">
                 <FlaskConical size={20} className="text-[#01acff]" />
-                <span className="text-sm text-[#798389]">Лабораторий</span>
+                <span className="text-sm text-[#798389]">Вирт. лабораторий</span>
               </div>
               <div className="text-3xl font-bold text-[#01acff]">
-                {statsLoading ? "—" : stats?.content?.labs ?? 0}
-              </div>
-            </div>
-            <div className="bg-[#2a3237] border border-[#434e54] rounded-xl p-5">
-              <div className="flex items-center gap-3 mb-3">
-                <GraduationCap size={20} className="text-[#ff6b6b]" />
-                <span className="text-sm text-[#798389]">Подтем</span>
-              </div>
-              <div className="text-3xl font-bold text-[#ff6b6b]">
-                {statsLoading ? "—" : stats?.content?.subtopics ?? 0}
+                {statsLoading ? "—" : stats?.content?.labWorks ?? 0}
               </div>
             </div>
           </div>
@@ -119,21 +109,14 @@ export default function Profile() {
             <Link to="/admin/topics" className="flex items-center gap-3 p-4 bg-[#2a3237] border border-[#434e54] rounded-xl hover:bg-[#ffcb3d]/10 transition-colors">
               <BookOpen size={20} className="text-[#ffcb3d]" />
               <div>
-                <div className="font-medium text-sm">Темы и подтемы</div>
+                <div className="font-medium text-sm">Темы курса</div>
                 <div className="text-xs text-[#798389]">Редактирование курса</div>
               </div>
             </Link>
-            <Link to="/admin/problems" className="flex items-center gap-3 p-4 bg-[#2a3237] border border-[#434e54] rounded-xl hover:bg-[#ff6b6b]/10 transition-colors">
-              <GraduationCap size={20} className="text-[#ff6b6b]" />
-              <div>
-                <div className="font-medium text-sm">Задачи</div>
-                <div className="text-xs text-[#798389]">Банк задач с решениями</div>
-              </div>
-            </Link>
-            <Link to="/admin/labs" className="flex items-center gap-3 p-4 bg-[#2a3237] border border-[#434e54] rounded-xl hover:bg-[#a78bfa]/10 transition-colors">
+            <Link to="/admin/virtual-labs" className="flex items-center gap-3 p-4 bg-[#2a3237] border border-[#434e54] rounded-xl hover:bg-[#a78bfa]/10 transition-colors">
               <FlaskConical size={20} className="text-[#a78bfa]" />
               <div>
-                <div className="font-medium text-sm">Лаборатории</div>
+                <div className="font-medium text-sm">Вирт. лаборатории</div>
                 <div className="text-xs text-[#798389]">Управление лабораторными</div>
               </div>
             </Link>

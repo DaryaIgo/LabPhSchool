@@ -15,6 +15,27 @@
       "when": 1780228090308,
       "tag": "0001_fix_created_by_fk",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1780237608914,
+      "tag": "0002_spooky_drax",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1780314358718,
+      "tag": "0003_wild_bishop",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1780318414324,
+      "tag": "0004_early_major_mapleleaf",
+      "breakpoints": true
     }
   ]
 }
