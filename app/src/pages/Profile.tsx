@@ -12,6 +12,7 @@ import {
   ArrowLeft,
   User,
   Activity,
+  Library,
 } from "lucide-react";
 
 export default function Profile() {
@@ -78,10 +79,19 @@ export default function Profile() {
             <div className="bg-[#2a3237] border border-[#434e54] rounded-xl p-5">
               <div className="flex items-center gap-3 mb-3">
                 <FlaskConical size={20} className="text-[#01acff]" />
-                <span className="text-sm text-[#798389]">Вирт. лабораторий</span>
+                <span className="text-sm text-[#798389]">Вирт. лабораторных</span>
               </div>
               <div className="text-3xl font-bold text-[#01acff]">
                 {statsLoading ? "—" : stats?.content?.labWorks ?? 0}
+              </div>
+            </div>
+            <div className="bg-[#2a3237] border border-[#434e54] rounded-xl p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <Library size={20} className="text-[#ff6b6b]" />
+                <span className="text-sm text-[#798389]">Ресурсов</span>
+              </div>
+              <div className="text-3xl font-bold text-[#ff6b6b]">
+                {statsLoading ? "—" : stats?.content?.resources ?? 0}
               </div>
             </div>
           </div>
@@ -116,8 +126,15 @@ export default function Profile() {
             <Link to="/admin/virtual-labs" className="flex items-center gap-3 p-4 bg-[#2a3237] border border-[#434e54] rounded-xl hover:bg-[#a78bfa]/10 transition-colors">
               <FlaskConical size={20} className="text-[#a78bfa]" />
               <div>
-                <div className="font-medium text-sm">Вирт. лаборатории</div>
+                <div className="font-medium text-sm">Вирт. лабораторные</div>
                 <div className="text-xs text-[#798389]">Управление лабораторными</div>
+              </div>
+            </Link>
+            <Link to="/admin/resources" className="flex items-center gap-3 p-4 bg-[#2a3237] border border-[#434e54] rounded-xl hover:bg-[#ff6b6b]/10 transition-colors">
+              <Library size={20} className="text-[#ff6b6b]" />
+              <div>
+                <div className="font-medium text-sm">Ресурсы</div>
+                <div className="text-xs text-[#798389]">Управление материалами</div>
               </div>
             </Link>
             <Link to="/admin/audit" className="flex items-center gap-3 p-4 bg-[#2a3237] border border-[#434e54] rounded-xl hover:bg-[#c8cdd1]/10 transition-colors">

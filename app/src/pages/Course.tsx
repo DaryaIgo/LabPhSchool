@@ -174,7 +174,7 @@ function TopicAccordion({
                 className="inline-flex items-center gap-2 text-xs text-[#2eff8c] hover:underline"
               >
                 <FlaskConical size={14} />
-                Перейти к лабораториям
+                Перейти к лабораторным
               </Link>
             </div>
           )}

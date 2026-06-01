@@ -14,6 +14,7 @@ import {
   localUsers,
   topicNodes,
   labWorks,
+  resources,
 } from "@db/schema";
 import { eq, asc, count } from "drizzle-orm";
 import { createAuditEntry } from "./queries/audit";
@@ -39,6 +40,7 @@ export const adminRouter = createRouter({
       .where(eq(localUsers.status, "suspended"));
     const [topicCount] = await db.select({ count: count() }).from(topics);
     const [labWorkCount] = await db.select({ count: count() }).from(labWorks);
+    const [resourceCount] = await db.select({ count: count() }).from(resources);
 
     return {
       students: {
@@ -49,6 +51,7 @@ export const adminRouter = createRouter({
       content: {
         topics: topicCount.count,
         labWorks: labWorkCount.count,
+        resources: resourceCount.count,
       },
     };
   }),
@@ -452,6 +455,99 @@ export const adminRouter = createRouter({
         actorType: "user",
         action: "delete",
         resource: "problems",
+        resourceId: input.id,
+      });
+
+      return { success: true };
+    }),
+
+  // ═══════════════════════════════════════════════════════════
+  // RESOURCES CRUD
+  // ═══════════════════════════════════════════════════════════
+
+  listResources: adminQuery.query(async () => {
+    return getDb().select().from(resources).orderBy(asc(resources.id));
+  }),
+
+  createResource: adminQuery
+    .input(
+      z.object({
+        title: z.string().min(1).max(255),
+        description: z.string().max(5000).optional(),
+        type: z.enum(["video", "reference", "workbook", "model"]),
+        url: z.string().max(500).optional(),
+        tags: z.string().max(500).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = getDb();
+      const result = await db.insert(resources).values({
+        title: input.title,
+        description: input.description ?? null,
+        type: input.type,
+        url: input.url ?? null,
+        tags: input.tags ?? null,
+      });
+
+      const id = Number(result[0].insertId);
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "create",
+        resource: "resources",
+        resourceId: id,
+        details: { title: input.title, type: input.type },
+      });
+
+      return { id, success: true };
+    }),
+
+  updateResource: adminQuery
+    .input(
+      z.object({
+        id: z.number().positive(),
+        title: z.string().min(1).max(255).optional(),
+        description: z.string().max(5000).optional(),
+        type: z.enum(["video", "reference", "workbook", "model"]).optional(),
+        url: z.string().max(500).optional(),
+        tags: z.string().max(500).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = getDb();
+      const { id, ...data } = input;
+      const updateData: Record<string, unknown> = {};
+      if (data.title !== undefined) updateData.title = data.title;
+      if (data.description !== undefined) updateData.description = data.description;
+      if (data.type !== undefined) updateData.type = data.type;
+      if (data.url !== undefined) updateData.url = data.url;
+      if (data.tags !== undefined) updateData.tags = data.tags;
+
+      await db.update(resources).set(updateData).where(eq(resources.id, id));
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "update",
+        resource: "resources",
+        resourceId: id,
+        details: { fields: Object.keys(data) },
+      });
+
+      return { success: true };
+    }),
+
+  deleteResource: adminQuery
+    .input(z.object({ id: z.number().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      await getDb().delete(resources).where(eq(resources.id, input.id));
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "delete",
+        resource: "resources",
         resourceId: input.id,
       });
 

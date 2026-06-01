@@ -199,7 +199,7 @@ export default function Home() {
             </Link>
             <Link to="/labs" className="btn-outline flex items-center justify-center gap-2">
               <FlaskConical size={18} />
-              Посмотреть лаборатории
+              Посмотреть лабораторные
             </Link>
           </div>
 
@@ -277,7 +277,7 @@ export default function Home() {
               },
               {
                 num: "02",
-                title: "Интерактивные лаборатории",
+                title: "Интерактивные лабораторные",
                 desc: "Вместо статичных описаний — живые симуляции. Ученик может менять параметры эксперимента и наблюдать результат в реальном времени.",
               },
               {

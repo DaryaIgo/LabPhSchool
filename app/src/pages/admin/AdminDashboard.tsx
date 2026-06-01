@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   ClipboardList,
   Activity,
+  Library,
 } from "lucide-react";
 
 function StatCard({
@@ -131,7 +132,7 @@ export default function AdminDashboard() {
         <Activity className="h-5 w-5 text-[#2eff8c]" />
         System Overview
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         <StatCard
           title="Total Students"
           value={stats?.students.total ?? "—"}
@@ -159,6 +160,13 @@ export default function AdminDashboard() {
           subtitle="Interactive simulations"
           icon={FlaskConical}
           onClick={() => navigate("/admin/virtual-labs")}
+        />
+        <StatCard
+          title="Ресурсы"
+          value={stats?.content.resources ?? "—"}
+          subtitle="Дополнительные материалы"
+          icon={Library}
+          onClick={() => navigate("/admin/resources")}
         />
       </div>
 
@@ -194,6 +202,11 @@ export default function AdminDashboard() {
           label="Audit Log"
           icon={Activity}
           onClick={() => navigate("/admin/audit")}
+        />
+        <QuickAction
+          label="Ресурсы"
+          icon={Library}
+          onClick={() => navigate("/admin/resources")}
         />
       </div>
 
