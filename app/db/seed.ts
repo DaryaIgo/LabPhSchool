@@ -342,18 +342,18 @@ async function seed() {
 
   // Seed hierarchical topic nodes
   const topicNodeRoots = [
-    { order: 1, title: "Кинематика", slug: "kinematics", color: "#2eff8c", content: "Раздел механики, изучающий движение тел без рассмотрения причин, вызывающих это движение." },
-    { order: 2, title: "Динамика", slug: "dynamics", color: "#ffcb3d", content: "Раздел механики, изучающий причины движения тел." },
-    { order: 3, title: "Законы сохранения", slug: "conservation", color: "#01acff", content: "Фундаментальные законы: сохранение импульса, энергии, момента импульса." },
-    { order: 4, title: "Статика и гидростатика", slug: "statics", color: "#ff6b6b", content: "Условия равновесия, давление, закон Архимеда." },
-    { order: 5, title: "Молекулярная физика", slug: "molecular", color: "#ff8c42", content: "Основы МКТ, идеальный газ, термодинамические процессы." },
-    { order: 6, title: "Электростатика", slug: "electrostatics", color: "#a78bfa", content: "Закон Кулона, электрическое поле, потенциал, ёмкость." },
-    { order: 7, title: "Постоянный ток", slug: "dc-circuits", color: "#2eff8c", content: "Законы Ома, соединения проводников, работа и мощность тока." },
-    { order: 8, title: "Магнетизм", slug: "magnetism", color: "#ffcb3d", content: "Магнитное поле, сила Ампера, сила Лоренца, электромагнитная индукция." },
-    { order: 9, title: "Колебания и волны", slug: "oscillations", color: "#01acff", content: "Механические и электромагнитные колебания, гармонические колебания, волны." },
-    { order: 10, title: "Оптика", slug: "optics", color: "#ff6b6b", content: "Закон преломления, линзы, оптические приборы, природа света." },
-    { order: 11, title: "Атомная физика", slug: "atomic", color: "#ff8c42", content: "Модели атома, спектры, постулаты Бора, радиоактивность." },
-    { order: 12, title: "Квантовая физика", slug: "quantum", color: "#a78bfa", content: "Де Бройля, принцип неопределенности, элементы СТО." },
+    { order: 1, title: "Кинематика", slug: "kinematics", color: "#2eff8c", content: "Раздел механики, изучающий движение тел без рассмотрения причин, вызывающих это движение.", labCategorySlug: "mechanics" },
+    { order: 2, title: "Динамика", slug: "dynamics", color: "#ffcb3d", content: "Раздел механики, изучающий причины движения тел.", labCategorySlug: "mechanics" },
+    { order: 3, title: "Законы сохранения", slug: "conservation", color: "#01acff", content: "Фундаментальные законы: сохранение импульса, энергии, момента импульса.", labCategorySlug: "mechanics" },
+    { order: 4, title: "Статика и гидростатика", slug: "statics", color: "#ff6b6b", content: "Условия равновесия, давление, закон Архимеда.", labCategorySlug: "mechanics" },
+    { order: 5, title: "Молекулярная физика", slug: "molecular", color: "#ff8c42", content: "Основы МКТ, идеальный газ, термодинамические процессы.", labCategorySlug: "molecular-thermodynamics" },
+    { order: 6, title: "Электростатика", slug: "electrostatics", color: "#a78bfa", content: "Закон Кулона, электрическое поле, потенциал, ёмкость.", labCategorySlug: "electrodynamics" },
+    { order: 7, title: "Постоянный ток", slug: "dc-circuits", color: "#2eff8c", content: "Законы Ома, соединения проводников, работа и мощность тока.", labCategorySlug: "electrodynamics" },
+    { order: 8, title: "Магнетизм", slug: "magnetism", color: "#ffcb3d", content: "Магнитное поле, сила Ампера, сила Лоренца, электромагнитная индукция.", labCategorySlug: "electrodynamics" },
+    { order: 9, title: "Колебания и волны", slug: "oscillations", color: "#01acff", content: "Механические и электромагнитные колебания, гармонические колебания, волны.", labCategorySlug: null },
+    { order: 10, title: "Оптика", slug: "optics", color: "#ff6b6b", content: "Закон преломления, линзы, оптические приборы, природа света.", labCategorySlug: "optics" },
+    { order: 11, title: "Атомная физика", slug: "atomic", color: "#ff8c42", content: "Модели атома, спектры, постулаты Бора, радиоактивность.", labCategorySlug: "nuclear-physics" },
+    { order: 12, title: "Квантовая физика", slug: "quantum", color: "#a78bfa", content: "Де Бройля, принцип неопределенности, элементы СТО.", labCategorySlug: "nuclear-physics" },
   ];
 
   const insertedRootIds: number[] = [];
@@ -365,6 +365,7 @@ async function seed() {
       slug: root.slug,
       content: root.content,
       color: root.color,
+      labCategorySlug: root.labCategorySlug,
     });
     insertedRootIds.push(Number(res[0].insertId));
   }

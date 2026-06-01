@@ -1,4 +1,5 @@
-import { Routes, Route } from "react-router";
+import { Routes, Route, useLocation } from "react-router";
+import { useEffect } from "react";
 import Header from "./components/Header";
 import Home from "./pages/Home";
 import Course from "./pages/Course";
@@ -19,9 +20,18 @@ import VirtualLabManagement from "./pages/admin/VirtualLabManagement";
 import EnrollmentManagement from "./pages/admin/EnrollmentManagement";
 import AuditLogViewer from "./pages/admin/AuditLogViewer";
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
+
 export default function App() {
   return (
     <div className="min-h-screen bg-[#262e33] text-white pt-16">
+      <ScrollToTop />
       <Header />
       <Routes>
         <Route path="/" element={<Home />} />

@@ -1,10 +1,7 @@
 import { Link } from "react-router";
-import { useAuth } from "@/hooks/useAuth";
 import {
   FlaskConical,
   BookOpen,
-  User,
-  ArrowRight,
   Mail,
   Send,
   Calendar,
@@ -169,15 +166,14 @@ function TypewriterText({
 
 /* ---------- Main Page ---------- */
 export default function Home() {
-  const { user } = useAuth();
 
 
   return (
     <div>
       {/* ====== HERO ====== */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#262e33]">
+      <section className="relative min-h-[calc(100dvh-4rem)] flex items-center justify-center overflow-hidden bg-[#262e33]">
         <GlobeCanvas />
-        <div className="relative z-10 text-center px-6 max-w-4xl mx-auto pt-20">
+        <div className="relative z-10 text-center px-6 max-w-4xl mx-auto pt-10">
           <div className="space-y-2 mb-8">
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white uppercase tracking-tight leading-[0.95]">
               <TypewriterText text="Физика — это не предмет" delay={600} />
@@ -207,18 +203,6 @@ export default function Home() {
             </Link>
           </div>
 
-          {user && (
-            <div className="mt-6 animate-fade-in-up" style={{ animationDelay: "4s", opacity: 0 }}>
-              <Link
-                to="/profile"
-                className="inline-flex items-center gap-2 text-[#2eff8c] hover:underline text-sm"
-              >
-                <User size={16} />
-                Перейти в личный кабинет
-                <ArrowRight size={14} />
-              </Link>
-            </div>
-          )}
         </div>
       </section>
 

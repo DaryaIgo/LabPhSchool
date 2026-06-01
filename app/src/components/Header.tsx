@@ -6,7 +6,6 @@ import {
   X,
   FlaskConical,
   BookOpen,
-  Home,
   Library,
   Shield,
   User,
@@ -19,7 +18,6 @@ export default function Header() {
   const location = useLocation();
 
   const baseNavLinks = [
-    { to: "/", label: "Главная", icon: Home },
     { to: "/course", label: "Курс", icon: BookOpen },
     { to: "/labs", label: "Лаборатории", icon: FlaskConical },
     { to: "/resources", label: "Ресурсы", icon: Library },

@@ -180,6 +180,7 @@ export const topicNodes = mysqlTable("topic_nodes", {
   slug: varchar("slug", { length: 255 }).notNull().unique(),
   content: text("content"),
   color: varchar("color", { length: 20 }),
+  labCategorySlug: varchar("lab_category_slug", { length: 255 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

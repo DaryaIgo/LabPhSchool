@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { trpc } from "@/providers/trpc";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
-import { ChevronDown, ChevronRight, BookOpen, FlaskConical, FileText, ArrowLeft, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronRight, FlaskConical, FileText, ArrowLeft, Loader2 } from "lucide-react";
 import { Link } from "react-router";
 import type { TopicNode } from "@db/schema";
 
@@ -57,55 +57,33 @@ function SubtopicList({
   nodes,
   activeId,
   onSelect,
-  depth = 0,
 }: {
   nodes: TreeNode[];
   activeId: number | null;
   onSelect: (id: number) => void;
-  depth?: number;
 }) {
   return (
-    <div className={`space-y-2 ${depth > 0 ? "ml-4 mt-2" : ""}`}>
-      {depth === 0 && (
-        <h4 className="text-xs font-mono-phys text-[#2eff8c] uppercase tracking-wider mb-3">
-          Подтемы:
-        </h4>
-      )}
+    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {nodes.map((sub) => (
-        <div key={sub.id}>
-          <button
-            onClick={() => onSelect(sub.id)}
-            className={`w-full flex items-start gap-3 p-3 rounded-lg transition-colors group text-left ${
-              activeId === sub.id
-                ? "bg-[#2eff8c]/10 border border-[#2eff8c]/30"
-                : "bg-[#262e33] hover:bg-[#2eff8c]/10 border border-transparent"
-            }`}
-          >
-            <FileText size={16} className="text-[#2eff8c] mt-0.5 shrink-0 group-hover:scale-110 transition-transform" />
-            <div className="flex-1">
-              <p className="text-sm font-medium group-hover:text-[#2eff8c] transition-colors">
-                {sub.title}
-              </p>
-              {sub.content && (
-                <p className="text-xs text-[#798389] mt-1 line-clamp-2">
-                  {sub.content.slice(0, 120).replace(/[#*_`]/g, "")}
-                  {sub.content.length > 120 ? "..." : ""}
-                </p>
-              )}
+        <button
+          key={sub.id}
+          onClick={() => onSelect(sub.id)}
+          className={`group text-left bg-[#1a1f22] border rounded-xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl flex flex-col ${
+            activeId === sub.id
+              ? "border-[#2eff8c]/50"
+              : "border-[#434e54] hover:border-[#2eff8c]/50"
+          }`}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+              <FileText size={20} className="text-[#2eff8c]" />
             </div>
-            <BookOpen size={14} className="text-[#798389] group-hover:text-[#2eff8c] transition-colors shrink-0 mt-1" />
-          </button>
-          {sub.children.length > 0 && activeId !== sub.id && (
-            <div className="mt-1">
-              <SubtopicList
-                nodes={sub.children}
-                activeId={activeId}
-                onSelect={onSelect}
-                depth={depth + 1}
-              />
-            </div>
-          )}
-        </div>
+            <ChevronRight size={18} className="text-[#798389] group-hover:text-[#2eff8c] transition-colors" />
+          </div>
+          <h5 className="text-sm font-semibold text-white group-hover:text-[#2eff8c] transition-colors">
+            {sub.title}
+          </h5>
+        </button>
       ))}
     </div>
   );
@@ -169,7 +147,18 @@ function TopicAccordion({
           )}
 
           {activeNode ? (
-            <NodeContent node={activeNode} onBack={onBack} />
+            <>
+              <NodeContent node={activeNode} onBack={onBack} />
+              {activeNode.children.length > 0 && (
+                <div className="mt-4">
+                  <SubtopicList
+                    nodes={activeNode.children}
+                    activeId={activeNodeId}
+                    onSelect={onSelectNode}
+                  />
+                </div>
+              )}
+            </>
           ) : (
             <SubtopicList
               nodes={topic.children}
@@ -178,10 +167,10 @@ function TopicAccordion({
             />
           )}
 
-          {!activeNode && (
+          {!activeNode && topic.labCategorySlug && (
             <div className="mt-4 flex gap-3">
               <Link
-                to={`/labs`}
+                to={`/labs/category/${topic.labCategorySlug}`}
                 className="inline-flex items-center gap-2 text-xs text-[#2eff8c] hover:underline"
               >
                 <FlaskConical size={14} />
@@ -267,19 +256,53 @@ export default function Course() {
               Пока нет тем. Добавьте их в панели администратора.
             </div>
           ) : (
-            <div className="space-y-3">
-              {tree.map((topic) => (
-                <TopicAccordion
-                  key={topic.id}
-                  topic={topic}
-                  isOpen={openTopicId === topic.id}
-                  onToggle={() => handleToggleTopic(topic.id)}
-                  activeNodeId={activeNodeId}
-                  onSelectNode={handleSelectNode}
-                  onBack={() => setActiveNodeId(null)}
-                />
-              ))}
-            </div>
+            openTopicId === null ? (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {tree.map((topic) => (
+                  <button
+                    key={topic.id}
+                    onClick={() => handleToggleTopic(topic.id)}
+                    className="group bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 transition-all duration-300 hover:border-[#2eff8c]/50 hover:-translate-y-1 hover:shadow-xl text-left flex flex-col"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <span
+                        className="font-mono-phys text-3xl font-bold"
+                        style={{ color: topic.color || "#2eff8c" }}
+                      >
+                        {String(topic.order).padStart(2, "0")}
+                      </span>
+                      <ChevronRight size={20} className="text-[#798389] group-hover:text-[#2eff8c] transition-colors" />
+                    </div>
+                    <h3 className="text-lg font-bold text-white group-hover:text-[#2eff8c] transition-colors">
+                      {topic.title}
+                    </h3>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <button
+                  onClick={() => handleToggleTopic(openTopicId)}
+                  className="inline-flex items-center gap-1.5 text-xs text-[#798389] hover:text-[#2eff8c] transition-colors"
+                >
+                  <ArrowLeft size={12} /> Назад к темам
+                </button>
+                {(() => {
+                  const topic = tree.find((t) => t.id === openTopicId);
+                  if (!topic) return null;
+                  return (
+                    <TopicAccordion
+                      topic={topic}
+                      isOpen={true}
+                      onToggle={() => handleToggleTopic(openTopicId)}
+                      activeNodeId={activeNodeId}
+                      onSelectNode={handleSelectNode}
+                      onBack={() => setActiveNodeId(null)}
+                    />
+                  );
+                })()}
+              </div>
+            )
           )}
         </div>
       </section>

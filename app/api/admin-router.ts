@@ -188,6 +188,7 @@ export const adminRouter = createRouter({
         slug: z.string().min(1).max(255).regex(/^[a-z0-9-]+$/),
         content: z.string().max(100000).optional(),
         color: z.string().max(20).optional(),
+        labCategorySlug: z.string().max(255).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -199,6 +200,7 @@ export const adminRouter = createRouter({
         slug: input.slug,
         content: input.content ?? null,
         color: input.color ?? null,
+        labCategorySlug: input.labCategorySlug ?? null,
       });
       const id = Number(result[0].insertId);
       await createAuditEntry({
@@ -222,6 +224,7 @@ export const adminRouter = createRouter({
         slug: z.string().min(1).max(255).regex(/^[a-z0-9-]+$/).optional(),
         content: z.string().max(100000).optional(),
         color: z.string().max(20).optional(),
+        labCategorySlug: z.string().max(255).optional().nullable(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -234,6 +237,7 @@ export const adminRouter = createRouter({
       if (data.slug !== undefined) updateData.slug = data.slug;
       if (data.content !== undefined) updateData.content = data.content;
       if (data.color !== undefined) updateData.color = data.color;
+      if (data.labCategorySlug !== undefined) updateData.labCategorySlug = data.labCategorySlug;
 
       await db.update(topicNodes).set(updateData).where(eq(topicNodes.id, id));
 
