@@ -200,14 +200,17 @@ export function LabGraphs({ measurements, slug }: LabGraphsProps) {
     }
 
     if (slug === "uniform-linear-motion") {
+      const numericData = data
+        .map((d) => ({ ...d, time: Number(d.time), x: Number(d.x), s: Number(d.s) }))
+        .sort((a, b) => a.time - b.time);
       return (
         <div className="space-y-6">
           <GraphCard title="Зависимость координаты от времени x(t)">
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={data}>
+              <LineChart data={numericData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
-                <XAxis dataKey="time" stroke="#798389" />
-                <YAxis dataKey="x" stroke="#798389" />
+                <XAxis type="number" dataKey="time" stroke="#798389" />
+                <YAxis type="number" dataKey="x" stroke="#798389" />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "#1a1f22",
@@ -218,7 +221,7 @@ export function LabGraphs({ measurements, slug }: LabGraphsProps) {
                 />
                 <Legend />
                 <Line
-                  type="monotone"
+                  type="linear"
                   dataKey="x"
                   stroke="#2eff8c"
                   strokeWidth={2}
@@ -230,10 +233,10 @@ export function LabGraphs({ measurements, slug }: LabGraphsProps) {
           </GraphCard>
           <GraphCard title="Зависимость пройденного пути от времени s(t)">
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={data}>
+              <LineChart data={numericData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
-                <XAxis dataKey="time" stroke="#798389" />
-                <YAxis dataKey="s" stroke="#798389" />
+                <XAxis type="number" dataKey="time" stroke="#798389" />
+                <YAxis type="number" dataKey="s" stroke="#798389" />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "#1a1f22",
@@ -244,7 +247,7 @@ export function LabGraphs({ measurements, slug }: LabGraphsProps) {
                 />
                 <Legend />
                 <Line
-                  type="monotone"
+                  type="linear"
                   dataKey="s"
                   stroke="#01acff"
                   strokeWidth={2}
