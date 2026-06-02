@@ -25,7 +25,7 @@ export function LabGraphs({ measurements, slug }: LabGraphsProps) {
     );
   }
 
-  const data = measurements.map((m, i) => ({
+  const data: Record<string, unknown>[] = measurements.map((m, i) => ({
     index: i + 1,
     ...m,
   }));
@@ -342,9 +342,11 @@ export function LabGraphs({ measurements, slug }: LabGraphsProps) {
     }
 
     if (slug === "free-fall-g") {
+      const pendulumData = data.filter((d) => d.method === "маятник");
+      const fallData = data.filter((d) => d.method === "падение");
       return (
         <div className="space-y-6">
-          <GraphCard title="Зависимость квадрата периода от длины нити T²(l)">
+          <GraphCard title="Способ 1: Зависимость квадрата периода от длины нити T²(l)">
             <ResponsiveContainer width="100%" height={300}>
               <ScatterChart>
                 <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
@@ -365,7 +367,25 @@ export function LabGraphs({ measurements, slug }: LabGraphsProps) {
                   }}
                   formatter={(value: number) => [(value * value).toFixed(3), "T²"]}
                 />
-                <Scatter name="T²(l)" data={data} fill="#2eff8c" />
+                <Scatter name="T²(l)" data={pendulumData} fill="#2eff8c" />
+              </ScatterChart>
+            </ResponsiveContainer>
+          </GraphCard>
+          <GraphCard title="Способ 2: Зависимость высоты от квадрата времени падения h(t²)">
+            <ResponsiveContainer width="100%" height={300}>
+              <ScatterChart>
+                <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
+                <XAxis type="number" dataKey="t2" name="t²" stroke="#798389" />
+                <YAxis type="number" dataKey="height" name="h" stroke="#798389" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1a1f22",
+                    border: "1px solid #37474f",
+                    borderRadius: "8px",
+                    color: "#fff",
+                  }}
+                />
+                <Scatter name="h(t²)" data={fallData} fill="#01acff" />
               </ScatterChart>
             </ResponsiveContainer>
           </GraphCard>

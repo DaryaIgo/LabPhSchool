@@ -190,13 +190,30 @@ export default function LabWorkPage() {
       row["v"] = (v0 + a * simTime).toFixed(1);
       row["s"] = (v0 * simTime + 0.5 * a * simTime * simTime).toFixed(1);
     } else if (slug === "free-fall-g") {
-      const l = Number(effectiveSimParams["length"] || 0);
-      const n = Number(effectiveSimParams["oscillations"] || 1);
-      const tm = Number(effectiveSimParams["measuredTime"] || 0);
-      const T = tm / n;
-      const gCalc = (4 * Math.PI * Math.PI * l) / (T * T);
-      row["T"] = T.toFixed(3);
-      row["g"] = gCalc.toFixed(2);
+      const method = String(effectiveSimParams["method"] || "pendulum");
+      row["method"] = method === "pendulum" ? "маятник" : "падение";
+      if (method === "pendulum") {
+        const l = Number(effectiveSimParams["length"] || 0);
+        const n = Number(effectiveSimParams["oscillations"] || 1);
+        const tm = Number(effectiveSimParams["measuredTime"] || 0);
+        const T = tm / n;
+        const gCalc = (4 * Math.PI * Math.PI * l) / (T * T);
+        row["l"] = l.toFixed(2);
+        row["n"] = n;
+        row["t"] = tm.toFixed(1);
+        row["T"] = T.toFixed(3);
+        row["g"] = gCalc.toFixed(2);
+      } else {
+        const h = Number(effectiveSimParams["height"] || 0);
+        const t = Number(effectiveSimParams["fallTime"] || 0);
+        const trials = Number(effectiveSimParams["trials"] || 1);
+        const gCalc = t > 0 ? (2 * h) / (t * t) : 0;
+        row["h"] = h.toFixed(1);
+        row["t"] = t.toFixed(2);
+        row["t2"] = (t * t).toFixed(3);
+        row["N"] = trials;
+        row["g"] = gCalc.toFixed(2);
+      }
     } else if (slug === "circular-motion") {
       const r = Number(effectiveSimParams["radius"] || 0);
       const T = Number(effectiveSimParams["period"] || 1);
@@ -277,9 +294,48 @@ export default function LabWorkPage() {
       data["avgAccel"] = Math.abs(expA).toFixed(2);
       data["theoreticalAccel"] = theoreticalA.toFixed(2);
     } else if (slug === "free-fall-g") {
-      const avgG = Number(data["g"]);
-      data["avgG"] = avgG.toFixed(2);
-      data["errorPercent"] = (Math.abs(avgG - 9.8) / 9.8 * 100).toFixed(1);
+      const pendulumMeasurements = measurements.filter((m) => m.method === "маятник");
+      const fallMeasurements = measurements.filter((m) => m.method === "падение");
+
+      const pendulumGs = pendulumMeasurements
+        .map((m) => Number(m["g"]))
+        .filter((v) => !isNaN(v));
+      const fallGs = fallMeasurements
+        .map((m) => Number(m["g"]))
+        .filter((v) => !isNaN(v));
+
+      if (pendulumGs.length > 0) {
+        const avgGPendulum = pendulumGs.reduce((a, b) => a + b, 0) / pendulumGs.length;
+        data["avgGPendulum"] = avgGPendulum.toFixed(2);
+        data["errorPercentPendulum"] = (Math.abs(avgGPendulum - 9.8) / 9.8 * 100).toFixed(1);
+      } else {
+        data["avgGPendulum"] = "не проведено";
+        data["errorPercentPendulum"] = "—";
+      }
+
+      if (fallGs.length > 0) {
+        const avgGFall = fallGs.reduce((a, b) => a + b, 0) / fallGs.length;
+        data["avgGFall"] = avgGFall.toFixed(2);
+        data["errorPercentFall"] = (Math.abs(avgGFall - 9.8) / 9.8 * 100).toFixed(1);
+      } else {
+        data["avgGFall"] = "не проведено";
+        data["errorPercentFall"] = "—";
+      }
+
+      const allGs = [...pendulumGs, ...fallGs];
+      if (allGs.length > 0) {
+        const avgAll = allGs.reduce((a, b) => a + b, 0) / allGs.length;
+        const diff = Math.abs(avgAll - 9.8);
+        if (diff < 0.5) {
+          data["comparison"] = "близки";
+        } else if (diff < 1.5) {
+          data["comparison"] = "приближённо соответствуют";
+        } else {
+          data["comparison"] = "имеют значительное отклонение от";
+        }
+      } else {
+        data["comparison"] = "требуют проведения измерений для сравнения с";
+      }
     } else if (slug === "circular-motion") {
       data["avgRadius"] = Number(effectiveSimParams["radius"] || 0).toFixed(2);
       data["avgPeriod"] = Number(effectiveSimParams["period"] || 0).toFixed(2);
