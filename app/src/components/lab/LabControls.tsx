@@ -59,8 +59,8 @@ function ControlField({ control }: { control: ControlItem }) {
   switch (control.type) {
     case "slider": {
       return (
-        <div className="flex flex-col gap-1.5 min-w-[140px] flex-1">
-          <label htmlFor={id} className="text-[#c8cdd1] text-sm font-medium">
+        <div className="flex flex-col gap-1.5 min-w-[200px] flex-none">
+          <label htmlFor={id} className="text-[#c8cdd1] text-sm font-medium truncate" title={`${control.label}${control.unit ? `, ${control.unit}` : ""}`}>
             {control.label}
             {control.unit ? `, ${control.unit}` : ""}
           </label>
@@ -73,9 +73,9 @@ function ControlField({ control }: { control: ControlItem }) {
               step={control.step}
               value={control.value}
               onChange={(e) => control.onChange(parseFloat(e.target.value))}
-              className="w-full h-2 bg-[#37474f] rounded-lg appearance-none cursor-pointer accent-[#2eff8c]"
+              className="flex-1 h-2 bg-[#37474f] rounded-lg appearance-none cursor-pointer accent-[#2eff8c] min-w-0"
             />
-            <span className="text-[#2eff8c] text-sm min-w-[48px] text-right font-mono font-semibold">
+            <span className="text-[#2eff8c] text-sm w-[68px] shrink-0 text-right font-mono font-semibold">
               {control.value}
               {control.unit ? ` ${control.unit}` : ""}
             </span>

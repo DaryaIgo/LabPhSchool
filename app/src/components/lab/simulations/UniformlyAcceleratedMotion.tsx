@@ -9,14 +9,19 @@ interface Props {
 
 export default function UniformlyAcceleratedMotion({ params, isRunning, onStateChange }: Props) {
   const v0 = Number(params["v0"] || 0);
-  const a = Number(params["acceleration"] || 2);
+  const angleDeg = Number(params["angle"] || 10);
   const time = Number(params["time"] || 5);
 
+  const angleRad = (angleDeg * Math.PI) / 180;
+  const a = 9.8 * Math.sin(angleRad);
+
   const startTimeRef = useRef<number>(Date.now());
+  const finishedRef = useRef(false);
 
   useEffect(() => {
     if (isRunning) {
       startTimeRef.current = Date.now();
+      finishedRef.current = false;
     }
   }, [isRunning]);
 
@@ -25,15 +30,12 @@ export default function UniformlyAcceleratedMotion({ params, isRunning, onStateC
       ctx.fillStyle = "#1a1f22";
       ctx.fillRect(0, 0, w, h);
 
-      const angleRad = Math.atan2(Math.abs(a), 9.8) * (a >= 0 ? 1 : -1);
-      const rampAngle = Math.abs(angleRad) * (180 / Math.PI);
-
-      // Inclined plane
+      // Inclined plane — шарик скатывается сверху вниз
       const rampLen = 400;
       const rampStartX = 80;
-      const rampStartY = 320;
-      const rampEndX = rampStartX + rampLen * Math.cos(Math.abs(angleRad));
-      const rampEndY = rampStartY - rampLen * Math.sin(Math.abs(angleRad));
+      const rampStartY = 120;
+      const rampEndX = rampStartX + rampLen * Math.cos(angleRad);
+      const rampEndY = rampStartY + rampLen * Math.sin(angleRad);
 
       ctx.fillStyle = "#2a3237";
       ctx.beginPath();
@@ -54,28 +56,28 @@ export default function UniformlyAcceleratedMotion({ params, isRunning, onStateC
       ctx.strokeStyle = "#505a60";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(rampStartX - 20, rampStartY);
-      ctx.lineTo(rampEndX + 50, rampStartY);
+      ctx.moveTo(rampStartX - 20, rampEndY);
+      ctx.lineTo(rampEndX + 50, rampEndY);
       ctx.stroke();
 
       // Angle arc
-      if (rampAngle > 1) {
+      if (angleDeg > 1) {
         ctx.strokeStyle = "#2eff8c";
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.arc(
-          rampStartX,
-          rampStartY,
+          rampEndX,
+          rampEndY,
           25,
-          -Math.abs(angleRad),
-          0
+          -Math.PI,
+          -Math.PI + angleRad
         );
         ctx.stroke();
         ctx.fillStyle = "#2eff8c";
         ctx.font = "11px sans-serif";
         ctx.textAlign = "left";
         ctx.textBaseline = "bottom";
-        ctx.fillText(`α ≈ ${rampAngle.toFixed(1)}°`, rampStartX + 30, rampStartY - 8);
+        ctx.fillText(`α ≈ ${angleDeg.toFixed(1)}°`, rampEndX + 30, rampEndY - 8);
       }
 
       // Animation progress
@@ -93,10 +95,10 @@ export default function UniformlyAcceleratedMotion({ params, isRunning, onStateC
       const ballProgress = Math.min(s / maxS, 1);
       const ballX =
         rampStartX +
-        ballProgress * rampLen * Math.cos(Math.abs(angleRad));
+        ballProgress * rampLen * Math.cos(angleRad);
       const ballY =
-        rampStartY -
-        ballProgress * rampLen * Math.sin(Math.abs(angleRad)) -
+        rampStartY +
+        ballProgress * rampLen * Math.sin(angleRad) -
         12;
 
       ctx.fillStyle = "#ff6464";
@@ -104,32 +106,45 @@ export default function UniformlyAcceleratedMotion({ params, isRunning, onStateC
       ctx.arc(ballX, ballY, 12, 0, Math.PI * 2);
       ctx.fill();
 
-      // Velocity arrow
+      // Velocity arrow along the ramp
       const v = v0 + a * currentTime;
       if (Math.abs(v) > 0.1) {
         const arrowLen = Math.min(Math.abs(v) * 8, 60);
         const dir = v >= 0 ? 1 : -1;
-        const arrowX = ballX + dir * 18;
-        const arrowEndX = arrowX + dir * arrowLen;
+        const arrowStartX = ballX;
+        const arrowStartY = ballY;
+        const arrowEndX = arrowStartX + dir * arrowLen * Math.cos(angleRad);
+        const arrowEndY = arrowStartY + dir * arrowLen * Math.sin(angleRad);
+
         ctx.strokeStyle = "#2eff8c";
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(arrowX, ballY);
-        ctx.lineTo(arrowEndX, ballY);
+        ctx.moveTo(arrowStartX, arrowStartY);
+        ctx.lineTo(arrowEndX, arrowEndY);
         ctx.stroke();
+
+        // Arrowhead
+        const headAngle = Math.atan2(arrowEndY - arrowStartY, arrowEndX - arrowStartX);
         ctx.beginPath();
-        ctx.moveTo(arrowEndX - dir * 6, ballY - 4);
-        ctx.lineTo(arrowEndX, ballY);
-        ctx.lineTo(arrowEndX - dir * 6, ballY + 4);
+        ctx.moveTo(
+          arrowEndX - 6 * Math.cos(headAngle - 0.4),
+          arrowEndY - 6 * Math.sin(headAngle - 0.4)
+        );
+        ctx.lineTo(arrowEndX, arrowEndY);
+        ctx.lineTo(
+          arrowEndX - 6 * Math.cos(headAngle + 0.4),
+          arrowEndY - 6 * Math.sin(headAngle + 0.4)
+        );
         ctx.stroke();
+
         ctx.fillStyle = "#2eff8c";
         ctx.font = "10px sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "bottom";
         ctx.fillText(
           `v = ${v.toFixed(1)} м/с`,
-          (arrowX + arrowEndX) / 2,
-          ballY - 6
+          (arrowStartX + arrowEndX) / 2,
+          (arrowStartY + arrowEndY) / 2 - 6
         );
       }
 
@@ -148,8 +163,8 @@ export default function UniformlyAcceleratedMotion({ params, isRunning, onStateC
       ctx.fillStyle = "#96a3ab";
       ctx.font = "12px sans-serif";
       ctx.fillText(`Нач. скорость: ${v0} м/с`, 495, 125);
-      ctx.fillText(`Ускорение: ${a} м/с²`, 495, 150);
-      ctx.fillText(`Время: ${time} с`, 495, 175);
+      ctx.fillText(`Угол наклона: ${angleDeg}°`, 495, 150);
+      ctx.fillText(`Ускорение: ${a.toFixed(2)} м/с²`, 495, 175);
 
       ctx.fillStyle = "#2eff8c";
       ctx.font = "13px sans-serif";
@@ -170,14 +185,20 @@ export default function UniformlyAcceleratedMotion({ params, isRunning, onStateC
       ctx.fillText("s = v₀t + at²/2          v = v₀ + at", w / 2, 45);
 
       if (onStateChange) {
-        onStateChange({
+        const state: Record<string, number> = {
           time: currentTime,
           s,
           v,
-        });
+          a,
+        };
+        if (ballProgress >= 1 && isRunning && !finishedRef.current) {
+          finishedRef.current = true;
+          state.finished = 1;
+        }
+        onStateChange(state);
       }
     };
-  }, [v0, a, time, isRunning, onStateChange]);
+  }, [v0, angleDeg, angleRad, a, time, isRunning, onStateChange]);
 
   return (
     <SimulationCanvas

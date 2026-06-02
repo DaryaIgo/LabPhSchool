@@ -516,9 +516,10 @@ $$y = v_0 \\cdot \\sin\\alpha \\cdot t - \\frac{g \\cdot t^2}{2}$$
       .from(labWorks)
       .where(eq(labWorks.slug, work.slug))
       .limit(1);
+    let workId: number;
     if (exists.length === 0) {
       const result = await db.insert(labWorks).values(work);
-      const workId = Number(result[0].insertId);
+      workId = Number(result[0].insertId);
       console.log(`Created lab work: ${work.title}`);
 
       // Create default blocks
@@ -542,89 +543,95 @@ $$y = v_0 \\cdot \\sin\\alpha \\cdot t - \\frac{g \\cdot t^2}{2}$$
           config: null,
         });
       }
+    } else {
+      workId = exists[0].id;
+      console.log(`Lab work exists, updating params: ${work.title}`);
+    }
 
-      // Create simulation params based on lab type
-      if (work.slug === "density-measurement") {
-        const params = [
-          { key: "mass", label: "Масса тела", paramType: "slider" as const, min: "10", max: "500", step: "1", defaultValue: "200", unit: "г" },
-          { key: "volume", label: "Объём тела", paramType: "slider" as const, min: "1", max: "200", step: "1", defaultValue: "50", unit: "см³" },
-          { key: "liquidDensity", label: "Плотность жидкости", paramType: "select" as const, defaultValue: "1000", options: "[{\"value\":\"1000\",\"label\":\"Вода\"},{\"value\":\"1260\",\"label\":\"Соляной раствор\"},{\"value\":\"800\",\"label\":\"Спирт\"}]", unit: "кг/м³" },
-        ];
-        for (const p of params) {
-          await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
-        }
-      } else if (work.slug === "archimedes-force") {
-        const params = [
-          { key: "bodyVolume", label: "Объём тела", paramType: "slider" as const, min: "10", max: "200", step: "1", defaultValue: "100", unit: "см³" },
-          { key: "immersionLevel", label: "Уровень погружения", paramType: "slider" as const, min: "0", max: "100", step: "5", defaultValue: "50", unit: "%" },
-          { key: "liquidDensity", label: "Плотность жидкости", paramType: "select" as const, defaultValue: "1000", options: "[{\"value\":\"1000\",\"label\":\"Вода\"},{\"value\":\"1260\",\"label\":\"Соляной раствор\"},{\"value\":\"13600\",\"label\":\"Ртуть\"}]", unit: "кг/м³" },
-        ];
-        for (const p of params) {
-          await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
-        }
-      } else if (work.slug === "buoyancy-independence") {
-        const params = [
-          { key: "bodyVolume", label: "Объём тел", paramType: "slider" as const, min: "20", max: "200", step: "1", defaultValue: "100", unit: "см³" },
-          { key: "material1", label: "Материал 1", paramType: "select" as const, defaultValue: "2700", options: "[{\"value\":\"2700\",\"label\":\"Алюминий\"},{\"value\":\"7800\",\"label\":\"Сталь\"},{\"value\":\"11300\",\"label\":\"Свинец\"}]", unit: "кг/м³" },
-          { key: "material2", label: "Материал 2", paramType: "select" as const, defaultValue: "7800", options: "[{\"value\":\"2700\",\"label\":\"Алюминий\"},{\"value\":\"7800\",\"label\":\"Сталь\"},{\"value\":\"11300\",\"label\":\"Свинец\"}]", unit: "кг/м³" },
-        ];
-        for (const p of params) {
-          await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
-        }
-      } else if (work.slug === "electric-work-measurement") {
-        const params = [
-          { key: "voltage", label: "Напряжение", paramType: "slider" as const, min: "1", max: "12", step: "0.5", defaultValue: "6", unit: "В" },
-          { key: "resistance", label: "Сопротивление", paramType: "slider" as const, min: "1", max: "100", step: "1", defaultValue: "10", unit: "Ом" },
-          { key: "time", label: "Время", paramType: "slider" as const, min: "10", max: "300", step: "10", defaultValue: "60", unit: "с" },
-        ];
-        for (const p of params) {
-          await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
-        }
-      } else if (work.slug === "uniform-linear-motion") {
-        const params = [
-          { key: "speed", label: "Скорость", paramType: "slider" as const, min: "0.5", max: "20", step: "0.5", defaultValue: "5", unit: "м/с" },
-          { key: "time", label: "Время", paramType: "slider" as const, min: "1", max: "30", step: "1", defaultValue: "10", unit: "с" },
-          { key: "startX", label: "Начальная координата", paramType: "slider" as const, min: "0", max: "50", step: "1", defaultValue: "0", unit: "м" },
-        ];
-        for (const p of params) {
-          await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
-        }
-      } else if (work.slug === "uniformly-accelerated-motion") {
-        const params = [
-          { key: "v0", label: "Начальная скорость", paramType: "slider" as const, min: "0", max: "10", step: "0.5", defaultValue: "0", unit: "м/с" },
-          { key: "acceleration", label: "Ускорение", paramType: "slider" as const, min: "-5", max: "5", step: "0.1", defaultValue: "2", unit: "м/с²" },
-          { key: "time", label: "Время", paramType: "slider" as const, min: "1", max: "20", step: "0.5", defaultValue: "5", unit: "с" },
-        ];
-        for (const p of params) {
-          await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
-        }
-      } else if (work.slug === "free-fall-g") {
-        const params = [
-          { key: "length", label: "Длина нити", paramType: "slider" as const, min: "0.1", max: "2", step: "0.05", defaultValue: "0.5", unit: "м" },
-          { key: "oscillations", label: "Число колебаний", paramType: "slider" as const, min: "5", max: "50", step: "1", defaultValue: "20", unit: "" },
-          { key: "measuredTime", label: "Измеренное время", paramType: "slider" as const, min: "1", max: "100", step: "0.1", defaultValue: "28.3", unit: "с" },
-        ];
-        for (const p of params) {
-          await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
-        }
-      } else if (work.slug === "circular-motion") {
-        const params = [
-          { key: "radius", label: "Радиус окружности", paramType: "slider" as const, min: "0.1", max: "2", step: "0.05", defaultValue: "0.5", unit: "м" },
-          { key: "period", label: "Период обращения", paramType: "slider" as const, min: "0.1", max: "5", step: "0.05", defaultValue: "1", unit: "с" },
-          { key: "mass", label: "Масса тела", paramType: "slider" as const, min: "0.05", max: "2", step: "0.05", defaultValue: "0.2", unit: "кг" },
-        ];
-        for (const p of params) {
-          await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
-        }
-      } else if (work.slug === "projectile-motion") {
-        const params = [
-          { key: "v0", label: "Начальная скорость", paramType: "slider" as const, min: "1", max: "50", step: "1", defaultValue: "20", unit: "м/с" },
-          { key: "angle", label: "Угол броска", paramType: "slider" as const, min: "0", max: "90", step: "1", defaultValue: "45", unit: "°" },
-          { key: "g", label: "Ускорение свободного падения", paramType: "slider" as const, min: "1.6", max: "20", step: "0.1", defaultValue: "9.8", unit: "м/с²" },
-        ];
-        for (const p of params) {
-          await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
-        }
+    // Always update simulation params
+    await db.delete(labSimulationParams).where(eq(labSimulationParams.labWorkId, workId));
+
+    // Create simulation params based on lab type
+    if (work.slug === "density-measurement") {
+      const params = [
+        { key: "mass", label: "Масса тела", paramType: "slider" as const, min: "10", max: "500", step: "1", defaultValue: "200", unit: "г" },
+        { key: "volume", label: "Объём тела", paramType: "slider" as const, min: "1", max: "200", step: "1", defaultValue: "50", unit: "см³" },
+        { key: "liquidDensity", label: "Плотность жидкости", paramType: "select" as const, defaultValue: "1000", options: "[{\"value\":\"1000\",\"label\":\"Вода\"},{\"value\":\"1260\",\"label\":\"Соляной раствор\"},{\"value\":\"800\",\"label\":\"Спирт\"}]", unit: "кг/м³" },
+      ];
+      for (const p of params) {
+        await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+      }
+    } else if (work.slug === "archimedes-force") {
+      const params = [
+        { key: "bodyVolume", label: "Объём тела", paramType: "slider" as const, min: "10", max: "200", step: "1", defaultValue: "100", unit: "см³" },
+        { key: "immersionLevel", label: "Уровень погружения", paramType: "slider" as const, min: "0", max: "100", step: "5", defaultValue: "50", unit: "%" },
+        { key: "liquidDensity", label: "Плотность жидкости", paramType: "select" as const, defaultValue: "1000", options: "[{\"value\":\"1000\",\"label\":\"Вода\"},{\"value\":\"1260\",\"label\":\"Соляной раствор\"},{\"value\":\"13600\",\"label\":\"Ртуть\"}]", unit: "кг/м³" },
+      ];
+      for (const p of params) {
+        await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+      }
+    } else if (work.slug === "buoyancy-independence") {
+      const params = [
+        { key: "bodyVolume", label: "Объём тел", paramType: "slider" as const, min: "20", max: "200", step: "1", defaultValue: "100", unit: "см³" },
+        { key: "material1", label: "Материал 1", paramType: "select" as const, defaultValue: "2700", options: "[{\"value\":\"2700\",\"label\":\"Алюминий\"},{\"value\":\"7800\",\"label\":\"Сталь\"},{\"value\":\"11300\",\"label\":\"Свинец\"}]", unit: "кг/м³" },
+        { key: "material2", label: "Материал 2", paramType: "select" as const, defaultValue: "7800", options: "[{\"value\":\"2700\",\"label\":\"Алюминий\"},{\"value\":\"7800\",\"label\":\"Сталь\"},{\"value\":\"11300\",\"label\":\"Свинец\"}]", unit: "кг/м³" },
+      ];
+      for (const p of params) {
+        await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+      }
+    } else if (work.slug === "electric-work-measurement") {
+      const params = [
+        { key: "voltage", label: "Напряжение", paramType: "slider" as const, min: "1", max: "12", step: "0.5", defaultValue: "6", unit: "В" },
+        { key: "resistance", label: "Сопротивление", paramType: "slider" as const, min: "1", max: "100", step: "1", defaultValue: "10", unit: "Ом" },
+        { key: "time", label: "Время", paramType: "slider" as const, min: "10", max: "300", step: "10", defaultValue: "60", unit: "с" },
+      ];
+      for (const p of params) {
+        await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+      }
+    } else if (work.slug === "uniform-linear-motion") {
+      const params = [
+        { key: "speed", label: "Скорость", paramType: "slider" as const, min: "0.5", max: "20", step: "0.5", defaultValue: "5", unit: "м/с" },
+        { key: "time", label: "Время", paramType: "slider" as const, min: "1", max: "30", step: "1", defaultValue: "10", unit: "с" },
+        { key: "startX", label: "Начальная координата", paramType: "slider" as const, min: "0", max: "50", step: "1", defaultValue: "0", unit: "м" },
+      ];
+      for (const p of params) {
+        await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+      }
+    } else if (work.slug === "uniformly-accelerated-motion") {
+      const params = [
+        { key: "v0", label: "Начальная скорость", paramType: "slider" as const, min: "0", max: "10", step: "0.5", defaultValue: "0", unit: "м/с" },
+        { key: "angle", label: "Угол наклона", paramType: "select" as const, defaultValue: "10", options: "[{\"value\":\"10\",\"label\":\"10°\"},{\"value\":\"20\",\"label\":\"20°\"},{\"value\":\"45\",\"label\":\"45°\"}]", unit: "°" },
+        { key: "time", label: "Время", paramType: "slider" as const, min: "0", max: "20", step: "0.5", defaultValue: "5", unit: "с" },
+      ];
+      for (const p of params) {
+        await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+      }
+    } else if (work.slug === "free-fall-g") {
+      const params = [
+        { key: "length", label: "Длина нити", paramType: "slider" as const, min: "0.1", max: "2", step: "0.05", defaultValue: "0.5", unit: "м" },
+        { key: "oscillations", label: "Число колебаний", paramType: "slider" as const, min: "5", max: "50", step: "1", defaultValue: "20", unit: "" },
+        { key: "measuredTime", label: "Измеренное время", paramType: "slider" as const, min: "1", max: "100", step: "0.1", defaultValue: "28.3", unit: "с" },
+      ];
+      for (const p of params) {
+        await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+      }
+    } else if (work.slug === "circular-motion") {
+      const params = [
+        { key: "radius", label: "Радиус окружности", paramType: "slider" as const, min: "0.1", max: "2", step: "0.05", defaultValue: "0.5", unit: "м" },
+        { key: "period", label: "Период обращения", paramType: "slider" as const, min: "1", max: "5", step: "0.05", defaultValue: "1", unit: "с" },
+        { key: "mass", label: "Масса тела", paramType: "slider" as const, min: "0.05", max: "2", step: "0.05", defaultValue: "0.2", unit: "кг" },
+      ];
+      for (const p of params) {
+        await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+      }
+    } else if (work.slug === "projectile-motion") {
+      const params = [
+        { key: "v0", label: "Начальная скорость", paramType: "slider" as const, min: "1", max: "50", step: "1", defaultValue: "20", unit: "м/с" },
+        { key: "angle", label: "Угол броска", paramType: "slider" as const, min: "0", max: "90", step: "1", defaultValue: "45", unit: "°" },
+        { key: "g", label: "Ускорение свободного падения", paramType: "slider" as const, min: "1.6", max: "20", step: "0.1", defaultValue: "9.8", unit: "м/с²" },
+      ];
+      for (const p of params) {
+        await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
       }
     }
   }

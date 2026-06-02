@@ -183,8 +183,9 @@ export default function LabWorkPage() {
       row["v"] = speed;
     } else if (slug === "uniformly-accelerated-motion") {
       const v0 = Number(effectiveSimParams["v0"] || 0);
-      const a = Number(effectiveSimParams["acceleration"] || 0);
-      const simTime = simStateRef.current.time ?? Number(effectiveSimParams["time"] || 0);
+      const angleDeg = Number(effectiveSimParams["angle"] || 10);
+      const a = 9.8 * Math.sin((angleDeg * Math.PI) / 180);
+      const simTime = simStateRef.current.time ?? Number(effectiveSimParams["time"] || 5);
       row["time"] = simTime.toFixed(1);
       row["v"] = (v0 + a * simTime).toFixed(1);
       row["s"] = (v0 * simTime + 0.5 * a * simTime * simTime).toFixed(1);
@@ -264,7 +265,8 @@ export default function LabWorkPage() {
         : "0.0";
     } else if (slug === "uniformly-accelerated-motion") {
       const v0 = Number(effectiveSimParams["v0"] || 0);
-      const theoreticalA = Number(effectiveSimParams["acceleration"] || 0);
+      const angleDeg = Number(effectiveSimParams["angle"] || 10);
+      const theoreticalA = 9.8 * Math.sin((angleDeg * Math.PI) / 180);
       const avgS = Number(data["s"]);
       const avgTime = Number(data["time"]);
       let expA = theoreticalA;
@@ -489,7 +491,12 @@ export default function LabWorkPage() {
                         <SimComponent
                           params={effectiveSimParams}
                           isRunning={isSimRunning}
-                          onStateChange={(state) => { simStateRef.current = state; }}
+                          onStateChange={(state) => {
+                            simStateRef.current = state;
+                            if (state.finished) {
+                              setIsSimRunning(false);
+                            }
+                          }}
                         />
                       </div>
                     )}
