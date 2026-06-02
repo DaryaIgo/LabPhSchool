@@ -8,7 +8,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AnimatePresence, motion } from "framer-motion";
+
 
 import { toast } from "sonner";
 import LabLayout from "@/components/lab/LabLayout";
@@ -310,15 +310,10 @@ export default function LabWorkPage() {
 
         {/* Content */}
         <main className="flex-1 overflow-y-auto p-6">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ x: -30, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 30, opacity: 0 }}
-              transition={{ duration: 0.25, ease: "easeInOut" }}
-              className="max-w-5xl mx-auto space-y-6"
-            >
+          <div
+            key={activeTab}
+            className="max-w-5xl mx-auto space-y-6 animate-fadeIn"
+          >
               {activeTab === "theory" && (
                 <div className="space-y-6">
                   <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
@@ -469,8 +464,7 @@ export default function LabWorkPage() {
                   </div>
                 </div>
               )}
-            </motion.div>
-          </AnimatePresence>
+          </div>
         </main>
       </div>
     </LabLayout>
