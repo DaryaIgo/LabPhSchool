@@ -20,6 +20,7 @@ import VirtualLabManagement from "./pages/admin/VirtualLabManagement";
 import EnrollmentManagement from "./pages/admin/EnrollmentManagement";
 import AuditLogViewer from "./pages/admin/AuditLogViewer";
 import ResourceManagement from "./pages/admin/ResourceManagement";
+import LabSubmissions from "./pages/admin/LabSubmissions";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -55,6 +56,7 @@ export default function App() {
         <Route path="/admin/enrollments" element={<EnrollmentManagement />} />
         <Route path="/admin/audit" element={<AuditLogViewer />} />
         <Route path="/admin/resources" element={<ResourceManagement />} />
+        <Route path="/admin/lab-submissions" element={<LabSubmissions />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

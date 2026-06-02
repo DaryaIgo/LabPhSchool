@@ -546,6 +546,8 @@ export const labProgress = mysqlTable("lab_progress", {
   data: json("data"),
   measurements: json("measurements"),
   conclusion: text("conclusion"),
+  grade: int("grade"),
+  teacherComment: text("teacher_comment"),
   startedAt: timestamp("started_at"),
   completedAt: timestamp("completed_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),

@@ -6,6 +6,8 @@ import {
   Target,
   Wrench,
   RotateCcw,
+  BookOpen,
+  Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -244,6 +246,86 @@ export default function LabWorkPage() {
     return result;
   }, [measurements]);
 
+  const conclusionData = useMemo(() => {
+    const data: Record<string, string | number> = { ...(averages || {}) };
+
+    if (labWork?.params) {
+      labWork.params.forEach((p) => {
+        data[p.key] = effectiveSimParams[p.key] ?? p.defaultValue ?? "";
+      });
+    }
+
+    if (slug === "uniform-linear-motion") {
+      const avgV = Number(data["v"]);
+      const theoreticalSpeed = Number(effectiveSimParams["speed"] || 1);
+      data["avgSpeed"] = avgV.toFixed(2);
+      data["errorPercent"] = theoreticalSpeed > 0
+        ? (Math.abs(avgV - theoreticalSpeed) / theoreticalSpeed * 100).toFixed(1)
+        : "0.0";
+    } else if (slug === "uniformly-accelerated-motion") {
+      const v0 = Number(effectiveSimParams["v0"] || 0);
+      const theoreticalA = Number(effectiveSimParams["acceleration"] || 0);
+      const avgS = Number(data["s"]);
+      const avgTime = Number(data["time"]);
+      let expA = theoreticalA;
+      if (avgTime > 0) {
+        expA = 2 * (avgS - v0 * avgTime) / (avgTime * avgTime);
+      }
+      data["v0"] = v0.toFixed(1);
+      data["avgAccel"] = Math.abs(expA).toFixed(2);
+      data["theoreticalAccel"] = theoreticalA.toFixed(2);
+    } else if (slug === "free-fall-g") {
+      const avgG = Number(data["g"]);
+      data["avgG"] = avgG.toFixed(2);
+      data["errorPercent"] = (Math.abs(avgG - 9.8) / 9.8 * 100).toFixed(1);
+    } else if (slug === "circular-motion") {
+      data["avgRadius"] = Number(effectiveSimParams["radius"] || 0).toFixed(2);
+      data["avgPeriod"] = Number(effectiveSimParams["period"] || 0).toFixed(2);
+      data["avgV"] = Number(data["v"] || 0).toFixed(2);
+      data["avgOmega"] = Number(data["ω"] || 0).toFixed(2);
+      data["avgA"] = Number(data["a"] || 0).toFixed(2);
+    } else if (slug === "projectile-motion") {
+      const Ls = measurements.map((m) => Number(m["L"])).filter((v) => !isNaN(v));
+      const Hs = measurements.map((m) => Number(m["H"])).filter((v) => !isNaN(v));
+      data["maxL"] = Ls.length > 0 ? Math.max(...Ls).toFixed(1) : "0.0";
+      data["maxH"] = Hs.length > 0 ? Math.max(...Hs).toFixed(1) : "0.0";
+      data["avgV0"] = Number(effectiveSimParams["v0"] || 0).toFixed(1);
+    } else if (slug === "density-measurement") {
+      const avgRho = Number(data["ρ"]);
+      data["avgDensity"] = avgRho.toFixed(2);
+      data["unit"] = "кг/м³";
+      const theoretical = 1000;
+      data["theoreticalDensity"] = theoretical;
+      data["errorPercent"] = theoretical > 0
+        ? (Math.abs(avgRho - theoretical) / theoretical * 100).toFixed(1)
+        : "0.0";
+    } else if (slug === "archimedes-force") {
+      const avgFa = Number(data["Fₐ"]);
+      data["avgFaWater"] = avgFa.toFixed(3);
+      data["avgFaSalt"] = (avgFa * 1.03).toFixed(3);
+    } else if (slug === "buoyancy-independence") {
+      const v = Number(effectiveSimParams["bodyVolume"] || 0);
+      data["volume"] = v.toFixed(1);
+      data["mass1"] = "50";
+      data["mass2"] = "100";
+      const avgFa = Number(data["Fₐ"]);
+      data["fa1"] = avgFa.toFixed(3);
+      data["fa2"] = avgFa.toFixed(3);
+    } else if (slug === "electric-work-measurement") {
+      const u = Number(effectiveSimParams["voltage"] || 0);
+      const r = Number(effectiveSimParams["resistance"] || 1);
+      const t = Number(effectiveSimParams["time"] || 0);
+      const i = u / r;
+      data["voltage"] = u.toFixed(1);
+      data["current"] = i.toFixed(2);
+      data["time"] = t.toFixed(1);
+      data["work"] = Number(data["A"] || 0).toFixed(1);
+      data["power"] = Number(data["P"] || 0).toFixed(1);
+    }
+
+    return data;
+  }, [averages, effectiveSimParams, slug, measurements, labWork]);
+
   const handleSaveProgress = () => {
     if (!labWork || !user) {
       toast.error("Необходимо авторизоваться");
@@ -300,7 +382,7 @@ export default function LabWorkPage() {
 
   return (
     <LabLayout title={labWork.title} topic={labWork.categoryTitle || "Лабораторная работа"} fullWidth>
-      <div className="flex min-h-[calc(100vh-220px)]">
+      <div className="flex">
         <LabSidebar
           activeTab={activeTab}
           onTabChange={setActiveTab}
@@ -309,7 +391,7 @@ export default function LabWorkPage() {
         />
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 p-6">
           <div
             key={activeTab}
             className="max-w-5xl mx-auto space-y-6 animate-fadeIn"
@@ -330,7 +412,7 @@ export default function LabWorkPage() {
                       <h3 className="text-lg font-bold text-white">Теоретические сведения</h3>
                     </div>
                     <div className="prose prose-invert prose-sm max-w-none text-[#c8cdd1] leading-relaxed">
-                      <MarkdownRenderer content={labWork.topicNodeContent || labWork.theory} />
+                      <MarkdownRenderer content={(labWork.topicNodeContent || labWork.theory) ?? ""} />
                     </div>
                   </div>
 
@@ -450,7 +532,7 @@ export default function LabWorkPage() {
                 <div className="space-y-6">
                   <ConclusionPanel
                     template={labWork.conclusionTemplate || ""}
-                    data={averages || {}}
+                    data={conclusionData}
                   />
                   <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
                     <label className="block text-sm text-[#798389] mb-2">Свой вывод</label>

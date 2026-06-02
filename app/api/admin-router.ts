@@ -15,8 +15,9 @@ import {
   topicNodes,
   labWorks,
   resources,
+  labProgress,
 } from "@db/schema";
-import { eq, asc, count } from "drizzle-orm";
+import { eq, asc, desc, count, and } from "drizzle-orm";
 import { createAuditEntry } from "./queries/audit";
 
 export const adminRouter = createRouter({
@@ -41,6 +42,10 @@ export const adminRouter = createRouter({
     const [topicCount] = await db.select({ count: count() }).from(topics);
     const [labWorkCount] = await db.select({ count: count() }).from(labWorks);
     const [resourceCount] = await db.select({ count: count() }).from(resources);
+    const [submissionCount] = await db
+      .select({ count: count() })
+      .from(labProgress)
+      .where(eq(labProgress.status, "submitted"));
 
     return {
       students: {
@@ -52,6 +57,7 @@ export const adminRouter = createRouter({
         topics: topicCount.count,
         labWorks: labWorkCount.count,
         resources: resourceCount.count,
+        labSubmissions: submissionCount.count,
       },
     };
   }),
@@ -549,6 +555,159 @@ export const adminRouter = createRouter({
         action: "delete",
         resource: "resources",
         resourceId: input.id,
+      });
+
+      return { success: true };
+    }),
+
+  // ═══════════════════════════════════════════════════════════
+  // Lab Submissions Review
+  // ═══════════════════════════════════════════════════════════
+
+  getLabSubmissions: adminQuery
+    .input(
+      z.object({
+        status: z.enum(["submitted", "completed"]).optional(),
+        labWorkId: z.number().positive().optional(),
+        studentId: z.number().positive().optional(),
+        search: z.string().optional(),
+        page: z.number().min(1).default(1),
+        pageSize: z.number().min(1).max(100).default(20),
+      }).optional()
+    )
+    .query(async ({ input }) => {
+      const db = getDb();
+      const page = input?.page ?? 1;
+      const pageSize = input?.pageSize ?? 20;
+      const offset = (page - 1) * pageSize;
+
+      const conditions = [];
+      if (input?.status) {
+        conditions.push(eq(labProgress.status, input.status));
+      } else {
+        conditions.push(eq(labProgress.status, "submitted"));
+      }
+      if (input?.labWorkId) {
+        conditions.push(eq(labProgress.labWorkId, input.labWorkId));
+      }
+      if (input?.studentId) {
+        conditions.push(eq(labProgress.localUserId, input.studentId));
+      }
+
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+      const items = await db
+        .select({
+          id: labProgress.id,
+          status: labProgress.status,
+          mode: labProgress.mode,
+          data: labProgress.data,
+          measurements: labProgress.measurements,
+          conclusion: labProgress.conclusion,
+          grade: labProgress.grade,
+          teacherComment: labProgress.teacherComment,
+          startedAt: labProgress.startedAt,
+          completedAt: labProgress.completedAt,
+          updatedAt: labProgress.updatedAt,
+          studentId: labProgress.localUserId,
+          studentName: localUsers.name,
+          studentLogin: localUsers.login,
+          labWorkId: labProgress.labWorkId,
+          labWorkTitle: labWorks.title,
+          labWorkSlug: labWorks.slug,
+        })
+        .from(labProgress)
+        .innerJoin(localUsers, eq(labProgress.localUserId, localUsers.id))
+        .innerJoin(labWorks, eq(labProgress.labWorkId, labWorks.id))
+        .where(whereClause)
+        .orderBy(desc(labProgress.updatedAt))
+        .limit(pageSize)
+        .offset(offset);
+
+      const [countResult] = await db
+        .select({ count: count() })
+        .from(labProgress)
+        .innerJoin(localUsers, eq(labProgress.localUserId, localUsers.id))
+        .innerJoin(labWorks, eq(labProgress.labWorkId, labWorks.id))
+        .where(whereClause);
+
+      return {
+        items,
+        total: countResult.count,
+        page,
+        pageSize,
+        totalPages: Math.ceil(countResult.count / pageSize),
+      };
+    }),
+
+  getLabSubmissionById: adminQuery
+    .input(z.object({ id: z.number().positive() }))
+    .query(async ({ input }) => {
+      const db = getDb();
+      const [item] = await db
+        .select({
+          id: labProgress.id,
+          status: labProgress.status,
+          mode: labProgress.mode,
+          data: labProgress.data,
+          measurements: labProgress.measurements,
+          conclusion: labProgress.conclusion,
+          grade: labProgress.grade,
+          teacherComment: labProgress.teacherComment,
+          startedAt: labProgress.startedAt,
+          completedAt: labProgress.completedAt,
+          updatedAt: labProgress.updatedAt,
+          studentId: labProgress.localUserId,
+          studentName: localUsers.name,
+          studentLogin: localUsers.login,
+          labWorkId: labProgress.labWorkId,
+          labWorkTitle: labWorks.title,
+          labWorkSlug: labWorks.slug,
+          labWorkGoal: labWorks.goal,
+          labWorkTheory: labWorks.theory,
+        })
+        .from(labProgress)
+        .innerJoin(localUsers, eq(labProgress.localUserId, localUsers.id))
+        .innerJoin(labWorks, eq(labProgress.labWorkId, labWorks.id))
+        .where(eq(labProgress.id, input.id));
+
+      if (!item) {
+        throw new Error("Submission not found");
+      }
+
+      return item;
+    }),
+
+  gradeLabSubmission: adminQuery
+    .input(
+      z.object({
+        id: z.number().positive(),
+        grade: z.number().min(1).max(5).optional(),
+        teacherComment: z.string().max(2000).optional(),
+        status: z.enum(["submitted", "completed"]).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = getDb();
+      const updateData: Record<string, unknown> = {
+        updatedAt: new Date(),
+      };
+      if (input.grade !== undefined) updateData.grade = input.grade;
+      if (input.teacherComment !== undefined) updateData.teacherComment = input.teacherComment;
+      if (input.status !== undefined) updateData.status = input.status;
+
+      await db
+        .update(labProgress)
+        .set(updateData)
+        .where(eq(labProgress.id, input.id));
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "grade",
+        resource: "lab_progress",
+        resourceId: input.id,
+        details: { grade: input.grade, comment: input.teacherComment },
       });
 
       return { success: true };

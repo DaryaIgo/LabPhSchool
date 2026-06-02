@@ -31,10 +31,8 @@ export default function LabSidebar({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   return (
-    <aside className="w-[72px] flex-shrink-0 bg-[#13171a]/80 backdrop-blur-xl border-r border-[#2a3237]/60 flex flex-col items-center py-5 gap-1 relative z-20">
-      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#2eff8c]/30 to-transparent" />
-
-      <nav className="flex flex-col gap-1 w-full px-2">
+    <aside className="w-[64px] flex-shrink-0 bg-[#1e2428] flex flex-col items-center sticky top-[80px] self-start h-fit rounded-2xl py-3 gap-2 mx-3 my-2 relative z-20 shadow-lg shadow-black/20">
+      <nav className="flex flex-col gap-1 w-full px-1.5">
         {navItems.map((item) => {
           const isActive = activeTab === item.id;
           const isHovered = hoveredId === item.id;
@@ -43,7 +41,7 @@ export default function LabSidebar({
           return (
             <div key={item.id} className="relative">
               {isHovered && !isActive && (
-                <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 pointer-events-none z-50 bg-[#1e2529] border border-[#37474f]/60 text-[#c8cdd1] text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg shadow-black/20">
+                <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 pointer-events-none z-50 bg-[#1e2529] border border-[#37474f]/60 text-[#c8cdd1] text-xs px-2.5 py-1 rounded-md whitespace-nowrap shadow-lg shadow-black/20">
                   {item.label}
                 </div>
               )}
@@ -52,7 +50,7 @@ export default function LabSidebar({
                 onClick={() => onTabChange(item.id)}
                 onMouseEnter={() => setHoveredId(item.id)}
                 onMouseLeave={() => setHoveredId(null)}
-                className="relative w-full h-12 rounded-xl flex items-center justify-center transition-colors duration-200 outline-none focus:outline-none"
+                className="relative w-full h-11 rounded-xl flex items-center justify-center transition-colors duration-200 outline-none focus:outline-none"
                 aria-label={item.label}
               >
                 {isActive && (
@@ -66,7 +64,7 @@ export default function LabSidebar({
                 )}
                 {isActive && (
                   <div
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r-full"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-[2.5px] h-5 rounded-r-full"
                     style={{ backgroundColor: item.color }}
                   />
                 )}
@@ -78,7 +76,7 @@ export default function LabSidebar({
                     transition: "all 0.2s",
                   }}
                 >
-                  <Icon size={20} />
+                  <Icon size={18} />
                 </div>
               </button>
             </div>
@@ -86,11 +84,9 @@ export default function LabSidebar({
         })}
       </nav>
 
-      <div className="flex-1 min-h-[20px]" />
+      <div className="w-6 h-px bg-[#2a3237]/60 my-1" />
 
-      <div className="w-8 h-px bg-[#2a3237]/80 mb-3" />
-
-      <div className="flex flex-col gap-2 px-2 pb-2">
+      <div className="flex flex-col gap-1.5 px-1.5 pb-1">
         <ActionButton icon={Save} label="Сохранить" onClick={onSave} color="#2eff8c" />
         <ActionButton icon={Send} label="Отправить" onClick={onSubmit} color="#ffc832" />
       </div>
@@ -114,7 +110,7 @@ function ActionButton({
   return (
     <div className="relative">
       {hovered && (
-        <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 pointer-events-none z-50 bg-[#1e2529] border border-[#37474f]/60 text-[#c8cdd1] text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg shadow-black/20">
+        <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 pointer-events-none z-50 bg-[#1e2529] border border-[#37474f]/60 text-[#c8cdd1] text-xs px-2.5 py-1 rounded-md whitespace-nowrap shadow-lg shadow-black/20">
           {label}
         </div>
       )}
@@ -122,7 +118,7 @@ function ActionButton({
         onClick={onClick}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        className="relative w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 outline-none focus:outline-none"
+        className="relative w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200 outline-none focus:outline-none"
         aria-label={label}
       >
         <div
@@ -140,7 +136,7 @@ function ActionButton({
             transition: "all 0.2s",
           }}
         >
-          <Icon size={18} />
+          <Icon size={16} />
         </div>
       </button>
     </div>

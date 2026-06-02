@@ -10,9 +10,9 @@ interface LabLayoutProps {
 
 export default function LabLayout({ title, topic, children, fullWidth }: LabLayoutProps) {
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-[#262e33]">
+    <div className="min-h-[calc(100vh-64px)] bg-[#262e33] flex flex-col">
       {/* Header */}
-      <div className="bg-[#1a1f22] border-b border-[#37474f]">
+      <div className="bg-[#1a1f22] border-b border-[#37474f] flex-shrink-0">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center gap-3 mb-2">
             <Link
@@ -34,7 +34,7 @@ export default function LabLayout({ title, topic, children, fullWidth }: LabLayo
       </div>
 
       {/* Content */}
-      <div className={fullWidth ? "px-6 py-6" : "max-w-7xl mx-auto px-6 py-6 space-y-10"}>
+      <div className={fullWidth ? "py-6 flex-1 flex flex-col" : "max-w-7xl mx-auto px-6 py-6 space-y-10 flex-1"}>
         {children}
       </div>
     </div>

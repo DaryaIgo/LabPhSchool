@@ -21,6 +21,7 @@ import {
   ClipboardList,
   Activity,
   Library,
+  FileCheck,
 } from "lucide-react";
 
 function StatCard({
@@ -168,6 +169,13 @@ export default function AdminDashboard() {
           icon={Library}
           onClick={() => navigate("/admin/resources")}
         />
+        <StatCard
+          title="Работы"
+          value={stats?.content.labSubmissions ?? "—"}
+          subtitle="На проверке"
+          icon={FileCheck}
+          onClick={() => navigate("/admin/lab-submissions")}
+        />
       </div>
 
       {/* Quick Actions */}
@@ -207,6 +215,11 @@ export default function AdminDashboard() {
           label="Ресурсы"
           icon={Library}
           onClick={() => navigate("/admin/resources")}
+        />
+        <QuickAction
+          label="Проверка работ"
+          icon={FileCheck}
+          onClick={() => navigate("/admin/lab-submissions")}
         />
       </div>
 
