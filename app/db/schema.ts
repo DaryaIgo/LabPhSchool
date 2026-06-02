@@ -458,6 +458,8 @@ export const labWorks = mysqlTable("lab_works", {
     .references(() => labCategories.id),
   subcategoryId: bigint("subcategory_id", { mode: "number", unsigned: true })
     .references(() => labSubcategories.id),
+  topicNodeId: bigint("topic_node_id", { mode: "number", unsigned: true })
+    .references(() => topicNodes.id),
   order: int("order").notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   slug: varchar("slug", { length: 255 }).notNull().unique(),

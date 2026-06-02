@@ -149,6 +149,7 @@ async function seedVirtualLabs() {
   const works = [
     {
       categoryId: catMap.get("pressure-archimedes")!,
+      topicNodeId: 27,
       order: 1,
       title: "Измерение средней плотности вещества",
       slug: "density-measurement",
@@ -194,6 +195,7 @@ gде:
     },
     {
       categoryId: catMap.get("pressure-archimedes")!,
+      topicNodeId: 27,
       order: 2,
       title: "Измерение архимедовой силы",
       slug: "archimedes-force",
@@ -235,6 +237,7 @@ $$F_А = P_{воздухе} − P_{жидкости}$$`,
     },
     {
       categoryId: catMap.get("pressure-archimedes")!,
+      topicNodeId: 27,
       order: 3,
       title: "Независимость выталкивающей силы от массы тела",
       slug: "buoyancy-independence",
@@ -262,6 +265,7 @@ $$F_{А1} = F_{А2} = \\rho_{ж} \\cdot g \\cdot V$$
     },
     {
       categoryId: catMap.get("electricity")!,
+      topicNodeId: 38,
       order: 1,
       title: "Измерение работы электрического тока",
       slug: "electric-work-measurement",
@@ -303,6 +307,7 @@ $$Q = I^2 \\cdot R \\cdot t$$
     {
       categoryId: catMap.get("mechanics")!,
       subcategoryId: subMap.get("kinematics")!,
+      topicNodeId: 13,
       order: 1,
       title: "Изучение прямолинейного равномерного движения",
       slug: "uniform-linear-motion",
@@ -343,6 +348,7 @@ gde:
     {
       categoryId: catMap.get("mechanics")!,
       subcategoryId: subMap.get("kinematics")!,
+      topicNodeId: 14,
       order: 2,
       title: "Изучение прямолинейного равноускоренного движения",
       slug: "uniformly-accelerated-motion",
@@ -383,6 +389,7 @@ gde:
     {
       categoryId: catMap.get("mechanics")!,
       subcategoryId: subMap.get("kinematics")!,
+      topicNodeId: 44,
       order: 3,
       title: "Определение ускорения свободного падения",
       slug: "free-fall-g",
@@ -424,6 +431,7 @@ $$T = \\frac{t}{n}$$
     {
       categoryId: catMap.get("mechanics")!,
       subcategoryId: subMap.get("kinematics")!,
+      topicNodeId: 15,
       order: 4,
       title: "Изучение движения по окружности",
       slug: "circular-motion",
@@ -461,6 +469,7 @@ gde:
     {
       categoryId: catMap.get("mechanics")!,
       subcategoryId: subMap.get("kinematics")!,
+      topicNodeId: 16,
       order: 5,
       title: "Исследование движения тела, брошенного под углом",
       slug: "projectile-motion",

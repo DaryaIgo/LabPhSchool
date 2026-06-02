@@ -17,6 +17,7 @@ import {
   labSimulationParams,
   labProgress,
   labAnalytics,
+  topicNodes,
 } from "@db/schema";
 import { eq, asc, count, and } from "drizzle-orm";
 import { createAuditEntry } from "./queries/audit";
@@ -141,6 +142,7 @@ export const virtualLabRouter = createRouter({
           id: labWorks.id,
           categoryId: labWorks.categoryId,
           subcategoryId: labWorks.subcategoryId,
+          topicNodeId: labWorks.topicNodeId,
           order: labWorks.order,
           title: labWorks.title,
           slug: labWorks.slug,
@@ -176,7 +178,20 @@ export const virtualLabRouter = createRouter({
         .where(eq(labSimulationParams.labWorkId, work[0].id))
         .orderBy(asc(labSimulationParams.id));
 
-      return { ...work[0], blocks, params };
+      // Pull theory from linked course topic node if available
+      let topicNodeContent: string | null = null;
+      if (work[0].topicNodeId) {
+        const node = await db
+          .select({ content: topicNodes.content })
+          .from(topicNodes)
+          .where(eq(topicNodes.id, work[0].topicNodeId))
+          .limit(1);
+        if (node[0]?.content) {
+          topicNodeContent = node[0].content;
+        }
+      }
+
+      return { ...work[0], blocks, params, topicNodeContent };
     }),
 
   // ═══════════════════════════════════════════════════════════

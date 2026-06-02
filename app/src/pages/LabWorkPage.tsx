@@ -362,7 +362,7 @@ export default function LabWorkPage() {
               <h3 className="text-lg font-bold text-white">Теоретические сведения</h3>
             </div>
             <div className="prose prose-invert prose-sm max-w-none text-[#c8cdd1] leading-relaxed">
-              {labWork.theory?.split("\n\n").map((paragraph, i) => (
+              {(labWork.topicNodeContent || labWork.theory)?.split("\n\n").map((paragraph, i) => (
                 <p key={i} className="mb-4">{paragraph}</p>
               ))}
             </div>
