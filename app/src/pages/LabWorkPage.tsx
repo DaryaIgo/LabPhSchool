@@ -20,6 +20,7 @@ import LabLayout from "@/components/lab/LabLayout";
 import LabControls from "@/components/lab/LabControls";
 import ResultsTable from "@/components/lab/ResultsTable";
 import ConclusionPanel from "@/components/lab/ConclusionPanel";
+import MarkdownRenderer from "@/components/MarkdownRenderer";
 import type { ControlItem } from "@/components/lab/LabControls";
 import DensitySimulation from "@/components/lab/simulations/DensitySimulation";
 import ArchimedesSimulation from "@/components/lab/simulations/ArchimedesSimulation";
@@ -362,9 +363,7 @@ export default function LabWorkPage() {
               <h3 className="text-lg font-bold text-white">Теоретические сведения</h3>
             </div>
             <div className="prose prose-invert prose-sm max-w-none text-[#c8cdd1] leading-relaxed">
-              {(labWork.topicNodeContent || labWork.theory)?.split("\n\n").map((paragraph, i) => (
-                <p key={i} className="mb-4">{paragraph}</p>
-              ))}
+              <MarkdownRenderer content={labWork.topicNodeContent || labWork.theory} />
             </div>
           </div>
 
