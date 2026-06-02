@@ -11,9 +11,10 @@ import {
   Send,
   CheckCircle2,
   RotateCcw,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AnimatePresence, motion } from "framer-motion";
 
 import { toast } from "sonner";
 import LabLayout from "@/components/lab/LabLayout";
@@ -303,201 +304,228 @@ export default function LabWorkPage() {
     : [];
 
   return (
-    <LabLayout title={labWork.title} topic={labWork.categoryTitle || "Лабораторная работа"}>
-      {/* Tabs + Actions bar */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="flex flex-wrap items-center gap-3 justify-between">
-          <TabsList className="bg-[#1a1f22] border border-[#37474f] p-1 flex-wrap h-auto">
-            <TabsTrigger value="theory" className="text-[#c8cdd1] hover:text-white data-[state=active]:bg-[#2a3237] data-[state=active]:text-[#2eff8c]">
-              <BookOpen size={14} className="mr-1.5" />
-              Теория
-            </TabsTrigger>
-            <TabsTrigger value="experiment" className="text-[#c8cdd1] hover:text-white data-[state=active]:bg-[#2a3237] data-[state=active]:text-[#2eff8c]">
-              <Play size={14} className="mr-1.5" />
-              Эксперимент
-            </TabsTrigger>
-            <TabsTrigger value="graphs" className="text-[#c8cdd1] hover:text-white data-[state=active]:bg-[#2a3237] data-[state=active]:text-[#2eff8c]">
-              <Target size={14} className="mr-1.5" />
-              Графики
-            </TabsTrigger>
-            <TabsTrigger value="conclusion" className="text-[#c8cdd1] hover:text-white data-[state=active]:bg-[#2a3237] data-[state=active]:text-[#2eff8c]">
-              <CheckCircle2 size={14} className="mr-1.5" />
-              Вывод
-            </TabsTrigger>
-          </TabsList>
+    <LabLayout title={labWork.title} topic={labWork.categoryTitle || "Лабораторная работа"} fullWidth>
+      <div className="flex min-h-[calc(100vh-220px)]">
+        {/* Sidebar */}
+        <nav className="w-16 flex-shrink-0 bg-[#1a1f22] border-r border-[#37474f] flex flex-col items-center py-4 gap-2">
+          {[
+            { id: "theory", icon: BookOpen, label: "Теория" },
+            { id: "experiment", icon: Play, label: "Эксперимент" },
+            { id: "graphs", icon: TrendingUp, label: "Графики" },
+            { id: "conclusion", icon: CheckCircle2, label: "Вывод" },
+          ].map((item) => {
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`relative w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 group ${
+                  isActive
+                    ? "bg-[#2a3237] text-[#2eff8c]"
+                    : "text-[#798389] hover:text-[#c8cdd1] hover:bg-[#1e2529]"
+                }`}
+                title={item.label}
+              >
+                <item.icon size={20} />
+                {isActive && (
+                  <motion.div
+                    layoutId="sidebar-active"
+                    className="absolute left-0 top-2 bottom-2 w-0.5 bg-[#2eff8c] rounded-r-full"
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                )}
+              </button>
+            );
+          })}
 
-          <div className="flex items-center gap-2">
+          <div className="flex-1" />
+
+          <div className="flex flex-col gap-2 pb-2">
             <Button
               variant="outline"
               size="sm"
               onClick={handleSaveProgress}
-              className="border-[#37474f] text-[#c8cdd1] hover:text-white"
+              className="border-[#37474f] text-[#c8cdd1] hover:text-white w-10 h-10 p-0"
+              title="Сохранить"
             >
-              <Save size={14} className="mr-1" />
-              Сохранить
+              <Save size={16} />
             </Button>
             <Button
               size="sm"
               onClick={handleSubmit}
-              className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70]"
+              className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70] w-10 h-10 p-0"
+              title="Отправить"
             >
-              <Send size={14} className="mr-1" />
-              Отправить
+              <Send size={16} />
             </Button>
           </div>
-        </div>
+        </nav>
 
-        {/* Theory Tab */}
-        <TabsContent value="theory" className="mt-6 space-y-6">
-          <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <Target size={20} className="text-[#2eff8c]" />
-              <h3 className="text-lg font-bold text-white">Цель работы</h3>
-            </div>
-            <p className="text-[#c8cdd1] leading-relaxed">{labWork.goal}</p>
-          </div>
-
-          <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <BookOpen size={20} className="text-[#2eff8c]" />
-              <h3 className="text-lg font-bold text-white">Теоретические сведения</h3>
-            </div>
-            <div className="prose prose-invert prose-sm max-w-none text-[#c8cdd1] leading-relaxed">
-              <MarkdownRenderer content={labWork.topicNodeContent || labWork.theory} />
-            </div>
-          </div>
-
-          <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <Wrench size={20} className="text-[#2eff8c]" />
-              <h3 className="text-lg font-bold text-white">Оборудование</h3>
-            </div>
-            {labWork.equipment && (
-              <ul className="space-y-2">
-                {JSON.parse(labWork.equipment).map((item: string, i: number) => (
-                  <li key={i} className="flex items-center gap-2 text-[#c8cdd1]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#2eff8c]" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </TabsContent>
-
-        {/* Experiment Tab — combined simulation + results */}
-        <TabsContent value="experiment" className="mt-6 space-y-6">
-          {labWork.instruction && (
-            <div className="bg-[#1a1f22] border border-[#37474f] rounded-xl p-4 text-sm text-[#c8cdd1]">
-              <p className="font-medium text-white mb-2">Пошаговая инструкция:</p>
-              <ol className="list-decimal list-inside space-y-1">
-                {labWork.instruction.split("\n").filter(Boolean).map((step, i) => (
-                  <li key={i}>{step.replace(/^\d+\.\s*/, "")}</li>
-                ))}
-              </ol>
-            </div>
-          )}
-
-          <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
-            <LabControls controls={controls} />
-          </div>
-
-          {/* Simulation + Start button */}
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-3">
-              <Button
-                onClick={() => setIsSimRunning((prev) => !prev)}
-                className={
-                  isSimRunning
-                    ? "bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 border border-yellow-500/30"
-                    : "bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70]"
-                }
-              >
-                {isSimRunning ? (
-                  <>
-                    <RotateCcw size={16} className="mr-2" />
-                    Остановить
-                  </>
-                ) : (
-                  <>
-                    <Play size={16} className="mr-2" />
-                    Начать симуляцию
-                  </>
-                )}
-              </Button>
-              <Button
-                onClick={handleAddMeasurement}
-                variant="outline"
-                className="border-[#37474f] text-[#c8cdd1] hover:text-white"
-              >
-                <FlaskConical size={16} className="mr-2" />
-                Зафиксировать измерение
-              </Button>
-            </div>
-
-            {SimComponent && (
-              <div className="bg-[#1a1f22] border border-[#37474f] rounded-2xl overflow-hidden flex justify-center">
-                <SimComponent
-                  params={effectiveSimParams}
-                  isRunning={isSimRunning}
-                  onStateChange={(state) => { simStateRef.current = state; }}
-                />
-              </div>
-            )}
-            {!SimComponent && (
-              <div className="bg-[#1a1f22] border border-[#37474f] rounded-2xl p-12 text-center text-[#798389]">
-                Симуляция для этой лабораторной работы в разработке.
-              </div>
-            )}
-          </div>
-
-          {/* Results table */}
-          <ResultsTable
-            headers={headers}
-            data={measurements}
-            onAdd={handleAddMeasurement}
-            onDelete={handleDeleteMeasurement}
-            onClear={handleClearMeasurements}
-            averages={averages}
-          />
-
-          {measurements.length > 0 && (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {Object.entries(averages || {})
-                .filter(([k]) => k !== "№")
-                .map(([key, value]) => (
-                  <div key={key} className="bg-[#2a3237] border border-[#434e54] rounded-xl p-4">
-                    <p className="text-xs text-[#798389] mb-1">Среднее {key}</p>
-                    <p className="text-xl font-bold text-[#2eff8c]">{String(value)}</p>
+        {/* Content */}
+        <main className="flex-1 overflow-y-auto p-6">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ x: -30, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 30, opacity: 0 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="max-w-5xl mx-auto space-y-6"
+            >
+              {activeTab === "theory" && (
+                <div className="space-y-6">
+                  <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Target size={20} className="text-[#2eff8c]" />
+                      <h3 className="text-lg font-bold text-white">Цель работы</h3>
+                    </div>
+                    <p className="text-[#c8cdd1] leading-relaxed">{labWork.goal}</p>
                   </div>
-                ))}
-            </div>
-          )}
-        </TabsContent>
 
-        {/* Graphs Tab */}
-        <TabsContent value="graphs" className="mt-6">
-          <LabGraphs measurements={measurements} slug={slug || ""} />
-        </TabsContent>
+                  <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <BookOpen size={20} className="text-[#2eff8c]" />
+                      <h3 className="text-lg font-bold text-white">Теоретические сведения</h3>
+                    </div>
+                    <div className="prose prose-invert prose-sm max-w-none text-[#c8cdd1] leading-relaxed">
+                      <MarkdownRenderer content={labWork.topicNodeContent || labWork.theory} />
+                    </div>
+                  </div>
 
-        {/* Conclusion Tab */}
-        <TabsContent value="conclusion" className="mt-6 space-y-6">
-          <ConclusionPanel
-            template={labWork.conclusionTemplate || ""}
-            data={averages || {}}
-          />
-          <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
-            <label className="block text-sm text-[#798389] mb-2">Свой вывод</label>
-            <textarea
-              value={conclusion}
-              onChange={(e) => setConclusion(e.target.value)}
-              rows={6}
-              className="w-full bg-[#1a1f22] border border-[#37474f] text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-[#2eff8c] transition-colors resize-none"
-              placeholder="Напишите свой вывод на основе полученных результатов..."
-            />
-          </div>
-        </TabsContent>
-      </Tabs>
+                  <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Wrench size={20} className="text-[#2eff8c]" />
+                      <h3 className="text-lg font-bold text-white">Оборудование</h3>
+                    </div>
+                    {labWork.equipment && (
+                      <ul className="space-y-2">
+                        {JSON.parse(labWork.equipment).map((item: string, i: number) => (
+                          <li key={i} className="flex items-center gap-2 text-[#c8cdd1]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#2eff8c]" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "experiment" && (
+                <div className="space-y-6">
+                  {labWork.instruction && (
+                    <div className="bg-[#1a1f22] border border-[#37474f] rounded-xl p-4 text-sm text-[#c8cdd1]">
+                      <p className="font-medium text-white mb-2">Пошаговая инструкция:</p>
+                      <ol className="list-decimal list-inside space-y-1">
+                        {labWork.instruction.split("\n").filter(Boolean).map((step, i) => (
+                          <li key={i}>{step.replace(/^\d+\.\s*/, "")}</li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
+
+                  <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
+                    <LabControls controls={controls} />
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        onClick={() => setIsSimRunning((prev) => !prev)}
+                        className={
+                          isSimRunning
+                            ? "bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 border border-yellow-500/30"
+                            : "bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70]"
+                        }
+                      >
+                        {isSimRunning ? (
+                          <>
+                            <RotateCcw size={16} className="mr-2" />
+                            Остановить
+                          </>
+                        ) : (
+                          <>
+                            <Play size={16} className="mr-2" />
+                            Начать симуляцию
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        onClick={handleAddMeasurement}
+                        variant="outline"
+                        className="border-[#37474f] text-[#c8cdd1] hover:text-white"
+                      >
+                        <FlaskConical size={16} className="mr-2" />
+                        Зафиксировать измерение
+                      </Button>
+                    </div>
+
+                    {SimComponent && (
+                      <div className="bg-[#1a1f22] border border-[#37474f] rounded-2xl overflow-hidden flex justify-center">
+                        <SimComponent
+                          params={effectiveSimParams}
+                          isRunning={isSimRunning}
+                          onStateChange={(state) => { simStateRef.current = state; }}
+                        />
+                      </div>
+                    )}
+                    {!SimComponent && (
+                      <div className="bg-[#1a1f22] border border-[#37474f] rounded-2xl p-12 text-center text-[#798389]">
+                        Симуляция для этой лабораторной работы в разработке.
+                      </div>
+                    )}
+                  </div>
+
+                  <ResultsTable
+                    headers={headers}
+                    data={measurements}
+                    onAdd={handleAddMeasurement}
+                    onDelete={handleDeleteMeasurement}
+                    onClear={handleClearMeasurements}
+                    averages={averages}
+                  />
+
+                  {measurements.length > 0 && (
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {Object.entries(averages || {})
+                        .filter(([k]) => k !== "№")
+                        .map(([key, value]) => (
+                          <div key={key} className="bg-[#2a3237] border border-[#434e54] rounded-xl p-4">
+                            <p className="text-xs text-[#798389] mb-1">Среднее {key}</p>
+                            <p className="text-xl font-bold text-[#2eff8c]">{String(value)}</p>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === "graphs" && (
+                <LabGraphs measurements={measurements} slug={slug || ""} />
+              )}
+
+              {activeTab === "conclusion" && (
+                <div className="space-y-6">
+                  <ConclusionPanel
+                    template={labWork.conclusionTemplate || ""}
+                    data={averages || {}}
+                  />
+                  <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
+                    <label className="block text-sm text-[#798389] mb-2">Свой вывод</label>
+                    <textarea
+                      value={conclusion}
+                      onChange={(e) => setConclusion(e.target.value)}
+                      rows={6}
+                      className="w-full bg-[#1a1f22] border border-[#37474f] text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-[#2eff8c] transition-colors resize-none"
+                      placeholder="Напишите свой вывод на основе полученных результатов..."
+                    />
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </main>
+      </div>
     </LabLayout>
   );
 }

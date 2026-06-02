@@ -5,9 +5,10 @@ interface LabLayoutProps {
   title: string;
   topic: string;
   children: React.ReactNode;
+  fullWidth?: boolean;
 }
 
-export default function LabLayout({ title, topic, children }: LabLayoutProps) {
+export default function LabLayout({ title, topic, children, fullWidth }: LabLayoutProps) {
   return (
     <div className="min-h-[calc(100vh-64px)] bg-[#262e33]">
       {/* Header */}
@@ -33,7 +34,7 @@ export default function LabLayout({ title, topic, children }: LabLayoutProps) {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-6 py-6 space-y-10">
+      <div className={fullWidth ? "px-6 py-6" : "max-w-7xl mx-auto px-6 py-6 space-y-10"}>
         {children}
       </div>
     </div>
