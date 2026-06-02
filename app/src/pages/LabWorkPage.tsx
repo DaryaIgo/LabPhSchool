@@ -4,14 +4,8 @@ import { useParams } from "react-router";
 import {
   FlaskConical,
   Target,
-  BookOpen,
   Wrench,
-  Play,
-  Save,
-  Send,
-  CheckCircle2,
   RotateCcw,
-  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion } from "framer-motion";
@@ -22,6 +16,7 @@ import LabControls from "@/components/lab/LabControls";
 import ResultsTable from "@/components/lab/ResultsTable";
 import ConclusionPanel from "@/components/lab/ConclusionPanel";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
+import LabSidebar from "@/components/lab/LabSidebar";
 import type { ControlItem } from "@/components/lab/LabControls";
 import DensitySimulation from "@/components/lab/simulations/DensitySimulation";
 import ArchimedesSimulation from "@/components/lab/simulations/ArchimedesSimulation";
@@ -306,60 +301,12 @@ export default function LabWorkPage() {
   return (
     <LabLayout title={labWork.title} topic={labWork.categoryTitle || "Лабораторная работа"} fullWidth>
       <div className="flex min-h-[calc(100vh-220px)]">
-        {/* Sidebar */}
-        <nav className="w-16 flex-shrink-0 bg-[#1a1f22] border-r border-[#37474f] flex flex-col items-center py-4 gap-2">
-          {[
-            { id: "theory", icon: BookOpen, label: "Теория" },
-            { id: "experiment", icon: Play, label: "Эксперимент" },
-            { id: "graphs", icon: TrendingUp, label: "Графики" },
-            { id: "conclusion", icon: CheckCircle2, label: "Вывод" },
-          ].map((item) => {
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`relative w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 group ${
-                  isActive
-                    ? "bg-[#2a3237] text-[#2eff8c]"
-                    : "text-[#798389] hover:text-[#c8cdd1] hover:bg-[#1e2529]"
-                }`}
-                title={item.label}
-              >
-                <item.icon size={20} />
-                {isActive && (
-                  <motion.div
-                    layoutId="sidebar-active"
-                    className="absolute left-0 top-2 bottom-2 w-0.5 bg-[#2eff8c] rounded-r-full"
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  />
-                )}
-              </button>
-            );
-          })}
-
-          <div className="flex-1" />
-
-          <div className="flex flex-col gap-2 pb-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSaveProgress}
-              className="border-[#37474f] text-[#c8cdd1] hover:text-white w-10 h-10 p-0"
-              title="Сохранить"
-            >
-              <Save size={16} />
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleSubmit}
-              className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70] w-10 h-10 p-0"
-              title="Отправить"
-            >
-              <Send size={16} />
-            </Button>
-          </div>
-        </nav>
+        <LabSidebar
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          onSave={handleSaveProgress}
+          onSubmit={handleSubmit}
+        />
 
         {/* Content */}
         <main className="flex-1 overflow-y-auto p-6">
