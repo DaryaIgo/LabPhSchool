@@ -10,9 +10,10 @@ import { TRPCError } from "@trpc/server";
 import { createRouter, adminQuery, studentQuery } from "./middleware";
 import {
   findEnrollment,
-  getEnrollmentsByLocalUser,
+  getEnrollmentsWithDetails,
   createEnrollment,
   updateEnrollmentStatus,
+  updateEnrollmentDetails,
   deleteEnrollment,
   isEnrolled,
 } from "./queries/enrollments";
@@ -29,7 +30,7 @@ export const enrollmentRouter = createRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Student not found" });
       }
 
-      return getEnrollmentsByLocalUser(input.studentId);
+      return getEnrollmentsWithDetails(input.studentId);
     }),
 
   // ── Admin: Enroll a student in a topic ──
@@ -46,7 +47,6 @@ export const enrollmentRouter = createRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Student not found" });
       }
 
-      // Check if already enrolled
       const existing = await findEnrollment(input.studentId, input.topicId);
       if (existing) {
         throw new TRPCError({
@@ -107,6 +107,40 @@ export const enrollmentRouter = createRouter({
         resource: "enrollments",
         resourceId: input.enrollmentId,
         details: { status: input.status },
+      });
+
+      return { success: true };
+    }),
+
+  // ── Admin: Update enrollment details ──
+  updateDetails: adminQuery
+    .input(
+      z.object({
+        enrollmentId: z.number().positive(),
+        status: z.enum(["active", "completed", "suspended"]).optional(),
+        currentSubtopicId: z.number().positive().nullable().optional(),
+        comment: z.string().max(500).optional(),
+        startedAt: z.date().nullable().optional(),
+        completedAt: z.date().nullable().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { enrollmentId, ...data } = input;
+      await updateEnrollmentDetails(enrollmentId, {
+        status: data.status,
+        currentSubtopicId: data.currentSubtopicId,
+        comment: data.comment,
+        startedAt: data.startedAt,
+        completedAt: data.completedAt,
+      });
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "update",
+        resource: "enrollments",
+        resourceId: enrollmentId,
+        details: { ...data },
       });
 
       return { success: true };

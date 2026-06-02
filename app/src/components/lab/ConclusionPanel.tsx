@@ -48,7 +48,7 @@ export default function ConclusionPanel({
       )}
 
       {!conclusion && (
-        <div className="bg-[#1a1f22] border border-[#37474f] rounded-xl p-8 text-center text-[#798389] text-sm">
+        <div className="bg-[#1a1f22] border border-[#37474f] rounded-xl p-8 text-center text-[#c8cdd1] text-sm">
           Нажмите «Сформировать вывод», чтобы автоматически сгенерировать вывод
           на основе полученных данных.
         </div>

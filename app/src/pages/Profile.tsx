@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { trpc } from "@/providers/trpc";
+import StudentProfile from "./StudentProfile";
 import {
   Shield,
   Users,
@@ -13,15 +14,32 @@ import {
   User,
   Activity,
   Library,
+  Loader2,
 } from "lucide-react";
 
 export default function Profile() {
-  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, logout, isLoading } = useAuth();
+
+  // Redirect students to dedicated student profile
+  if (!isLoading && isAuthenticated && user?.role === "student") {
+    return <StudentProfile />;
+  }
 
   const { data: stats, isLoading: statsLoading } = trpc.admin.dashboardStats.useQuery(
     undefined,
     { enabled: isAdmin }
   );
+
+  if (isLoading) {
+    return (
+      <div className="pt-16 min-h-screen flex items-center justify-center bg-[#262e33]">
+        <div className="text-center max-w-md mx-auto px-6">
+          <Loader2 size={48} className="text-[#2eff8c] mx-auto mb-6 animate-spin" />
+          <h2 className="text-2xl font-bold mb-3">Загрузка...</h2>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated || !user) {
     return (

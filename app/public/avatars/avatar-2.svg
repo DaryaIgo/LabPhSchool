@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a2332"/>
+      <stop offset="100%" stop-color="#0f1724"/>
+    </linearGradient>
+    <linearGradient id="glow2" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#01acff" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#01acff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="96" fill="url(#bg2)" stroke="#01acff" stroke-width="2"/>
+  <circle cx="100" cy="100" r="88" fill="none" stroke="url(#glow2)" stroke-width="4"/>
+  <!-- Wave / Oscillation -->
+  <path d="M30 100 Q55 60, 80 100 T130 100 T180 100" fill="none" stroke="#01acff" stroke-width="3" stroke-linecap="round"/>
+  <path d="M30 120 Q55 80, 80 120 T130 120 T180 120" fill="none" stroke="#2eff8c" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+  <path d="M30 80 Q55 40, 80 80 T130 80 T180 80" fill="none" stroke="#ffcb3d" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+  <!-- Axis -->
+  <line x1="25" y1="100" x2="175" y2="100" stroke="#434e54" stroke-width="1"/>
+  <line x1="100" y1="40" x2="100" y2="160" stroke="#434e54" stroke-width="1"/>
+  <!-- Nodes -->
+  <circle cx="80" cy="100" r="4" fill="#01acff"/>
+  <circle cx="130" cy="100" r="4" fill="#01acff"/>
+</svg>

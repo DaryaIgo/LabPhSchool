@@ -9,9 +9,11 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const utils = trpc.useUtils();
 
   const loginMutation = trpc.unifiedAuth.login.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
+      await utils.unifiedAuth.me.refetch();
       navigate("/profile");
     },
     onError: (err) => {

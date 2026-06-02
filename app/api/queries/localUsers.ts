@@ -39,6 +39,7 @@ export async function findLocalUserWithRole(id: number) {
       status: localUsers.status,
       roleId: localUsers.roleId,
       roleName: roles.name,
+      avatar: localUsers.avatar,
       createdBy: localUsers.createdBy,
       createdAt: localUsers.createdAt,
       lastLoginAt: localUsers.lastLoginAt,
@@ -124,6 +125,7 @@ export async function updateLocalUser(
     name: string;
     passwordHash: string;
     status: "active" | "inactive" | "suspended";
+    avatar: string | null;
   }>
 ) {
   return getDb()

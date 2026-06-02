@@ -44,6 +44,7 @@ export default function App() {
         {/* Auth Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/student/profile" element={<Profile />} />
 
         {/* Admin Routes */}
         <Route path="/admin/problems" element={<AdminProblems />} />

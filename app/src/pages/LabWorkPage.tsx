@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { trpc } from "@/providers/trpc";
 import { useParams } from "react-router";
 import {
@@ -9,12 +9,8 @@ import {
   Play,
   Save,
   Send,
-  GraduationCap,
-  User,
-  ShieldCheck,
-  Info,
   CheckCircle2,
-  AlertCircle,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -29,22 +25,30 @@ import DensitySimulation from "@/components/lab/simulations/DensitySimulation";
 import ArchimedesSimulation from "@/components/lab/simulations/ArchimedesSimulation";
 import BuoyancySimulation from "@/components/lab/simulations/BuoyancySimulation";
 import ElectricWorkSimulation from "@/components/lab/simulations/ElectricWorkSimulation";
+import UniformLinearMotion from "@/components/lab/simulations/UniformLinearMotion";
+import UniformlyAcceleratedMotion from "@/components/lab/simulations/UniformlyAcceleratedMotion";
+import FreeFallG from "@/components/lab/simulations/FreeFallG";
+import CircularMotion from "@/components/lab/simulations/CircularMotion";
+import ProjectileMotion from "@/components/lab/simulations/ProjectileMotion";
 import { LabGraphs } from "@/components/lab/LabGraphs";
 import { useAuth } from "@/hooks/useAuth";
 
-type WorkMode = "training" | "self" | "control";
+interface SimComponentProps {
+  params: Record<string, number | string>;
+  isRunning?: boolean;
+  onStateChange?: (state: Record<string, number>) => void;
+}
 
-const modeConfig: Record<WorkMode, { label: string; icon: React.ReactNode; color: string }> = {
-  training: { label: "Обучающий", icon: <GraduationCap size={14} />, color: "bg-blue-500/10 text-blue-400" },
-  self: { label: "Самостоятельный", icon: <User size={14} />, color: "bg-green-500/10 text-green-400" },
-  control: { label: "Контрольный", icon: <ShieldCheck size={14} />, color: "bg-red-500/10 text-red-400" },
-};
-
-const simComponents: Record<string, React.FC<{ params: Record<string, number | string> }>> = {
+const simComponents: Record<string, React.FC<SimComponentProps>> = {
   "density-measurement": DensitySimulation,
   "archimedes-force": ArchimedesSimulation,
   "buoyancy-independence": BuoyancySimulation,
   "electric-work-measurement": ElectricWorkSimulation,
+  "uniform-linear-motion": UniformLinearMotion,
+  "uniformly-accelerated-motion": UniformlyAcceleratedMotion,
+  "free-fall-g": FreeFallG,
+  "circular-motion": CircularMotion,
+  "projectile-motion": ProjectileMotion,
 };
 
 export default function LabWorkPage() {
@@ -56,12 +60,12 @@ export default function LabWorkPage() {
   const { user } = useAuth();
   const utils = trpc.useUtils();
 
-  const [mode, setMode] = useState<WorkMode>("self");
   const [activeTab, setActiveTab] = useState("theory");
   const [measurements, setMeasurements] = useState<Record<string, string | number>[]>([]);
   const [simParams, setSimParams] = useState<Record<string, number | string>>({});
   const [conclusion, setConclusion] = useState("");
-  const [hintsEnabled, setHintsEnabled] = useState(true);
+  const [isSimRunning, setIsSimRunning] = useState(false);
+  const simStateRef = useRef<Record<string, number>>({});
 
   const saveProgress = trpc.virtualLab.saveLabProgress.useMutation({
     onSuccess: () => {
@@ -99,7 +103,10 @@ export default function LabWorkPage() {
           max: Number(p.max || 100),
           step: Number(p.step || 1),
           unit: p.unit || undefined,
-          onChange: (v: number) => setSimParams((prev) => ({ ...prev, [p.key]: v })),
+          onChange: (v: number) => {
+            setSimParams((prev) => ({ ...prev, [p.key]: v }));
+            setIsSimRunning(false);
+          },
         };
       }
       if (p.paramType === "select") {
@@ -109,7 +116,10 @@ export default function LabWorkPage() {
           label: p.label,
           value: String(value),
           options,
-          onChange: (v: string) => setSimParams((prev) => ({ ...prev, [p.key]: v })),
+          onChange: (v: string) => {
+            setSimParams((prev) => ({ ...prev, [p.key]: v }));
+            setIsSimRunning(false);
+          },
         };
       }
       return {
@@ -120,7 +130,10 @@ export default function LabWorkPage() {
         max: p.max ? Number(p.max) : undefined,
         step: p.step ? Number(p.step) : undefined,
         unit: p.unit || undefined,
-        onChange: (v: number) => setSimParams((prev) => ({ ...prev, [p.key]: v })),
+        onChange: (v: number) => {
+          setSimParams((prev) => ({ ...prev, [p.key]: v }));
+          setIsSimRunning(false);
+        },
       };
     });
   })();
@@ -161,6 +174,50 @@ export default function LabWorkPage() {
       row["I"] = i.toFixed(2);
       row["A"] = (u * i * t).toFixed(1);
       row["P"] = (u * i).toFixed(1);
+    } else if (slug === "uniform-linear-motion") {
+      const speed = Number(effectiveSimParams["speed"] || 0);
+      const startX = Number(effectiveSimParams["startX"] || 0);
+      const simTime = simStateRef.current.time ?? Number(effectiveSimParams["time"] || 0);
+      row["time"] = simTime.toFixed(1);
+      row["s"] = (speed * simTime).toFixed(1);
+      row["x"] = (startX + speed * simTime).toFixed(1);
+    } else if (slug === "uniformly-accelerated-motion") {
+      const v0 = Number(effectiveSimParams["v0"] || 0);
+      const a = Number(effectiveSimParams["acceleration"] || 0);
+      const simTime = simStateRef.current.time ?? Number(effectiveSimParams["time"] || 0);
+      row["time"] = simTime.toFixed(1);
+      row["v"] = (v0 + a * simTime).toFixed(1);
+      row["s"] = (v0 * simTime + 0.5 * a * simTime * simTime).toFixed(1);
+    } else if (slug === "free-fall-g") {
+      const l = Number(effectiveSimParams["length"] || 0);
+      const n = Number(effectiveSimParams["oscillations"] || 1);
+      const tm = Number(effectiveSimParams["measuredTime"] || 0);
+      const T = tm / n;
+      const gCalc = (4 * Math.PI * Math.PI * l) / (T * T);
+      row["T"] = T.toFixed(3);
+      row["g"] = gCalc.toFixed(2);
+    } else if (slug === "circular-motion") {
+      const r = Number(effectiveSimParams["radius"] || 0);
+      const T = Number(effectiveSimParams["period"] || 1);
+      const m = Number(effectiveSimParams["mass"] || 0);
+      const omega = (2 * Math.PI) / T;
+      const v = (2 * Math.PI * r) / T;
+      const a = (v * v) / r;
+      const F = m * a;
+      row["ω"] = omega.toFixed(2);
+      row["v"] = v.toFixed(2);
+      row["a"] = a.toFixed(2);
+      row["F"] = F.toFixed(2);
+    } else if (slug === "projectile-motion") {
+      const v0val = Number(effectiveSimParams["v0"] || 0);
+      const alpha = (Number(effectiveSimParams["angle"] || 0) * Math.PI) / 180;
+      const gVal = Number(effectiveSimParams["g"] || 9.8);
+      const L = (v0val * v0val * Math.sin(2 * alpha)) / gVal;
+      const H = (v0val * v0val * Math.sin(alpha) * Math.sin(alpha)) / (2 * gVal);
+      const Tflight = (2 * v0val * Math.sin(alpha)) / gVal;
+      row["L"] = L.toFixed(1);
+      row["H"] = H.toFixed(1);
+      row["T"] = Tflight.toFixed(2);
     }
     setMeasurements((prev) => [...prev, row]);
   };
@@ -196,7 +253,7 @@ export default function LabWorkPage() {
     }
     saveProgress.mutate({
       labWorkId: labWork.id,
-      mode,
+      mode: "training",
       status: measurements.length > 0 ? "in_progress" : "not_started",
       data: effectiveSimParams,
       measurements,
@@ -211,7 +268,7 @@ export default function LabWorkPage() {
     }
     saveProgress.mutate({
       labWorkId: labWork.id,
-      mode,
+      mode: "training",
       status: "submitted",
       data: effectiveSimParams,
       measurements,
@@ -245,108 +302,48 @@ export default function LabWorkPage() {
 
   return (
     <LabLayout title={labWork.title} topic={labWork.categoryTitle || "Лабораторная работа"}>
-      {/* Mode selector */}
-      <div className="flex flex-wrap items-center gap-3 justify-between">
-        <div className="flex items-center gap-2">
-          {(Object.keys(modeConfig) as WorkMode[]).map((m) => (
-            <button
-              key={m}
-              onClick={() => setMode(m)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                mode === m
-                  ? modeConfig[m].color.replace("/10", "/20") + " ring-1 ring-current"
-                  : "text-[#798389] hover:text-white bg-[#1a1f22] hover:bg-[#2a3237]"
-              } ${mode === "control" && m !== mode ? "opacity-50 cursor-not-allowed" : ""}`}
-              disabled={mode === "control" && m !== mode}
-            >
-              {modeConfig[m].icon}
-              {modeConfig[m].label}
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-2">
-          {mode === "training" && (
-            <label className="flex items-center gap-2 text-sm text-[#c8cdd1] cursor-pointer">
-              <input
-                type="checkbox"
-                checked={hintsEnabled}
-                onChange={(e) => setHintsEnabled(e.target.checked)}
-                className="accent-[#2eff8c]"
-              />
-              Подсказки
-            </label>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSaveProgress}
-            className="border-[#37474f] text-[#c8cdd1] hover:text-white"
-          >
-            <Save size={14} className="mr-1" />
-            Сохранить
-          </Button>
-          <Button
-            size="sm"
-            onClick={handleSubmit}
-            className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70]"
-          >
-            <Send size={14} className="mr-1" />
-            Отправить
-          </Button>
-        </div>
-      </div>
-
-      {mode === "training" && hintsEnabled && (
-        <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-sm text-blue-300 flex items-start gap-3">
-          <Info size={18} className="shrink-0 mt-0.5" />
-          <div>
-            <p className="font-medium mb-1">Обучающий режим</p>
-            <p>
-              В этом режиме вы получаете подробные подсказки на каждом шаге. Сначала изучите
-              теорию, затем проведите эксперимент в симуляторе, зафиксируйте результаты и
-              сформируйте вывод.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {mode === "control" && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-sm text-red-300 flex items-start gap-3">
-          <AlertCircle size={18} className="shrink-0 mt-0.5" />
-          <div>
-            <p className="font-medium mb-1">Контрольная работа</p>
-            <p>
-              Подсказки отключены. Результаты будут зафиксированы после отправки. Внимательно
-              проверьте данные перед завершением.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Tabs */}
+      {/* Tabs + Actions bar */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-[#1a1f22] border border-[#37474f] p-1 flex-wrap h-auto">
-          <TabsTrigger value="theory" className="data-[state=active]:bg-[#2a3237] data-[state=active]:text-[#2eff8c]">
-            <BookOpen size={14} className="mr-1.5" />
-            Теория
-          </TabsTrigger>
-          <TabsTrigger value="simulation" className="data-[state=active]:bg-[#2a3237] data-[state=active]:text-[#2eff8c]">
-            <Play size={14} className="mr-1.5" />
-            Симуляция
-          </TabsTrigger>
-          <TabsTrigger value="results" className="data-[state=active]:bg-[#2a3237] data-[state=active]:text-[#2eff8c]">
-            <FlaskConical size={14} className="mr-1.5" />
-            Результаты
-          </TabsTrigger>
-          <TabsTrigger value="graphs" className="data-[state=active]:bg-[#2a3237] data-[state=active]:text-[#2eff8c]">
-            <Target size={14} className="mr-1.5" />
-            Графики
-          </TabsTrigger>
-          <TabsTrigger value="conclusion" className="data-[state=active]:bg-[#2a3237] data-[state=active]:text-[#2eff8c]">
-            <CheckCircle2 size={14} className="mr-1.5" />
-            Вывод
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex flex-wrap items-center gap-3 justify-between">
+          <TabsList className="bg-[#1a1f22] border border-[#37474f] p-1 flex-wrap h-auto">
+            <TabsTrigger value="theory" className="text-[#c8cdd1] hover:text-white data-[state=active]:bg-[#2a3237] data-[state=active]:text-[#2eff8c]">
+              <BookOpen size={14} className="mr-1.5" />
+              Теория
+            </TabsTrigger>
+            <TabsTrigger value="experiment" className="text-[#c8cdd1] hover:text-white data-[state=active]:bg-[#2a3237] data-[state=active]:text-[#2eff8c]">
+              <Play size={14} className="mr-1.5" />
+              Эксперимент
+            </TabsTrigger>
+            <TabsTrigger value="graphs" className="text-[#c8cdd1] hover:text-white data-[state=active]:bg-[#2a3237] data-[state=active]:text-[#2eff8c]">
+              <Target size={14} className="mr-1.5" />
+              Графики
+            </TabsTrigger>
+            <TabsTrigger value="conclusion" className="text-[#c8cdd1] hover:text-white data-[state=active]:bg-[#2a3237] data-[state=active]:text-[#2eff8c]">
+              <CheckCircle2 size={14} className="mr-1.5" />
+              Вывод
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSaveProgress}
+              className="border-[#37474f] text-[#c8cdd1] hover:text-white"
+            >
+              <Save size={14} className="mr-1" />
+              Сохранить
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSubmit}
+              className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70]"
+            >
+              <Send size={14} className="mr-1" />
+              Отправить
+            </Button>
+          </div>
+        </div>
 
         {/* Theory Tab */}
         <TabsContent value="theory" className="mt-6 space-y-6">
@@ -388,9 +385,9 @@ export default function LabWorkPage() {
           </div>
         </TabsContent>
 
-        {/* Simulation Tab */}
-        <TabsContent value="simulation" className="mt-6 space-y-6">
-          {mode === "training" && hintsEnabled && labWork.instruction && (
+        {/* Experiment Tab — combined simulation + results */}
+        <TabsContent value="experiment" className="mt-6 space-y-6">
+          {labWork.instruction && (
             <div className="bg-[#1a1f22] border border-[#37474f] rounded-xl p-4 text-sm text-[#c8cdd1]">
               <p className="font-medium text-white mb-2">Пошаговая инструкция:</p>
               <ol className="list-decimal list-inside space-y-1">
@@ -405,30 +402,56 @@ export default function LabWorkPage() {
             <LabControls controls={controls} />
           </div>
 
-          {SimComponent && (
-            <div className="bg-[#1a1f22] border border-[#37474f] rounded-2xl overflow-hidden">
-              <SimComponent params={effectiveSimParams} />
+          {/* Simulation + Start button */}
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-3">
+              <Button
+                onClick={() => setIsSimRunning((prev) => !prev)}
+                className={
+                  isSimRunning
+                    ? "bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 border border-yellow-500/30"
+                    : "bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70]"
+                }
+              >
+                {isSimRunning ? (
+                  <>
+                    <RotateCcw size={16} className="mr-2" />
+                    Остановить
+                  </>
+                ) : (
+                  <>
+                    <Play size={16} className="mr-2" />
+                    Начать симуляцию
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={handleAddMeasurement}
+                variant="outline"
+                className="border-[#37474f] text-[#c8cdd1] hover:text-white"
+              >
+                <FlaskConical size={16} className="mr-2" />
+                Зафиксировать измерение
+              </Button>
             </div>
-          )}
-          {!SimComponent && (
-            <div className="bg-[#1a1f22] border border-[#37474f] rounded-2xl p-12 text-center text-[#798389]">
-              Симуляция для этой лабораторной работы в разработке.
-            </div>
-          )}
 
-          <div className="flex gap-3">
-            <Button
-              onClick={handleAddMeasurement}
-              className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70]"
-            >
-              <FlaskConical size={16} className="mr-2" />
-              Добавить измерение
-            </Button>
+            {SimComponent && (
+              <div className="bg-[#1a1f22] border border-[#37474f] rounded-2xl overflow-hidden flex justify-center">
+                <SimComponent
+                  params={effectiveSimParams}
+                  isRunning={isSimRunning}
+                  onStateChange={(state) => { simStateRef.current = state; }}
+                />
+              </div>
+            )}
+            {!SimComponent && (
+              <div className="bg-[#1a1f22] border border-[#37474f] rounded-2xl p-12 text-center text-[#798389]">
+                Симуляция для этой лабораторной работы в разработке.
+              </div>
+            )}
           </div>
-        </TabsContent>
 
-        {/* Results Tab */}
-        <TabsContent value="results" className="mt-6 space-y-6">
+          {/* Results table */}
           <ResultsTable
             headers={headers}
             data={measurements}

@@ -199,6 +199,266 @@ export function LabGraphs({ measurements, slug }: LabGraphsProps) {
       );
     }
 
+    if (slug === "uniform-linear-motion") {
+      return (
+        <div className="space-y-6">
+          <GraphCard title="Зависимость координаты от времени x(t)">
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
+                <XAxis dataKey="time" stroke="#798389" />
+                <YAxis dataKey="x" stroke="#798389" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1a1f22",
+                    border: "1px solid #37474f",
+                    borderRadius: "8px",
+                    color: "#fff",
+                  }}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="x"
+                  stroke="#2eff8c"
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: "#2eff8c" }}
+                  name="x(t)"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </GraphCard>
+          <GraphCard title="Зависимость пройденного пути от времени s(t)">
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
+                <XAxis dataKey="time" stroke="#798389" />
+                <YAxis dataKey="s" stroke="#798389" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1a1f22",
+                    border: "1px solid #37474f",
+                    borderRadius: "8px",
+                    color: "#fff",
+                  }}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="s"
+                  stroke="#01acff"
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: "#01acff" }}
+                  name="s(t)"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </GraphCard>
+        </div>
+      );
+    }
+
+    if (slug === "uniformly-accelerated-motion") {
+      return (
+        <div className="space-y-6">
+          <GraphCard title="Зависимость скорости от времени v(t)">
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
+                <XAxis dataKey="time" stroke="#798389" />
+                <YAxis dataKey="v" stroke="#798389" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1a1f22",
+                    border: "1px solid #37474f",
+                    borderRadius: "8px",
+                    color: "#fff",
+                  }}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="v"
+                  stroke="#ff7043"
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: "#ff7043" }}
+                  name="v(t)"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </GraphCard>
+          <GraphCard title="Зависимость пройденного пути от времени s(t)">
+            <ResponsiveContainer width="100%" height={300}>
+              <ScatterChart>
+                <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
+                <XAxis type="number" dataKey="time" name="t" stroke="#798389" />
+                <YAxis type="number" dataKey="s" name="s" stroke="#798389" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1a1f22",
+                    border: "1px solid #37474f",
+                    borderRadius: "8px",
+                    color: "#fff",
+                  }}
+                />
+                <Scatter name="s(t)" data={data} fill="#2eff8c" />
+              </ScatterChart>
+            </ResponsiveContainer>
+          </GraphCard>
+        </div>
+      );
+    }
+
+    if (slug === "free-fall-g") {
+      return (
+        <div className="space-y-6">
+          <GraphCard title="Зависимость квадрата периода от длины нити T²(l)">
+            <ResponsiveContainer width="100%" height={300}>
+              <ScatterChart>
+                <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
+                <XAxis type="number" dataKey="length" name="l" stroke="#798389" />
+                <YAxis
+                  type="number"
+                  dataKey="T"
+                  name="T²"
+                  stroke="#798389"
+                  tickFormatter={(v: number) => (v * v).toFixed(2)}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1a1f22",
+                    border: "1px solid #37474f",
+                    borderRadius: "8px",
+                    color: "#fff",
+                  }}
+                  formatter={(value: number) => [(value * value).toFixed(3), "T²"]}
+                />
+                <Scatter name="T²(l)" data={data} fill="#2eff8c" />
+              </ScatterChart>
+            </ResponsiveContainer>
+          </GraphCard>
+        </div>
+      );
+    }
+
+    if (slug === "circular-motion") {
+      return (
+        <div className="space-y-6">
+          <GraphCard title="Зависимость центростремительного ускорения от радиуса a(R)">
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
+                <XAxis dataKey="radius" stroke="#798389" />
+                <YAxis dataKey="a" stroke="#798389" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1a1f22",
+                    border: "1px solid #37474f",
+                    borderRadius: "8px",
+                    color: "#fff",
+                  }}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="a"
+                  stroke="#ff7043"
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: "#ff7043" }}
+                  name="a(R)"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </GraphCard>
+          <GraphCard title="Зависимость линейной скорости от периода v(T)">
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
+                <XAxis dataKey="period" stroke="#798389" />
+                <YAxis dataKey="v" stroke="#798389" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1a1f22",
+                    border: "1px solid #37474f",
+                    borderRadius: "8px",
+                    color: "#fff",
+                  }}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="v"
+                  stroke="#01acff"
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: "#01acff" }}
+                  name="v(T)"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </GraphCard>
+        </div>
+      );
+    }
+
+    if (slug === "projectile-motion") {
+      return (
+        <div className="space-y-6">
+          <GraphCard title="Зависимость дальности полёта от угла броска L(α)">
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
+                <XAxis dataKey="angle" stroke="#798389" />
+                <YAxis dataKey="L" stroke="#798389" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1a1f22",
+                    border: "1px solid #37474f",
+                    borderRadius: "8px",
+                    color: "#fff",
+                  }}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="L"
+                  stroke="#2eff8c"
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: "#2eff8c" }}
+                  name="L(α)"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </GraphCard>
+          <GraphCard title="Зависимость максимальной высоты от угла броска H(α)">
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
+                <XAxis dataKey="angle" stroke="#798389" />
+                <YAxis dataKey="H" stroke="#798389" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1a1f22",
+                    border: "1px solid #37474f",
+                    borderRadius: "8px",
+                    color: "#fff",
+                  }}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="H"
+                  stroke="#01acff"
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: "#01acff" }}
+                  name="H(α)"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </GraphCard>
+        </div>
+      );
+    }
+
     return (
       <div className="bg-[#1a1f22] border border-[#37474f] rounded-2xl p-12 text-center text-[#798389]">
         Графики для этой лабораторной работы в разработке.

@@ -54,9 +54,13 @@ export default function Header() {
               <div className="flex items-center gap-3">
                 <Link to="/profile"
                   className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    isActive("/profile") ? "text-[#2eff8c] bg-[#2eff8c]/10" : "text-[#c8cdd1] hover:text-white"
+                    isActive("/profile") || isActive("/student/profile") ? "text-[#2eff8c] bg-[#2eff8c]/10" : "text-[#c8cdd1] hover:text-white"
                   }`}>
-                  <User size={16} />
+                  {user.avatar ? (
+                    <img src={`/avatars/${user.avatar}.svg`} alt="" className="w-5 h-5 rounded-full" />
+                  ) : (
+                    <User size={16} />
+                  )}
                   <span className="max-w-[100px] truncate">{user.name || "Кабинет"}</span>
                 </Link>
                 <button onClick={logout} className="text-xs text-[#798389] hover:text-white transition-colors flex items-center gap-1">
@@ -93,7 +97,12 @@ export default function Header() {
                 <div className="space-y-2">
                   <Link to="/profile" onClick={() => setMobileOpen(false)}
                     className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#2eff8c] bg-[#2eff8c]/10">
-                    <User size={18} />{user.name || "Кабинет"}
+                    {user.avatar ? (
+                      <img src={`/avatars/${user.avatar}.svg`} alt="" className="w-5 h-5 rounded-full" />
+                    ) : (
+                      <User size={18} />
+                    )}
+                    {user.name || "Кабинет"}
                   </Link>
                   <button onClick={() => { logout(); setMobileOpen(false); }}
                     className="w-full text-left px-4 py-3 rounded-xl text-sm text-[#798389] hover:text-white transition-colors flex items-center gap-3">

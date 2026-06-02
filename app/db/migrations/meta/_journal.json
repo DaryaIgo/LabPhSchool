@@ -36,6 +36,20 @@
       "when": 1780318414324,
       "tag": "0004_early_major_mapleleaf",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1780377142026,
+      "tag": "0005_secret_raza",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1780381784375,
+      "tag": "0006_hesitant_the_phantom",
+      "breakpoints": true
     }
   ]
 }

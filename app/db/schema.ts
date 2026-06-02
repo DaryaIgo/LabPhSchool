@@ -115,6 +115,7 @@ export const localUsers = mysqlTable(
     status: mysqlEnum("status", ["active", "inactive", "suspended"])
       .default("active")
       .notNull(),
+    avatar: varchar("avatar", { length: 50 }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()
@@ -274,6 +275,12 @@ export const studentProgress = mysqlTable("student_progress", {
   labCompleted: mysqlEnum("lab_completed", ["pending", "completed"])
     .default("pending")
     .notNull(),
+  status: mysqlEnum("status", ["not_started", "in_progress", "completed"])
+    .default("not_started")
+    .notNull(),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  comment: text("comment"),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
@@ -301,6 +308,11 @@ export const enrollments = mysqlTable(
     status: mysqlEnum("status", ["active", "completed", "suspended"])
       .default("active")
       .notNull(),
+    startedAt: timestamp("started_at"),
+    completedAt: timestamp("completed_at"),
+    comment: text("comment"),
+    currentSubtopicId: bigint("current_subtopic_id", { mode: "number", unsigned: true })
+      .references(() => subtopics.id),
     enrolledAt: timestamp("enrolled_at").defaultNow().notNull(),
     expiresAt: timestamp("expires_at"),
     createdBy: bigint("created_by", { mode: "number", unsigned: true })
@@ -525,7 +537,7 @@ export const labProgress = mysqlTable("lab_progress", {
   labWorkId: bigint("lab_work_id", { mode: "number", unsigned: true })
     .notNull()
     .references(() => labWorks.id, { onDelete: "cascade" }),
-  mode: mysqlEnum("mode", ["training", "self", "control"]).default("self").notNull(),
+  mode: mysqlEnum("mode", ["training", "self"]).default("self").notNull(),
   status: mysqlEnum("status", ["not_started", "in_progress", "completed", "submitted"])
     .default("not_started")
     .notNull(),

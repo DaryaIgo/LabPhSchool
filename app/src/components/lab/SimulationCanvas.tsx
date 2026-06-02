@@ -1,56 +1,77 @@
 import { useRef, useEffect } from "react";
-import p5 from "p5";
 
 interface SimulationCanvasProps {
-  setup?: (p: p5) => void;
-  draw: (p: p5) => void;
+  setup?: (ctx: CanvasRenderingContext2D, width: number, height: number) => void;
+  draw: (ctx: CanvasRenderingContext2D, width: number, height: number) => void;
   width?: number;
   height?: number;
+  isRunning?: boolean;
   className?: string;
 }
 
 export default function SimulationCanvas({
   setup,
   draw,
-  width = 600,
+  width = 700,
   height = 400,
+  isRunning = false,
   className = "",
 }: SimulationCanvasProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawRef = useRef(draw);
   const setupRef = useRef(setup);
+  const rafRef = useRef<number>(0);
 
   useEffect(() => {
     drawRef.current = draw;
     setupRef.current = setup;
   }, [draw, setup]);
 
+  // Draw immediately when draw/setup/dimensions change (even when stopped)
   useEffect(() => {
-    if (!containerRef.current) return;
-    const sketch = (p: p5) => {
-      p.setup = () => {
-        if (setupRef.current) {
-          setupRef.current(p);
-        } else {
-          p.createCanvas(width, height);
-        }
-      };
-      p.draw = () => {
-        drawRef.current(p);
-      };
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    if (setupRef.current) {
+      setupRef.current(ctx, width, height);
+    }
+    drawRef.current(ctx, width, height);
+  }, [draw, setup, width, height]);
+
+  // Animation loop — only when isRunning
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    cancelAnimationFrame(rafRef.current);
+
+    if (!isRunning) return;
+
+    const loop = () => {
+      if (setupRef.current) {
+        setupRef.current(ctx, width, height);
+      }
+      drawRef.current(ctx, width, height);
+      rafRef.current = requestAnimationFrame(loop);
     };
-    const instance = new p5(sketch, containerRef.current);
+
+    rafRef.current = requestAnimationFrame(loop);
+
     return () => {
-      instance.remove();
+      cancelAnimationFrame(rafRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isRunning, width, height]);
 
   return (
-    <div
-      ref={containerRef}
-      style={{ maxWidth: width, maxHeight: height }}
-      className={`bg-[#1a1f22] rounded-xl border border-[#37474f] overflow-hidden inline-block ${className}`}
+    <canvas
+      ref={canvasRef}
+      width={width}
+      height={height}
+      className={`bg-[#1a1f22] rounded-xl border border-[#37474f] ${className}`}
     />
   );
 }

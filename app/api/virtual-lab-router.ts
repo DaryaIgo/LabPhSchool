@@ -226,7 +226,7 @@ export const virtualLabRouter = createRouter({
     .input(
       z.object({
         labWorkId: z.number().positive(),
-        mode: z.enum(["training", "self", "control"]),
+        mode: z.enum(["training", "self"]),
         status: z.enum(["not_started", "in_progress", "completed", "submitted"]),
         data: z.record(z.string(), z.unknown()).optional(),
         measurements: z.array(z.record(z.string(), z.unknown())).optional(),

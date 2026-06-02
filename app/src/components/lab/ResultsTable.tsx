@@ -50,7 +50,7 @@ export default function ResultsTable({
               {headers.map((h) => (
                 <th
                   key={h.key}
-                  className="text-left px-4 py-3 text-[#798389] font-medium border-b border-[#37474f] whitespace-nowrap"
+                  className="text-left px-4 py-3 text-[#c8cdd1] font-semibold border-b border-[#37474f] whitespace-nowrap"
                 >
                   {h.label}
                 </th>
@@ -63,9 +63,9 @@ export default function ResultsTable({
               <tr>
                 <td
                   colSpan={headers.length + 1}
-                  className="px-4 py-8 text-center text-[#798389]"
+                  className="px-4 py-8 text-center text-[#c8cdd1]"
                 >
-                  Нет данных. Нажмите «Добавить измерение».
+                  Нет данных. Нажмите «Зафиксировать измерение».
                 </td>
               </tr>
             ) : (
@@ -77,7 +77,7 @@ export default function ResultsTable({
                   {headers.map((h) => (
                     <td
                       key={h.key}
-                      className="px-4 py-2.5 text-white border-b border-[#37474f]/50 whitespace-nowrap"
+                      className="px-4 py-2.5 text-[#c8cdd1] border-b border-[#37474f]/50 whitespace-nowrap"
                     >
                       {row[h.key] ?? "—"}
                     </td>

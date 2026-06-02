@@ -172,6 +172,7 @@ export const unifiedAuthRouter = createRouter({
         status: ctx.localUser.status,
         role: ctx.role?.name ?? "student",
         permissions: ctx.role?.permissions ?? [],
+        avatar: ctx.localUser.avatar ?? null,
       };
     }
 

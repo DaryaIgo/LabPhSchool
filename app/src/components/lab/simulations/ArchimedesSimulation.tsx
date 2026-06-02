@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import SimulationCanvas from "@/components/lab/SimulationCanvas";
-import type p5 from "p5";
 
 interface Props {
   params: Record<string, number | string>;
+  isRunning?: boolean;
 }
 
 export default function ArchimedesSimulation({ params }: Props) {
@@ -11,123 +11,136 @@ export default function ArchimedesSimulation({ params }: Props) {
   const immersionLevel = Number(params["immersionLevel"] || 50);
   const liquidDensity = Number(params["liquidDensity"] || 1000);
 
-  const { setup, draw } = useMemo(() => {
-    const setup = (p: p5) => {
-      p.createCanvas(700, 400);
-    };
+  const draw = useMemo(() => {
+    return (ctx: CanvasRenderingContext2D, w: number, h: number) => {
+      ctx.fillStyle = "#1a1f22";
+      ctx.fillRect(0, 0, w, h);
 
-    const draw = (p: p5) => {
-      p.background(26, 31, 34);
+      const rho = liquidDensity;
+      const v = bodyVolume;
+      const level = immersionLevel;
+      const g = 9.8;
+      const fa = rho * g * (v * 1e-6) * (level / 100);
 
-      const cx = 200;
-      const cy = 180;
-      const cw = 120;
-      const ch = 220;
+      // Tank
+      const tankX = 150;
+      const tankY = 120;
+      const tankW = 200;
+      const tankH = 240;
 
       // Liquid
-      const liquidH = 160;
+      const liquidH = 180;
       const liquidColor =
-        liquidDensity > 13000
-          ? [180, 180, 200]
-          : liquidDensity > 1200
-            ? [100, 180, 255]
-            : [100, 200, 255];
-      p.fill(liquidColor[0], liquidColor[1], liquidColor[2], 140);
-      p.noStroke();
-      p.rect(cx - cw / 2 + 4, cy + ch / 2 - liquidH, cw - 8, liquidH);
+        rho > 1200
+          ? "rgba(100,180,255,0.5)"
+          : rho > 900
+            ? "rgba(100,200,255,0.5)"
+            : "rgba(180,220,100,0.5)";
+      ctx.fillStyle = liquidColor;
+      ctx.fillRect(tankX + 4, tankY + tankH - liquidH, tankW - 8, liquidH);
 
-      // Cylinder
-      p.noFill();
-      p.stroke(120, 140, 150, 150);
-      p.strokeWeight(2);
-      p.rect(cx - cw / 2, cy - ch / 2, cw, ch, 4);
-
-      // Scale
-      p.stroke(120, 140, 150, 100);
-      p.strokeWeight(1);
-      for (let i = 0; i <= 10; i++) {
-        const y = cy + ch / 2 - (i * ch) / 10;
-        p.line(cx - cw / 2 + 10, y, cx - cw / 2 + 25, y);
-        p.noStroke();
-        p.fill(150, 160, 170);
-        p.textSize(10);
-        p.textAlign(p.LEFT, p.CENTER);
-        p.text(String(i * 20), cx - cw / 2 + 30, y);
-      }
+      // Tank glass
+      ctx.strokeStyle = "rgba(120,140,150,0.6)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(tankX, tankY, tankW, tankH);
 
       // Body
-      const bodySize = 30 + bodyVolume * 0.2;
-      const immersionPixels = (bodySize * immersionLevel) / 100;
-      const bodyY = cy + ch / 2 - liquidH + bodySize / 2 - (bodySize - immersionPixels) + 10;
+      const bodySize = Math.min(40 + v * 0.2, 80);
+      const submergedH = bodySize * (level / 100);
+      const bodyY =
+        tankY + tankH - liquidH + submergedH - bodySize / 2;
+      const bodyX = tankX + tankW / 2;
 
-      p.fill(200, 160, 80);
-      p.stroke(255, 255, 255, 100);
-      p.strokeWeight(1);
-      p.rect(cx - bodySize / 2, bodyY - bodySize / 2, bodySize, bodySize, 3);
+      ctx.fillStyle = "#c86464";
+      ctx.fillRect(
+        bodyX - bodySize / 2,
+        bodyY - bodySize / 2,
+        bodySize,
+        bodySize
+      );
 
-      // Water level rise
-      const rise = (bodyVolume * immersionLevel) / 100 / 20;
-      p.fill(liquidColor[0], liquidColor[1], liquidColor[2], 80);
-      p.noStroke();
-      p.rect(cx - cw / 2 + 4, cy + ch / 2 - liquidH - rise, cw - 8, rise);
+      // Submerged part highlight
+      ctx.fillStyle = "rgba(100,180,255,0.3)";
+      ctx.fillRect(
+        bodyX - bodySize / 2,
+        bodyY - bodySize / 2 + bodySize - submergedH,
+        bodySize,
+        submergedH
+      );
 
-      // Force vectors
-      const g = 9.8;
-      const fa = (liquidDensity * g * (bodyVolume * 1e-6) * (immersionLevel / 100));
-      const arrowLen = Math.min(fa * 200, 80);
+      // Arrows
+      ctx.strokeStyle = "#ff6464";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(bodyX, bodyY - bodySize / 2 - 40);
+      ctx.lineTo(bodyX, bodyY - bodySize / 2 - 5);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(bodyX - 5, bodyY - bodySize / 2 - 10);
+      ctx.lineTo(bodyX, bodyY - bodySize / 2 - 5);
+      ctx.lineTo(bodyX + 5, bodyY - bodySize / 2 - 10);
+      ctx.stroke();
+      ctx.fillStyle = "#ff6464";
+      ctx.font = "11px sans-serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText("Fтяж", bodyX + 12, bodyY - bodySize / 2 - 25);
 
-      // F_A up
-      p.stroke(100, 255, 150);
-      p.strokeWeight(2);
-      p.line(cx, bodyY + bodySize / 2 + 10, cx, bodyY + bodySize / 2 + 10 - arrowLen);
-      p.line(cx - 5, bodyY + bodySize / 2 + 10 - arrowLen + 5, cx, bodyY + bodySize / 2 + 10 - arrowLen);
-      p.line(cx + 5, bodyY + bodySize / 2 + 10 - arrowLen + 5, cx, bodyY + bodySize / 2 + 10 - arrowLen);
-      p.noStroke();
-      p.fill(100, 255, 150);
-      p.textSize(11);
-      p.textAlign(p.LEFT, p.CENTER);
-      p.text(`Fₐ = ${fa.toFixed(3)} Н`, cx + 15, bodyY + bodySize / 2 + 10 - arrowLen / 2);
-
-      // F_gravity down
-      const fg = arrowLen * 1.2;
-      p.stroke(255, 100, 100);
-      p.strokeWeight(2);
-      p.line(cx, bodyY - bodySize / 2 - 10, cx, bodyY - bodySize / 2 - 10 + fg);
-      p.line(cx - 5, bodyY - bodySize / 2 - 10 + fg - 5, cx, bodyY - bodySize / 2 - 10 + fg);
-      p.line(cx + 5, bodyY - bodySize / 2 - 10 + fg - 5, cx, bodyY - bodySize / 2 - 10 + fg);
-      p.noStroke();
-      p.fill(255, 100, 100);
-      p.text("Fтяж", cx + 15, bodyY - bodySize / 2 - 10 + fg / 2);
+      ctx.strokeStyle = "#64c896";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(bodyX, bodyY + bodySize / 2 + 40);
+      ctx.lineTo(bodyX, bodyY + bodySize / 2 + 5);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(bodyX - 5, bodyY + bodySize / 2 + 10);
+      ctx.lineTo(bodyX, bodyY + bodySize / 2 + 5);
+      ctx.lineTo(bodyX + 5, bodyY + bodySize / 2 + 10);
+      ctx.stroke();
+      ctx.fillStyle = "#64c896";
+      ctx.fillText("Fₐ", bodyX + 12, bodyY + bodySize / 2 + 25);
 
       // Info panel
-      p.fill(42, 50, 55);
-      p.noStroke();
-      p.rect(400, 80, 260, 240, 8);
-      p.fill(255);
-      p.textSize(14);
-      p.textAlign(p.LEFT, p.TOP);
-      p.text("Параметры:", 415, 95);
-      p.textSize(12);
-      p.fill(150, 160, 170);
-      p.text(`Объём тела: ${bodyVolume} см³`, 415, 125);
-      p.text(`Погружение: ${immersionLevel}%`, 415, 150);
-      p.text(`Плотность жидк.: ${liquidDensity} кг/м³`, 415, 175);
-      p.fill(46, 255, 140);
-      p.textSize(14);
-      p.text(`Fₐ = ${fa.toFixed(3)} Н`, 415, 210);
-      p.textSize(11);
-      p.fill(180, 190, 200);
-      p.text(`Fₐ = ρж·g·Vпогр`, 415, 240);
-      p.text(`Vпогр = ${((bodyVolume * immersionLevel) / 100).toFixed(1)} см³`, 415, 260);
+      ctx.fillStyle = "#3c474f";
+      ctx.beginPath();
+      ctx.roundRect(480, 80, 200, 220, 8);
+      ctx.fill();
 
-      p.fill(255);
-      p.textSize(16);
-      p.textAlign(p.CENTER, p.TOP);
-      p.text("Архимедова сила", 350, 20);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "14px sans-serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillText("Показания:", 495, 95);
+
+      ctx.fillStyle = "#96a3ab";
+      ctx.font = "12px sans-serif";
+      ctx.fillText(`Объём тела: ${v} см³`, 495, 125);
+      ctx.fillText(`Погружение: ${level}%`, 495, 150);
+      ctx.fillText(`ρ жидкости: ${rho} кг/м³`, 495, 175);
+
+      ctx.fillStyle = "#2eff8c";
+      ctx.font = "14px sans-serif";
+      ctx.fillText(`Fₐ = ${fa.toFixed(3)} Н`, 495, 210);
+      ctx.fillText(
+        `Vпогр = ${(v * (level / 100)).toFixed(1)} см³`,
+        495,
+        235
+      );
+
+      // Title
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "16px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText("Измерение архимедовой силы", w / 2, 20);
     };
-
-    return { setup, draw };
   }, [bodyVolume, immersionLevel, liquidDensity]);
 
-  return <SimulationCanvas setup={setup} draw={draw} width={700} height={400} />;
+  return (
+    <SimulationCanvas
+      draw={draw}
+      width={700}
+      height={400}
+    />
+  );
 }

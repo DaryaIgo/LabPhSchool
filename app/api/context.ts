@@ -42,6 +42,7 @@ export async function createContext(
           status: localUser.status as "active" | "inactive" | "suspended",
           roleId: localUser.roleId,
           createdBy: localUser.createdBy,
+          avatar: localUser.avatar ?? null,
           createdAt: localUser.createdAt,
           updatedAt: localUser.createdAt,
           lastLoginAt: localUser.lastLoginAt,

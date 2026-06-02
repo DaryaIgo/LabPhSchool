@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="bg1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a2332"/>
+      <stop offset="100%" stop-color="#0f1724"/>
+    </linearGradient>
+    <linearGradient id="glow1" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#2eff8c" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#2eff8c" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="96" fill="url(#bg1)" stroke="#2eff8c" stroke-width="2"/>
+  <circle cx="100" cy="100" r="88" fill="none" stroke="url(#glow1)" stroke-width="4"/>
+  <!-- Atom model -->
+  <ellipse cx="100" cy="100" rx="50" ry="18" fill="none" stroke="#2eff8c" stroke-width="2" opacity="0.8"/>
+  <ellipse cx="100" cy="100" rx="50" ry="18" fill="none" stroke="#01acff" stroke-width="2" opacity="0.6" transform="rotate(60 100 100)"/>
+  <ellipse cx="100" cy="100" rx="50" ry="18" fill="none" stroke="#ffcb3d" stroke-width="2" opacity="0.6" transform="rotate(-60 100 100)"/>
+  <circle cx="100" cy="100" r="10" fill="#2eff8c"/>
+  <circle cx="100" cy="100" r="6" fill="#1a2332"/>
+  <!-- Electrons -->
+  <circle cx="150" cy="100" r="5" fill="#01acff"/>
+  <circle cx="55" cy="145" r="5" fill="#ffcb3d"/>
+  <circle cx="55" cy="55" r="5" fill="#2eff8c"/>
+</svg>

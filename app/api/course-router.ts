@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createRouter, publicQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { topics, resources, topicNodes } from "@db/schema";
+import { topics, subtopics, resources, topicNodes, labs } from "@db/schema";
 import { eq, asc } from "drizzle-orm";
 
 export const courseRouter = createRouter({
@@ -50,4 +50,14 @@ export const courseRouter = createRouter({
         .orderBy(asc(topicNodes.order));
       return { ...node[0], children };
     }),
+
+  listSubtopics: publicQuery.query(async () => {
+    const db = getDb();
+    return db.select().from(subtopics).orderBy(asc(subtopics.topicId), asc(subtopics.order));
+  }),
+
+  labs: publicQuery.query(async () => {
+    const db = getDb();
+    return db.select().from(labs).orderBy(asc(labs.topicId), asc(labs.order));
+  }),
 });

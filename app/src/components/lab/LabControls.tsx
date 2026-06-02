@@ -60,7 +60,7 @@ function ControlField({ control }: { control: ControlItem }) {
     case "slider": {
       return (
         <div className="flex flex-col gap-1.5 min-w-[140px] flex-1">
-          <label htmlFor={id} className="text-[#798389] text-sm">
+          <label htmlFor={id} className="text-[#c8cdd1] text-sm font-medium">
             {control.label}
             {control.unit ? `, ${control.unit}` : ""}
           </label>
@@ -75,7 +75,7 @@ function ControlField({ control }: { control: ControlItem }) {
               onChange={(e) => control.onChange(parseFloat(e.target.value))}
               className="w-full h-2 bg-[#37474f] rounded-lg appearance-none cursor-pointer accent-[#2eff8c]"
             />
-            <span className="text-white text-sm min-w-[48px] text-right font-mono">
+            <span className="text-[#2eff8c] text-sm min-w-[48px] text-right font-mono font-semibold">
               {control.value}
               {control.unit ? ` ${control.unit}` : ""}
             </span>
@@ -86,7 +86,7 @@ function ControlField({ control }: { control: ControlItem }) {
     case "number": {
       return (
         <div className="flex flex-col gap-1.5 min-w-[120px]">
-          <label htmlFor={id} className="text-[#798389] text-sm">
+          <label htmlFor={id} className="text-[#c8cdd1] text-sm font-medium">
             {control.label}
             {control.unit ? `, ${control.unit}` : ""}
           </label>
@@ -106,7 +106,7 @@ function ControlField({ control }: { control: ControlItem }) {
     case "select": {
       return (
         <div className="flex flex-col gap-1.5 min-w-[160px]">
-          <label htmlFor={id} className="text-[#798389] text-sm">
+          <label htmlFor={id} className="text-[#c8cdd1] text-sm font-medium">
             {control.label}
           </label>
           <select

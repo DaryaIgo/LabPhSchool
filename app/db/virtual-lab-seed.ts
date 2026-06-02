@@ -1,6 +1,7 @@
 import { getDb } from "../api/queries/connection";
 import {
   labCategories,
+  labSubcategories,
   labWorks,
   labBlocks,
   labSimulationParams,
@@ -117,6 +118,32 @@ async function seedVirtualLabs() {
   // Fetch category IDs
   const catRows = await db.select().from(labCategories);
   const catMap = new Map(catRows.map((c) => [c.slug, c.id]));
+
+  // Subcategories
+  const subcategories = [
+    {
+      categoryId: catMap.get("mechanics")!,
+      order: 1,
+      title: "Кинематика",
+      slug: "kinematics",
+      description: "Равномерное и равноускоренное движение, движение по окружности, бросок тела.",
+    },
+  ];
+
+  for (const sub of subcategories) {
+    const exists = await db
+      .select()
+      .from(labSubcategories)
+      .where(eq(labSubcategories.slug, sub.slug))
+      .limit(1);
+    if (exists.length === 0) {
+      await db.insert(labSubcategories).values(sub);
+      console.log(`Created subcategory: ${sub.title}`);
+    }
+  }
+
+  const subRows = await db.select().from(labSubcategories);
+  const subMap = new Map(subRows.map((s) => [s.slug, s.id]));
 
   // Lab Works
   const works = [
@@ -272,6 +299,206 @@ $$Q = I^2 \\cdot R \\cdot t$$
         "При напряжении U = {{voltage}} В и силе тока I = {{current}} А за время t = {{time}} с работа тока составила A = {{work}} Дж, мощность P = {{power}} Вт. Увеличение напряжения приводит к росту работы и мощности тока.",
       status: "published" as const,
     },
+    // ── Кинематика ──
+    {
+      categoryId: catMap.get("mechanics")!,
+      subcategoryId: subMap.get("kinematics")!,
+      order: 1,
+      title: "Изучение прямолинейного равномерного движения",
+      slug: "uniform-linear-motion",
+      law: "s = v·t",
+      skills: "Измерение скорости и времени, построение графиков зависимости координаты от времени.",
+      difficulty: "easy" as const,
+      duration: 25,
+      goal:
+        "Экспериментально определить скорость тела при равномерном прямолинейном движении и построить график зависимости координаты от времени.",
+      theory: `При **равномерном прямолинейном движении** тело за равные промежутки времени совершает равные перемещения. Скорость остается постоянной.
+
+**Основные формулы:**
+$$s = v \\cdot t$$
+$$x = x_0 + v \\cdot t$$
+
+gde:
+- $s$ — путь (м)
+- $v$ — скорость (м/с)
+- $t$ — время (с)
+- $x$ — координата тела (м)
+- $x_0$ — начальная координата (м)
+
+**График $x(t)$** при равномерном движении — прямая линия, угловой коэффициент которой равен скорости $v$.
+
+**График $s(t)$** — прямая линия, проходящая через начало координат.`,
+      equipment: JSON.stringify(["Секундомер", "Измерительная лента", "Движущееся тело (тележка)", "Линейка", "Метки"]),
+      instruction: `1. Установите начальное положение тела на измерительной ленте. Запишите x0.
+2. Задайте скорость движения тела.
+3. Запустите движение и одновременно включите секундомер.
+4. Через равные промежутки времени (например, каждые 2 с) фиксируйте координату тела.
+5. Занесите результаты в таблицу.
+6. Постройте график зависимости x(t).
+7. По угловому коэффициенту графика определите скорость движения.`,
+      conclusionTemplate:
+        "В ходе работы было исследовано равномерное прямолинейное движение. Установлено, что координата тела линейно зависит от времени. Экспериментально определенная скорость составила v = {{avgSpeed}} м/с, что соответствует заданному значению с погрешностью {{errorPercent}}%.",
+      status: "published" as const,
+    },
+    {
+      categoryId: catMap.get("mechanics")!,
+      subcategoryId: subMap.get("kinematics")!,
+      order: 2,
+      title: "Изучение прямолинейного равноускоренного движения",
+      slug: "uniformly-accelerated-motion",
+      law: "s = v0t + at2/2",
+      skills: "Измерение пути, скорости и ускорения; работа с наклонным желобом; построение графиков.",
+      difficulty: "medium" as const,
+      duration: 35,
+      goal:
+        "Экспериментально измерить путь и скорость тела, движущегося с постоянным ускорением, и определить величину ускорения.",
+      theory: `При **равноускоренном прямолинейном движении** ускорение остается постоянным.
+
+**Основные формулы:**
+$$v = v_0 + a \\cdot t$$
+$$s = v_0 \\cdot t + \\frac{a \\cdot t^2}{2}$$
+$$v^2 - v_0^2 = 2 \\cdot a \\cdot s$$
+
+gde:
+- $v_0$ — начальная скорость (м/с)
+- $a$ — ускорение (м/с²)
+- $t$ — время (с)
+- $s$ — путь (м)
+
+**График $v(t)$** при равноускоренном движении — наклонная прямая. Угловой коэффициент равен ускорению $a$.
+
+Эксперимент часто выполняется на **наклонном желобе** или с помощью **машины Атвуда**.`,
+      equipment: JSON.stringify(["Наклонный желоб", "Шарик (или тележка)", "Секундомер", "Линейка", "Угломер", "Опоры"]),
+      instruction: `1. Установите наклонный желоб под углом 10–15° к горизонту.
+2. Отпустите шарик из начальной точки (v0 = 0).
+3. Измерьте время движения до нескольких контрольных точек.
+4. Для каждой точки рассчитайте пройденный путь s и мгновенную скорость v.
+5. Повторите опыт при другом угле наклона (другом ускорении).
+6. Постройте графики s(t) и v(t).
+7. По графику v(t) определите ускорение.`,
+      conclusionTemplate:
+        "При равноускоренном движении с начальной скоростью v0 = {{v0}} м/с и ускорением a = {{avgAccel}} м/с² путь пропорционален квадрату времени, а скорость линейно зависит от времени. Экспериментально полученное значение ускорения подтверждает теоретический расчет: a = g·sin(α) ≈ {{theoreticalAccel}} м/с².",
+      status: "published" as const,
+    },
+    {
+      categoryId: catMap.get("mechanics")!,
+      subcategoryId: subMap.get("kinematics")!,
+      order: 3,
+      title: "Определение ускорения свободного падения",
+      slug: "free-fall-g",
+      law: "T = 2π√(l/g)",
+      skills: "Работа с маятником, измерение периода колебаний, обработка экспериментальных данных.",
+      difficulty: "medium" as const,
+      duration: 40,
+      goal:
+        "Экспериментально определить ускорение свободного падения g с помощью математического маятника.",
+      theory: `**Математический маятник** — материальная точка, подвешенная на невесомой нерастяжимой нити.
+
+Период его колебаний:
+$$T = 2\\pi \\sqrt{\\frac{l}{g}}$$
+
+gde:
+- $T$ — период колебаний (с)
+- $l$ — длина нити (м)
+- $g$ — ускорение свободного падения (м/с²)
+
+**Выражение для g:**
+$$g = \\frac{4\\pi^2 l}{T^2}$$
+
+Для повышения точности измеряют время $t$ большого числа колебаний $n$:
+$$T = \\frac{t}{n}$$
+
+При малых амплитудах (α < 5°) период не зависит от массы груза.`,
+      equipment: JSON.stringify(["Штатив с кольцом", "Нить с грузом (шарик)", "Секундомер", "Линейка", "Транспортир"]),
+      instruction: `1. Подвесьте груз на нити длиной l = 50 см.
+2. Отведите маятник на малый угол (2–3°) и отпустите.
+3. Измерьте время t = 20 полных колебаний.
+4. Вычислите период: T = t/20.
+5. Рассчитайте g по формуле g = 4π²l/T².
+6. Повторите опыт для нитей длиной 75 см, 100 см, 125 см, 150 см.
+7. Постройте график T²(l) и определите g по угловому коэффициенту.`,
+      conclusionTemplate:
+        "В ходе работы было определено ускорение свободного падения с помощью математического маятника. Среднее значение g = {{avgG}} м/с². Погрешность измерения составила {{errorPercent}}% по сравнению с табличным значением 9,8 м/с². Установлено, что T² пропорционально длине нити l.",
+      status: "published" as const,
+    },
+    {
+      categoryId: catMap.get("mechanics")!,
+      subcategoryId: subMap.get("kinematics")!,
+      order: 4,
+      title: "Изучение движения по окружности",
+      slug: "circular-motion",
+      law: "a = v²/R = ω²R",
+      skills: "Измерение периода вращения, расчет центростремительного ускорения, угловой и линейной скорости.",
+      difficulty: "medium" as const,
+      duration: 30,
+      goal:
+        "Определить центростремительное ускорение, угловую и линейную скорость тела при равномерном вращении по окружности.",
+      theory: `При **равномерном движении по окружности** скорость по модулю постоянна, но направление непрерывно меняется.
+
+**Основные величины:**
+- Период: $T = \\frac{2\\pi R}{v} = \\frac{2\\pi}{\\omega}$
+- Линейная скорость: $v = \\frac{2\\pi R}{T} = \\omega R$
+- Угловая скорость: $\\omega = \\frac{2\\pi}{T}$
+- Центростремительное ускорение: $a = \\frac{v^2}{R} = \\omega^2 R = \\frac{4\\pi^2 R}{T^2}$
+- Центростремительная сила: $F = m \\cdot a = m \\cdot \\frac{v^2}{R}$
+
+gde:
+- $R$ — радиус окружности (м)
+- $m$ — масса тела (кг)
+- $T$ — период обращения (с)`,
+      equipment: JSON.stringify(["Штатив с нитью", "Груз", "Секундомер", "Линейка", "Весы"]),
+      instruction: `1. Подвесьте груз массой m на нити длиной R.
+2. Приведите груз во вращение по горизонтальной окружности радиуса R (конический маятник).
+3. Измерьте время 10 полных оборотов.
+4. Вычислите период вращения T.
+5. Рассчитайте линейную скорость v, угловую скорость ω и центростремительное ускорение a.
+6. Повторите опыт при другом радиусе вращения.
+7. Постройте график a(R) при постоянном T.`,
+      conclusionTemplate:
+        "При равномерном движении по окружности радиусом R = {{avgRadius}} м и периодом T = {{avgPeriod}} с линейная скорость составила v = {{avgV}} м/с, угловая скорость ω = {{avgOmega}} рад/с, центростремительное ускорение a = {{avgA}} м/с². Установлено, что a пропорционально R при постоянном ω и обратно пропорционально R при постоянном v.",
+      status: "published" as const,
+    },
+    {
+      categoryId: catMap.get("mechanics")!,
+      subcategoryId: subMap.get("kinematics")!,
+      order: 5,
+      title: "Исследование движения тела, брошенного под углом",
+      slug: "projectile-motion",
+      law: "L = v0²·sin(2α)/g",
+      skills: "Анализ параболического движения, расчет дальности, высоты и времени полета.",
+      difficulty: "hard" as const,
+      duration: 45,
+      goal:
+        "Определить дальность полета, максимальную высоту подъема и время полета тела, брошенного под углом к горизонту, в зависимости от угла бросания и начальной скорости.",
+      theory: `Движение тела, брошенного под углом α к горизонту с начальной скоростью v0, можно разложить на два независимых движения:
+
+**По горизонтали** — равномерное движение:
+$$v_x = v_0 \\cdot \\cos\\alpha$$
+$$x = v_0 \\cdot \\cos\\alpha \\cdot t$$
+
+**По вертикали** — равноускоренное движение:
+$$v_y = v_0 \\cdot \\sin\\alpha - g \\cdot t$$
+$$y = v_0 \\cdot \\sin\\alpha \\cdot t - \\frac{g \\cdot t^2}{2}$$
+
+**Характеристики полета:**
+- Время подъема: $t_{п} = \\frac{v_0 \\cdot \\sin\\alpha}{g}$
+- Полное время полета: $T = 2t_{п} = \\frac{2v_0 \\cdot \\sin\\alpha}{g}$
+- Максимальная высота: $H = \\frac{v_0^2 \\cdot \\sin^2\\alpha}{2g}$
+- Дальность полета: $L = \\frac{v_0^2 \\cdot \\sin(2\\alpha)}{g}$
+
+Максимальная дальность достигается при угле броска α = 45°.`,
+      equipment: JSON.stringify(["Стенд для броска", "Мяч", "Линейка", "Угломер", "Секундомер", "Бумага миллиметровая"]),
+      instruction: `1. Установите угол броска α = 30° и начальную скорость v0.
+2. Выполните бросок и измерьте дальность полета L и время полета T.
+3. Рассчитайте теоретические значения L, H и T по формулам.
+4. Повторите опыт для углов 45° и 60° (при той же v0).
+5. Повторите опыт при другой начальной скорости.
+6. Занесите результаты в таблицу.
+7. Постройте графики L(α) и H(α).`,
+      conclusionTemplate:
+        "В ходе работы было исследовано движение тела, брошенного под углом к горизонту. Установлено, что максимальная дальность полета L = {{maxL}} м достигается при угле броска около 45°, а максимальная высота H = {{maxH}} м увеличивается с ростом угла α. При v0 = {{avgV0}} м/с экспериментальные значения хорошо согласуются с теоретическими расчетами.",
+      status: "published" as const,
+    },
   ];
 
   for (const work of works) {
@@ -340,6 +567,51 @@ $$Q = I^2 \\cdot R \\cdot t$$
           { key: "voltage", label: "Напряжение", paramType: "slider" as const, min: "1", max: "12", step: "0.5", defaultValue: "6", unit: "В" },
           { key: "resistance", label: "Сопротивление", paramType: "slider" as const, min: "1", max: "100", step: "1", defaultValue: "10", unit: "Ом" },
           { key: "time", label: "Время", paramType: "slider" as const, min: "10", max: "300", step: "10", defaultValue: "60", unit: "с" },
+        ];
+        for (const p of params) {
+          await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+        }
+      } else if (work.slug === "uniform-linear-motion") {
+        const params = [
+          { key: "speed", label: "Скорость", paramType: "slider" as const, min: "0.5", max: "20", step: "0.5", defaultValue: "5", unit: "м/с" },
+          { key: "time", label: "Время", paramType: "slider" as const, min: "1", max: "30", step: "1", defaultValue: "10", unit: "с" },
+          { key: "startX", label: "Начальная координата", paramType: "slider" as const, min: "0", max: "50", step: "1", defaultValue: "0", unit: "м" },
+        ];
+        for (const p of params) {
+          await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+        }
+      } else if (work.slug === "uniformly-accelerated-motion") {
+        const params = [
+          { key: "v0", label: "Начальная скорость", paramType: "slider" as const, min: "0", max: "10", step: "0.5", defaultValue: "0", unit: "м/с" },
+          { key: "acceleration", label: "Ускорение", paramType: "slider" as const, min: "-5", max: "5", step: "0.1", defaultValue: "2", unit: "м/с²" },
+          { key: "time", label: "Время", paramType: "slider" as const, min: "1", max: "20", step: "0.5", defaultValue: "5", unit: "с" },
+        ];
+        for (const p of params) {
+          await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+        }
+      } else if (work.slug === "free-fall-g") {
+        const params = [
+          { key: "length", label: "Длина нити", paramType: "slider" as const, min: "0.1", max: "2", step: "0.05", defaultValue: "0.5", unit: "м" },
+          { key: "oscillations", label: "Число колебаний", paramType: "slider" as const, min: "5", max: "50", step: "1", defaultValue: "20", unit: "" },
+          { key: "measuredTime", label: "Измеренное время", paramType: "slider" as const, min: "1", max: "100", step: "0.1", defaultValue: "28.3", unit: "с" },
+        ];
+        for (const p of params) {
+          await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+        }
+      } else if (work.slug === "circular-motion") {
+        const params = [
+          { key: "radius", label: "Радиус окружности", paramType: "slider" as const, min: "0.1", max: "2", step: "0.05", defaultValue: "0.5", unit: "м" },
+          { key: "period", label: "Период обращения", paramType: "slider" as const, min: "0.1", max: "5", step: "0.05", defaultValue: "1", unit: "с" },
+          { key: "mass", label: "Масса тела", paramType: "slider" as const, min: "0.05", max: "2", step: "0.05", defaultValue: "0.2", unit: "кг" },
+        ];
+        for (const p of params) {
+          await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+        }
+      } else if (work.slug === "projectile-motion") {
+        const params = [
+          { key: "v0", label: "Начальная скорость", paramType: "slider" as const, min: "1", max: "50", step: "1", defaultValue: "20", unit: "м/с" },
+          { key: "angle", label: "Угол броска", paramType: "slider" as const, min: "0", max: "90", step: "1", defaultValue: "45", unit: "°" },
+          { key: "g", label: "Ускорение свободного падения", paramType: "slider" as const, min: "1.6", max: "20", step: "0.1", defaultValue: "9.8", unit: "м/с²" },
         ];
         for (const p of params) {
           await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
