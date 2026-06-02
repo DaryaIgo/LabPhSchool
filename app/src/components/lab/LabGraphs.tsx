@@ -200,9 +200,12 @@ export function LabGraphs({ measurements, slug }: LabGraphsProps) {
     }
 
     if (slug === "uniform-linear-motion") {
-      const numericData = data
-        .map((d) => ({ ...d, time: Number(d.time), x: Number(d.x), s: Number(d.s) }))
-        .sort((a, b) => a.time - b.time);
+      const startX = Number(data[0]?.startX || 0);
+      const speed = Number(data[0]?.speed || 0);
+      const originPoint = { time: 0, x: startX, s: 0, v: speed, speed, startX };
+      const numericData = [originPoint, ...data
+        .map((d) => ({ ...d, time: Number(d.time), x: Number(d.x), s: Number(d.s), v: Number(d.v || d.speed) }))
+      ].sort((a, b) => a.time - b.time);
       return (
         <div className="space-y-6">
           <GraphCard title="Зависимость координаты от времени x(t)">
@@ -253,6 +256,32 @@ export function LabGraphs({ measurements, slug }: LabGraphsProps) {
                   strokeWidth={2}
                   dot={{ r: 4, fill: "#01acff" }}
                   name="s(t)"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </GraphCard>
+          <GraphCard title="Зависимость скорости от времени v(t)">
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={numericData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
+                <XAxis type="number" dataKey="time" stroke="#798389" />
+                <YAxis type="number" dataKey="v" stroke="#798389" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1a1f22",
+                    border: "1px solid #37474f",
+                    borderRadius: "8px",
+                    color: "#fff",
+                  }}
+                />
+                <Legend />
+                <Line
+                  type="linear"
+                  dataKey="v"
+                  stroke="#ff7043"
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: "#ff7043" }}
+                  name="v(t)"
                 />
               </LineChart>
             </ResponsiveContainer>

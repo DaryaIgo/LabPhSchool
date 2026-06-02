@@ -181,6 +181,7 @@ export default function LabWorkPage() {
       row["time"] = simTime.toFixed(1);
       row["s"] = (speed * simTime).toFixed(1);
       row["x"] = (startX + speed * simTime).toFixed(1);
+      row["v"] = speed;
     } else if (slug === "uniformly-accelerated-motion") {
       const v0 = Number(effectiveSimParams["v0"] || 0);
       const a = Number(effectiveSimParams["acceleration"] || 0);
