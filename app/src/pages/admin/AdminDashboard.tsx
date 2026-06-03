@@ -22,6 +22,7 @@ import {
   Activity,
   Library,
   FileCheck,
+  NotebookPen,
 } from "lucide-react";
 
 function StatCard({
@@ -221,38 +222,15 @@ export default function AdminDashboard() {
           icon={FileCheck}
           onClick={() => navigate("/admin/lab-submissions")}
         />
+        <QuickAction
+          label="Jupyter-ссылки"
+          icon={NotebookPen}
+          onClick={() => navigate("/admin/subtopics")}
+        />
       </div>
 
       {/* Recent Activity Preview */}
-      <h2 className="text-lg font-semibold mb-4">Security</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="bg-[#1e2529] border-[#37474f]">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <ShieldCheck className="h-10 w-10 text-[#2eff8c]" />
-              <div>
-                <p className="font-medium">Role-Based Access Control</p>
-                <p className="text-sm text-gray-400">
-                  Admin and student roles with fine-grained permissions
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-[#1e2529] border-[#37474f]">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Activity className="h-10 w-10 text-[#2eff8c]" />
-              <div>
-                <p className="font-medium">Audit Logging</p>
-                <p className="text-sm text-gray-400">
-                  All actions are logged with actor, timestamp, and details
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Security section hidden per request */}
     </div>
   );
 }

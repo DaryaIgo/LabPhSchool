@@ -64,6 +64,13 @@
       "when": 1780399229027,
       "tag": "0008_brown_mesmero",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1780494109929,
+      "tag": "0009_typical_iron_monger",
+      "breakpoints": true
     }
   ]
 }

@@ -10,6 +10,7 @@ import { createRouter, adminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import {
   topics,
+  subtopics,
   problems,
   localUsers,
   topicNodes,
@@ -366,6 +367,52 @@ export const adminRouter = createRouter({
         .filter(Boolean)
         .join("\n");
       return { markdown: frontMatter, filename: `${n.slug}.md` };
+    }),
+
+  // ═══════════════════════════════════════════════════════════
+  // SUBTOPICS CRUD
+  // ═══════════════════════════════════════════════════════════
+
+  listSubtopics: adminQuery.query(async () => {
+    return getDb()
+      .select()
+      .from(subtopics)
+      .orderBy(asc(subtopics.topicId), asc(subtopics.order));
+  }),
+
+  updateSubtopic: adminQuery
+    .input(
+      z.object({
+        id: z.number().positive(),
+        title: z.string().min(1).max(255).optional(),
+        description: z.string().max(5000).optional(),
+        content: z.string().max(100000).optional(),
+        jupyterUrl: z.string().max(500).optional().nullable(),
+        order: z.number().int().min(1).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = getDb();
+      const { id, ...data } = input;
+      const updateData: Record<string, unknown> = {};
+      if (data.title !== undefined) updateData.title = data.title;
+      if (data.description !== undefined) updateData.description = data.description;
+      if (data.content !== undefined) updateData.content = data.content;
+      if (data.jupyterUrl !== undefined) updateData.jupyterUrl = data.jupyterUrl;
+      if (data.order !== undefined) updateData.order = data.order;
+
+      await db.update(subtopics).set(updateData).where(eq(subtopics.id, id));
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "update",
+        resource: "subtopics",
+        resourceId: id,
+        details: { fields: Object.keys(data) },
+      });
+
+      return { success: true };
     }),
 
   // ═══════════════════════════════════════════════════════════

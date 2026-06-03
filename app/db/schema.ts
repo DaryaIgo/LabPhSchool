@@ -165,6 +165,7 @@ export const subtopics = mysqlTable("subtopics", {
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
   content: text("content"),
+  jupyterUrl: varchar("jupyter_url", { length: 500 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

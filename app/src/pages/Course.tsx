@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { trpc } from "@/providers/trpc";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
-import { ChevronDown, ChevronRight, FlaskConical, FileText, ArrowLeft, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronRight, FlaskConical, FileText, ArrowLeft, Loader2, ExternalLink } from "lucide-react";
 import { Link } from "react-router";
 import type { TopicNode } from "@db/schema";
 
@@ -32,7 +32,7 @@ function buildTree(nodes: TopicNode[]): TreeNode[] {
   return roots;
 }
 
-function NodeContent({ node, onBack }: { node: TreeNode; onBack: () => void }) {
+function NodeContent({ node, onBack, jupyterUrl }: { node: TreeNode; onBack: () => void; jupyterUrl?: string | null }) {
   return (
     <div className="bg-[#1a1f22] border border-[#2eff8c]/20 rounded-xl p-5 mb-4">
       <button
@@ -48,6 +48,22 @@ function NodeContent({ node, onBack }: { node: TreeNode; onBack: () => void }) {
         ) : (
           <p className="text-sm text-[#798389]">Нет содержимого</p>
         )}
+        {jupyterUrl ? (
+          <a
+            href={jupyterUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 mt-4 text-xs bg-[#2eff8c]/10 text-[#2eff8c] px-3 py-1.5 rounded-md hover:bg-[#2eff8c]/20 transition-colors"
+          >
+            <ExternalLink size={12} />
+            Jupyter- {node.title}
+          </a>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 mt-4 text-xs text-[#798389] bg-white/5 px-3 py-1.5 rounded-md">
+            <ExternalLink size={12} />
+            Jupyter: не задан
+          </span>
+        )}
       </div>
     </div>
   );
@@ -57,34 +73,56 @@ function SubtopicList({
   nodes,
   activeId,
   onSelect,
+  jupyterUrlMap,
 }: {
   nodes: TreeNode[];
   activeId: number | null;
   onSelect: (id: number) => void;
+  jupyterUrlMap?: Map<string, string | null>;
 }) {
   return (
     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {nodes.map((sub) => (
-        <button
-          key={sub.id}
-          onClick={() => onSelect(sub.id)}
-          className={`group text-left bg-[#1a1f22] border rounded-xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl flex flex-col ${
-            activeId === sub.id
-              ? "border-[#2eff8c]/50"
-              : "border-[#434e54] hover:border-[#2eff8c]/50"
-          }`}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
-              <FileText size={20} className="text-[#2eff8c]" />
+      {nodes.map((sub) => {
+        const jupyterUrl = jupyterUrlMap?.get(sub.title);
+        return (
+          <button
+            key={sub.id}
+            onClick={() => onSelect(sub.id)}
+            className={`group text-left bg-[#1a1f22] border rounded-xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl flex flex-col ${
+              activeId === sub.id
+                ? "border-[#2eff8c]/50"
+                : "border-[#434e54] hover:border-[#2eff8c]/50"
+            }`}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+                <FileText size={20} className="text-[#2eff8c]" />
+              </div>
+              <ChevronRight size={18} className="text-[#798389] group-hover:text-[#2eff8c] transition-colors" />
             </div>
-            <ChevronRight size={18} className="text-[#798389] group-hover:text-[#2eff8c] transition-colors" />
-          </div>
-          <h5 className="text-sm font-semibold text-white group-hover:text-[#2eff8c] transition-colors">
-            {sub.title}
-          </h5>
-        </button>
-      ))}
+            <h5 className="text-sm font-semibold text-white group-hover:text-[#2eff8c] transition-colors mb-3">
+              {sub.title}
+            </h5>
+            {jupyterUrl ? (
+              <a
+                href={jupyterUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1 text-xs bg-[#2eff8c]/10 text-[#2eff8c] px-2 py-1 rounded-md hover:bg-[#2eff8c]/20 transition-colors mt-auto"
+              >
+                <ExternalLink size={12} />
+                Jupyter- {sub.title}
+              </a>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-xs text-[#798389] bg-white/5 px-2 py-1 rounded-md mt-auto">
+                <ExternalLink size={12} />
+                Jupyter: не задан
+              </span>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -96,6 +134,7 @@ function TopicAccordion({
   activeNodeId,
   onSelectNode,
   onBack,
+  jupyterUrlMap,
 }: {
   topic: TreeNode;
   isOpen: boolean;
@@ -103,6 +142,7 @@ function TopicAccordion({
   activeNodeId: number | null;
   onSelectNode: (id: number) => void;
   onBack: () => void;
+  jupyterUrlMap?: Map<string, string | null>;
 }) {
   const activeNode = useMemo(() => {
     const find = (nodes: TreeNode[]): TreeNode | null => {
@@ -148,13 +188,14 @@ function TopicAccordion({
 
           {activeNode ? (
             <>
-              <NodeContent node={activeNode} onBack={onBack} />
+              <NodeContent node={activeNode} onBack={onBack} jupyterUrl={jupyterUrlMap?.get(activeNode.title)} />
               {activeNode.children.length > 0 && (
                 <div className="mt-4">
                   <SubtopicList
                     nodes={activeNode.children}
                     activeId={activeNodeId}
                     onSelect={onSelectNode}
+                    jupyterUrlMap={jupyterUrlMap}
                   />
                 </div>
               )}
@@ -164,6 +205,7 @@ function TopicAccordion({
               nodes={topic.children}
               activeId={activeNodeId}
               onSelect={onSelectNode}
+              jupyterUrlMap={jupyterUrlMap}
             />
           )}
 
@@ -189,11 +231,18 @@ export default function Course() {
   const [activeNodeId, setActiveNodeId] = useState<number | null>(null);
 
   const { data: nodes, isLoading } = trpc.course.topicNodes.useQuery();
+  const { data: subtopics } = trpc.course.listSubtopics.useQuery();
 
   const tree = useMemo(() => {
     if (!nodes) return [];
     return buildTree(nodes);
   }, [nodes]);
+
+  const jupyterUrlMap = useMemo(() => {
+    const map = new Map<string, string | null>();
+    subtopics?.forEach((s) => map.set(s.title, s.jupyterUrl));
+    return map;
+  }, [subtopics]);
 
   const handleToggleTopic = (id: number) => {
     setOpenTopicId((prev) => (prev === id ? null : id));
@@ -298,6 +347,7 @@ export default function Course() {
                       activeNodeId={activeNodeId}
                       onSelectNode={handleSelectNode}
                       onBack={() => setActiveNodeId(null)}
+                      jupyterUrlMap={jupyterUrlMap}
                     />
                   );
                 })()}

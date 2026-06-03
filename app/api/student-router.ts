@@ -177,6 +177,7 @@ export const studentRouter = createRouter({
         topicId: schema.subtopics.topicId,
         title: schema.subtopics.title,
         order: schema.subtopics.order,
+        jupyterUrl: schema.subtopics.jupyterUrl,
       })
       .from(schema.subtopics)
       .where(inArray(schema.subtopics.topicId, enrolledTopicIds))
@@ -227,6 +228,7 @@ export const studentRouter = createRouter({
           id: sub.id,
           title: sub.title,
           order: sub.order,
+          jupyterUrl: sub.jupyterUrl,
           status: (prog?.status ?? "not_started") as
             | "not_started"
             | "in_progress"

@@ -32,6 +32,7 @@ import {
   GraduationCap,
   Beaker,
   FileText,
+  ExternalLink,
 } from "lucide-react";
 
 const AVATARS = [
@@ -483,6 +484,17 @@ export default function StudentProfile() {
                                     <p className="text-xs text-[#798389] mt-0.5">
                                       {sub.comment}
                                     </p>
+                                  )}
+                                  {sub.jupyterUrl && (
+                                    <a
+                                      href={sub.jupyterUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 mt-1.5 text-xs bg-[#2eff8c]/10 text-[#2eff8c] px-2 py-1 rounded-md hover:bg-[#2eff8c]/20 transition-colors"
+                                    >
+                                      <ExternalLink size={12} />
+                                      Jupyter- {sub.title}
+                                    </a>
                                   )}
                                 </div>
                                 <div className="flex items-center gap-1 shrink-0">
