@@ -10,6 +10,7 @@ import {
   Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 
 import { toast } from "sonner";
@@ -49,6 +50,33 @@ const simComponents: Record<string, React.FC<SimComponentProps>> = {
   "circular-motion": CircularMotion,
   "projectile-motion": ProjectileMotion,
 };
+
+interface TheoryTab {
+  label: string;
+  title: string;
+  content: string;
+}
+
+function parseTheoryTabs(theory: string): TheoryTab[] | null {
+  const regex = /\*\*Способ\s+(\d+):\s*([^\*]+)\*\*/g;
+  const matches = Array.from(theory.matchAll(regex));
+  if (matches.length < 2) return null;
+
+  const tabs: TheoryTab[] = [];
+  for (let i = 0; i < matches.length; i++) {
+    const start = matches[i].index!;
+    const end = i < matches.length - 1 ? matches[i + 1].index! : theory.length;
+    const sectionText = theory.slice(start, end).trim();
+    const header = matches[i][0];
+    const body = sectionText.slice(header.length).trim();
+    tabs.push({
+      label: `Способ ${matches[i][1]}`,
+      title: matches[i][2].trim(),
+      content: body,
+    });
+  }
+  return tabs;
+}
 
 export default function LabWorkPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -469,9 +497,36 @@ export default function LabWorkPage() {
                       <BookOpen size={20} className="text-[#2eff8c]" />
                       <h3 className="text-lg font-bold text-white">Теоретические сведения</h3>
                     </div>
-                    <div className="prose prose-invert prose-sm max-w-none text-[#c8cdd1] leading-relaxed">
-                      <MarkdownRenderer content={(labWork.topicNodeContent || labWork.theory) ?? ""} />
-                    </div>
+                    {(() => {
+                      const theoryContent = (labWork.theory || labWork.topicNodeContent) ?? "";
+                      const tabs = parseTheoryTabs(theoryContent);
+                      if (tabs) {
+                        return (
+                          <Tabs defaultValue="0">
+                            <TabsList>
+                              {tabs.map((tab, i) => (
+                                <TabsTrigger key={i} value={String(i)}>
+                                  {tab.label}
+                                </TabsTrigger>
+                              ))}
+                            </TabsList>
+                            {tabs.map((tab, i) => (
+                              <TabsContent key={i} value={String(i)} className="mt-4">
+                                <p className="text-white font-semibold mb-3">
+                                  {tab.title}
+                                </p>
+                                <MarkdownRenderer content={tab.content} />
+                              </TabsContent>
+                            ))}
+                          </Tabs>
+                        );
+                      }
+                      return (
+                        <div className="prose prose-invert prose-sm max-w-none text-[#c8cdd1] leading-relaxed">
+                          <MarkdownRenderer content={theoryContent} />
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
@@ -498,11 +553,37 @@ export default function LabWorkPage() {
                   {labWork.instruction && (
                     <div className="bg-[#1a1f22] border border-[#37474f] rounded-xl p-4 text-sm text-[#c8cdd1]">
                       <p className="font-medium text-white mb-2">Пошаговая инструкция:</p>
-                      <ol className="list-decimal list-inside space-y-1">
-                        {labWork.instruction.split("\n").filter(Boolean).map((step, i) => (
-                          <li key={i}>{step.replace(/^\d+\.\s*/, "")}</li>
-                        ))}
-                      </ol>
+                      {(() => {
+                        const instTabs = parseTheoryTabs(labWork.instruction);
+                        if (instTabs) {
+                          return (
+                            <Tabs defaultValue="0">
+                              <TabsList>
+                                {instTabs.map((tab, i) => (
+                                  <TabsTrigger key={i} value={String(i)}>
+                                    {tab.label}
+                                  </TabsTrigger>
+                                ))}
+                              </TabsList>
+                              {instTabs.map((tab, i) => (
+                                <TabsContent key={i} value={String(i)} className="mt-3">
+                                  <p className="text-white font-medium mb-2">
+                                    {tab.title}
+                                  </p>
+                                  <MarkdownRenderer content={tab.content} />
+                                </TabsContent>
+                              ))}
+                            </Tabs>
+                          );
+                        }
+                        return (
+                          <ol className="list-decimal list-inside space-y-1">
+                            {labWork.instruction.split("\n").filter(Boolean).map((step, i) => (
+                              <li key={i}>{step.replace(/^\d+\.\s*/, "")}</li>
+                            ))}
+                          </ol>
+                        );
+                      })()}
                     </div>
                   )}
 
