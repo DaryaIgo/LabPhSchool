@@ -26,13 +26,14 @@ export default function Header() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/50 border-b border-white/5">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+      <div className="w-full px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-6">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
-              <span className="font-mono-phys text-lg font-bold text-white tracking-tight">Квант</span>
-              <span className="text-[10px] font-mono-phys text-[#2eff8c] uppercase tracking-widest">physics</span>
+              <div className="flex flex-col items-center leading-none">
+                <span className="font-mono-phys text-2xl font-bold neon-ph">Ph</span>
+              </div>
             </Link>
 
             {/* Desktop Nav */}

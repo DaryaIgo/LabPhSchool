@@ -157,3 +157,49 @@
 .animate-fadeIn {
   animation: fadeIn 0.25s ease-out forwards;
 }
+
+/* Neon Ph effect */
+.neon-ph {
+  color: #22d3ee;
+  text-shadow:
+    0 0 4px #06b6d4,
+    0 0 8px #0891b2,
+    0 0 16px #0e7490,
+    0 0 32px #155e75;
+  transition: all 0.3s ease;
+}
+
+.neon-ph:hover {
+  animation: neonFlicker 0.08s infinite alternate;
+  text-shadow:
+    0 0 8px #a5f3fc,
+    0 0 16px #67e8f9,
+    0 0 32px #22d3ee,
+    0 0 64px #06b6d4,
+    0 0 100px #0891b2,
+    0 0 140px #0e7490;
+}
+
+@keyframes neonFlicker {
+  0%   { opacity: 1; transform: scale(1); }
+  5%   { opacity: 0.35; transform: scale(1.02); }
+  10%  { opacity: 1; transform: scale(1); }
+  15%  { opacity: 0.2; transform: scale(1.03); }
+  20%  { opacity: 0.9; transform: scale(1); }
+  25%  { opacity: 0.45; transform: scale(1.01); }
+  30%  { opacity: 1; transform: scale(1); }
+  35%  { opacity: 0.15; transform: scale(1.02); }
+  40%  { opacity: 0.85; transform: scale(1); }
+  45%  { opacity: 0.55; transform: scale(1.01); }
+  50%  { opacity: 1; transform: scale(1); }
+  55%  { opacity: 0.25; transform: scale(1.03); }
+  60%  { opacity: 0.95; transform: scale(1); }
+  65%  { opacity: 0.4; transform: scale(1.02); }
+  70%  { opacity: 1; transform: scale(1); }
+  75%  { opacity: 0.3; transform: scale(1.01); }
+  80%  { opacity: 0.9; transform: scale(1); }
+  85%  { opacity: 0.5; transform: scale(1.02); }
+  90%  { opacity: 1; transform: scale(1); }
+  95%  { opacity: 0.6; transform: scale(1.01); }
+  100% { opacity: 0.85; transform: scale(1); }
+}

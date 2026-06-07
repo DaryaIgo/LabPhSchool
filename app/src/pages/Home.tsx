@@ -192,17 +192,6 @@ export default function Home() {
             каждого ученика
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up" style={{ animationDelay: "3.8s", opacity: 0 }}>
-            <Link to="/course" className="btn-lime flex items-center justify-center gap-2">
-              <BookOpen size={18} />
-              Начать обучение
-            </Link>
-            <Link to="/labs" className="btn-outline flex items-center justify-center gap-2">
-              <FlaskConical size={18} />
-              Посмотреть лабораторные
-            </Link>
-          </div>
-
         </div>
       </section>
 
@@ -236,25 +225,15 @@ export default function Home() {
                 кабинет с доступом к полному школьному курсу, интерактивным
                 лабораторным работам и отслеживанию прогресса.
               </p>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-white rounded-xl shadow-sm">
-                  <div className="text-2xl lg:text-3xl font-bold text-[#2eff8c]">
-                    12+
-                  </div>
-                  <div className="text-xs text-[#798389] mt-1">лет опыта</div>
-                </div>
-                <div className="text-center p-4 bg-white rounded-xl shadow-sm">
-                  <div className="text-2xl lg:text-3xl font-bold text-[#01acff]">
-                    500+
-                  </div>
-                  <div className="text-xs text-[#798389] mt-1">учеников</div>
-                </div>
-                <div className="text-center p-4 bg-white rounded-xl shadow-sm">
-                  <div className="text-2xl lg:text-3xl font-bold text-[#2eff8c]">
-                    100%
-                  </div>
-                  <div className="text-xs text-[#798389] mt-1">охват курса</div>
-                </div>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link to="/course" className="btn-lime flex items-center justify-center gap-2">
+                  <BookOpen size={18} />
+                  Начать обучение
+                </Link>
+                <Link to="/labs" className="btn-outline flex items-center justify-center gap-2">
+                  <FlaskConical size={18} />
+                  Посмотреть лабораторные
+                </Link>
               </div>
             </div>
           </div>
@@ -322,7 +301,7 @@ export default function Home() {
 
           <div className="grid sm:grid-cols-3 gap-4 max-w-xl mx-auto">
             <a
-              href="https://t.me/physics_teacher"
+              href="https://t.me/igoshinadarya"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 bg-[#01acff] text-white px-6 py-3 rounded-full font-medium hover:scale-105 transition-transform"
@@ -331,7 +310,7 @@ export default function Home() {
               Telegram
             </a>
             <a
-              href="https://profi.ru/profile/"
+              href="https://profi.ru/profile/IgoshinaDD3"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 bg-[#ff6b6b] text-white px-6 py-3 rounded-full font-medium hover:scale-105 transition-transform"
@@ -340,7 +319,7 @@ export default function Home() {
               Profi.ru
             </a>
             <a
-              href="mailto:teacher@kvant.physics"
+              href="mailto:igoshina.physics@yandex.com"
               className="flex items-center justify-center gap-2 bg-[#262e33] text-white px-6 py-3 rounded-full font-medium hover:scale-105 transition-transform"
             >
               <Mail size={18} />
@@ -362,19 +341,14 @@ export default function Home() {
       </section>
 
       {/* ====== FOOTER ====== */}
-
-      {/* ====== FOOTER ====== */}
       <footer className="bg-[#1a1a1a] py-16">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-12">
+          <div className="text-center">
             <h4 className="font-semibold mb-4 text-white">Контакты</h4>
             <ul className="space-y-2 text-sm text-[#798389]">
-              <li>Telegram: @physics_teacher</li>
-              <li>Email: teacher@kvant.physics</li>
+              <li>Telegram: @igoshinadarya</li>
+              <li>Email: igoshina.physics@yandex.com</li>
             </ul>
-          </div>
-          <div className="border-t border-white/5 pt-6 text-center text-xs text-[#798389]">
-            Академия Кванта — Школьный курс физики
           </div>
         </div>
       </footer>
