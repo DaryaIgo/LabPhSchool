@@ -304,7 +304,7 @@ async function seed() {
       title: "Интерактивная модель: Солнечная система",
       description: "3D-модель планет с реальными орбитами и масштабами",
       type: "model" as const,
-      url: "#",
+      url: "https://eyes.nasa.gov/apps/solar-system/#/home",
       tags: "Астрофизика,Модель,3D",
     },
     {
@@ -332,8 +332,15 @@ async function seed() {
       title: "Интерактивная модель: Маятник",
       description: "Симуляция математического и пружинного маятника",
       type: "model" as const,
-      url: "#",
+      url: "https://phet.colorado.edu/sims/html/pendulum-lab/latest/pendulum-lab_ru.html",
       tags: "Колебания,Маятник,Механика",
+    },
+    {
+      title: "Тренажёр: сложение векторов",
+      description: "Интерактивная симуляция для изучения сложения и вычитания векторов",
+      type: "model" as const,
+      url: "https://phet.colorado.edu/sims/html/vector-addition/latest/vector-addition_all.html",
+      tags: "Механика,Векторы,Модель",
     },
   ];
 

@@ -172,9 +172,20 @@ export default function Resources() {
                           </span>
                         ))}
                       </div>
-                      <button className="text-[#2eff8c] hover:scale-110 transition-transform">
-                        <ExternalLink size={16} />
-                      </button>
+                      {resource.url && resource.url !== "#" ? (
+                        <a
+                          href={resource.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#2eff8c] hover:scale-110 transition-transform inline-block"
+                        >
+                          <ExternalLink size={16} />
+                        </a>
+                      ) : (
+                        <span className="text-[#434e54]">
+                          <ExternalLink size={16} />
+                        </span>
+                      )}
                     </div>
                   </div>
                 );
