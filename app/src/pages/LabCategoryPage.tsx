@@ -225,7 +225,18 @@ export default function LabCategoryPage() {
                   {i + 1}
                 </div>
                 <div>
-                  <h4 className="font-medium text-white mb-1">{task.title}</h4>
+                  {task.url ? (
+                    <a
+                      href={task.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-[#2eff8c] hover:underline mb-1 inline-block"
+                    >
+                      {task.title}
+                    </a>
+                  ) : (
+                    <h4 className="font-medium text-white mb-1">{task.title}</h4>
+                  )}
                   <p className="text-sm text-[#c8cdd1]">{task.description}</p>
                 </div>
               </div>
@@ -259,33 +270,50 @@ function getPracticalCards(slug: string): Array<{ title: string; description: st
       { title: "Почему звёзды светят", description: "Термоядерный синтез: слияние лёгких ядер с выделением огромной энергии." },
       { title: "Как работает атомная электростанция", description: "Цепная реакция деления урана, замедлители нейтронов, теплообменник." },
     ],
+    "atomic-nuclear": [
+      { title: "Почему звёзды светят", description: "Термоядерный синтез: слияние лёгких ядер с выделением огромной энергии." },
+      { title: "Как работает атомная электростанция", description: "Цепная реакция деления урана, замедлители нейтронов, теплообменник." },
+    ],
   };
   return map[slug] || [
     { title: "Интерактивная демонстрация", description: "Изучите ключевые физические процессы на наглядной интерактивной модели." },
   ];
 }
 
-function getResearchTasks(slug: string): Array<{ title: string; description: string }> {
-  const map: Record<string, Array<{ title: string; description: string }>> = {
+function getResearchTasks(slug: string): Array<{ title: string; description: string; url?: string }> {
+  const map: Record<string, Array<{ title: string; description: string; url?: string }>> = {
     mechanics: [
-      { title: "Исследование зависимости пути от времени при равноускоренном движении", description: "Постройте график s(t), определите ускорение и начальную скорость по экспериментальным данным." },
-      { title: "Проверка второго закона Ньютона", description: "Измерьте ускорение тел при разных значениях силы и массы. Убедитесь в справедливости F=ma." },
+      { title: "Массы и пружины", description: "Интерактивная симуляция для изучения колебаний пружинного маятника", url: "https://phet.colorado.edu/sims/html/masses-and-springs/latest/masses-and-springs_all.html" },
     ],
     "molecular-thermodynamics": [
-      { title: "Определение удельной теплоёмкости вещества", description: "Нагрейте тело известной массы, измерьте количество подведённой теплоты и изменение температуры." },
-      { title: "Исследование изопроцессов в газе", description: "Постройте графики изотермы, изобары и изохоры для идеального газа." },
+      { title: "Состояния веществ: Основы", description: "Интерактивная симуляция для изучения агрегатных состояний вещества", url: "https://phet.colorado.edu/sims/html/states-of-matter-basics/latest/states-of-matter-basics_en.html" },
+      { title: "Газы: Введение", description: "Интерактивная симуляция для изучения поведения газов на молекулярном уровне", url: "https://phet.colorado.edu/sims/html/gases-intro/latest/gases-intro_ru.html" },
     ],
     electrodynamics: [
-      { title: "Зависимость силы тока от напряжения", description: "Постройте вольт-амперную характеристику для различных проводников. Проверьте закон Ома." },
-      { title: "Изучение электромагнитной индукции", description: "Исследуйте зависимость ЭДС индукции от скорости изменения магнитного потока." },
+      { title: "Заряды и поля", description: "Интерактивная симуляция для изучения электрических зарядов и напряжённости электрического поля", url: "https://phet.colorado.edu/sims/html/charges-and-fields/latest/charges-and-fields_ru.html" },
+    ],
+    electricity: [
+      { title: "Интерактивная карта потребления и генерации электроэнергии", description: "Изучите в реальном времени, как различные страны производят и потребляют электроэнергию", url: "https://app.electricitymaps.com/map/live/fifteen_minutes" },
+      { title: "Электрическая цепь постоянного тока", description: "Виртуальная лаборатория для сборки и исследования электрических цепей постоянного тока", url: "https://phet.colorado.edu/sims/html/circuit-construction-kit-dc-virtual-lab/latest/circuit-construction-kit-dc-virtual-lab_ru.html" },
     ],
     optics: [
-      { title: "Определение фокусного расстояния линзы", description: "Используя формулу тонкой линзы, определите фокусное расстояние собирающей линзы." },
-      { title: "Наблюдение дифракции света", description: "Пропустите свет через узкую щель и исследуйте картину дифракции на экране." },
+      { title: "Геометрическая оптика", description: "Интерактивная симуляция для изучения поведения света при прохождении через линзы", url: "https://phet.colorado.edu/sims/html/geometric-optics/latest/geometric-optics_ru.html" },
+      { title: "Преломление света", description: "Интерактивная симуляция для изучения преломления света", url: "https://phet.colorado.edu/sims/html/geometric-optics/latest/geometric-optics_ru.html" },
+      { title: "Интерференция волн", description: "Интерактивная симуляция для изучения интерференции волн", url: "https://phet.colorado.edu/sims/html/wave-interference/latest/wave-interference_ru.html" },
     ],
     "nuclear-physics": [
       { title: "Определение периода полураспада", description: "По кривой распада радиоактивного изотопа определите период полураспада." },
       { title: "Исследование фотоэффекта", description: "Изучите зависимость фототока от частоты падающего света и материала катода." },
+      { title: "Построй атом", description: "Интерактивная симуляция для изучения строения атома", url: "https://phet.colorado.edu/sims/html/build-an-atom/latest/build-an-atom_ru.html" },
+      { title: "Модели атома водорода", description: "Интерактивная симуляция для изучения моделей атома водорода", url: "https://phet.colorado.edu/sims/html/models-of-the-hydrogen-atom/latest/models-of-the-hydrogen-atom_all.html" },
+    ],
+    "atomic-nuclear": [
+      { title: "Определение периода полураспада", description: "По кривой распада радиоактивного изотопа определите период полураспада." },
+      { title: "Исследование фотоэффекта", description: "Изучите зависимость фототока от частоты падающего света и материала катода." },
+    ],
+    "oscillations-waves": [
+      { title: "Интерференция волн", description: "Интерактивная симуляция для изучения интерференции волн", url: "https://phet.colorado.edu/sims/html/wave-interference/latest/wave-interference_ru.html" },
+      { title: "Звуковые волны", description: "Интерактивная симуляция для изучения звуковых волн", url: "https://phet.colorado.edu/sims/html/sound-waves/latest/sound-waves_all.html" },
     ],
   };
   return map[slug] || [

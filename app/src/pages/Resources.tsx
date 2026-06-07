@@ -190,6 +190,144 @@ export default function Resources() {
                   </div>
                 );
               })}
+
+              {/* Static resource: earth.nullschool.net */}
+              <div className="bg-[#2a3237] border border-[#434e54] rounded-xl p-6 transition-all hover:border-[#2eff8c]/30 hover:-translate-y-1">
+                <div className="flex items-start justify-between mb-4">
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center"
+                    style={{ backgroundColor: "#ff6b6b15" }}
+                  >
+                    <Box size={24} style={{ color: "#ff6b6b" }} />
+                  </div>
+                  <span
+                    className="text-xs font-medium px-3 py-1 rounded-full"
+                    style={{ backgroundColor: "#ff6b6b15", color: "#ff6b6b" }}
+                  >
+                    Модель
+                  </span>
+                </div>
+
+                <h3 className="text-lg font-semibold mb-2">
+                  Океаны и волны (живой 3D-глобус)
+                </h3>
+                <p className="text-sm text-[#798389] mb-4">
+                  Интерактивная визуализация глобальных погодных условий, океанских течений и волн в реальном времени
+                </p>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap gap-1">
+                    {["Гидростатика", "Астрофизика", "Модель", "3D"].map((tag) => (
+                      <span
+                        key={tag}
+                        className="text-[10px] text-[#798389] bg-[#262e33] px-2 py-1 rounded-full"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <a
+                    href="https://earth.nullschool.net/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#2eff8c] hover:scale-110 transition-transform inline-block"
+                  >
+                    <ExternalLink size={16} />
+                  </a>
+                </div>
+              </div>
+
+              {/* Static resource: electricitymaps.com */}
+              <div className="bg-[#2a3237] border border-[#434e54] rounded-xl p-6 transition-all hover:border-[#2eff8c]/30 hover:-translate-y-1">
+                <div className="flex items-start justify-between mb-4">
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center"
+                    style={{ backgroundColor: "#ff6b6b15" }}
+                  >
+                    <Box size={24} style={{ color: "#ff6b6b" }} />
+                  </div>
+                  <span
+                    className="text-xs font-medium px-3 py-1 rounded-full"
+                    style={{ backgroundColor: "#ff6b6b15", color: "#ff6b6b" }}
+                  >
+                    Модель
+                  </span>
+                </div>
+
+                <h3 className="text-lg font-semibold mb-2">
+                  Интерактивная карта потребления и генерации электроэнергии
+                </h3>
+                <p className="text-sm text-[#798389] mb-4">
+                  Изучите в реальном времени, как различные страны производят и потребляют электроэнергию
+                </p>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap gap-1">
+                    {["Электричество", "Энергетика", "Модель"].map((tag) => (
+                      <span
+                        key={tag}
+                        className="text-[10px] text-[#798389] bg-[#262e33] px-2 py-1 rounded-full"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <a
+                    href="https://app.electricitymaps.com/map/live/fifteen_minutes"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#2eff8c] hover:scale-110 transition-transform inline-block"
+                  >
+                    <ExternalLink size={16} />
+                  </a>
+                </div>
+              </div>
+
+              {/* Static resource: NASA Trek */}
+              <div className="bg-[#2a3237] border border-[#434e54] rounded-xl p-6 transition-all hover:border-[#2eff8c]/30 hover:-translate-y-1">
+                <div className="flex items-start justify-between mb-4">
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center"
+                    style={{ backgroundColor: "#ff6b6b15" }}
+                  >
+                    <Box size={24} style={{ color: "#ff6b6b" }} />
+                  </div>
+                  <span
+                    className="text-xs font-medium px-3 py-1 rounded-full"
+                    style={{ backgroundColor: "#ff6b6b15", color: "#ff6b6b" }}
+                  >
+                    Модель
+                  </span>
+                </div>
+
+                <h3 className="text-lg font-semibold mb-2">
+                  Виртуальное исследование планет (NASA Trek)
+                </h3>
+                <p className="text-sm text-[#798389] mb-4">
+                  Интерактивный портал NASA для исследования поверхностей планет и спутников Солнечной системы
+                </p>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap gap-1">
+                    {["Астрофизика", "Модель", "3D", "NASA"].map((tag) => (
+                      <span
+                        key={tag}
+                        className="text-[10px] text-[#798389] bg-[#262e33] px-2 py-1 rounded-full"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <a
+                    href="https://trek.nasa.gov/#"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#2eff8c] hover:scale-110 transition-transform inline-block"
+                  >
+                    <ExternalLink size={16} />
+                  </a>
+                </div>
+              </div>
             </div>
           )}
         </div>

@@ -27,11 +27,26 @@ export default function Labs() {
   const { user } = useAuth();
   const isStudent = user?.type === "student" && user?.role === "student";
 
-  const { data: categories, isLoading } = trpc.virtualLab.listCategories.useQuery();
+  const { data: rawCategories, isLoading } = trpc.virtualLab.listCategories.useQuery();
   const { data: myProgress } = trpc.virtualLab.getMyLabProgress.useQuery(undefined, {
     retry: false,
     enabled: isStudent,
   });
+
+  // Merge atomic-nuclear into nuclear-physics
+  const categories = rawCategories?.reduce((acc, cat) => {
+    if (cat.slug === "atomic-nuclear") {
+      const existing = acc.find((c) => c.slug === "nuclear-physics");
+      if (existing) {
+        existing.labCount += cat.labCount;
+      } else {
+        acc.push({ ...cat, slug: "nuclear-physics", title: "Атомная и ядерная физика" });
+      }
+      return acc;
+    }
+    acc.push(cat);
+    return acc;
+  }, [] as typeof rawCategories);
 
   function getCategoryProgress(categoryId: number, labCount: number) {
     if (!myProgress || !Array.isArray(myProgress) || labCount === 0) return 0;

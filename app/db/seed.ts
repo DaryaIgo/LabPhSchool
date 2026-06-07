@@ -342,6 +342,27 @@ async function seed() {
       url: "https://phet.colorado.edu/sims/html/vector-addition/latest/vector-addition_all.html",
       tags: "Механика,Векторы,Модель",
     },
+    {
+      title: "Океаны и волны (живой 3D-глобус)",
+      description: "Интерактивная визуализация глобальных погодных условий, океанских течений и волн в реальном времени",
+      type: "model" as const,
+      url: "https://earth.nullschool.net/",
+      tags: "Гидростатика,Астрофизика,Модель,3D",
+    },
+    {
+      title: "Интерактивная карта потребления и генерации электроэнергии",
+      description: "Изучите в реальном времени, как различные страны производят и потребляют электроэнергию",
+      type: "model" as const,
+      url: "https://app.electricitymaps.com/map/live/fifteen_minutes",
+      tags: "Электричество,Энергетика,Модель",
+    },
+    {
+      title: "Виртуальное исследование планет (NASA Trek)",
+      description: "Интерактивный портал NASA для исследования поверхностей планет и спутников Солнечной системы",
+      type: "model" as const,
+      url: "https://trek.nasa.gov/#",
+      tags: "Астрофизика,Модель,3D,NASA",
+    },
   ];
 
   await db.insert(resources).values(resourceData);
