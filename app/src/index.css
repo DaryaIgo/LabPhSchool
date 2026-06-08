@@ -109,10 +109,10 @@
   }
 
   .btn-outline {
-    @apply border-2 border-[#2eff8c] text-white bg-white/15 px-6 py-2.5 rounded-full transition-all duration-300;
+    @apply border-2 border-[#2eff8c] text-[#1a1a1a] bg-transparent font-medium px-6 py-2.5 rounded-full transition-all duration-300;
   }
   .btn-outline:hover {
-    @apply bg-[#2eff8c]/20;
+    @apply bg-[#2eff8c] text-black scale-105;
   }
 
   .section-dark {

@@ -181,16 +181,7 @@ export default function Home() {
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-[#2eff8c] uppercase tracking-tight leading-[0.95]">
               <TypewriterText text="Это способ мыслить" delay={1800} />
             </h1>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white uppercase tracking-tight leading-[0.95]">
-              <TypewriterText text="о реальности" delay={3000} />
-            </h1>
           </div>
-
-          <p className="text-base md:text-lg text-[#c8cdd1] max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in-up" style={{ animationDelay: "3.5s", opacity: 0 }}>
-            Структурированный школьный курс с интерактивными лабораторными
-            работами, алгоритмами решения задач и персональными кабинетами для
-            каждого ученика
-          </p>
 
         </div>
       </section>
@@ -202,7 +193,7 @@ export default function Home() {
             <div className="relative">
               <div className="w-64 h-64 lg:w-80 lg:h-80 mx-auto rounded-full overflow-hidden border-2 border-[#2eff8c] shadow-2xl">
                 <img
-                  src="/images/teacher.jpg"
+                  src="/images/teacher.png"
                   alt="Преподаватель физики"
                   className="w-full h-full object-cover"
                 />
@@ -212,18 +203,26 @@ export default function Home() {
               </div>
             </div>
             <div>
-              <p className="formula-text mb-3">
-                преподаватель физики | 12+ лет опыта
-              </p>
               <h2 className="text-3xl lg:text-4xl font-bold text-[#1a1a1a] mb-6 leading-tight">
                 Превращаю сложную физику в понятные шаги
               </h2>
+              <p className="text-[#434e54] mb-2 leading-relaxed">
+                Рада вас приветствовать 👋
+              </p>
+              <p className="text-[#434e54] mb-4 leading-relaxed">
+                Меня зовут Дарья Дмитриевна.
+              </p>
+              <p className="text-[#434e54] mb-4 leading-relaxed">
+                Я окончила СПбПУ (Политех Петра Великого) с отличием. Я не просто
+                знаю теорию из учебников — я каждый день вижу, как физика работает
+                на практике и в технологиях.
+              </p>
               <p className="text-[#434e54] mb-8 leading-relaxed">
-                Более 12 лет преподаю физику в средней школе. Разработал
-                собственную методику обучения, основанную на алгоритмическом
-                подходе к решению задач. Каждый ученик получает персональный
-                кабинет с доступом к полному школьному курсу, интерактивным
-                лабораторным работам и отслеживанию прогресса.
+                С помощью интерактивных симуляций PhET ученики могут сами
+                «потрогать» физические процессы — от движения молекул до
+                оптических лучей и электрических цепей. На занятиях мы используем
+                видеосвязь в Яндекс Телемост, удобную онлайн-доску Chattern и
+                ноутбуки Jupyter для наглядного разбора сложных задач.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link to="/course" className="btn-lime flex items-center justify-center gap-2">
