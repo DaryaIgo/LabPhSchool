@@ -11,7 +11,6 @@ import {
   boolean,
   index,
   uniqueIndex,
-  foreignKey,
   type AnyMySqlColumn,
 } from "drizzle-orm/mysql-core";
 
@@ -126,10 +125,6 @@ export const localUsers = mysqlTable(
   (table) => ({
     statusIdx: index("local_user_status_idx").on(table.status),
     createdByIdx: index("local_user_created_by_idx").on(table.createdBy),
-    createdByFk: foreignKey({
-      columns: [table.createdBy],
-      foreignColumns: [table.id],
-    }),
   })
 );
 
@@ -316,8 +311,7 @@ export const enrollments = mysqlTable(
       .references(() => subtopics.id),
     enrolledAt: timestamp("enrolled_at").defaultNow().notNull(),
     expiresAt: timestamp("expires_at"),
-    createdBy: bigint("created_by", { mode: "number", unsigned: true })
-      .references(() => localUsers.id),
+    createdBy: bigint("created_by", { mode: "number", unsigned: true }),
   },
   (table) => ({
     uniqueEnrollment: uniqueIndex("unique_enrollment").on(
@@ -578,3 +572,67 @@ export const labAnalytics = mysqlTable("lab_analytics", {
 });
 
 export type LabAnalytics = typeof labAnalytics.$inferSelect;
+
+// ═══════════════════════════════════════════════════════════════
+// Jupyter Notebook Tables
+// ═══════════════════════════════════════════════════════════════
+
+// ── JUPYTER NOTEBOOKS ──
+export const jupyterNotebooks = mysqlTable("jupyter_notebooks", {
+  id: serial("id").primaryKey(),
+  subtopicId: bigint("subtopic_id", { mode: "number", unsigned: true })
+    .notNull()
+    .references(() => subtopics.id, { onDelete: "cascade" }),
+  title: varchar("title", { length: 255 }).notNull(),
+  filename: varchar("filename", { length: 255 }).notNull(),
+  filePath: varchar("file_path", { length: 500 }).notNull(),
+  uploadedBy: bigint("uploaded_by", { mode: "number", unsigned: true }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type JupyterNotebook = typeof jupyterNotebooks.$inferSelect;
+
+// ── JUPYTER NOTEBOOK ACCESS ──
+export const jupyterNotebookAccess = mysqlTable(
+  "jupyter_notebook_access",
+  {
+    id: serial("id").primaryKey(),
+    notebookId: bigint("notebook_id", { mode: "number", unsigned: true })
+      .notNull()
+      .references(() => jupyterNotebooks.id, { onDelete: "cascade" }),
+    localUserId: bigint("local_user_id", { mode: "number", unsigned: true })
+      .notNull()
+      .references(() => localUsers.id, { onDelete: "cascade" }),
+    grantedBy: bigint("granted_by", { mode: "number", unsigned: true }),
+    grantedAt: timestamp("granted_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    uniqueAccess: uniqueIndex("unique_jupyter_access").on(
+      table.notebookId,
+      table.localUserId
+    ),
+  })
+);
+
+export type JupyterNotebookAccess = typeof jupyterNotebookAccess.$inferSelect;
+
+// ═══════════════════════════════════════════════════════════════
+// Notifications Table
+// ═══════════════════════════════════════════════════════════════
+
+export const notifications = mysqlTable("notifications", {
+  id: serial("id").primaryKey(),
+  localUserId: bigint("local_user_id", { mode: "number", unsigned: true })
+    .notNull()
+    .references(() => localUsers.id, { onDelete: "cascade" }),
+  type: mysqlEnum("type", ["jupyter_notebook", "lab", "general"])
+    .default("general")
+    .notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  message: text("message"),
+  read: boolean("read").default(false).notNull(),
+  resourceId: bigint("resource_id", { mode: "number", unsigned: true }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type Notification = typeof notifications.$inferSelect;

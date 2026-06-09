@@ -22,6 +22,7 @@ import AuditLogViewer from "./pages/admin/AuditLogViewer";
 import ResourceManagement from "./pages/admin/ResourceManagement";
 import LabSubmissions from "./pages/admin/LabSubmissions";
 import SubtopicManagement from "./pages/admin/SubtopicManagement";
+import JupyterNotebookManagement from "./pages/admin/JupyterNotebookManagement";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -59,6 +60,7 @@ export default function App() {
         <Route path="/admin/resources" element={<ResourceManagement />} />
         <Route path="/admin/lab-submissions" element={<LabSubmissions />} />
         <Route path="/admin/subtopics" element={<SubtopicManagement />} />
+        <Route path="/admin/jupyter-notebooks" element={<JupyterNotebookManagement />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

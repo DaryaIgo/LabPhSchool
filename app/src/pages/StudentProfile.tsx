@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { trpc } from "@/providers/trpc";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { useEffect } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -24,8 +25,6 @@ import {
   TrendingUp,
   Award,
   Activity,
-  LogOut,
-  Lock,
   Loader2,
   ChevronDown,
   ChevronUp,
@@ -33,6 +32,8 @@ import {
   Beaker,
   FileText,
   ExternalLink,
+  NotebookPen,
+  Download,
 } from "lucide-react";
 
 const AVATARS = [
@@ -65,7 +66,8 @@ const STATUS_CONFIG: Record<
 };
 
 export default function StudentProfile() {
-  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
 
   const {
     data: profile,
@@ -95,6 +97,13 @@ export default function StudentProfile() {
     enabled: isAuthenticated && user?.role === "student",
   });
 
+  const {
+    data: myNotebooks,
+    isLoading: notebooksLoading,
+  } = trpc.student.getMyJupyterNotebooks.useQuery(undefined, {
+    enabled: isAuthenticated && user?.role === "student",
+  });
+
   const utils = trpc.useUtils();
 
   const updateAvatar = trpc.student.updateAvatar.useMutation({
@@ -107,6 +116,12 @@ export default function StudentProfile() {
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
   const [expandedTopic, setExpandedTopic] = useState<number | null>(null);
 
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      navigate("/", { replace: true });
+    }
+  }, [authLoading, isAuthenticated, navigate]);
+
   if (authLoading) {
     return (
       <div className="pt-16 min-h-screen flex items-center justify-center bg-[#262e33]">
@@ -118,16 +133,7 @@ export default function StudentProfile() {
   if (!isAuthenticated || !user || user.role !== "student") {
     return (
       <div className="pt-16 min-h-screen flex items-center justify-center bg-[#262e33]">
-        <div className="text-center max-w-md mx-auto px-6">
-          <Lock size={48} className="text-[#ff6b6b] mx-auto mb-6" />
-          <h2 className="text-2xl font-bold mb-3">Требуется авторизация</h2>
-          <p className="text-[#c8cdd1] mb-6">
-            Войдите в систему как ученик, чтобы получить доступ к профилю.
-          </p>
-          <Link to="/login" className="btn-lime inline-flex items-center gap-2">
-            Войти
-          </Link>
-        </div>
+        <Loader2 size={48} className="text-[#2eff8c] animate-spin" />
       </div>
     );
   }
@@ -201,12 +207,6 @@ export default function StudentProfile() {
                       Ученик · Логин: {user.login}
                     </p>
                   </div>
-                  <button
-                    onClick={logout}
-                    className="text-xs text-[#798389] hover:text-white transition-colors flex items-center gap-1 shrink-0"
-                  >
-                    <LogOut size={14} />Выйти
-                  </button>
                 </div>
 
                 {isLoading ? (
@@ -351,6 +351,13 @@ export default function StudentProfile() {
                               </span>
                             </div>
                           )}
+                        <Link
+                          to={`/course?topic=${encodeURIComponent(currentTopic.topic?.title ?? "")}&node=${encodeURIComponent(currentTopic.subtopic?.title ?? "")}`}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#2eff8c]/10 text-[#2eff8c] rounded-lg border border-[#2eff8c]/30 text-xs hover:bg-[#2eff8c]/20 transition-colors"
+                        >
+                          <BookOpen size={14} />
+                          Перейти к теории
+                        </Link>
                       </div>
                     </div>
                   </div>
@@ -548,6 +555,63 @@ export default function StudentProfile() {
               <Award size={32} className="text-[#798389] mx-auto mb-3" />
               <p className="text-[#c8cdd1]">
                 У вас пока нет открытых тем. Обратитесь к преподавателю.
+              </p>
+            </div>
+          )}
+        </section>
+
+        {/* Jupyter Notebooks */}
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <NotebookPen size={18} className="text-[#2eff8c]" />
+            Мои Jupyter-ноутбуки
+          </h2>
+          {notebooksLoading ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-24 bg-[#37474f]" />
+              ))}
+            </div>
+          ) : myNotebooks && myNotebooks.length > 0 ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {myNotebooks.map((nb) => (
+                <Card
+                  key={nb.id}
+                  className="bg-[#2a3237] border-[#434e54] hover:border-[#2eff8c]/50 transition-colors"
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <NotebookPen size={20} className="text-[#2eff8c] shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-semibold text-[#c8cdd1] truncate">
+                          {nb.title}
+                        </h3>
+                        <p className="text-xs text-[#798389] mt-1">
+                          {nb.subtopicTitle}
+                        </p>
+                        <div className="flex items-center gap-2 mt-3">
+                          <a
+                            href={`/api/jupyter/download/${nb.id}`}
+                            className="inline-flex items-center gap-1 text-xs bg-[#2eff8c]/10 text-[#2eff8c] px-3 py-1.5 rounded-md hover:bg-[#2eff8c]/20 transition-colors"
+                          >
+                            <Download size={12} />
+                            Скачать
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 text-center">
+              <NotebookPen size={28} className="text-[#798389] mx-auto mb-2" />
+              <p className="text-sm text-[#c8cdd1]">
+                У вас пока нет доступных Jupyter-ноутбуков.
+              </p>
+              <p className="text-xs text-[#798389] mt-1">
+                Преподаватель откроет доступ к новым материалам.
               </p>
             </div>
           )}

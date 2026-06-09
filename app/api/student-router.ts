@@ -24,7 +24,7 @@ import {
 } from "./queries/enrollments";
 import { createAuditEntry } from "./queries/audit";
 import { getDb } from "./queries/connection";
-import { eq, and, desc, sql, inArray } from "drizzle-orm";
+import { eq, and, desc, sql, inArray, count } from "drizzle-orm";
 import * as schema from "@db/schema";
 
 // ─── Student Endpoints ───
@@ -224,22 +224,29 @@ export const studentRouter = createRouter({
       );
       const subsWithProgress = topicSubs.map((sub) => {
         const prog = progress.find((p) => p.subtopicId === sub.id);
+        const isCurrent = enrollment.currentSubtopicId === sub.id;
+        let status = (prog?.status ?? "not_started") as
+          | "not_started"
+          | "in_progress"
+          | "completed";
+        // If this is the current subtopic assigned by teacher,
+        // it should be considered in_progress, not not_started
+        if (isCurrent && status === "not_started") {
+          status = "in_progress";
+        }
         return {
           id: sub.id,
           title: sub.title,
           order: sub.order,
           jupyterUrl: sub.jupyterUrl,
-          status: (prog?.status ?? "not_started") as
-            | "not_started"
-            | "in_progress"
-            | "completed",
+          status,
           startedAt: prog?.startedAt,
           completedAt: prog?.completedAt,
           comment: prog?.comment,
           theoryCompleted: prog?.theoryCompleted === "completed",
           practiceCompleted: prog?.practiceCompleted === "completed",
           labCompleted: prog?.labCompleted === "completed",
-          isCurrent: enrollment.currentSubtopicId === sub.id,
+          isCurrent,
         };
       });
 
@@ -774,4 +781,93 @@ export const studentRouter = createRouter({
         };
       });
     }),
+
+  // ═══════════════════════════════════════════════════════════
+  // Student Jupyter Notebooks
+  // ═══════════════════════════════════════════════════════════
+
+  getMyJupyterNotebooks: studentQuery.query(async ({ ctx }) => {
+    const db = getDb();
+    const studentId = ctx.localUser!.id;
+
+    const accesses = await db
+      .select({
+        notebookId: schema.jupyterNotebookAccess.notebookId,
+        grantedAt: schema.jupyterNotebookAccess.grantedAt,
+      })
+      .from(schema.jupyterNotebookAccess)
+      .where(eq(schema.jupyterNotebookAccess.localUserId, studentId));
+
+    const notebookIds = accesses.map((a) => a.notebookId);
+    if (notebookIds.length === 0) return [];
+
+    const notebooks = await db
+      .select()
+      .from(schema.jupyterNotebooks)
+      .where(inArray(schema.jupyterNotebooks.id, notebookIds));
+
+    const subtopicList = await db
+      .select()
+      .from(schema.subtopics)
+      .where(inArray(schema.subtopics.id, notebooks.map((n) => n.subtopicId)));
+    const subtopicMap = new Map(subtopicList.map((s) => [s.id, s.title]));
+
+    return notebooks.map((n) => ({
+      ...n,
+      subtopicTitle: subtopicMap.get(n.subtopicId) ?? "—",
+    }));
+  }),
+
+  // ═══════════════════════════════════════════════════════════
+  // Student Notifications
+  // ═══════════════════════════════════════════════════════════
+
+  getNotifications: studentQuery.query(async ({ ctx }) => {
+    const db = getDb();
+    return db
+      .select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.localUserId, ctx.localUser!.id))
+      .orderBy(desc(schema.notifications.createdAt))
+      .limit(50);
+  }),
+
+  getUnreadNotificationCount: studentQuery.query(async ({ ctx }) => {
+    const db = getDb();
+    const result = await db
+      .select({ count: count() })
+      .from(schema.notifications)
+      .where(
+        and(
+          eq(schema.notifications.localUserId, ctx.localUser!.id),
+          eq(schema.notifications.read, false)
+        )
+      );
+    return result[0]?.count ?? 0;
+  }),
+
+  markNotificationRead: studentQuery
+    .input(z.object({ id: z.number().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = getDb();
+      await db
+        .update(schema.notifications)
+        .set({ read: true })
+        .where(
+          and(
+            eq(schema.notifications.id, input.id),
+            eq(schema.notifications.localUserId, ctx.localUser!.id)
+          )
+        );
+      return { success: true };
+    }),
+
+  markAllNotificationsRead: studentQuery.mutation(async ({ ctx }) => {
+    const db = getDb();
+    await db
+      .update(schema.notifications)
+      .set({ read: true })
+      .where(eq(schema.notifications.localUserId, ctx.localUser!.id));
+    return { success: true };
+  }),
 });

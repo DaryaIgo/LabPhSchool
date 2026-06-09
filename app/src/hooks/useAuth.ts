@@ -40,7 +40,7 @@ export function useAuth(options?: UseAuthOptions) {
   const logoutMutation = trpc.unifiedAuth.logout.useMutation({
     onSuccess: async () => {
       await utils.invalidate();
-      navigate(redirectPath);
+      navigate("/");
     },
   });
 

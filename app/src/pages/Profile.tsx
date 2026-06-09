@@ -1,7 +1,8 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { trpc } from "@/providers/trpc";
 import StudentProfile from "./StudentProfile";
+import { useEffect } from "react";
 import {
   Shield,
   Users,
@@ -19,16 +20,24 @@ import {
 
 export default function Profile() {
   const { user, isAuthenticated, isAdmin, logout, isLoading } = useAuth();
+  const navigate = useNavigate();
+
+  // Все hooks должны быть до любых условных return
+  const { data: stats, isLoading: statsLoading } = trpc.admin.dashboardStats.useQuery(
+    undefined,
+    { enabled: isAdmin }
+  );
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      navigate("/", { replace: true });
+    }
+  }, [isLoading, isAuthenticated, navigate]);
 
   // Redirect students to dedicated student profile
   if (!isLoading && isAuthenticated && user?.role === "student") {
     return <StudentProfile />;
   }
-
-  const { data: stats, isLoading: statsLoading } = trpc.admin.dashboardStats.useQuery(
-    undefined,
-    { enabled: isAdmin }
-  );
 
   if (isLoading) {
     return (
@@ -44,12 +53,7 @@ export default function Profile() {
   if (!isAuthenticated || !user) {
     return (
       <div className="pt-16 min-h-screen flex items-center justify-center bg-[#262e33]">
-        <div className="text-center max-w-md mx-auto px-6">
-          <Lock size={48} className="text-[#ff6b6b] mx-auto mb-6" />
-          <h2 className="text-2xl font-bold mb-3">Требуется авторизация</h2>
-          <p className="text-[#c8cdd1] mb-6">Войдите в систему, чтобы получить доступ к кабинету.</p>
-          <Link to="/login" className="btn-lime inline-flex items-center gap-2">Войти</Link>
-        </div>
+        <Loader2 size={48} className="text-[#2eff8c] animate-spin" />
       </div>
     );
   }

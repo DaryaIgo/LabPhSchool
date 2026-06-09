@@ -349,7 +349,7 @@ function StudentEnrollments({
                 title="Настройки"
                 onClick={() => {
                   setEditEnrollment(editEnrollment === e.id ? null : e.id);
-                  setCurrentSubtopicId(e.currentSubtopicId?.toString() ?? "");
+                  setCurrentSubtopicId(e.currentSubtopicId?.toString() ?? "none");
                   setComment(e.comment ?? "");
                 }}
               >
@@ -411,7 +411,7 @@ function StudentEnrollments({
                       <SelectValue placeholder="Выберите подтему..." />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1e2529] border-[#37474f]">
-                      <SelectItem value="">Не назначена</SelectItem>
+                      <SelectItem value="none">Не назначена</SelectItem>
                       {allSubtopics
                         ?.filter((s) => s.topicId === e.topicId)
                         .map((s) => (
@@ -442,7 +442,7 @@ function StudentEnrollments({
                   onClick={() => {
                     updateDetailsMutation.mutate({
                       enrollmentId: e.id,
-                      currentSubtopicId: currentSubtopicId
+                      currentSubtopicId: currentSubtopicId && currentSubtopicId !== "none"
                         ? Number(currentSubtopicId)
                         : null,
                       comment: comment || undefined,

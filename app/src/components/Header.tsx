@@ -1,6 +1,12 @@
 import { Link, useLocation } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
+import { trpc } from "@/providers/trpc";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Menu,
   X,
@@ -9,7 +15,110 @@ import {
   Library,
   User,
   LogOut,
+  Bell,
+  NotebookPen,
+  Check,
 } from "lucide-react";
+
+function StudentNotifications() {
+  const [open, setOpen] = useState(false);
+  const utils = trpc.useUtils();
+
+  const { data: notifications } = trpc.student.getNotifications.useQuery(
+    undefined,
+    { enabled: open }
+  );
+  const { data: unreadCount } = trpc.student.getUnreadNotificationCount.useQuery();
+
+  const markRead = trpc.student.markNotificationRead.useMutation({
+    onSuccess: () => {
+      utils.student.getNotifications.invalidate();
+      utils.student.getUnreadNotificationCount.invalidate();
+    },
+  });
+
+  const markAllRead = trpc.student.markAllNotificationsRead.useMutation({
+    onSuccess: () => {
+      utils.student.getNotifications.invalidate();
+      utils.student.getUnreadNotificationCount.invalidate();
+    },
+  });
+
+  const unread = notifications?.filter((n) => !n.read) ?? [];
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button className="relative p-2 rounded-full text-[#c8cdd1] hover:text-white hover:bg-white/5 transition-colors">
+          <Bell size={18} />
+          {(unreadCount ?? 0) > 0 && (
+            <span className="absolute top-0 right-0 h-4 w-4 bg-[#ff6b6b] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+              {unreadCount}
+            </span>
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="bg-[#1e2529] border-[#37474f] text-white w-80 p-0"
+        align="end"
+      >
+        <div className="flex items-center justify-between p-3 border-b border-[#37474f]">
+          <span className="text-sm font-medium">Уведомления</span>
+          {unread.length > 0 && (
+            <button
+              onClick={() => markAllRead.mutate()}
+              className="text-xs text-[#2eff8c] hover:underline"
+            >
+              Прочитать всё
+            </button>
+          )}
+        </div>
+        <div className="max-h-64 overflow-y-auto">
+          {notifications && notifications.length > 0 ? (
+            notifications.map((n) => (
+              <div
+                key={n.id}
+                className={`p-3 border-b border-[#37474f]/50 flex items-start gap-2 ${
+                  n.read ? "opacity-60" : ""
+                }`}
+              >
+                <div className="mt-0.5">
+                  {n.type === "jupyter_notebook" ? (
+                    <NotebookPen size={14} className="text-[#2eff8c]" />
+                  ) : (
+                    <Bell size={14} className="text-[#01acff]" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium">{n.title}</p>
+                  {n.message && (
+                    <p className="text-xs text-gray-400 mt-0.5">{n.message}</p>
+                  )}
+                  <p className="text-[10px] text-gray-500 mt-1">
+                    {new Date(n.createdAt).toLocaleDateString("ru-RU")}
+                  </p>
+                </div>
+                {!n.read && (
+                  <button
+                    onClick={() => markRead.mutate({ id: n.id })}
+                    className="text-[#2eff8c] hover:bg-[#2eff8c]/10 p-1 rounded"
+                    title="Отметить прочитанным"
+                  >
+                    <Check size={14} />
+                  </button>
+                )}
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-gray-500 text-center py-6">
+              Нет уведомлений
+            </p>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 export default function Header() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -53,6 +162,7 @@ export default function Header() {
           <div className="hidden md:flex items-center gap-3">
             {isAuthenticated && user ? (
               <div className="flex items-center gap-3">
+                {user.role === "student" && <StudentNotifications />}
                 <Link to="/profile"
                   className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
                     isActive("/profile") || isActive("/student/profile") ? "text-[#2eff8c] bg-[#2eff8c]/10" : "text-[#c8cdd1] hover:text-white"

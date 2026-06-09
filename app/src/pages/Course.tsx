@@ -1,8 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react";
 import { trpc } from "@/providers/trpc";
+import { useAuth } from "@/hooks/useAuth";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import { ChevronDown, ChevronRight, FlaskConical, FileText, ArrowLeft, Loader2, ExternalLink } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 import type { TopicNode } from "@db/schema";
 
 interface TreeNode extends TopicNode {
@@ -32,7 +33,7 @@ function buildTree(nodes: TopicNode[]): TreeNode[] {
   return roots;
 }
 
-function NodeContent({ node, onBack, jupyterUrl }: { node: TreeNode; onBack: () => void; jupyterUrl?: string | null }) {
+function NodeContent({ node, onBack, jupyterUrl, showJupyter }: { node: TreeNode; onBack: () => void; jupyterUrl?: string | null; showJupyter?: boolean }) {
   return (
     <div className="bg-[#1a1f22] border border-[#2eff8c]/20 rounded-xl p-5 mb-4">
       <button
@@ -48,21 +49,23 @@ function NodeContent({ node, onBack, jupyterUrl }: { node: TreeNode; onBack: () 
         ) : (
           <p className="text-sm text-[#798389]">Нет содержимого</p>
         )}
-        {jupyterUrl ? (
-          <a
-            href={jupyterUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 mt-4 text-xs bg-[#2eff8c]/10 text-[#2eff8c] px-3 py-1.5 rounded-md hover:bg-[#2eff8c]/20 transition-colors"
-          >
-            <ExternalLink size={12} />
-            Jupyter- {node.title}
-          </a>
-        ) : (
-          <span className="inline-flex items-center gap-1.5 mt-4 text-xs text-[#798389] bg-white/5 px-3 py-1.5 rounded-md">
-            <ExternalLink size={12} />
-            Jupyter: не задан
-          </span>
+        {showJupyter && (
+          jupyterUrl ? (
+            <a
+              href={jupyterUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 mt-4 text-xs bg-[#2eff8c]/10 text-[#2eff8c] px-3 py-1.5 rounded-md hover:bg-[#2eff8c]/20 transition-colors"
+            >
+              <ExternalLink size={12} />
+              Jupyter- {node.title}
+            </a>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 mt-4 text-xs text-[#798389] bg-white/5 px-3 py-1.5 rounded-md">
+              <ExternalLink size={12} />
+              Jupyter: не задан
+            </span>
+          )
         )}
       </div>
     </div>
@@ -74,11 +77,13 @@ function SubtopicList({
   activeId,
   onSelect,
   jupyterUrlMap,
+  showJupyter,
 }: {
   nodes: TreeNode[];
   activeId: number | null;
   onSelect: (id: number) => void;
   jupyterUrlMap?: Map<string, string | null>;
+  showJupyter?: boolean;
 }) {
   return (
     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -103,22 +108,24 @@ function SubtopicList({
             <h5 className="text-sm font-semibold text-white group-hover:text-[#2eff8c] transition-colors mb-3">
               {sub.title}
             </h5>
-            {jupyterUrl ? (
-              <a
-                href={jupyterUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 text-xs bg-[#2eff8c]/10 text-[#2eff8c] px-2 py-1 rounded-md hover:bg-[#2eff8c]/20 transition-colors mt-auto"
-              >
-                <ExternalLink size={12} />
-                Jupyter- {sub.title}
-              </a>
-            ) : (
-              <span className="inline-flex items-center gap-1 text-xs text-[#798389] bg-white/5 px-2 py-1 rounded-md mt-auto">
-                <ExternalLink size={12} />
-                Jupyter: не задан
-              </span>
+            {showJupyter && (
+              jupyterUrl ? (
+                <a
+                  href={jupyterUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1 text-xs bg-[#2eff8c]/10 text-[#2eff8c] px-2 py-1 rounded-md hover:bg-[#2eff8c]/20 transition-colors mt-auto"
+                >
+                  <ExternalLink size={12} />
+                  Jupyter- {sub.title}
+                </a>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-xs text-[#798389] bg-white/5 px-2 py-1 rounded-md mt-auto">
+                  <ExternalLink size={12} />
+                  Jupyter: не задан
+                </span>
+              )
             )}
           </button>
         );
@@ -135,6 +142,7 @@ function TopicAccordion({
   onSelectNode,
   onBack,
   jupyterUrlMap,
+  showJupyter,
 }: {
   topic: TreeNode;
   isOpen: boolean;
@@ -143,6 +151,7 @@ function TopicAccordion({
   onSelectNode: (id: number) => void;
   onBack: () => void;
   jupyterUrlMap?: Map<string, string | null>;
+  showJupyter?: boolean;
 }) {
   const activeNode = useMemo(() => {
     const find = (nodes: TreeNode[]): TreeNode | null => {
@@ -188,7 +197,7 @@ function TopicAccordion({
 
           {activeNode ? (
             <>
-              <NodeContent node={activeNode} onBack={onBack} jupyterUrl={jupyterUrlMap?.get(activeNode.title)} />
+              <NodeContent node={activeNode} onBack={onBack} jupyterUrl={jupyterUrlMap?.get(activeNode.title)} showJupyter={showJupyter} />
               {activeNode.children.length > 0 && (
                 <div className="mt-4">
                   <SubtopicList
@@ -196,6 +205,7 @@ function TopicAccordion({
                     activeId={activeNodeId}
                     onSelect={onSelectNode}
                     jupyterUrlMap={jupyterUrlMap}
+                    showJupyter={showJupyter}
                   />
                 </div>
               )}
@@ -229,6 +239,8 @@ function TopicAccordion({
 export default function Course() {
   const [openTopicId, setOpenTopicId] = useState<number | null>(null);
   const [activeNodeId, setActiveNodeId] = useState<number | null>(null);
+  const { isAuthenticated } = useAuth();
+  const location = useLocation();
 
   const { data: nodes, isLoading } = trpc.course.topicNodes.useQuery();
   const { data: subtopics } = trpc.course.listSubtopics.useQuery();
@@ -243,6 +255,47 @@ export default function Course() {
     subtopics?.forEach((s) => map.set(s.title, s.jupyterUrl));
     return map;
   }, [subtopics]);
+
+  // Deeplink: open topic/node from URL query params (by title)
+  const deeplinkApplied = useRef(false);
+  useLayoutEffect(() => {
+    if (deeplinkApplied.current) return;
+    if (tree.length === 0) return;
+    const params = new URLSearchParams(location.search);
+    const topicTitle = params.get("topic");
+    const nodeTitle = params.get("node");
+    if (!topicTitle && !nodeTitle) return;
+
+    const decodedTopic = topicTitle ? decodeURIComponent(topicTitle) : null;
+    const decodedNode = nodeTitle ? decodeURIComponent(nodeTitle) : null;
+
+    for (const topic of tree) {
+      if (decodedTopic && topic.title !== decodedTopic) continue;
+
+      if (decodedNode) {
+        const findNode = (nodes: TreeNode[]): TreeNode | null => {
+          for (const n of nodes) {
+            if (n.title === decodedNode) return n;
+            const found = findNode(n.children);
+            if (found) return found;
+          }
+          return null;
+        };
+        const node = findNode(topic.children);
+        if (node) {
+          deeplinkApplied.current = true;
+          setOpenTopicId(topic.id);
+          setActiveNodeId(node.id);
+          return;
+        }
+      } else if (decodedTopic && topic.title === decodedTopic) {
+        deeplinkApplied.current = true;
+        setOpenTopicId(topic.id);
+        setActiveNodeId(null);
+        return;
+      }
+    }
+  }, [location.search, tree]);
 
   const handleToggleTopic = (id: number) => {
     setOpenTopicId((prev) => (prev === id ? null : id));
@@ -278,7 +331,7 @@ export default function Course() {
           </svg>
         </div>
         <div className="relative max-w-4xl mx-auto px-6 text-center">
-          <p className="formula-text text-sm mb-4">E = mc² | полный курс</p>
+          <p className="formula-text text-sm mb-4">понятнее всего то, чего не будет на экзамене</p>
           <h1 className="text-4xl lg:text-5xl font-black uppercase tracking-tight mb-6">
             Курс физики: полная программа
           </h1>
@@ -348,6 +401,7 @@ export default function Course() {
                       onSelectNode={handleSelectNode}
                       onBack={() => setActiveNodeId(null)}
                       jupyterUrlMap={jupyterUrlMap}
+                      showJupyter={isAuthenticated}
                     />
                   );
                 })()}

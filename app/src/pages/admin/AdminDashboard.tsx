@@ -227,6 +227,11 @@ export default function AdminDashboard() {
           icon={NotebookPen}
           onClick={() => navigate("/admin/subtopics")}
         />
+        <QuickAction
+          label="Jupyter-ноутбуки"
+          icon={NotebookPen}
+          onClick={() => navigate("/admin/jupyter-notebooks")}
+        />
       </div>
 
       {/* Recent Activity Preview */}

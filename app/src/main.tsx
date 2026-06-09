@@ -4,12 +4,25 @@ import './index.css'
 import { TRPCProvider } from "@/providers/trpc"
 import { Toaster } from "@/components/ui/sonner"
 import App from './App.tsx'
+import { ErrorBoundary } from "@/components/ErrorFallback"
+
+window.addEventListener('error', (e) => {
+  // eslint-disable-next-line no-console
+  console.error('Global error:', e.error);
+});
+
+window.addEventListener('unhandledrejection', (e) => {
+  // eslint-disable-next-line no-console
+  console.error('Unhandled rejection:', e.reason);
+});
 
 createRoot(document.getElementById('root')!).render(
-  <HashRouter>
-    <TRPCProvider>
-      <App />
-      <Toaster />
-    </TRPCProvider>
-  </HashRouter>,
+  <ErrorBoundary>
+    <HashRouter>
+      <TRPCProvider>
+        <App />
+        <Toaster />
+      </TRPCProvider>
+    </HashRouter>
+  </ErrorBoundary>,
 )

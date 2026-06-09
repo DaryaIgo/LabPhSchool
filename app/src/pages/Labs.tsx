@@ -67,7 +67,7 @@ export default function Labs() {
       {/* Hero */}
       <section className="bg-[#262e33] py-24 lg:py-32">
         <div className="max-w-4xl mx-auto px-6 text-center">
-          <p className="formula-text text-sm mb-4">F = ma | эксперименты</p>
+          <p className="formula-text text-sm mb-4">под давлением всё ухудшается</p>
           <h1 className="text-4xl lg:text-5xl font-black uppercase tracking-tight mb-6">
             Виртуальные лабораторные работы
           </h1>

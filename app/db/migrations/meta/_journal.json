@@ -71,6 +71,34 @@
       "when": 1780494109929,
       "tag": "0009_typical_iron_monger",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1780974337682,
+      "tag": "0010_complete_forgotten_one",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1780976076358,
+      "tag": "0011_certain_pet_avengers",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1780976258473,
+      "tag": "0012_mature_hydra",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1780977449753,
+      "tag": "0013_milky_wonder_man",
+      "breakpoints": true
     }
   ]
 }

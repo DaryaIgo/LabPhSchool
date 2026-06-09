@@ -143,7 +143,7 @@ export default function Resources() {
         </div>
 
         <div className="relative max-w-4xl mx-auto px-6 text-center">
-          <p className="formula-text text-sm mb-4">E = hν | материалы</p>
+          <p className="formula-text text-sm mb-4">усталость - это иллюзия</p>
           <h1 className="text-4xl lg:text-5xl font-black uppercase tracking-tight mb-6">
             Дополнительные ресурсы
           </h1>

@@ -9,6 +9,9 @@ import {
   topics,
   subtopics,
   labs,
+  jupyterNotebooks,
+  jupyterNotebookAccess,
+  notifications,
 } from "./schema";
 
 // ── Roles ──
@@ -90,5 +93,34 @@ export const labsRelations = relations(labs, ({ one }) => ({
   topic: one(topics, {
     fields: [labs.topicId],
     references: [topics.id],
+  }),
+}));
+
+// ── Jupyter Notebooks ──
+export const jupyterNotebooksRelations = relations(jupyterNotebooks, ({ one, many }) => ({
+  subtopic: one(subtopics, {
+    fields: [jupyterNotebooks.subtopicId],
+    references: [subtopics.id],
+  }),
+  accesses: many(jupyterNotebookAccess),
+}));
+
+// ── Jupyter Notebook Access ──
+export const jupyterNotebookAccessRelations = relations(jupyterNotebookAccess, ({ one }) => ({
+  notebook: one(jupyterNotebooks, {
+    fields: [jupyterNotebookAccess.notebookId],
+    references: [jupyterNotebooks.id],
+  }),
+  localUser: one(localUsers, {
+    fields: [jupyterNotebookAccess.localUserId],
+    references: [localUsers.id],
+  }),
+}));
+
+// ── Notifications ──
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  localUser: one(localUsers, {
+    fields: [notifications.localUserId],
+    references: [localUsers.id],
   }),
 }));

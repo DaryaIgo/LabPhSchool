@@ -13,10 +13,14 @@ import {
   subtopics,
   problems,
   localUsers,
+  roles,
   topicNodes,
   labWorks,
   resources,
   labProgress,
+  jupyterNotebooks,
+  jupyterNotebookAccess,
+  notifications,
 } from "@db/schema";
 import { eq, asc, desc, count, and } from "drizzle-orm";
 import { createAuditEntry } from "./queries/audit";
@@ -31,15 +35,19 @@ export const adminRouter = createRouter({
 
     const [studentCount] = await db
       .select({ count: count() })
-      .from(localUsers);
+      .from(localUsers)
+      .innerJoin(roles, eq(localUsers.roleId, roles.id))
+      .where(eq(roles.name, "student"));
     const [activeCount] = await db
       .select({ count: count() })
       .from(localUsers)
-      .where(eq(localUsers.status, "active"));
+      .innerJoin(roles, eq(localUsers.roleId, roles.id))
+      .where(and(eq(roles.name, "student"), eq(localUsers.status, "active")));
     const [suspendedCount] = await db
       .select({ count: count() })
       .from(localUsers)
-      .where(eq(localUsers.status, "suspended"));
+      .innerJoin(roles, eq(localUsers.roleId, roles.id))
+      .where(and(eq(roles.name, "student"), eq(localUsers.status, "suspended")));
     const [topicCount] = await db.select({ count: count() }).from(topics);
     const [labWorkCount] = await db.select({ count: count() }).from(labWorks);
     const [resourceCount] = await db.select({ count: count() }).from(resources);
@@ -755,6 +763,194 @@ export const adminRouter = createRouter({
         resource: "lab_progress",
         resourceId: input.id,
         details: { grade: input.grade, comment: input.teacherComment },
+      });
+
+      return { success: true };
+    }),
+
+  // ═══════════════════════════════════════════════════════════
+  // JUPYTER NOTEBOOKS CRUD
+  // ═══════════════════════════════════════════════════════════
+
+  listJupyterNotebooks: adminQuery.query(async () => {
+    const db = getDb();
+    const notebooks = await db
+      .select()
+      .from(jupyterNotebooks)
+      .orderBy(desc(jupyterNotebooks.createdAt));
+
+    // Get subtopic names
+    const subtopicList = await db.select().from(subtopics);
+    const subtopicMap = new Map(subtopicList.map((s) => [s.id, s.title]));
+
+    // Get access counts
+    const accessList = await db
+      .select({
+        notebookId: jupyterNotebookAccess.notebookId,
+        count: count(),
+      })
+      .from(jupyterNotebookAccess)
+      .groupBy(jupyterNotebookAccess.notebookId);
+    const accessCountMap = new Map(accessList.map((a) => [a.notebookId, a.count]));
+
+    return notebooks.map((n) => ({
+      ...n,
+      subtopicTitle: subtopicMap.get(n.subtopicId) ?? "—",
+      accessCount: accessCountMap.get(n.id) ?? 0,
+    }));
+  }),
+
+  createJupyterNotebook: adminQuery
+    .input(
+      z.object({
+        subtopicId: z.number().positive(),
+        title: z.string().min(1).max(255),
+        filename: z.string().min(1).max(255),
+        filePath: z.string().min(1).max(500),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = getDb();
+      const result = await db.insert(jupyterNotebooks).values({
+        subtopicId: input.subtopicId,
+        title: input.title,
+        filename: input.filename,
+        filePath: input.filePath,
+        uploadedBy: ctx.localUser!.id,
+      });
+
+      const id = Number(result[0].insertId);
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "create",
+        resource: "jupyter_notebooks",
+        resourceId: id,
+        details: { title: input.title, subtopicId: input.subtopicId },
+      });
+
+      return { id, success: true };
+    }),
+
+  deleteJupyterNotebook: adminQuery
+    .input(z.object({ id: z.number().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = getDb();
+      // Delete access entries first
+      await db
+        .delete(jupyterNotebookAccess)
+        .where(eq(jupyterNotebookAccess.notebookId, input.id));
+
+      await db.delete(jupyterNotebooks).where(eq(jupyterNotebooks.id, input.id));
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "delete",
+        resource: "jupyter_notebooks",
+        resourceId: input.id,
+      });
+
+      return { success: true };
+    }),
+
+  // ── Jupyter Notebook Access Management ──
+
+  listJupyterAccess: adminQuery
+    .input(z.object({ notebookId: z.number().positive() }))
+    .query(async ({ input }) => {
+      const db = getDb();
+      const accesses = await db
+        .select({
+          id: jupyterNotebookAccess.id,
+          notebookId: jupyterNotebookAccess.notebookId,
+          localUserId: jupyterNotebookAccess.localUserId,
+          grantedAt: jupyterNotebookAccess.grantedAt,
+          studentName: localUsers.name,
+          studentLogin: localUsers.login,
+        })
+        .from(jupyterNotebookAccess)
+        .innerJoin(localUsers, eq(jupyterNotebookAccess.localUserId, localUsers.id))
+        .where(eq(jupyterNotebookAccess.notebookId, input.notebookId));
+
+      return accesses;
+    }),
+
+  grantJupyterAccess: adminQuery
+    .input(
+      z.object({
+        notebookId: z.number().positive(),
+        localUserId: z.number().positive(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = getDb();
+
+      // Check if already granted
+      const existing = await db
+        .select()
+        .from(jupyterNotebookAccess)
+        .where(
+          and(
+            eq(jupyterNotebookAccess.notebookId, input.notebookId),
+            eq(jupyterNotebookAccess.localUserId, input.localUserId)
+          )
+        )
+        .limit(1);
+
+      if (existing.length > 0) {
+        return { success: true, alreadyGranted: true };
+      }
+
+      await db.insert(jupyterNotebookAccess).values({
+        notebookId: input.notebookId,
+        localUserId: input.localUserId,
+        grantedBy: ctx.localUser!.id,
+      });
+
+      // Get notebook info for notification
+      const notebook = await db
+        .select()
+        .from(jupyterNotebooks)
+        .where(eq(jupyterNotebooks.id, input.notebookId))
+        .limit(1);
+
+      // Create notification for student
+      await db.insert(notifications).values({
+        localUserId: input.localUserId,
+        type: "jupyter_notebook",
+        title: "Доступен новый Jupyter-ноутбук",
+        message: `Вам открыт доступ к ноутбуку "${notebook[0]?.title ?? "—"}". Скачайте его в своём профиле.`,
+        resourceId: input.notebookId,
+      });
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "grant_access",
+        resource: "jupyter_notebook_access",
+        resourceId: input.notebookId,
+        details: { localUserId: input.localUserId },
+      });
+
+      return { success: true, alreadyGranted: false };
+    }),
+
+  revokeJupyterAccess: adminQuery
+    .input(z.object({ accessId: z.number().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = getDb();
+      await db
+        .delete(jupyterNotebookAccess)
+        .where(eq(jupyterNotebookAccess.id, input.accessId));
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "revoke_access",
+        resource: "jupyter_notebook_access",
+        resourceId: input.accessId,
       });
 
       return { success: true };
