@@ -30,6 +30,14 @@ import UniformlyAcceleratedMotion from "@/components/lab/simulations/UniformlyAc
 import FreeFallG from "@/components/lab/simulations/FreeFallG";
 import CircularMotion from "@/components/lab/simulations/CircularMotion";
 import ProjectileMotion from "@/components/lab/simulations/ProjectileMotion";
+import LightReflectionSimulation from "@/components/lab/simulations/LightReflectionSimulation";
+import LightRefractionSimulation from "@/components/lab/simulations/LightRefractionSimulation";
+import RefractionIndexSimulation from "@/components/lab/simulations/RefractionIndexSimulation";
+import LensFocalSimulation from "@/components/lab/simulations/LensFocalSimulation";
+import LensImageSimulation from "@/components/lab/simulations/LensImageSimulation";
+import WavelengthMeasurementSimulation from "@/components/lab/simulations/WavelengthMeasurementSimulation";
+import InterferenceDiffractionSimulation from "@/components/lab/simulations/InterferenceDiffractionSimulation";
+import EmissionSpectraSimulation from "@/components/lab/simulations/EmissionSpectraSimulation";
 import { LabGraphs } from "@/components/lab/LabGraphs";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -49,6 +57,14 @@ const simComponents: Record<string, React.FC<SimComponentProps>> = {
   "free-fall-g": FreeFallG,
   "circular-motion": CircularMotion,
   "projectile-motion": ProjectileMotion,
+  "light-reflection": LightReflectionSimulation,
+  "light-refraction": LightRefractionSimulation,
+  "glass-refraction-index": RefractionIndexSimulation,
+  "converging-lens-focus": LensFocalSimulation,
+  "lens-image-formation": LensImageSimulation,
+  "wavelength-measurement": WavelengthMeasurementSimulation,
+  "interference-diffraction": InterferenceDiffractionSimulation,
+  "emission-spectra": EmissionSpectraSimulation,
 };
 
 interface TheoryTab {
@@ -264,6 +280,111 @@ export default function LabWorkPage() {
       row["L"] = L.toFixed(1);
       row["H"] = H.toFixed(1);
       row["T"] = Tflight.toFixed(2);
+    } else if (slug === "light-reflection") {
+      const alpha = Number(effectiveSimParams["incidentAngle"] || 0);
+      row["α"] = alpha.toFixed(0);
+      row["β"] = alpha.toFixed(0);
+      row["α+β"] = (2 * alpha).toFixed(0);
+    } else if (slug === "light-refraction") {
+      const alpha = Number(effectiveSimParams["incidentAngle"] || 0);
+      const n = Number(effectiveSimParams["medium"] || 1.5);
+      const alphaRad = (alpha * Math.PI) / 180;
+      const sinBeta = Math.min(Math.sin(alphaRad) / n, 1);
+      const beta = (Math.asin(sinBeta) * 180) / Math.PI;
+      row["α"] = alpha.toFixed(0);
+      row["β"] = beta.toFixed(1);
+      row["n"] = n.toFixed(2);
+    } else if (slug === "glass-refraction-index") {
+      const alpha = Number(effectiveSimParams["incidentAngle"] || 45);
+      const n = Number(effectiveSimParams["nGlass"] || 1.5);
+      const alphaRad = (alpha * Math.PI) / 180;
+      const sinBeta = Math.min(Math.sin(alphaRad) / n, 1);
+      const beta = (Math.asin(sinBeta) * 180) / Math.PI;
+      const nMeasured = Math.sin(alphaRad) / Math.sin((beta * Math.PI) / 180);
+      row["α"] = alpha.toFixed(0);
+      row["β"] = beta.toFixed(1);
+      row["n_изм"] = nMeasured.toFixed(2);
+      row["n_табл"] = n.toFixed(2);
+    } else if (slug === "converging-lens-focus") {
+      const d = Number(effectiveSimParams["objectDistance"] || 30);
+      const F = Number(effectiveSimParams["focalLength"] || 10);
+      const f = d > F ? 1 / (1 / F - 1 / d) : 0;
+      const D = 100 / F;
+      const gamma = f / d;
+      row["d"] = d.toFixed(1);
+      row["f"] = f.toFixed(1);
+      row["F"] = F.toFixed(1);
+      row["D"] = D.toFixed(2);
+      row["Γ"] = gamma.toFixed(2);
+    } else if (slug === "lens-image-formation") {
+      const d = Number(effectiveSimParams["objectDistance"] || 30);
+      const F = Number(effectiveSimParams["focalLength"] || 10);
+      const h = Number(effectiveSimParams["objectHeight"] || 3);
+      let f = 0;
+      let gamma = 0;
+      let imageType = "";
+      if (d > 2 * F) {
+        f = 1 / (1 / F - 1 / d);
+        gamma = f / d;
+        imageType = "уменьшенное, перевёрнутое, действительное";
+      } else if (Math.abs(d - 2 * F) < 0.1) {
+        f = 1 / (1 / F - 1 / d);
+        gamma = f / d;
+        imageType = "равное, перевёрнутое, действительное";
+      } else if (d > F && d < 2 * F) {
+        f = 1 / (1 / F - 1 / d);
+        gamma = f / d;
+        imageType = "увеличенное, перевёрнутое, действительное";
+      } else if (Math.abs(d - F) < 0.1) {
+        f = Infinity;
+        gamma = Infinity;
+        imageType = "нет изображения";
+      } else {
+        f = 1 / (1 / F - 1 / d);
+        gamma = Math.abs(f / d);
+        imageType = "увеличенное, прямое, мнимое";
+      }
+      row["d"] = d.toFixed(1);
+      row["F"] = F.toFixed(1);
+      row["f"] = Number.isFinite(f) ? Math.abs(f).toFixed(1) : "∞";
+      row["Γ"] = Number.isFinite(gamma) ? gamma.toFixed(2) : "∞";
+      row["h"] = h.toFixed(1);
+      row["тип"] = imageType;
+    } else if (slug === "wavelength-measurement") {
+      const d = Number(effectiveSimParams["gratingConstant"] || 1.0);
+      const phi = Number(effectiveSimParams["diffractionAngle"] || 20);
+      const k = Number(effectiveSimParams["order"] || 1);
+      const lambda = (d * 1000 * Math.sin((phi * Math.PI) / 180)) / k;
+      row["d"] = d.toFixed(1);
+      row["φ"] = phi.toFixed(1);
+      row["k"] = k;
+      row["λ"] = lambda.toFixed(1);
+    } else if (slug === "interference-diffraction") {
+      const d = Number(effectiveSimParams["slitDistance"] || 0.5);
+      const L = Number(effectiveSimParams["screenDistance"] || 1.0);
+      const dx = Number(effectiveSimParams["fringeSpacing"] || 1.0);
+      const lambda = (d * dx) / L;
+      row["d"] = d.toFixed(1);
+      row["L"] = L.toFixed(1);
+      row["Δx"] = dx.toFixed(1);
+      row["λ"] = lambda.toFixed(1);
+    } else if (slug === "emission-spectra") {
+      const substance = String(effectiveSimParams["substance"] || "hydrogen");
+      const spectrumType = String(effectiveSimParams["spectrumType"] || "line");
+      const substanceNames: Record<string, string> = {
+        hydrogen: "Водород",
+        helium: "Гелий",
+        neon: "Неон",
+        sodium: "Натрий",
+        mercury: "Ртуть",
+        tungsten: "Вольфрам",
+      };
+      const spectrumNames: Record<string, string> = {
+        line: "линейчатый",
+        continuous: "сплошной",
+      };
+      row["вещество"] = substanceNames[substance] || substance;
+      row["тип спектра"] = spectrumNames[spectrumType] || spectrumType;
     }
     setMeasurements((prev) => [...prev, row]);
   };
@@ -407,6 +528,97 @@ export default function LabWorkPage() {
       data["time"] = t.toFixed(1);
       data["work"] = Number(data["A"] || 0).toFixed(1);
       data["power"] = Number(data["P"] || 0).toFixed(1);
+    } else if (slug === "light-reflection") {
+      const alpha = Number(effectiveSimParams["incidentAngle"] || 0);
+      data["alpha"] = alpha.toFixed(0);
+      data["beta"] = alpha.toFixed(0);
+    } else if (slug === "light-refraction") {
+      const alpha = Number(effectiveSimParams["incidentAngle"] || 0);
+      const n = Number(effectiveSimParams["medium"] || 1.5);
+      const alphaRad = (alpha * Math.PI) / 180;
+      const sinBeta = Math.min(Math.sin(alphaRad) / n, 1);
+      const beta = (Math.asin(sinBeta) * 180) / Math.PI;
+      data["alpha"] = alpha.toFixed(0);
+      data["beta"] = beta.toFixed(1);
+      data["n"] = n.toFixed(2);
+    } else if (slug === "glass-refraction-index") {
+      const alpha = Number(effectiveSimParams["incidentAngle"] || 45);
+      const n = Number(effectiveSimParams["nGlass"] || 1.5);
+      const alphaRad = (alpha * Math.PI) / 180;
+      const sinBeta = Math.min(Math.sin(alphaRad) / n, 1);
+      const beta = (Math.asin(sinBeta) * 180) / Math.PI;
+      const nMeasured = Math.sin(alphaRad) / Math.sin((beta * Math.PI) / 180);
+      data["nMeasured"] = nMeasured.toFixed(2);
+      data["nTabular"] = n.toFixed(2);
+    } else if (slug === "converging-lens-focus") {
+      const d = Number(effectiveSimParams["objectDistance"] || 30);
+      const F = Number(effectiveSimParams["focalLength"] || 10);
+      const f = d > F ? 1 / (1 / F - 1 / d) : 0;
+      const D = 100 / F;
+      data["F"] = F.toFixed(1);
+      data["d"] = d.toFixed(1);
+      data["f"] = f.toFixed(1);
+      data["Fcalc"] = f.toFixed(1);
+      data["D"] = D.toFixed(2);
+    } else if (slug === "lens-image-formation") {
+      const d = Number(effectiveSimParams["objectDistance"] || 30);
+      const F = Number(effectiveSimParams["focalLength"] || 10);
+      let gamma = 0;
+      let imageType = "";
+      if (d > 2 * F) {
+        const f = 1 / (1 / F - 1 / d);
+        gamma = f / d;
+        imageType = "уменьшенное, перевёрнутое, действительное";
+      } else if (Math.abs(d - 2 * F) < 0.1) {
+        const f = 1 / (1 / F - 1 / d);
+        gamma = f / d;
+        imageType = "равное, перевёрнутое, действительное";
+      } else if (d > F && d < 2 * F) {
+        const f = 1 / (1 / F - 1 / d);
+        gamma = f / d;
+        imageType = "увеличенное, перевёрнутое, действительное";
+      } else if (Math.abs(d - F) < 0.1) {
+        gamma = Infinity;
+        imageType = "нет изображения";
+      } else {
+        const f = 1 / (1 / F - 1 / d);
+        gamma = Math.abs(f / d);
+        imageType = "увеличенное, прямое, мнимое";
+      }
+      data["d"] = d.toFixed(1);
+      data["gamma"] = Number.isFinite(gamma) ? gamma.toFixed(2) : "∞";
+      data["imageType"] = imageType;
+    } else if (slug === "wavelength-measurement") {
+      const d = Number(effectiveSimParams["gratingConstant"] || 1.0);
+      const phi = Number(effectiveSimParams["diffractionAngle"] || 20);
+      const k = Number(effectiveSimParams["order"] || 1);
+      const lambda = (d * 1000 * Math.sin((phi * Math.PI) / 180)) / k;
+      data["d"] = d.toFixed(1);
+      data["lambda"] = lambda.toFixed(1);
+    } else if (slug === "interference-diffraction") {
+      const d = Number(effectiveSimParams["slitDistance"] || 0.5);
+      const L = Number(effectiveSimParams["screenDistance"] || 1.0);
+      const dx = Number(effectiveSimParams["fringeSpacing"] || 1.0);
+      const lambda = (d * dx) / L;
+      data["fringeSpacing"] = dx.toFixed(1);
+      data["lambda"] = lambda.toFixed(1);
+    } else if (slug === "emission-spectra") {
+      const substance = String(effectiveSimParams["substance"] || "hydrogen");
+      const spectrumType = String(effectiveSimParams["spectrumType"] || "line");
+      const substanceNames: Record<string, string> = {
+        hydrogen: "Водород",
+        helium: "Гелий",
+        neon: "Неон",
+        sodium: "Натрий",
+        mercury: "Ртуть",
+        tungsten: "Вольфрам",
+      };
+      const spectrumNames: Record<string, string> = {
+        line: "линейчатый",
+        continuous: "сплошной",
+      };
+      data["substance"] = substanceNames[substance] || substance;
+      data["spectrumType"] = spectrumNames[spectrumType] || spectrumType;
     }
 
     return data;
