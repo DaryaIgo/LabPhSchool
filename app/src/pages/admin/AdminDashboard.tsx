@@ -23,6 +23,7 @@ import {
   Library,
   FileCheck,
   NotebookPen,
+  History,
 } from "lucide-react";
 
 function StatCard({
@@ -231,6 +232,11 @@ export default function AdminDashboard() {
           label="Jupyter-ноутбуки"
           icon={NotebookPen}
           onClick={() => navigate("/admin/jupyter-notebooks")}
+        />
+        <QuickAction
+          label="Стрела времени"
+          icon={History}
+          onClick={() => navigate("/admin/timeline")}
         />
       </div>
 

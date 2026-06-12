@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { trpc } from "@/providers/trpc";
 import { Button } from "@/components/ui/button";
@@ -140,38 +140,40 @@ export default function TopicManagement() {
   const [importMd, setImportMd] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const importFileRef = useRef<HTMLInputElement>(null);
+  const lastSelectedIdRef = useRef<number | null>(null);
 
   const { data: nodes, isLoading } = trpc.admin.listTopicNodes.useQuery(undefined, {
     enabled: !!user && user.role === "admin",
+    refetchOnWindowFocus: false,
+    staleTime: 60_000,
   });
 
   const tree = useMemo(() => buildTree(nodes || []), [nodes]);
 
-  const selectedNode = useMemo(() => {
-    return nodes?.find((n) => n.id === selectedId) ?? null;
-  }, [nodes, selectedId]);
-
-  useEffect(() => {
-    if (selectedNode) {
+  const loadNodeIntoForm = useCallback((id: number) => {
+    const node = nodes?.find((n) => n.id === id);
+    if (node) {
       setForm({
-        title: selectedNode.title,
-        slug: selectedNode.slug,
-        order: selectedNode.order,
-        color: selectedNode.color || "#2eff8c",
-        content: selectedNode.content || "",
+        title: node.title,
+        slug: node.slug,
+        order: node.order,
+        color: node.color || "#2eff8c",
+        content: node.content || "",
       });
       setIsEditing(true);
-    } else {
-      setForm({ ...initialForm });
-      setIsEditing(false);
     }
-  }, [selectedNode]);
+  }, [nodes]);
 
   const createMutation = trpc.admin.createTopicNode.useMutation({
     onSuccess: (res) => {
       toast("Узел создан");
       utils.admin.listTopicNodes.invalidate();
-      if (res.id) setSelectedId(res.id);
+      utils.course.topicNodes.invalidate();
+      if (res.id) {
+        setSelectedId(res.id);
+        lastSelectedIdRef.current = res.id;
+        setIsEditing(true);
+      }
       setCreatingChildOf(null);
     },
     onError: (err) => toast(err.message),
@@ -181,6 +183,7 @@ export default function TopicManagement() {
     onSuccess: () => {
       toast("Сохранено");
       utils.admin.listTopicNodes.invalidate();
+      utils.course.topicNodes.invalidate();
     },
     onError: (err) => toast(err.message),
   });
@@ -189,7 +192,11 @@ export default function TopicManagement() {
     onSuccess: () => {
       toast("Удалено");
       utils.admin.listTopicNodes.invalidate();
+      utils.course.topicNodes.invalidate();
       setSelectedId(null);
+      lastSelectedIdRef.current = null;
+      setForm({ ...initialForm });
+      setIsEditing(false);
     },
     onError: (err) => toast(err.message),
   });
@@ -198,9 +205,14 @@ export default function TopicManagement() {
     onSuccess: (res) => {
       toast("Импорт завершен");
       utils.admin.listTopicNodes.invalidate();
+      utils.course.topicNodes.invalidate();
       setImportOpen(false);
       setImportMd("");
-      if (res.id) setSelectedId(res.id);
+      if (res.id) {
+        setSelectedId(res.id);
+        lastSelectedIdRef.current = res.id;
+        setIsEditing(true);
+      }
     },
     onError: (err) => toast(err.message),
   });
@@ -316,6 +328,18 @@ export default function TopicManagement() {
     }
   }, [selectedId, utils]);
 
+  const mdPreviewOptions = useMemo(
+    () => ({
+      remarkPlugins: [remarkGfm, remarkMath],
+      rehypePlugins: [rehypeKatex],
+    }),
+    []
+  );
+  const mdTextareaProps = useMemo(
+    () => ({ placeholder: "Введите Markdown..." }),
+    []
+  );
+
   if (!user || user.role !== "admin") return null;
 
   return (
@@ -378,6 +402,10 @@ export default function TopicManagement() {
                   node={node}
                   selectedId={selectedId}
                   onSelect={(id) => {
+                    if (lastSelectedIdRef.current !== id) {
+                      lastSelectedIdRef.current = id;
+                      loadNodeIntoForm(id);
+                    }
                     setSelectedId(id);
                     setCreatingChildOf(null);
                   }}
@@ -544,13 +572,8 @@ export default function TopicManagement() {
                     }
                     height={500}
                     preview="live"
-                    previewOptions={{
-                      remarkPlugins: [remarkGfm, remarkMath],
-                      rehypePlugins: [rehypeKatex],
-                    }}
-                    textareaProps={{
-                      placeholder: "Введите Markdown...",
-                    }}
+                    previewOptions={mdPreviewOptions}
+                    textareaProps={mdTextareaProps}
                   />
                 </div>
               </div>

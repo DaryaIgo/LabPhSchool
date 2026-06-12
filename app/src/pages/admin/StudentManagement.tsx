@@ -46,6 +46,7 @@ import {
   PlayCircle,
   ChevronLeft,
   ChevronRight,
+  User,
 } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -297,10 +298,10 @@ export default function StudentManagement() {
                         ID
                       </th>
                       <th className="text-left p-4 text-gray-400 font-medium">
-                        Login
+                        Student
                       </th>
                       <th className="text-left p-4 text-gray-400 font-medium">
-                        Name
+                        Role
                       </th>
                       <th className="text-left p-4 text-gray-400 font-medium">
                         Status
@@ -332,8 +333,36 @@ export default function StudentManagement() {
                         <td className="p-4 font-mono text-xs text-gray-400">
                           {s.id}
                         </td>
-                        <td className="p-4 font-medium">{s.login}</td>
-                        <td className="p-4">{s.name}</td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-[#2eff8c]/10 flex items-center justify-center shrink-0">
+                              <User className="h-4 w-4 text-[#2eff8c]" />
+                            </div>
+                            <div>
+                              <div className="text-white font-semibold text-base leading-tight">
+                                {s.name}
+                              </div>
+                              <div className="text-gray-400 text-sm leading-tight mt-0.5">
+                                @{s.login}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <Badge
+                            className={
+                              s.roleName === "admin"
+                                ? "bg-blue-600 text-white"
+                                : "bg-gray-600 text-white"
+                            }
+                          >
+                            {s.roleName === "admin"
+                              ? "Администратор"
+                              : s.roleName === "student"
+                              ? "Ученик"
+                              : s.roleName}
+                          </Badge>
+                        </td>
                         <td className="p-4">
                           <Badge
                             className={

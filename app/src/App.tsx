@@ -9,6 +9,7 @@ import LabWorkPage from "./pages/LabWorkPage";
 import AdminProblems from "./pages/admin/AdminProblems";
 import Profile from "./pages/Profile";
 import Resources from "./pages/Resources";
+import Timeline from "./pages/Timeline";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -23,6 +24,7 @@ import ResourceManagement from "./pages/admin/ResourceManagement";
 import LabSubmissions from "./pages/admin/LabSubmissions";
 import SubtopicManagement from "./pages/admin/SubtopicManagement";
 import JupyterNotebookManagement from "./pages/admin/JupyterNotebookManagement";
+import AdminTimeline from "./pages/admin/AdminTimeline";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -44,6 +46,7 @@ export default function App() {
         <Route path="/labs/category/:slug" element={<LabCategoryPage />} />
         <Route path="/labs/work/:slug" element={<LabWorkPage />} />
         <Route path="/resources" element={<Resources />} />
+        <Route path="/timeline" element={<Timeline />} />
         {/* Auth Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/profile" element={<Profile />} />
@@ -61,6 +64,7 @@ export default function App() {
         <Route path="/admin/lab-submissions" element={<LabSubmissions />} />
         <Route path="/admin/subtopics" element={<SubtopicManagement />} />
         <Route path="/admin/jupyter-notebooks" element={<JupyterNotebookManagement />} />
+        <Route path="/admin/timeline" element={<AdminTimeline />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

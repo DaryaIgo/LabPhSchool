@@ -45,6 +45,7 @@ import {
   EyeOff,
   Circle,
   Clock,
+  User,
 } from "lucide-react";
 
 const ENROLLMENT_STATUS_COLORS: Record<string, string> = {
@@ -135,7 +136,7 @@ export default function EnrollmentManagement() {
         </div>
       ) : (
         <div className="space-y-3">
-          {students?.users.map((student) => (
+          {students?.users.filter((s) => s.roleName !== "admin").map((student) => (
             <Card
               key={student.id}
               className="bg-[#1e2529] border-[#37474f]"
@@ -155,12 +156,17 @@ export default function EnrollmentManagement() {
                         expandedStudent === student.id ? "rotate-180" : ""
                       }`}
                     />
+                    <div className="w-9 h-9 rounded-full bg-[#2eff8c]/10 flex items-center justify-center shrink-0">
+                      <User className="h-4 w-4 text-[#2eff8c]" />
+                    </div>
                     <div>
-                      <p className="font-medium">{student.name}</p>
-                      <p className="text-xs text-gray-400">
-                        {student.login} ·
+                      <p className="text-white font-semibold text-base leading-tight">
+                        {student.name}
+                      </p>
+                      <p className="text-sm text-gray-300 leading-tight mt-0.5">
+                        @{student.login}
                         <Badge
-                          className="ml-2 text-xs"
+                          className="ml-2 text-[10px]"
                           variant={
                             student.status === "active"
                               ? "default"
@@ -292,7 +298,6 @@ function StudentEnrollments({
   });
 
   const { data: allSubtopics } = trpc.course.listSubtopics.useQuery();
-  const { data: allLabs } = trpc.course.labs.useQuery();
 
   if (isLoading) {
     return (
@@ -321,7 +326,7 @@ function StudentEnrollments({
                 className="w-2 h-2 rounded-full shrink-0"
                 style={{ backgroundColor: e.topicColor ?? "#2eff8c" }}
               />
-              <span className="text-sm font-medium truncate">{e.topicTitle}</span>
+              <span className="text-sm font-medium text-white truncate">{e.topicTitle}</span>
               <Badge
                 className={`${ENROLLMENT_STATUS_COLORS[e.status]} text-[10px] shrink-0`}
               >
@@ -510,15 +515,14 @@ function StudentEnrollments({
 function SubtopicProgressManager({
   studentId,
   topicId,
-  labs,
 }: {
   studentId: number;
   topicId: number;
-  labs: { id: number; title: string; slug: string; shortDesc: string | null }[];
 }) {
   const { data: progress, isLoading } = trpc.student.getTopicProgress.useQuery(
     { studentId, topicId }
   );
+  const { data: topicLabs } = trpc.course.topicLabWorks.useQuery({ topicId });
   const utils = trpc.useUtils();
 
   const updateProgress = trpc.student.updateProgress.useMutation({
@@ -557,7 +561,7 @@ function SubtopicProgressManager({
           className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 px-3 bg-[#1e2529] rounded-lg border border-[#37474f]"
         >
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-sm font-medium truncate">{sub.title}</span>
+            <span className="text-sm font-medium text-white truncate">{sub.title}</span>
             <Badge className={`${SUBTOPIC_STATUS_COLORS[sub.status]} text-[10px] border`}>
               {SUBTOPIC_STATUS_LABELS[sub.status]}
             </Badge>
@@ -669,17 +673,17 @@ function SubtopicProgressManager({
       ))}
 
       {/* Labs */}
-      {labs.length > 0 && (
+      {topicLabs && topicLabs.length > 0 && (
         <div className="mt-2 space-y-1">
           <p className="text-xs text-[#798389] px-1">Лабораторные работы</p>
-          {labs.map((lab) => (
+          {topicLabs.map((lab) => (
             <div
               key={lab.id}
               className="flex items-center gap-3 py-2 px-3 bg-[#263238]/50 rounded-lg border border-[#37474f]/50"
             >
               <Beaker size={14} className="text-[#2eff8c] shrink-0" />
               <div className="flex-1 min-w-0">
-                <span className="text-sm truncate">{lab.title}</span>
+                <span className="text-sm text-white truncate">{lab.title}</span>
                 {lab.shortDesc && (
                   <p className="text-xs text-[#798389]">{lab.shortDesc}</p>
                 )}

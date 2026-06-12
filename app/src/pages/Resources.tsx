@@ -29,6 +29,54 @@ const allTags = [
 
 const staticResources = [
   {
+    id: -13,
+    title: "Механическое движение",
+    description: "Плейлист с теорией и разбором задач на механическое движение",
+    type: "video" as const,
+    url: "https://www.youtube.com/playlist?list=PL1Us50cZo25k0P5jsqx5FYgVMCkxNxMKC",
+    tags: "Видео,Механическое движение,Кинематика,Механика",
+  },
+  {
+    id: -12,
+    title: "Электромагнитные волны",
+    description: "Плейлист с теорией и разбором задач на электромагнитные волны",
+    type: "video" as const,
+    url: "https://youtube.com/playlist?list=PL1Us50cZo25meF0AqFID_fR0qwgYUkXY6&si=zXXmFvacNUJpXBPX",
+    tags: "Видео,Электромагнитные волны,Оптика,Электричество",
+  },
+  {
+    id: -11,
+    title: "Давление твёрдых тел, жидкостей и газов",
+    description: "Плейлист с теорией и разбором задач на давление в твёрдых телах, жидкостях и газах",
+    type: "video" as const,
+    url: "https://youtube.com/playlist?list=PL1Us50cZo25m3ozxGRcOFqsGM30UK4NQ5&si=vKRZJPoiqVBia2aF",
+    tags: "Видео,Давление,Гидростатика,Механика",
+  },
+  {
+    id: -10,
+    title: "Электрические дуги в замедленной съёмке",
+    description: "Сверхзамедленная съёмка высоковольтных электрических разрядов",
+    type: "video" as const,
+    url: "https://www.youtube.com/watch?v=HDzVD-cqiWM",
+    tags: "Видео,Электричество,Разряды,Замедленная съёмка",
+  },
+  {
+    id: -9,
+    title: "Измерения. Теория погрешностей",
+    description: "Плейлист с теорией измерений и обработки погрешностей в школьной физике",
+    type: "video" as const,
+    url: "https://youtube.com/playlist?list=PL1Us50cZo25n0s1gsVxipdJkc6EQoptM5&si=FGMT6P_c2y_65lhB",
+    tags: "Видео,Измерения,Погрешности,Теория",
+  },
+  {
+    id: -8,
+    title: "Удивительная физика капель воды",
+    description: "Захватывающее видео о физике капель воды в замедленной съёмке",
+    type: "video" as const,
+    url: "https://youtu.be/yFvEl3TTD38?si=1pRtjunepib92Qan",
+    tags: "Видео,Молекулярная физика,Поверхностное натяжение",
+  },
+  {
     id: -1,
     title: "Океаны и волны (живой 3D-глобус)",
     description: "Интерактивная визуализация глобальных погодных условий, океанских течений и волн в реальном времени",
@@ -84,6 +132,30 @@ const staticResources = [
     url: "https://ptable.com/?lang=ru#%D0%A1%D0%B2%D0%BE%D0%B9%D1%81%D1%82%D0%B2%D0%B0",
     tags: "Химия,Модель,Таблица,Атом",
   },
+  {
+    id: -16,
+    title: "1001 задача по физике с решениями",
+    description: "Сборник задач по физике с подробными решениями. Авторы: И.М. Гельфгат, Л.Э. Генденштейн, Л.А. Кирик",
+    type: "workbook" as const,
+    url: "https://lib.brsu.by/sites/default/files/books/%D0%93%D0%B5%D0%BB%D1%8C%D1%84%D0%B3%D0%B0%D1%82%20%D0%98.%D0%9C.%2C%20%D0%9B.%D0%AD.%D0%93%D0%B5%D0%BD%D0%B4%D0%B5%D0%BD%D1%88%D1%82%D0%B5%D0%B9%D0%BD%2C%20%D0%9B.%D0%90.%D0%9A%D0%B8%D1%80%D0%B8%D0%BA%20-%201001%20%D0%B7%D0%B0%D0%B4%D0%B0%D1%87%D0%B0%20%D0%BF%D0%BE%20%D1%84%D0%B8%D0%B7%D0%B8%D0%BA%D0%B5%20%D1%81%20%D1%80%D0%B5%D1%88%D0%B5%D0%BD%D0%B8%D1%8F%D0%BC%D0%B8_.pdf",
+    tags: "Задачник,1001 задача,PDF,Решения",
+  },
+  {
+    id: -15,
+    title: "Решу ЕГЭ по физике",
+    description: "Банк заданий ЕГЭ по физике с разбором решений и тренировочными вариантами",
+    type: "workbook" as const,
+    url: "https://phys-ege.sdamgia.ru/",
+    tags: "ЕГЭ,Задачник,Экзамен,Тренировка",
+  },
+  {
+    id: -14,
+    title: "Тренажёр по решению задач (7–9 класс)",
+    description: "Интерактивный тренажёр по решению физических задач для учащихся 7–9 классов",
+    type: "workbook" as const,
+    url: "https://physics-engineers.ru/page/tasks",
+    tags: "Задачник,Задачи,7–9 класс,Тренажёр",
+  },
 ];
 
 export default function Resources() {
@@ -92,7 +164,12 @@ export default function Resources() {
   const [tagFilter, setTagFilter] = useState<string | null>(null);
 
   const allResources = [
-    ...(resources?.filter((r) => !(r.type === "reference" && r.url === "#")) || []),
+    ...(resources?.filter(
+      (r) =>
+        !(r.type === "reference" && r.url === "#") &&
+        !(r.type === "video" && r.url === "#") &&
+        !(r.type === "workbook" && r.url === "#")
+    ) || []),
     ...staticResources,
   ];
   const filtered = allResources.filter((r) => {

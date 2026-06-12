@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { createRouter, publicQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { topics, subtopics, resources, topicNodes, labs } from "@db/schema";
-import { eq, asc } from "drizzle-orm";
+import { topics, subtopics, resources, topicNodes, labs, labWorks, labCategories } from "@db/schema";
+import { eq, asc, or, like, inArray } from "drizzle-orm";
 
 export const courseRouter = createRouter({
   topics: publicQuery.query(async () => {
@@ -60,4 +60,65 @@ export const courseRouter = createRouter({
     const db = getDb();
     return db.select().from(labs).orderBy(asc(labs.topicId), asc(labs.order));
   }),
+
+  // ── Lab works for a topic (new virtual lab system) ──
+  topicLabWorks: publicQuery
+    .input(z.object({ topicId: z.number().positive() }))
+    .query(async ({ input }) => {
+      const db = getDb();
+      const [topic] = await db
+        .select()
+        .from(topics)
+        .where(eq(topics.id, input.topicId))
+        .limit(1);
+      if (!topic) return [];
+
+      // Find matching topic nodes by slug or title
+      const nodes = await db
+        .select()
+        .from(topicNodes)
+        .where(
+          or(
+            eq(topicNodes.slug, topic.slug),
+            like(topicNodes.title, `%${topic.title}%`)
+          )
+        );
+
+      if (nodes.length === 0) return [];
+
+      const nodeIds = nodes.map((n) => n.id);
+      const categorySlugs = nodes
+        .map((n) => n.labCategorySlug)
+        .filter((s): s is string => !!s);
+
+      let categoryIds: number[] = [];
+      if (categorySlugs.length > 0) {
+        const cats = await db
+          .select({ id: labCategories.id })
+          .from(labCategories)
+          .where(inArray(labCategories.slug, categorySlugs));
+        categoryIds = cats.map((c) => c.id);
+      }
+
+      const conditions = [];
+      if (nodeIds.length > 0) {
+        conditions.push(inArray(labWorks.topicNodeId, nodeIds));
+      }
+      if (categoryIds.length > 0) {
+        conditions.push(inArray(labWorks.categoryId, categoryIds));
+      }
+
+      if (conditions.length === 0) return [];
+
+      return db
+        .select({
+          id: labWorks.id,
+          title: labWorks.title,
+          slug: labWorks.slug,
+          shortDesc: labWorks.goal,
+        })
+        .from(labWorks)
+        .where(or(...conditions))
+        .orderBy(asc(labWorks.order));
+    }),
 });

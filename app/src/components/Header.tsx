@@ -18,6 +18,7 @@ import {
   Bell,
   NotebookPen,
   Check,
+  History,
 } from "lucide-react";
 
 function StudentNotifications() {
@@ -129,6 +130,7 @@ export default function Header() {
     { to: "/course", label: "Курс", icon: BookOpen },
     { to: "/labs", label: "Лабораторные", icon: FlaskConical },
     { to: "/resources", label: "Ресурсы", icon: Library },
+    { to: "/timeline", label: "Таймлайн", icon: History },
   ];
 
   const isActive = (path: string) => location.pathname === path;

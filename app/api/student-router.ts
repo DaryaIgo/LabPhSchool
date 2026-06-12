@@ -62,6 +62,21 @@ export const studentRouter = createRouter({
 
   // ── Get student enrollments ──
   getEnrollments: studentQuery.query(async ({ ctx }) => {
+    const db = getDb();
+    if (ctx.role?.name === "admin") {
+      const allTopics = await db.select().from(schema.topics).orderBy(schema.topics.order);
+      return allTopics.map((t) => ({
+        id: 0,
+        localUserId: ctx.localUser!.id,
+        topicId: t.id,
+        status: "active" as const,
+        enrolledAt: new Date(),
+        expiresAt: null as Date | null,
+        topicTitle: t.title,
+        topicSlug: t.slug,
+        topicColor: t.color,
+      }));
+    }
     return getEnrollmentsByLocalUser(ctx.localUser!.id);
   }),
 
@@ -76,7 +91,27 @@ export const studentRouter = createRouter({
     }
 
     // Get enrollments with topics
-    const enrollments = await getEnrollmentsWithDetails(studentId);
+    let enrollments;
+    if (ctx.role?.name === "admin") {
+      const allTopics = await db.select().from(schema.topics).orderBy(schema.topics.order);
+      enrollments = allTopics.map((t) => ({
+        id: 0,
+        localUserId: studentId,
+        topicId: t.id,
+        status: "active" as const,
+        startedAt: null as Date | null,
+        completedAt: null as Date | null,
+        comment: null as string | null,
+        currentSubtopicId: null as number | null,
+        enrolledAt: new Date(),
+        expiresAt: null as Date | null,
+        topicTitle: t.title,
+        topicSlug: t.slug,
+        topicColor: t.color,
+      }));
+    } else {
+      enrollments = await getEnrollmentsWithDetails(studentId);
+    }
 
     // Get student progress for all enrolled topics' subtopics
     const enrolledTopicIds = enrollments.map((e) => e.topicId);
@@ -163,7 +198,27 @@ export const studentRouter = createRouter({
     const db = getDb();
     const studentId = ctx.localUser!.id;
 
-    const enrollments = await getEnrollmentsWithDetails(studentId);
+    let enrollments;
+    if (ctx.role?.name === "admin") {
+      const allTopics = await db.select().from(schema.topics).orderBy(schema.topics.order);
+      enrollments = allTopics.map((t) => ({
+        id: 0,
+        localUserId: studentId,
+        topicId: t.id,
+        status: "active" as const,
+        startedAt: null as Date | null,
+        completedAt: null as Date | null,
+        comment: null as string | null,
+        currentSubtopicId: null as number | null,
+        enrolledAt: new Date(),
+        expiresAt: null as Date | null,
+        topicTitle: t.title,
+        topicSlug: t.slug,
+        topicColor: t.color,
+      }));
+    } else {
+      enrollments = await getEnrollmentsWithDetails(studentId);
+    }
     const enrolledTopicIds = enrollments.map((e) => e.topicId);
 
     if (enrolledTopicIds.length === 0) {
@@ -272,6 +327,25 @@ export const studentRouter = createRouter({
   getCurrentTopic: studentQuery.query(async ({ ctx }) => {
     const db = getDb();
     const studentId = ctx.localUser!.id;
+
+    if (ctx.role?.name === "admin") {
+      // Admin sees the first topic as current
+      const firstTopic = await db.select().from(schema.topics).orderBy(schema.topics.order).limit(1);
+      if (!firstTopic.length) return null;
+      const topic = firstTopic[0];
+      const subtopics = await db.select().from(schema.subtopics).where(eq(schema.subtopics.topicId, topic.id)).orderBy(schema.subtopics.order).limit(1);
+      const labs = await db.select().from(schema.labs).where(eq(schema.labs.topicId, topic.id));
+      const problemTypes = subtopics.length
+        ? await db.select().from(schema.problemTypes).where(eq(schema.problemTypes.subtopicId, subtopics[0].id))
+        : [];
+      return {
+        subtopic: subtopics[0] ?? null,
+        topic: topic,
+        labs,
+        problemTypes,
+        enrollmentComment: null,
+      };
+    }
 
     // Find enrollment with currentSubtopicId
     const enrollment = await db

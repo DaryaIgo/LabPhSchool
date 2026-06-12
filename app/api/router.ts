@@ -19,6 +19,7 @@ import { unifiedAuthRouter } from "./unified-auth-router";
 import { auditRouter } from "./audit-router";
 import { enrollmentRouter } from "./enrollment-router";
 import { virtualLabRouter } from "./virtual-lab-router";
+import { timelineRouter } from "./timeline-router";
 import { createRouter, publicQuery } from "./middleware";
 
 export const appRouter = createRouter({
@@ -31,6 +32,7 @@ export const appRouter = createRouter({
   audit: auditRouter,
   enrollment: enrollmentRouter,
   virtualLab: virtualLabRouter,
+  timeline: timelineRouter,
 });
 
 export type AppRouter = typeof appRouter;
