@@ -320,6 +320,263 @@ $$F_{А1} = F_{А2} = \\rho_{ж} \\cdot g \\cdot V$$
       status: "published" as const,
     },
     {
+      categoryId: catMap.get("pressure-archimedes")!,
+      topicNodeId: 27,
+      order: 4,
+      title: "Зависимость архимедовой силы от объёма погружённой части тела",
+      slug: "archimedes-force-vs-volume",
+      law: "Fₐ = ρж·g·Vпогр",
+      skills: "Исследование зависимости выталкивающей силы от объёма погружённой части тела, построение графика.",
+      difficulty: "easy" as const,
+      duration: 25,
+      goal:
+        "Экспериментально установить, что архимедова сила прямо пропорциональна объёму погружённой части тела при постоянной плотности жидкости.",
+      theory: `**Закон Архимеда:** на тело, погружённое в жидкость, действует выталкивающая сила, равная весу жидкости в объёме погружённой части тела.
+
+$$F_А = \\rho_{ж} \\cdot g \\cdot V_{погр}$$
+
+где:
+- $F_А$ — архимедова сила (Н)
+- $\\rho_{ж}$ — плотность жидкости (кг/м³)
+- $g \\approx 9,8$ Н/кг
+- $V_{погр}$ — объём погружённой части тела (м³)
+
+При постоянной плотности жидкости сила Архимеда прямо пропорциональна объёму погружённой части:
+
+$$F_А \\propto V_{погр}$$
+
+График зависимости $F_А(V_{погр})$ — прямая линия, проходящая через начало координат.`,
+      equipment: JSON.stringify(["Динамометр", "Мензурка", "Цилиндр металлический", "Вода", "Линейка"]),
+      instruction: `1. Измерьте вес тела в воздухе P₀.
+2. Погрузите тело на 1/4 объёма, измерьте вес P₁.
+3. Погрузите на 1/2, измерьте вес P₂.
+4. Погрузите на 3/4, измерьте вес P₃.
+5. Полностью погрузите, измерьте вес P₄.
+6. Рассчитайте Fₐ = P₀ − P для каждого случая.
+7. Постройте график Fₐ(Vпогр) и убедитесь, что он линейный.`,
+      conclusionTemplate:
+        "При постоянной плотности жидкости ρж = {{liquidDensity}} кг/м³ архимедова сила прямо пропорциональна объёму погружённой части тела. Максимальное значение Fₐ = {{faMax}} Н при полном погружении. График Fₐ(Vпогр) представляет собой прямую линию, проходящую через начало координат.",
+      status: "published" as const,
+    },
+    {
+      categoryId: catMap.get("pressure-archimedes")!,
+      topicNodeId: 27,
+      order: 5,
+      title: "Зависимость архимедовой силы от плотности жидкости",
+      slug: "archimedes-force-vs-density",
+      law: "Fₐ = ρж·g·Vт",
+      skills: "Сравнение выталкивающей силы в жидкостях разной плотности, анализ прямой пропорциональности.",
+      difficulty: "easy" as const,
+      duration: 25,
+      goal:
+        "Экспериментально установить, что архимедова сила прямо пропорциональна плотности жидкости при постоянном объёме погружённого тела.",
+      theory: `**Закон Архимеда:**
+
+$$F_А = \\rho_{ж} \\cdot g \\cdot V_{погр}$$
+
+При постоянном объёме погружённого тела выталкивающая сила прямо пропорциональна плотности жидкости:
+
+$$F_А \\propto \\rho_{ж}$$
+
+Чем плотнее жидкость, тем больший вес жидкости вытесняет тело, и тем больше архимедова сила.`,
+      equipment: JSON.stringify(["Динамометр", "Цилиндр металлический", "Вода", "Насыщенный раствор соли", "Мензурка"]),
+      instruction: `1. Измерьте вес тела в воздухе P₀.
+2. Полностью погрузите тело в воду, измерьте вес P₁.
+3. Рассчитайте Fₐ₁ = P₀ − P₁.
+4. Полностью погрузите то же тело в раствор соли, измерьте вес P₂.
+5. Рассчитайте Fₐ₂ = P₀ − P₂.
+6. Сравните Fₐ₁ и Fₐ₂.
+7. Постройте график Fₐ(ρж).`,
+      conclusionTemplate:
+        "При постоянном объёме тела V = {{volume}} см³ архимедова сила прямо пропорциональна плотности жидкости. В жидкости плотностью {{liquidDensity}} кг/м³ сила составила Fₐ = {{avgFa}} Н. С увеличением плотности жидкости выталкивающая сила возрастает.",
+      status: "published" as const,
+    },
+    {
+      categoryId: catMap.get("pressure-archimedes")!,
+      topicNodeId: 27,
+      order: 6,
+      title: "Выяснение условий плавания тел",
+      slug: "floating-conditions",
+      law: "Fтяж = ρт·V·g; Fₐ = ρж·V·g",
+      skills: "Сравнение силы тяжести и архимедовой силы, определение условий плавания, тонущия и всплывания.",
+      difficulty: "medium" as const,
+      duration: 30,
+      goal:
+        "Экспериментально выяснить условия, при которых тело тонет, плавает внутри жидкости или всплывает.",
+      theory: `На тело в жидкости действуют две силы:
+
+1. **Сила тяжести** направлена вниз:
+$$F_{тяж} = m \\cdot g = \\rho_{т} \\cdot V \\cdot g$$
+
+2. **Архимедова сила** направлена вверх:
+$$F_А = \\rho_{ж} \\cdot g \\cdot V_{погр}$$
+
+**Условия плавания:**
+- Если $F_{тяж} > F_А$ (или $\\rho_{т} > \\rho_{ж}$) — тело **тонет**.
+- Если $F_{тяж} = F_А$ (или $\\rho_{т} = \\rho_{ж}$) — тело **плавает** внутри жидкости.
+- Если $F_{тяж} < F_А$ (или $\\rho_{т} < \\rho_{ж}$) — тело **всплывает**.`,
+      equipment: JSON.stringify(["Сосуд с водой", "Тела разной плотности", "Динамометр", "Мензурка", "Весы"]),
+      instruction: `1. Определите массу и объём тела.
+2. Рассчитайте плотность тела ρт.
+3. Опустите тело в воду и наблюдайте его поведение.
+4. Измерьте вес тела в жидкости.
+5. Рассчитайте Fтяж и Fₐ.
+6. Сравните силы и сделайте вывод.
+7. Повторите для тел с плотностью больше, равной и меньше плотности воды.`,
+      conclusionTemplate:
+        "При плотности тела ρт = {{bodyDensity}} кг/м³ и плотности жидкости ρж = {{liquidDensity}} кг/м³ тело {{state}}. Средняя сила тяжести Fтяж = {{avgGravity}} Н, средняя архимедова сила Fₐ = {{avgFa}} Н. Условие плавания подтверждено: при ρт < ρж тело всплывает, при ρт = ρж плавает внутри, при ρт > ρж тонет.",
+      status: "published" as const,
+    },
+    {
+      categoryId: catMap.get("pressure-archimedes")!,
+      topicNodeId: 27,
+      order: 7,
+      title: "Определение плотности жидкости",
+      slug: "liquid-density-measurement",
+      law: "ρж = Fₐ / (g·V)",
+      skills: "Измерение веса тела в воздухе и в жидкости, расчёт архимедовой силы и плотности жидкости.",
+      difficulty: "medium" as const,
+      duration: 30,
+      goal:
+        "Определить плотность неизвестной жидкости, измерив вес тела в воздухе и в жидкости и зная его объём.",
+      theory: `Если известны вес тела в воздухе $P_{возд}$ и в жидкости $P_{жид}$, то архимедова сила равна разности этих весов:
+
+$$F_А = P_{возд} - P_{жид}$$
+
+По закону Архимеда:
+
+$$F_А = \\rho_{ж} \\cdot g \\cdot V$$
+
+Отсюда плотность жидкости:
+
+$$\\rho_{ж} = \\frac{F_А}{g \\cdot V} = \\frac{P_{возд} - P_{жид}}{g \\cdot V}$$
+
+где $V$ — объём тела (м³).`,
+      equipment: JSON.stringify(["Динамометр", "Тело правильной формы", "Мензурка", "Исследуемая жидкость"]),
+      instruction: `1. Измерьте вес тела в воздухе Pвозд.
+2. Измерьте объём тела V с помощью мензурки.
+3. Полностью погрузите тело в исследуемую жидкость.
+4. Измерьте вес тела в жидкости Pжид.
+5. Рассчитайте Fₐ = Pвозд − Pжид.
+6. Рассчитайте плотность жидкости: ρж = Fₐ / (g·V).
+7. Сравните результат с табличным значением.`,
+      conclusionTemplate:
+        "По разности весов тела в воздухе и в жидкости определена архимедова сила Fₐ = {{avgFa}} Н. Плотность исследуемой жидкости составила ρж = {{avgRho}} кг/м³ при объёме тела V = {{volume}} см³. Результат можно сравнить с табличной плотностью воды 1000 кг/м³.",
+      status: "published" as const,
+    },
+    {
+      categoryId: catMap.get("pressure-archimedes")!,
+      topicNodeId: 27,
+      order: 8,
+      title: "Исследование давления в жидкости (PhET)",
+      slug: "under-pressure-phet",
+      law: "p = ρ·g·h",
+      skills: "Исследование зависимости гидростатического давления от глубины, плотности жидкости и площади поверхности с помощью PhET-симуляции.",
+      difficulty: "easy" as const,
+      duration: 25,
+      goal:
+        "С помощью интерактивной PhET-симуляции исследовать, от каких величин зависит давление жидкости на дно и стенки сосуда.",
+      theory: `**Гидростатическое давление** — давление, создаваемое столбом жидкости в покое.
+
+$$p = \\rho \\cdot g \\cdot h$$
+
+где:
+- $p$ — давление жидкости (Па)
+- $\\rho$ — плотность жидкости (кг/м³)
+- $g \\approx 9,8$ Н/кг
+- $h$ — глубина погружения (м)
+
+Давление в жидкости одинаково во всех точках на одной горизонтали и не зависит от формы сосуда. Сила давления на площадь $S$:
+
+$$F = p \\cdot S$$
+
+**[PhET: Под давлением](https://phet.colorado.edu/sims/html/under-pressure/latest/under-pressure_all.html)**`,
+      equipment: JSON.stringify(["Компьютер", "PhET-симуляция", "Калькулятор"]),
+      instruction: `1. Откройте PhET-симуляцию «Под давлением» по ссылке в теории.
+2. Установите плотность жидкости и глубину измерения.
+3. Запишите значение давления p на данной глубине.
+4. Измените площадь поверхности и измерьте силу давления F.
+5. Повторите опыт для другой плотности жидкости.
+6. Постройте график p(h) и убедитесь, что он линейный.`,
+      conclusionTemplate:
+        "С помощью PhET-симуляции установлено, что гидростатическое давление прямо пропорционально глубине погружения и плотности жидкости. При глубине h = {{depth}} м и плотности ρ = {{liquidDensity}} кг/м³ среднее давление составило p = {{avgPressure}} кПа, а сила давления F = {{avgForce}} Н.",
+      status: "published" as const,
+    },
+    {
+      categoryId: catMap.get("pressure-archimedes")!,
+      topicNodeId: 27,
+      order: 9,
+      title: "Плавание тел в PhET",
+      slug: "buoyancy-phet",
+      law: "Fₐ = ρж·g·Vт",
+      skills: "Исследование условий плавания тел, сравнение силы тяжести и архимедовой силы в интерактивной PhET-модели.",
+      difficulty: "medium" as const,
+      duration: 30,
+      goal:
+        "С помощью PhET-симуляции исследовать, при каких условиях тело тонет, плавает или всплывает в жидкости.",
+      theory: `На тело в жидкости действуют сила тяжести и архимедова сила:
+
+$$F_{тяж} = \\rho_{т} \\cdot V \\cdot g$$
+
+$$F_А = \\rho_{ж} \\cdot g \\cdot V_{погр}$$
+
+где:
+- $\\rho_{т}$ — плотность тела
+- $\\rho_{ж}$ — плотность жидкости
+- $V$ — объём тела
+
+**Условия плавания:**
+- $\\rho_{т} > \\rho_{ж}$ — тело тонет
+- $\\rho_{т} = \\rho_{ж}$ — тело плавает внутри жидкости
+- $\\rho_{т} < \\rho_{ж}$ — тело всплывает
+
+**[PhET: Плавание тел](https://phet.colorado.edu/sims/html/buoyancy/latest/buoyancy_all.html)**`,
+      equipment: JSON.stringify(["Компьютер", "PhET-симуляция", "Калькулятор"]),
+      instruction: `1. Откройте PhET-симуляцию «Плавание тел» по ссылке в теории.
+2. Выберите объём тела и его плотность.
+3. Наблюдайте, тонет тело, плавает или всплывает.
+4. Запишите значения силы тяжести и архимедовой силы.
+5. Повторите опыт для разных сочетаний плотностей тела и жидкости.
+6. Сравните Fтяж и Fₐ для каждого случая.`,
+      conclusionTemplate:
+        "В PhET-симуляции при плотности тела ρт = {{bodyDensity}} кг/м³ и плотности жидкости ρж = {{liquidDensity}} кг/м³ тело объёмом V = {{volume}} см³ {{state}}. Средняя сила тяжести Fтяж = {{avgGravity}} Н, средняя архимедова сила Fₐ = {{avgFa}} Н.",
+      status: "published" as const,
+    },
+    {
+      categoryId: catMap.get("pressure-archimedes")!,
+      topicNodeId: 27,
+      order: 10,
+      title: "Плавание тел: основы (PhET)",
+      slug: "buoyancy-basics-phet",
+      law: "Fₐ = ρж·g·V; ρ = m/V",
+      skills: "Знакомство с архимедовой силой и условиями плавания тел с помощью простой PhET-модели.",
+      difficulty: "easy" as const,
+      duration: 20,
+      goal:
+        "С помощью простой PhET-симуляции понять, почему одни тела тонут, а другие всплывают.",
+      theory: `**Архимедова сила** — сила, выталкивающая тело из жидкости. Она равна весу вытесненной жидкости:
+
+$$F_А = \\rho_{ж} \\cdot g \\cdot V$$
+
+Плотность тела можно найти по массе и объёму:
+
+$$\\rho_{т} = \\frac{m}{V}$$
+
+Если плотность тела меньше плотности жидкости, тело всплывает. Если больше — тонет.
+
+**[PhET: Плавание тел — основы](https://phet.colorado.edu/sims/html/buoyancy-basics/latest/buoyancy-basics_all.html)**`,
+      equipment: JSON.stringify(["Компьютер", "PhET-симуляция", "Калькулятор"]),
+      instruction: `1. Откройте PhET-симуляцию «Плавание тел: основы» по ссылке в теории.
+2. Выберите массу и объём тела.
+3. Определите плотность тела по формуле ρ = m/V.
+4. Поместите тело в жидкость и наблюдайте результат.
+5. Запишите силу тяжести и архимедову силу.
+6. Повторите для разных тел и сравните результаты.`,
+      conclusionTemplate:
+        "В простой PhET-симуляции при массе тела m = {{mass}} г и объёме V = {{volume}} см³ его плотность ρт = {{bodyDensity}} кг/м³. При плотности жидкости ρж = {{liquidDensity}} кг/м³ средняя сила тяжести Fтяж = {{avgGravity}} Н, средняя архимедова сила Fₐ = {{avgFa}} Н.",
+      status: "published" as const,
+    },
+    {
       categoryId: catMap.get("electricity")!,
       topicNodeId: 38,
       order: 1,
@@ -1210,6 +1467,68 @@ $$\\sigma = \\frac{mg}{2\\pi r}$$
         { key: "bodyVolume", label: "Объём тела", paramType: "slider" as const, min: "10", max: "200", step: "1", defaultValue: "100", unit: "см³" },
         { key: "immersionLevel", label: "Уровень погружения", paramType: "slider" as const, min: "0", max: "100", step: "5", defaultValue: "50", unit: "%" },
         { key: "liquidDensity", label: "Плотность жидкости", paramType: "select" as const, defaultValue: "1000", options: "[{\"value\":\"1000\",\"label\":\"Вода\"},{\"value\":\"1260\",\"label\":\"Соляной раствор\"},{\"value\":\"13600\",\"label\":\"Ртуть\"}]", unit: "кг/м³" },
+      ];
+      for (const p of params) {
+        await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+      }
+    } else if (work.slug === "archimedes-force-vs-volume") {
+      const params = [
+        { key: "bodyVolume", label: "Объём тела", paramType: "slider" as const, min: "10", max: "200", step: "1", defaultValue: "100", unit: "см³" },
+        { key: "immersionLevel", label: "Уровень погружения", paramType: "slider" as const, min: "0", max: "100", step: "5", defaultValue: "50", unit: "%" },
+        { key: "liquidDensity", label: "Плотность жидкости", paramType: "select" as const, defaultValue: "1000", options: "[{\"value\":\"1000\",\"label\":\"Вода\"},{\"value\":\"1260\",\"label\":\"Соляной раствор\"}]", unit: "кг/м³" },
+      ];
+      for (const p of params) {
+        await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+      }
+    } else if (work.slug === "archimedes-force-vs-density") {
+      const params = [
+        { key: "bodyVolume", label: "Объём тела", paramType: "slider" as const, min: "10", max: "200", step: "1", defaultValue: "100", unit: "см³" },
+        { key: "liquidDensity", label: "Плотность жидкости", paramType: "slider" as const, min: "600", max: "1400", step: "20", defaultValue: "1000", unit: "кг/м³" },
+      ];
+      for (const p of params) {
+        await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+      }
+    } else if (work.slug === "floating-conditions") {
+      const params = [
+        { key: "bodyVolume", label: "Объём тела", paramType: "slider" as const, min: "10", max: "200", step: "1", defaultValue: "100", unit: "см³" },
+        { key: "bodyDensity", label: "Плотность тела", paramType: "slider" as const, min: "400", max: "1500", step: "10", defaultValue: "800", unit: "кг/м³" },
+        { key: "liquidDensity", label: "Плотность жидкости", paramType: "select" as const, defaultValue: "1000", options: "[{\"value\":\"1000\",\"label\":\"Вода\"},{\"value\":\"1260\",\"label\":\"Соляной раствор\"},{\"value\":\"800\",\"label\":\"Спирт\"}]", unit: "кг/м³" },
+      ];
+      for (const p of params) {
+        await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+      }
+    } else if (work.slug === "liquid-density-measurement") {
+      const params = [
+        { key: "bodyVolume", label: "Объём тела", paramType: "slider" as const, min: "10", max: "200", step: "1", defaultValue: "100", unit: "см³" },
+        { key: "weightInAir", label: "Вес в воздухе", paramType: "slider" as const, min: "0.1", max: "5", step: "0.05", defaultValue: "2.0", unit: "Н" },
+        { key: "weightInLiquid", label: "Вес в жидкости", paramType: "slider" as const, min: "0", max: "5", step: "0.05", defaultValue: "1.5", unit: "Н" },
+      ];
+      for (const p of params) {
+        await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+      }
+    } else if (work.slug === "under-pressure-phet") {
+      const params = [
+        { key: "depth", label: "Глубина погружения", paramType: "slider" as const, min: "0.1", max: "5", step: "0.1", defaultValue: "1.0", unit: "м" },
+        { key: "liquidDensity", label: "Плотность жидкости", paramType: "select" as const, defaultValue: "1000", options: "[{\"value\":\"1000\",\"label\":\"Вода\"},{\"value\":\"1260\",\"label\":\"Соляной раствор\"},{\"value\":\"800\",\"label\":\"Спирт\"}]", unit: "кг/м³" },
+        { key: "area", label: "Площадь поверхности", paramType: "slider" as const, min: "0.01", max: "1", step: "0.01", defaultValue: "0.1", unit: "м²" },
+      ];
+      for (const p of params) {
+        await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+      }
+    } else if (work.slug === "buoyancy-phet") {
+      const params = [
+        { key: "bodyVolume", label: "Объём тела", paramType: "slider" as const, min: "10", max: "200", step: "1", defaultValue: "100", unit: "см³" },
+        { key: "bodyDensity", label: "Плотность тела", paramType: "slider" as const, min: "400", max: "1500", step: "10", defaultValue: "800", unit: "кг/м³" },
+        { key: "liquidDensity", label: "Плотность жидкости", paramType: "select" as const, defaultValue: "1000", options: "[{\"value\":\"1000\",\"label\":\"Вода\"},{\"value\":\"1260\",\"label\":\"Соляной раствор\"},{\"value\":\"800\",\"label\":\"Спирт\"}]", unit: "кг/м³" },
+      ];
+      for (const p of params) {
+        await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+      }
+    } else if (work.slug === "buoyancy-basics-phet") {
+      const params = [
+        { key: "bodyMass", label: "Масса тела", paramType: "slider" as const, min: "10", max: "500", step: "5", defaultValue: "100", unit: "г" },
+        { key: "bodyVolume", label: "Объём тела", paramType: "slider" as const, min: "10", max: "200", step: "1", defaultValue: "100", unit: "см³" },
+        { key: "liquidDensity", label: "Плотность жидкости", paramType: "select" as const, defaultValue: "1000", options: "[{\"value\":\"1000\",\"label\":\"Вода\"},{\"value\":\"1260\",\"label\":\"Соляной раствор\"},{\"value\":\"800\",\"label\":\"Спирт\"}]", unit: "кг/м³" },
       ];
       for (const p of params) {
         await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });

@@ -23,7 +23,14 @@ import LabSidebar from "@/components/lab/LabSidebar";
 import type { ControlItem } from "@/components/lab/LabControls";
 import DensitySimulation from "@/components/lab/simulations/DensitySimulation";
 import ArchimedesSimulation from "@/components/lab/simulations/ArchimedesSimulation";
+import ArchimedesForceVsVolumeSimulation from "@/components/lab/simulations/ArchimedesForceVsVolumeSimulation";
+import ArchimedesForceVsDensitySimulation from "@/components/lab/simulations/ArchimedesForceVsDensitySimulation";
 import BuoyancySimulation from "@/components/lab/simulations/BuoyancySimulation";
+import UnderPressurePhetSimulation from "@/components/lab/simulations/UnderPressurePhetSimulation";
+import BuoyancyPhetSimulation from "@/components/lab/simulations/BuoyancyPhetSimulation";
+import BuoyancyBasicsPhetSimulation from "@/components/lab/simulations/BuoyancyBasicsPhetSimulation";
+import FloatingConditionsSimulation from "@/components/lab/simulations/FloatingConditionsSimulation";
+import LiquidDensityMeasurementSimulation from "@/components/lab/simulations/LiquidDensityMeasurementSimulation";
 import ElectricWorkSimulation from "@/components/lab/simulations/ElectricWorkSimulation";
 import UniformLinearMotion from "@/components/lab/simulations/UniformLinearMotion";
 import UniformlyAcceleratedMotion from "@/components/lab/simulations/UniformlyAcceleratedMotion";
@@ -57,7 +64,14 @@ interface SimComponentProps {
 const simComponents: Record<string, React.FC<SimComponentProps>> = {
   "density-measurement": DensitySimulation,
   "archimedes-force": ArchimedesSimulation,
+  "archimedes-force-vs-volume": ArchimedesForceVsVolumeSimulation,
+  "archimedes-force-vs-density": ArchimedesForceVsDensitySimulation,
   "buoyancy-independence": BuoyancySimulation,
+  "floating-conditions": FloatingConditionsSimulation,
+  "liquid-density-measurement": LiquidDensityMeasurementSimulation,
+  "under-pressure-phet": UnderPressurePhetSimulation,
+  "buoyancy-phet": BuoyancyPhetSimulation,
+  "buoyancy-basics-phet": BuoyancyBasicsPhetSimulation,
   "electric-work-measurement": ElectricWorkSimulation,
   "uniform-linear-motion": UniformLinearMotion,
   "uniformly-accelerated-motion": UniformlyAcceleratedMotion,
@@ -223,6 +237,88 @@ export default function LabWorkPage() {
       const g = 9.8;
       row["Fₐ"] = (rho * g * v * 1e-6).toFixed(3);
       row["V"] = v;
+    } else if (slug === "archimedes-force-vs-volume") {
+      const rho = Number(effectiveSimParams["liquidDensity"] || 1000);
+      const v = Number(effectiveSimParams["bodyVolume"] || 0);
+      const level = Number(effectiveSimParams["immersionLevel"] || 100);
+      const g = 9.8;
+      const fa = rho * g * (v * 1e-6) * (level / 100);
+      row["Fₐ"] = fa.toFixed(4);
+      row["Vпогр"] = (v * (level / 100)).toFixed(1);
+      row["V"] = v;
+    } else if (slug === "archimedes-force-vs-density") {
+      const rho = Number(effectiveSimParams["liquidDensity"] || 1000);
+      const v = Number(effectiveSimParams["bodyVolume"] || 0);
+      const g = 9.8;
+      const fa = rho * g * (v * 1e-6);
+      row["Fₐ"] = fa.toFixed(4);
+      row["ρж"] = rho;
+      row["V"] = v;
+    } else if (slug === "floating-conditions") {
+      const rhoBody = Number(effectiveSimParams["bodyDensity"] || 800);
+      const rhoLiquid = Number(effectiveSimParams["liquidDensity"] || 1000);
+      const v = Number(effectiveSimParams["bodyVolume"] || 0);
+      const g = 9.8;
+      const gravity = rhoBody * (v * 1e-6) * g;
+      const maxFa = rhoLiquid * (v * 1e-6) * g;
+      const fa = rhoBody < rhoLiquid ? gravity : maxFa;
+      let state = "тонет";
+      if (rhoBody < rhoLiquid) state = "всплывает";
+      else if (Math.abs(rhoBody - rhoLiquid) < 10) state = "плавает внутри";
+      row["Fтяж"] = gravity.toFixed(4);
+      row["Fₐ"] = fa.toFixed(4);
+      row["состояние"] = state;
+    } else if (slug === "liquid-density-measurement") {
+      const v = Number(effectiveSimParams["bodyVolume"] || 0);
+      const pAir = Number(effectiveSimParams["weightInAir"] || 0);
+      const pLiquid = Number(effectiveSimParams["weightInLiquid"] || 0);
+      const g = 9.8;
+      const fa = pAir - pLiquid;
+      const rho = v > 0 ? fa / (g * v * 1e-6) : 0;
+      row["Pвозд"] = pAir.toFixed(2);
+      row["Pжид"] = pLiquid.toFixed(2);
+      row["Fₐ"] = fa.toFixed(4);
+      row["ρж"] = rho.toFixed(0);
+    } else if (slug === "under-pressure-phet") {
+      const depth = Number(effectiveSimParams["depth"] || 0);
+      const rho = Number(effectiveSimParams["liquidDensity"] || 1000);
+      const area = Number(effectiveSimParams["area"] || 1);
+      const g = 9.8;
+      const pressure = rho * g * depth;
+      const force = pressure * area;
+      row["h"] = depth.toFixed(2);
+      row["ρ"] = rho;
+      row["S"] = area.toFixed(2);
+      row["p"] = (pressure / 1000).toFixed(2);
+      row["F"] = force.toFixed(2);
+    } else if (slug === "buoyancy-phet") {
+      const v = Number(effectiveSimParams["bodyVolume"] || 0);
+      const rhoBody = Number(effectiveSimParams["bodyDensity"] || 800);
+      const rhoLiquid = Number(effectiveSimParams["liquidDensity"] || 1000);
+      const g = 9.8;
+      const gravity = rhoBody * (v * 1e-6) * g;
+      const maxFa = rhoLiquid * (v * 1e-6) * g;
+      const fa = rhoBody < rhoLiquid ? gravity : maxFa;
+      row["V"] = v;
+      row["ρт"] = rhoBody;
+      row["ρж"] = rhoLiquid;
+      row["Fтяж"] = gravity.toFixed(4);
+      row["Fₐ"] = fa.toFixed(4);
+    } else if (slug === "buoyancy-basics-phet") {
+      const v = Number(effectiveSimParams["bodyVolume"] || 0);
+      const mass = Number(effectiveSimParams["bodyMass"] || 0);
+      const rhoLiquid = Number(effectiveSimParams["liquidDensity"] || 1000);
+      const g = 9.8;
+      const rhoBody = v > 0 ? (mass / 1000) / (v * 1e-6) : 0;
+      const gravity = mass / 1000 * g;
+      const maxFa = rhoLiquid * (v * 1e-6) * g;
+      const fa = rhoBody < rhoLiquid ? gravity : maxFa;
+      row["m"] = mass;
+      row["V"] = v;
+      row["ρт"] = rhoBody.toFixed(0);
+      row["ρж"] = rhoLiquid;
+      row["Fтяж"] = gravity.toFixed(4);
+      row["Fₐ"] = fa.toFixed(4);
     } else if (slug === "electric-work-measurement") {
       const u = Number(effectiveSimParams["voltage"] || 0);
       const r = Number(effectiveSimParams["resistance"] || 1);
@@ -633,6 +729,73 @@ export default function LabWorkPage() {
       const avgFa = Number(data["Fₐ"]);
       data["fa1"] = avgFa.toFixed(3);
       data["fa2"] = avgFa.toFixed(3);
+    } else if (slug === "archimedes-force-vs-volume") {
+      const v = Number(effectiveSimParams["bodyVolume"] || 0);
+      const rho = Number(effectiveSimParams["liquidDensity"] || 1000);
+      const avgFa = Number(data["Fₐ"] || 0);
+      data["volume"] = v.toFixed(0);
+      data["liquidDensity"] = rho;
+      data["avgFa"] = avgFa.toFixed(4);
+      const faMax = rho * 9.8 * (v * 1e-6);
+      data["faMax"] = faMax.toFixed(4);
+    } else if (slug === "archimedes-force-vs-density") {
+      const v = Number(effectiveSimParams["bodyVolume"] || 0);
+      const rho = Number(effectiveSimParams["liquidDensity"] || 1000);
+      const avgFa = Number(data["Fₐ"] || 0);
+      data["volume"] = v.toFixed(0);
+      data["liquidDensity"] = rho;
+      data["avgFa"] = avgFa.toFixed(4);
+    } else if (slug === "floating-conditions") {
+      const rhoBody = Number(effectiveSimParams["bodyDensity"] || 800);
+      const rhoLiquid = Number(effectiveSimParams["liquidDensity"] || 1000);
+      let state = "тонет";
+      if (rhoBody < rhoLiquid) state = "всплывает";
+      else if (Math.abs(rhoBody - rhoLiquid) < 10) state = "плавает внутри жидкости";
+      data["bodyDensity"] = rhoBody;
+      data["liquidDensity"] = rhoLiquid;
+      data["avgGravity"] = Number(data["Fтяж"] || 0).toFixed(4);
+      data["avgFa"] = Number(data["Fₐ"] || 0).toFixed(4);
+      data["state"] = state;
+    } else if (slug === "liquid-density-measurement") {
+      const v = Number(effectiveSimParams["bodyVolume"] || 0);
+      const avgFa = Number(data["Fₐ"] || 0);
+      const avgRho = Number(data["ρж"] || 0);
+      data["volume"] = v.toFixed(0);
+      data["avgFa"] = avgFa.toFixed(4);
+      data["avgRho"] = avgRho.toFixed(0);
+    } else if (slug === "under-pressure-phet") {
+      const depth = Number(effectiveSimParams["depth"] || 0);
+      const rho = Number(effectiveSimParams["liquidDensity"] || 1000);
+      const avgP = Number(data["p"] || 0);
+      const avgF = Number(data["F"] || 0);
+      data["depth"] = depth.toFixed(2);
+      data["liquidDensity"] = rho;
+      data["avgPressure"] = avgP.toFixed(2);
+      data["avgForce"] = avgF.toFixed(2);
+    } else if (slug === "buoyancy-phet") {
+      const v = Number(effectiveSimParams["bodyVolume"] || 0);
+      const rhoBody = Number(effectiveSimParams["bodyDensity"] || 800);
+      const rhoLiquid = Number(effectiveSimParams["liquidDensity"] || 1000);
+      let state = "тонет";
+      if (rhoBody < rhoLiquid) state = "всплывает";
+      else if (Math.abs(rhoBody - rhoLiquid) < 10) state = "плавает внутри жидкости";
+      data["volume"] = v.toFixed(0);
+      data["bodyDensity"] = rhoBody;
+      data["liquidDensity"] = rhoLiquid;
+      data["avgGravity"] = Number(data["Fтяж"] || 0).toFixed(4);
+      data["avgFa"] = Number(data["Fₐ"] || 0).toFixed(4);
+      data["state"] = state;
+    } else if (slug === "buoyancy-basics-phet") {
+      const v = Number(effectiveSimParams["bodyVolume"] || 0);
+      const mass = Number(effectiveSimParams["bodyMass"] || 0);
+      const rhoLiquid = Number(effectiveSimParams["liquidDensity"] || 1000);
+      const rhoBody = v > 0 ? (mass / 1000) / (v * 1e-6) : 0;
+      data["volume"] = v.toFixed(0);
+      data["mass"] = mass.toFixed(0);
+      data["bodyDensity"] = rhoBody.toFixed(0);
+      data["liquidDensity"] = rhoLiquid;
+      data["avgGravity"] = Number(data["Fтяж"] || 0).toFixed(4);
+      data["avgFa"] = Number(data["Fₐ"] || 0).toFixed(4);
     } else if (slug === "electric-work-measurement") {
       const u = Number(effectiveSimParams["voltage"] || 0);
       const r = Number(effectiveSimParams["resistance"] || 1);

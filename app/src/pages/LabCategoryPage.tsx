@@ -1,6 +1,6 @@
 import { trpc } from "@/providers/trpc";
 import { Link, useParams } from "react-router";
-import { ArrowLeft, FlaskConical, Clock, BookOpen, Lightbulb, Search, ChevronRight } from "lucide-react";
+import { ArrowLeft, FlaskConical, Clock, BookOpen, Search, ChevronRight } from "lucide-react";
 
 const difficultyLabel: Record<string, string> = {
   easy: "Лёгкая",
@@ -190,25 +190,6 @@ export default function LabCategoryPage() {
           </div>
         </section>
 
-        {/* Practicals */}
-        <section>
-          <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
-            <Lightbulb size={22} className="text-[#2eff8c]" />
-            Практикум
-          </h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {getPracticalCards(slug!).map((card, i) => (
-              <div
-                key={i}
-                className="bg-[#2a3237] border border-[#434e54] rounded-xl p-5 hover:border-[#2eff8c]/30 transition-colors"
-              >
-                <h3 className="font-semibold text-white mb-2">{card.title}</h3>
-                <p className="text-sm text-[#c8cdd1]">{card.description}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
         {/* Research Tasks */}
         <section>
           <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
@@ -248,38 +229,6 @@ export default function LabCategoryPage() {
   );
 }
 
-function getPracticalCards(slug: string): Array<{ title: string; description: string }> {
-  const map: Record<string, Array<{ title: string; description: string }>> = {
-    mechanics: [
-      { title: "Почему тело движется по инерции", description: "Наблюдение за движением тел на воздушной подушке при отсутствии силы трения." },
-      { title: "Как работает блок", description: "Сравнение неподвижного и подвижного блока с точки зрения механического преимущества." },
-    ],
-    "molecular-thermodynamics": [
-      { title: "Почему шарик прыгает", description: "Превращение механической энергии в тепловую при неупругом ударе." },
-      { title: "Как работает паровая машина", description: "Цикл тепловой машины: нагрев, расширение, охлаждение, сжатие." },
-    ],
-    electrodynamics: [
-      { title: "Почему греются провода", description: "При прохождении тока электроны сталкиваются с ионами решётки — проводник нагревается." },
-      { title: "Как работает трансформатор", description: "Электромагнитная индукция: изменение магнитного потока создаёт ЭДС индукции." },
-    ],
-    optics: [
-      { title: "Почему радуга круглая", description: "Двойное преломление и отражение света в капле воды под разными углами." },
-      { title: "Как работает лазер", description: "Вынужденное излучение, когерентность, монохроматичность." },
-    ],
-    "nuclear-physics": [
-      { title: "Почему звёзды светят", description: "Термоядерный синтез: слияние лёгких ядер с выделением огромной энергии." },
-      { title: "Как работает атомная электростанция", description: "Цепная реакция деления урана, замедлители нейтронов, теплообменник." },
-    ],
-    "atomic-nuclear": [
-      { title: "Почему звёзды светят", description: "Термоядерный синтез: слияние лёгких ядер с выделением огромной энергии." },
-      { title: "Как работает атомная электростанция", description: "Цепная реакция деления урана, замедлители нейтронов, теплообменник." },
-    ],
-  };
-  return map[slug] || [
-    { title: "Интерактивная демонстрация", description: "Изучите ключевые физические процессы на наглядной интерактивной модели." },
-  ];
-}
-
 function getResearchTasks(slug: string): Array<{ title: string; description: string; url?: string }> {
   const map: Record<string, Array<{ title: string; description: string; url?: string }>> = {
     mechanics: [
@@ -314,6 +263,11 @@ function getResearchTasks(slug: string): Array<{ title: string; description: str
     "oscillations-waves": [
       { title: "Интерференция волн", description: "Интерактивная симуляция для изучения интерференции волн", url: "https://phet.colorado.edu/sims/html/wave-interference/latest/wave-interference_ru.html" },
       { title: "Звуковые волны", description: "Интерактивная симуляция для изучения звуковых волн", url: "https://phet.colorado.edu/sims/html/sound-waves/latest/sound-waves_all.html" },
+    ],
+    "pressure-archimedes": [
+      { title: "Под давлением (PhET)", description: "Исследуйте, как меняется давление в жидкости с глубиной, плотностью и формой сосуда", url: "https://phet.colorado.edu/sims/html/under-pressure/latest/under-pressure_all.html" },
+      { title: "Плавание тел (PhET)", description: "Изучите условия плавания тел, силу Архимеда и выталкивающую силу", url: "https://phet.colorado.edu/sims/html/buoyancy/latest/buoyancy_all.html" },
+      { title: "Плавание тел: основы (PhET)", description: "Простая симуляция для знакомства с плаванием тел и архимедовой силой", url: "https://phet.colorado.edu/sims/html/buoyancy-basics/latest/buoyancy-basics_all.html" },
     ],
   };
   return map[slug] || [
