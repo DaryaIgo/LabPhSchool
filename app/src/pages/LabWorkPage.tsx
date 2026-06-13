@@ -38,6 +38,13 @@ import LensImageSimulation from "@/components/lab/simulations/LensImageSimulatio
 import WavelengthMeasurementSimulation from "@/components/lab/simulations/WavelengthMeasurementSimulation";
 import InterferenceDiffractionSimulation from "@/components/lab/simulations/InterferenceDiffractionSimulation";
 import EmissionSpectraSimulation from "@/components/lab/simulations/EmissionSpectraSimulation";
+import BoyleMariotteSimulation from "@/components/lab/simulations/BoyleMariotteSimulation";
+import IsobaricProcessSimulation from "@/components/lab/simulations/IsobaricProcessSimulation";
+import IsochoricProcessSimulation from "@/components/lab/simulations/IsochoricProcessSimulation";
+import SpecificHeatCapacitySimulation from "@/components/lab/simulations/SpecificHeatCapacitySimulation";
+import RelativeHumiditySimulation from "@/components/lab/simulations/RelativeHumiditySimulation";
+import SurfaceTensionSimulation from "@/components/lab/simulations/SurfaceTensionSimulation";
+import BalancingActSimulation from "@/components/lab/simulations/BalancingActSimulation";
 import { LabGraphs } from "@/components/lab/LabGraphs";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -65,6 +72,13 @@ const simComponents: Record<string, React.FC<SimComponentProps>> = {
   "wavelength-measurement": WavelengthMeasurementSimulation,
   "interference-diffraction": InterferenceDiffractionSimulation,
   "emission-spectra": EmissionSpectraSimulation,
+  "boyle-mariotte": BoyleMariotteSimulation,
+  "isobaric-process": IsobaricProcessSimulation,
+  "isochoric-process": IsochoricProcessSimulation,
+  "specific-heat-capacity": SpecificHeatCapacitySimulation,
+  "relative-humidity": RelativeHumiditySimulation,
+  "surface-tension": SurfaceTensionSimulation,
+  "balancing-act": BalancingActSimulation,
 };
 
 interface TheoryTab {
@@ -385,6 +399,107 @@ export default function LabWorkPage() {
       };
       row["вещество"] = substanceNames[substance] || substance;
       row["тип спектра"] = spectrumNames[spectrumType] || spectrumType;
+    } else if (slug === "boyle-mariotte") {
+      const temperature = Number(effectiveSimParams["temperature"] || 0);
+      const volume = Number(effectiveSimParams["volume"] || 0);
+      const amount = Number(effectiveSimParams["amount"] || 0);
+      const R = 8.31;
+      const pressure = volume > 0 ? (amount * R * temperature) / (volume * 1e-3) / 1000 : 0;
+      row["T"] = temperature.toFixed(0);
+      row["V"] = volume.toFixed(1);
+      row["p"] = pressure.toFixed(1);
+      row["pV"] = (pressure * volume).toFixed(2);
+    } else if (slug === "isobaric-process") {
+      const pressure = Number(effectiveSimParams["pressure"] || 0);
+      const temperature = Number(effectiveSimParams["temperature"] || 0);
+      const amount = Number(effectiveSimParams["amount"] || 0);
+      const R = 8.31;
+      const volume = pressure > 0 ? (amount * R * temperature) / (pressure * 1000) * 1000 : 0;
+      row["p"] = pressure.toFixed(0);
+      row["T"] = temperature.toFixed(0);
+      row["V"] = volume.toFixed(2);
+      row["V/T"] = temperature > 0 ? (volume / temperature).toFixed(4) : "0";
+    } else if (slug === "isochoric-process") {
+      const volume = Number(effectiveSimParams["volume"] || 0);
+      const temperature = Number(effectiveSimParams["temperature"] || 0);
+      const amount = Number(effectiveSimParams["amount"] || 0);
+      const R = 8.31;
+      const pressure = volume > 0 ? (amount * R * temperature) / (volume * 1e-3) / 1000 : 0;
+      row["V"] = volume.toFixed(1);
+      row["T"] = temperature.toFixed(0);
+      row["p"] = pressure.toFixed(1);
+      row["p/T"] = temperature > 0 ? (pressure / temperature).toFixed(3) : "0";
+    } else if (slug === "specific-heat-capacity") {
+      const bodyMass = Number(effectiveSimParams["bodyMass"] || 0);
+      const waterMass = Number(effectiveSimParams["waterMass"] || 0);
+      const bodyTemp = Number(effectiveSimParams["bodyTemp"] || 0);
+      const waterTemp = Number(effectiveSimParams["waterTemp"] || 0);
+      const material = String(effectiveSimParams["material"] || "aluminum");
+      const materialData: Record<string, { c: number }> = {
+        aluminum: { c: 920 },
+        copper: { c: 390 },
+        steel: { c: 500 },
+        lead: { c: 130 },
+      };
+      const cWater = 4200;
+      const cTabl = materialData[material]?.c ?? 920;
+      const mt = bodyMass / 1000;
+      const mw = waterMass / 1000;
+      const equilibriumTemp =
+        (cTabl * mt * bodyTemp + cWater * mw * waterTemp) /
+        (cTabl * mt + cWater * mw);
+      const measuredC =
+        mt > 0 && bodyTemp > equilibriumTemp
+          ? (cWater * mw * (equilibriumTemp - waterTemp)) /
+            (mt * (bodyTemp - equilibriumTemp))
+          : 0;
+      row["m_т"] = bodyMass.toFixed(0);
+      row["m_в"] = waterMass.toFixed(0);
+      row["T_т"] = bodyTemp.toFixed(0);
+      row["T_в"] = waterTemp.toFixed(0);
+      row["T_р"] = equilibriumTemp.toFixed(1);
+      row["c_изм"] = measuredC.toFixed(0);
+    } else if (slug === "relative-humidity") {
+      const dryTemp = Number(effectiveSimParams["dryTemp"] || 0);
+      const wetTemp = Number(effectiveSimParams["wetTemp"] || 0);
+      const deltaT = dryTemp - wetTemp;
+      const rh =
+        deltaT <= 0
+          ? 100
+          : Math.max(10, Math.min(100, Math.round(100 - deltaT * (4.5 + 0.1 * (dryTemp - 20)))));
+      row["T_сух"] = dryTemp.toFixed(0);
+      row["T_влж"] = wetTemp.toFixed(0);
+      row["ΔT"] = deltaT.toFixed(1);
+      row["φ"] = rh;
+    } else if (slug === "surface-tension") {
+      const dropCount = Number(effectiveSimParams["dropCount"] || 1);
+      const totalMass = Number(effectiveSimParams["totalMass"] || 0);
+      const radius = Number(effectiveSimParams["radius"] || 1);
+      const g = 9.8;
+      const dropMassMg = dropCount > 0 ? (totalMass / dropCount) * 1000 : 0;
+      const detachForce = (dropMassMg / 1e6) * g * 1000;
+      const sigma = radius > 0 ? (detachForce / (2 * Math.PI * radius)) * 1000 : 0;
+      row["N"] = dropCount;
+      row["m_кап"] = dropMassMg.toFixed(1);
+      row["F_отр"] = detachForce.toFixed(2);
+      row["σ_изм"] = sigma.toFixed(1);
+    } else if (slug === "balancing-act") {
+      const leftMass = Number(effectiveSimParams["leftMass"] || 0);
+      const leftDistance = Number(effectiveSimParams["leftDistance"] || 0);
+      const rightMass = Number(effectiveSimParams["rightMass"] || 0);
+      const rightDistance = Number(effectiveSimParams["rightDistance"] || 0);
+      const g = 9.8;
+      const leftForce = (leftMass / 1000) * g;
+      const rightForce = (rightMass / 1000) * g;
+      const leftMoment = leftForce * leftDistance;
+      const rightMoment = rightForce * rightDistance;
+      row["m_лев"] = leftMass;
+      row["d_лев"] = leftDistance;
+      row["m_прав"] = rightMass;
+      row["d_прав"] = rightDistance;
+      row["M_лев"] = leftMoment.toFixed(2);
+      row["M_прав"] = rightMoment.toFixed(2);
+      row["ΔM"] = (leftMoment - rightMoment).toFixed(2);
     }
     setMeasurements((prev) => [...prev, row]);
   };
@@ -619,6 +734,119 @@ export default function LabWorkPage() {
       };
       data["substance"] = substanceNames[substance] || substance;
       data["spectrumType"] = spectrumNames[spectrumType] || spectrumType;
+    } else if (slug === "boyle-mariotte") {
+      const temperature = Number(effectiveSimParams["temperature"] || 0);
+      data["temperature"] = temperature.toFixed(0);
+      const pvs = measurements
+        .map((m) => Number(m["pV"]))
+        .filter((v) => !isNaN(v));
+      if (pvs.length > 0) {
+        const avgPV = pvs.reduce((a, b) => a + b, 0) / pvs.length;
+        data["avgPV"] = avgPV.toFixed(2);
+      } else {
+        data["avgPV"] = (Number(data["pV"]) || 0).toFixed(2);
+      }
+    } else if (slug === "isobaric-process") {
+      const pressure = Number(effectiveSimParams["pressure"] || 0);
+      data["pressure"] = pressure.toFixed(0);
+      const vts = measurements
+        .map((m) => Number(m["V/T"]))
+        .filter((v) => !isNaN(v));
+      if (vts.length > 0) {
+        const avgVT = vts.reduce((a, b) => a + b, 0) / vts.length;
+        data["avgVT"] = avgVT.toFixed(4);
+      } else {
+        data["avgVT"] = (Number(data["V/T"]) || 0).toFixed(4);
+      }
+    } else if (slug === "isochoric-process") {
+      const volume = Number(effectiveSimParams["volume"] || 0);
+      data["volume"] = volume.toFixed(1);
+      const pts = measurements
+        .map((m) => Number(m["p/T"]))
+        .filter((v) => !isNaN(v));
+      if (pts.length > 0) {
+        const avgPT = pts.reduce((a, b) => a + b, 0) / pts.length;
+        data["avgPT"] = avgPT.toFixed(3);
+      } else {
+        data["avgPT"] = (Number(data["p/T"]) || 0).toFixed(3);
+      }
+    } else if (slug === "specific-heat-capacity") {
+      const material = String(effectiveSimParams["material"] || "aluminum");
+      const materialNames: Record<string, string> = {
+        aluminum: "Алюминий",
+        copper: "Медь",
+        steel: "Сталь",
+        lead: "Свинец",
+      };
+      const tabularHeat: Record<string, number> = {
+        aluminum: 920,
+        copper: 390,
+        steel: 500,
+        lead: 130,
+      };
+      data["materialName"] = materialNames[material] || material;
+      data["tabularHeat"] = tabularHeat[material] ?? 920;
+      data["equilibriumTemp"] = Number(data["T_р"] || 0).toFixed(1);
+      const cMeasured = Number(data["c_изм"] || 0);
+      data["specificHeat"] = cMeasured.toFixed(0);
+      const tab = data["tabularHeat"] as number;
+      data["errorPercent"] = tab > 0 ? (Math.abs(cMeasured - tab) / tab * 100).toFixed(1) : "0.0";
+    } else if (slug === "relative-humidity") {
+      data["dryTemp"] = Number(effectiveSimParams["dryTemp"] || 0).toFixed(0);
+      data["wetTemp"] = Number(effectiveSimParams["wetTemp"] || 0).toFixed(0);
+      data["deltaT"] = (
+        Number(effectiveSimParams["dryTemp"] || 0) -
+        Number(effectiveSimParams["wetTemp"] || 0)
+      ).toFixed(1);
+      const rhValues = measurements
+        .map((m) => Number(m["φ"]))
+        .filter((v) => !isNaN(v));
+      if (rhValues.length > 0) {
+        const avgRh = rhValues.reduce((a, b) => a + b, 0) / rhValues.length;
+        data["relativeHumidity"] = Math.round(avgRh);
+      } else {
+        data["relativeHumidity"] = Number(data["φ"] || 0);
+      }
+    } else if (slug === "surface-tension") {
+      const liquid = String(effectiveSimParams["liquid"] || "water");
+      const liquidNames: Record<string, string> = {
+        water: "Вода",
+        alcohol: "Спирт",
+        glycerol: "Глицерин",
+      };
+      const tabularTension: Record<string, number> = {
+        water: 73,
+        alcohol: 22,
+        glycerol: 63,
+      };
+      data["liquidName"] = liquidNames[liquid] || liquid;
+      data["tabularTension"] = tabularTension[liquid] ?? 73;
+      data["dropMass"] = Number(data["m_кап"] || 0).toFixed(1);
+      data["detachForce"] = Number(data["F_отр"] || 0).toFixed(2);
+      const sigmaMeasured = Number(data["σ_изм"] || 0);
+      data["surfaceTension"] = sigmaMeasured.toFixed(1);
+    } else if (slug === "balancing-act") {
+      const leftMoments = measurements
+        .map((m) => Number(m["M_лев"]))
+        .filter((v) => !isNaN(v));
+      const rightMoments = measurements
+        .map((m) => Number(m["M_прав"]))
+        .filter((v) => !isNaN(v));
+      const diffs = measurements
+        .map((m) => Number(m["ΔM"]))
+        .filter((v) => !isNaN(v));
+      data["avgLeftMoment"] =
+        leftMoments.length > 0
+          ? (leftMoments.reduce((a, b) => a + b, 0) / leftMoments.length).toFixed(2)
+          : (Number(data["M_лев"] || 0)).toFixed(2);
+      data["avgRightMoment"] =
+        rightMoments.length > 0
+          ? (rightMoments.reduce((a, b) => a + b, 0) / rightMoments.length).toFixed(2)
+          : (Number(data["M_прав"] || 0)).toFixed(2);
+      data["avgDiff"] =
+        diffs.length > 0
+          ? (diffs.reduce((a, b) => a + b, 0) / diffs.length).toFixed(2)
+          : (Number(data["ΔM"] || 0)).toFixed(2);
     }
 
     return data;

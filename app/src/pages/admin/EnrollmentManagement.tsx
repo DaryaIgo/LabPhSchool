@@ -502,7 +502,6 @@ function StudentEnrollments({
               <SubtopicProgressManager
                 studentId={studentId}
                 topicId={e.topicId}
-                labs={allLabs?.filter((l) => l.topicId === e.topicId) ?? []}
               />
             )}
           </div>

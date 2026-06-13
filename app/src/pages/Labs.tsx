@@ -14,7 +14,6 @@ import { useAuth } from "@/hooks/useAuth";
 
 const categoryIconMap: Record<string, React.ReactNode> = {
   mechanics: <Wrench size={40} className="text-[#2eff8c]" />,
-  thermal: <Thermometer size={40} className="text-[#ff7043]" />,
   "molecular-thermodynamics": <Thermometer size={40} className="text-[#ff7043]" />,
   electrodynamics: <Zap size={40} className="text-[#ffd600]" />,
   circuit: <Zap size={40} className="text-[#ffd600]" />,

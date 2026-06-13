@@ -511,6 +511,231 @@ export function LabGraphs({ measurements, slug }: LabGraphsProps) {
       );
     }
 
+    if (slug === "boyle-mariotte") {
+      return (
+        <div className="space-y-6">
+          <GraphCard title="Зависимость давления от объёма p(V)">
+            <ResponsiveContainer width="100%" height={300}>
+              <ScatterChart>
+                <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
+                <XAxis type="number" dataKey="V" name="V" stroke="#798389" />
+                <YAxis type="number" dataKey="p" name="p" stroke="#798389" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1a1f22",
+                    border: "1px solid #37474f",
+                    borderRadius: "8px",
+                    color: "#fff",
+                  }}
+                />
+                <Scatter name="p(V)" data={data} fill="#ff7043" />
+              </ScatterChart>
+            </ResponsiveContainer>
+          </GraphCard>
+        </div>
+      );
+    }
+
+    if (slug === "isobaric-process") {
+      return (
+        <div className="space-y-6">
+          <GraphCard title="Зависимость объёма от температуры V(T)">
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
+                <XAxis dataKey="T" stroke="#798389" />
+                <YAxis dataKey="V" stroke="#798389" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1a1f22",
+                    border: "1px solid #37474f",
+                    borderRadius: "8px",
+                    color: "#fff",
+                  }}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="V"
+                  stroke="#2eff8c"
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: "#2eff8c" }}
+                  name="V(T)"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </GraphCard>
+        </div>
+      );
+    }
+
+    if (slug === "isochoric-process") {
+      return (
+        <div className="space-y-6">
+          <GraphCard title="Зависимость давления от температуры p(T)">
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
+                <XAxis dataKey="T" stroke="#798389" />
+                <YAxis dataKey="p" stroke="#798389" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1a1f22",
+                    border: "1px solid #37474f",
+                    borderRadius: "8px",
+                    color: "#fff",
+                  }}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="p"
+                  stroke="#ff7043"
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: "#ff7043" }}
+                  name="p(T)"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </GraphCard>
+        </div>
+      );
+    }
+
+    if (slug === "specific-heat-capacity") {
+      return (
+        <div className="space-y-6">
+          <GraphCard title="Зависимость равновесной температуры от массы воды T_р(m_в)">
+            <ResponsiveContainer width="100%" height={300}>
+              <ScatterChart>
+                <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
+                <XAxis type="number" dataKey="m_в" name="m_в" stroke="#798389" />
+                <YAxis type="number" dataKey="T_р" name="T_р" stroke="#798389" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1a1f22",
+                    border: "1px solid #37474f",
+                    borderRadius: "8px",
+                    color: "#fff",
+                  }}
+                />
+                <Scatter name="T_р(m_в)" data={data} fill="#01acff" />
+              </ScatterChart>
+            </ResponsiveContainer>
+          </GraphCard>
+        </div>
+      );
+    }
+
+    if (slug === "relative-humidity") {
+      return (
+        <div className="space-y-6">
+          <GraphCard title="Зависимость относительной влажности от разности температур φ(ΔT)">
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
+                <XAxis dataKey="ΔT" stroke="#798389" />
+                <YAxis dataKey="φ" stroke="#798389" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1a1f22",
+                    border: "1px solid #37474f",
+                    borderRadius: "8px",
+                    color: "#fff",
+                  }}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="φ"
+                  stroke="#2eff8c"
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: "#2eff8c" }}
+                  name="φ(ΔT)"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </GraphCard>
+        </div>
+      );
+    }
+
+    if (slug === "surface-tension") {
+      return (
+        <div className="space-y-6">
+          <GraphCard title="Зависимость силы отрыва от массы капли F(m_кап)">
+            <ResponsiveContainer width="100%" height={300}>
+              <ScatterChart>
+                <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
+                <XAxis type="number" dataKey="m_кап" name="m_кап" stroke="#798389" />
+                <YAxis type="number" dataKey="F_отр" name="F_отр" stroke="#798389" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1a1f22",
+                    border: "1px solid #37474f",
+                    borderRadius: "8px",
+                    color: "#fff",
+                  }}
+                />
+                <Scatter name="F(m_кап)" data={data} fill="#ff7043" />
+              </ScatterChart>
+            </ResponsiveContainer>
+          </GraphCard>
+        </div>
+      );
+    }
+
+    if (slug === "balancing-act") {
+      return (
+        <div className="space-y-6">
+          <GraphCard title="Сравнение левого и правого моментов M_лев(M_прав)">
+            <ResponsiveContainer width="100%" height={300}>
+              <ScatterChart>
+                <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
+                <XAxis type="number" dataKey="M_прав" name="M_прав" stroke="#798389" />
+                <YAxis type="number" dataKey="M_лев" name="M_лев" stroke="#798389" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1a1f22",
+                    border: "1px solid #37474f",
+                    borderRadius: "8px",
+                    color: "#fff",
+                  }}
+                />
+                <Scatter name="M_лев(M_прав)" data={data} fill="#2eff8c" />
+              </ScatterChart>
+            </ResponsiveContainer>
+          </GraphCard>
+          <GraphCard title="Изменение разности моментов ΔM от номера измерения">
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
+                <XAxis dataKey="index" stroke="#798389" />
+                <YAxis dataKey="ΔM" stroke="#798389" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1a1f22",
+                    border: "1px solid #37474f",
+                    borderRadius: "8px",
+                    color: "#fff",
+                  }}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="ΔM"
+                  stroke="#ffcb3d"
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: "#ffcb3d" }}
+                  name="ΔM"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </GraphCard>
+        </div>
+      );
+    }
+
     return (
       <div className="bg-[#1a1f22] border border-[#37474f] rounded-2xl p-12 text-center text-[#798389]">
         Графики для этой лабораторной работы в разработке.

@@ -6,7 +6,7 @@ import {
   labBlocks,
   labSimulationParams,
 } from "./schema";
-import { eq } from "drizzle-orm";
+import { eq, count } from "drizzle-orm";
 
 async function seedVirtualLabs() {
   const db = getDb();
@@ -23,17 +23,6 @@ async function seedVirtualLabs() {
       shortDesc: "Кинематика, динамика, статика",
       color: "#2eff8c",
       iconType: "mechanics",
-    },
-    {
-      order: 2,
-      title: "Тепловые явления",
-      slug: "thermal",
-      grade: "8 класс",
-      description:
-        "Теплопередача, количество теплоты, теплоёмкость, агрегатные состояния вещества.",
-      shortDesc: "Теплота, теплоёмкость",
-      color: "#ff7043",
-      iconType: "thermal",
     },
     {
       order: 3,
@@ -101,6 +90,17 @@ async function seedVirtualLabs() {
       color: "#ef5350",
       iconType: "atomic",
     },
+    {
+      order: 9,
+      title: "Молекулярная физика и термодинамика",
+      slug: "molecular-thermodynamics",
+      grade: "8–10 класс",
+      description:
+        "Молекулярно-кинетическая теория, идеальный газ, теплопередача, первое и второе начала термодинамики, тепловые машины.",
+      shortDesc: "МКТ, газ, термодинамика",
+      color: "#ff7043",
+      iconType: "thermal",
+    },
   ];
 
   for (const cat of categories) {
@@ -119,6 +119,27 @@ async function seedVirtualLabs() {
   const catRows = await db.select().from(labCategories);
   const catMap = new Map(catRows.map((c) => [c.slug, c.id]));
 
+  // Remove legacy duplicate "Тепловые явления" category (now covered by molecular-thermodynamics)
+  const legacyThermal = await db
+    .select({ id: labCategories.id })
+    .from(labCategories)
+    .where(eq(labCategories.slug, "thermal"))
+    .limit(1);
+  if (legacyThermal.length > 0) {
+    const linkedWorks = await db
+      .select({ count: count() })
+      .from(labWorks)
+      .where(eq(labWorks.categoryId, legacyThermal[0].id));
+    if (linkedWorks[0].count === 0) {
+      await db.delete(labCategories).where(eq(labCategories.slug, "thermal"));
+      console.log("Removed legacy category: Тепловые явления");
+    } else {
+      console.log(
+        "Legacy category 'thermal' has linked works, skipping removal"
+      );
+    }
+  }
+
   // Subcategories
   const subcategories = [
     {
@@ -127,6 +148,13 @@ async function seedVirtualLabs() {
       title: "Кинематика",
       slug: "kinematics",
       description: "Равномерное и равноускоренное движение, движение по окружности, бросок тела.",
+    },
+    {
+      categoryId: catMap.get("mechanics")!,
+      order: 2,
+      title: "Статика",
+      slug: "statics",
+      description: "Условия равновесия тел, момент силы, рычаг, простые механизмы.",
     },
     {
       categoryId: catMap.get("optics")!,
@@ -141,6 +169,20 @@ async function seedVirtualLabs() {
       title: "Волновая и квантовая оптика",
       slug: "wave-quantum-optics",
       description: "Интерференция, дифракция, спектры, волновая и квантовая природа света.",
+    },
+    {
+      categoryId: catMap.get("molecular-thermodynamics")!,
+      order: 1,
+      title: "Молекулярная физика",
+      slug: "molecular-physics",
+      description: "Основы МКТ, идеальный газ, уравнение состояния, изопроцессы.",
+    },
+    {
+      categoryId: catMap.get("molecular-thermodynamics")!,
+      order: 2,
+      title: "Термодинамика",
+      slug: "thermodynamics",
+      description: "Первое и второе начала термодинамики, теплопередача, теплоёмкость, влажность.",
     },
   ];
 
@@ -542,6 +584,52 @@ $$y = v_0 \\cdot \\sin\\alpha \\cdot t - \\frac{g \\cdot t^2}{2}$$
         "В ходе работы было исследовано движение тела, брошенного под углом к горизонту. Установлено, что максимальная дальность полета L = {{maxL}} м достигается при угле броска около 45°, а максимальная высота H = {{maxH}} м увеличивается с ростом угла α. При v0 = {{avgV0}} м/с экспериментальные значения хорошо согласуются с теоретическими расчетами.",
       status: "published" as const,
     },
+    // ── Статика ──
+    {
+      categoryId: catMap.get("mechanics")!,
+      subcategoryId: subMap.get("statics")!,
+      topicNodeId: null,
+      order: 1,
+      title: "Балансировка рычага",
+      slug: "balancing-act",
+      law: "M = F·d; сумма моментов равна нулю",
+      skills: "Исследование условий равновесия рычага, расчёт моментов сил, работа с интерактивной PhET-моделью.",
+      difficulty: "easy" as const,
+      duration: 30,
+      goal: "Экспериментально проверить условие равновесия рычага: сумма моментов сил относительно точки опоры равна нулю.",
+      theory: `**Момент силы** относительно точки опоры:
+
+$$M = F \cdot d$$
+
+где:
+- $F$ — сила, действующая на рычаг (Н)
+- $d$ — плечо силы — расстояние от точки опоры до линии действия силы (м)
+
+**Условие равновесия рычага:**
+
+$$M_1 = M_2$$
+
+или
+
+$$F_1 \cdot d_1 = F_2 \cdot d_2$$
+
+Вес груза массой $m$: $F = mg$.
+
+Интерактивная симуляция от PhET помогает наглядно исследовать равновесие рычага под разными грузами и на разных расстояниях:
+
+**[PhET: Балансировка рычага](https://phet.colorado.edu/sims/html/balancing-act/latest/balancing-act_all.html)**`,
+      equipment: JSON.stringify(["Рычаг", "Грузы разной массы", "Линейка", "Весы", "PhET-симуляция"]),
+      instruction: `1. Откройте PhET-симуляцию «Balancing Act» по ссылке в теории.
+2. Установите на левом плече рычага груз массой m₁ на расстоянии d₁ от точки опоры.
+3. Подберите массу m₂ и расстояние d₂ на правом плече так, чтобы рычаг находился в равновесии.
+4. Запишите значения m₁, d₁, m₂, d₂.
+5. Рассчитайте моменты силы слева и справа: M = m·g·d.
+6. Убедитесь, что моменты примерно равны.
+7. Повторите опыт для 3–5 разных комбинаций масс и расстояний.
+8. Постройте график зависимости M_лев от M_прав.`,
+      conclusionTemplate: "В ходе работы было проверено условие равновесия рычага. Средний левый момент M_лев = {{avgLeftMoment}} Н·см, средний правый момент M_прав = {{avgRightMoment}} Н·см. Разность моментов составила {{avgDiff}} Н·см, что подтверждает правило равновесия: сумма моментов сил относительно точки опоры равна нулю.",
+      status: "published" as const,
+    },
     // ── Геометрическая оптика ──
     {
       categoryId: catMap.get("optics")!,
@@ -851,6 +939,219 @@ $$h\\nu = E_m - E_n$$
         "Спектр вещества {{substance}} является {{spectrumType}}. Наблюдаемые спектральные линии соответствуют переходам электронов между энергетическими уровнями атомов и могут использоваться для спектрального анализа.",
       status: "published" as const,
     },
+    // ── Молекулярная физика и термодинамика ──
+    {
+      categoryId: catMap.get("molecular-thermodynamics")!,
+      subcategoryId: subMap.get("molecular-physics")!,
+      topicNodeId: null,
+      order: 1,
+      title: "Опытная проверка закона Бойля–Мариотта",
+      slug: "boyle-mariotte",
+      law: "pV = const (при T = const)",
+      skills: "Исследование изотермического процесса, установление обратной пропорциональности между давлением и объёмом газа.",
+      difficulty: "easy" as const,
+      duration: 30,
+      goal: "Экспериментально проверить, что при постоянной температуре произведение давления и объёма газа остаётся постоянным.",
+      theory: `**Закон Бойля–Мариотта** утверждает, что при постоянной температуре и неизменной массе идеального газа произведение давления на объём постоянно:
+
+$$pV = \\text{const}$$
+
+или
+
+$$p_1 V_1 = p_2 V_2$$
+
+где:
+- $p$ — давление газа (Па)
+- $V$ — объём газа (м³)
+
+При изотермическом расширении газа давление уменьшается обратно пропорционально объёму. График зависимости $p(V)$ — гипербола, а в координатах $p$ от $1/V$ — прямая линия, проходящая через начало координат.`,
+      equipment: JSON.stringify(["Цилиндр с поршнем", "Манометр", "Термостат", "Газ"]),
+      instruction: `1. Установите температуру газа (должна оставаться постоянной).
+2. Задайте начальный объём газа в цилиндре.
+3. Запишите показания манометра (давление p).
+4. Медленно изменяйте объём, перемещая поршень.
+5. Для каждого положения поршня записывайте объём V и давление p.
+6. Рассчитайте произведение p·V для каждого измерения.
+7. Постройте график p(V) и убедитесь, что он имеет вид гиперболы.`,
+      conclusionTemplate: "При температуре T = {{temperature}} К проверена изотерма идеального газа. Среднее произведение p·V составило {{avgPV}} Дж. Полученные данные подтверждают закон Бойля–Мариотта: при постоянной температуре pV = const.",
+      status: "published" as const,
+    },
+    {
+      categoryId: catMap.get("molecular-thermodynamics")!,
+      subcategoryId: subMap.get("molecular-physics")!,
+      topicNodeId: null,
+      order: 2,
+      title: "Изучение изобарного процесса",
+      slug: "isobaric-process",
+      law: "V/T = const (при p = const)",
+      skills: "Исследование изобарного расширения газа, определение температурного коэффициента расширения.",
+      difficulty: "easy" as const,
+      duration: 30,
+      goal: "Экспериментально установить зависимость объёма фиксированной массы газа от температуры при постоянном давлении.",
+      theory: `**Изобарный процесс** — процесс, происходящий при постоянном давлении. Для идеального газа при $p = \\text{const}$:
+
+$$\\frac{V}{T} = \\text{const}$$
+
+или
+
+$$\\frac{V_1}{T_1} = \rac{V_2}{T_2}$$
+
+где:
+- $V$ — объём газа (м³)
+- $T$ — абсолютная температура (К)
+
+При нагревании газа при постоянном давлении его объём увеличивается прямо пропорционально абсолютной температуре. График $V(T)$ — прямая линия, продолжение которой при $T = 0$ К проходит через начало координат.`,
+      equipment: JSON.stringify(["Цилиндр с подвижным поршнем", "Термометр", "Нагреватель", "Газ"]),
+      instruction: `1. Установите постоянное давление на поршне (например, атмосферное).
+2. Задайте начальную температуру газа.
+3. Измерьте объём газа в цилиндре.
+4. Постепенно нагревайте газ, поддерживая давление постоянным.
+5. Для каждой температуры записывайте объём V.
+6. Рассчитайте отношение V/T.
+7. Постройте график V(T) и проверьте его линейность.`,
+      conclusionTemplate: "При постоянном давлении p = {{pressure}} кПа установлена прямая пропорциональность между объёмом и абсолютной температурой газа. Среднее отношение V/T составило {{avgVT}} м³/К, что подтверждает закон Гей-Люссака.",
+      status: "published" as const,
+    },
+    {
+      categoryId: catMap.get("molecular-thermodynamics")!,
+      subcategoryId: subMap.get("molecular-physics")!,
+      topicNodeId: null,
+      order: 3,
+      title: "Изучение изохорного процесса",
+      slug: "isochoric-process",
+      law: "p/T = const (при V = const)",
+      skills: "Исследование изменения давления газа при нагревании в замкнутом сосуде постоянного объёма.",
+      difficulty: "easy" as const,
+      duration: 30,
+      goal: "Экспериментально проверить, что при постоянном объёме давление газа прямо пропорционально абсолютной температуре.",
+      theory: `**Изохорный процесс** — процесс, происходящий при постоянном объёме. Для идеального газа при $V = \\text{const}$:
+
+$$\\frac{p}{T} = \\text{const}$$
+
+или
+
+$$\\frac{p_1}{T_1} = \\frac{p_2}{T_2}$$
+
+где:
+- $p$ — давление газа (Па)
+- $T$ — абсолютная температура (К)
+
+При нагревании газа в замкнутом сосуде его давление увеличивается прямо пропорционально абсолютной температуре. График $p(T)$ — прямая линия.`,
+      equipment: JSON.stringify(["Закрытый сосуд (колба)", "Манометр", "Термометр", "Нагреватель", "Газ"]),
+      instruction: `1. Поместите газ в закрытый сосуд постоянного объёма.
+2. Установите начальную температуру и запишите давление.
+3. Постепенно нагревайте сосуд.
+4. Для каждой температуры записывайте давление p.
+5. Рассчитайте отношение p/T.
+6. Постройте график p(T) и убедитесь в его линейности.`,
+      conclusionTemplate: "При постоянном объёме V = {{volume}} л установлена прямая пропорциональность между давлением и абсолютной температурой газа. Среднее отношение p/T составило {{avgPT}} Па/К, что подтверждает закон Шарля (изохорный процесс).",
+      status: "published" as const,
+    },
+    {
+      categoryId: catMap.get("molecular-thermodynamics")!,
+      subcategoryId: subMap.get("thermodynamics")!,
+      topicNodeId: null,
+      order: 1,
+      title: "Определение удельной теплоёмкости твёрдого тела",
+      slug: "specific-heat-capacity",
+      law: "Q = cmΔT",
+      skills: "Работа с калориметром, составление уравнения теплового баланса, расчёт удельной теплоёмкости.",
+      difficulty: "medium" as const,
+      duration: 40,
+      goal: "Определить удельную теплоёмкость металлического тела по результатам теплообмена с водой в калориметре.",
+      theory: `**Количество теплоты**, необходимое для нагревания тела массой $m$ на $\Delta T$ градусов:
+
+$$Q = c \\cdot m \\cdot \\Delta T$$
+
+где $c$ — **удельная теплоёмкость** вещества (Дж/(кг·°C)).
+
+В изолированной системе «горячее тело + холодная вода» количество теплоты, отданного телом, равно количеству теплоты, полученному водой:
+
+$$c_{т} m_{т} (T_{т} - T_{р}) = c_{в} m_{в} (T_{р} - T_{в})$$
+
+где:
+- $T_{т}$ — начальная температура тела
+- $T_{в}$ — начальная температура воды
+- $T_{р}$ — температура в момент теплового равновесия
+- $c_{в} = 4200$ Дж/(кг·°C) — удельная теплоёмкость воды`,
+      equipment: JSON.stringify(["Калориметр", "Весы", "Термометр", "Нагретый металлический брусок", "Вода"]),
+      instruction: `1. Измерьте массу металлического бруска m_т.
+2. Нагрейте брусок до температуры T_т.
+3. Налейте в калориметр холодную воду массой m_в и измерьте её температуру T_в.
+4. Опустите брусок в воду и замкните крышку калориметра.
+5. Дождитесь теплового равновесия и измерьте установившуюся температуру T_р.
+6. Рассчитайте удельную теплоёмкость тела по формуле теплового баланса.
+7. Сравните результат с табличным значением для данного металла.`,
+      conclusionTemplate: "В результате теплообмена в калориметре установлена температура равновесия T_р = {{equilibriumTemp}} °C. Рассчитанная удельная теплоёмкость металла c = {{specificHeat}} Дж/(кг·°C). Табличное значение для {{materialName}} c_табл = {{tabularHeat}} Дж/(кг·°C), погрешность составила {{errorPercent}}%.",
+      status: "published" as const,
+    },
+    {
+      categoryId: catMap.get("molecular-thermodynamics")!,
+      subcategoryId: subMap.get("thermodynamics")!,
+      topicNodeId: null,
+      order: 2,
+      title: "Измерение относительной влажности воздуха",
+      slug: "relative-humidity",
+      law: "φ = (p_пар / p_нас) · 100%",
+      skills: "Работа с психрометром, использование психрометрической таблицы, расчёт относительной влажности.",
+      difficulty: "easy" as const,
+      duration: 25,
+      goal: "Определить относительную влажность воздуха по показаниям сухого и влажного термометров психрометра.",
+      theory: `**Относительная влажность воздуха** — отношение давления водяного пара, содержащегося в воздухе, к давлению насыщенного пара при той же температуре:
+
+$$\\varphi = \\frac{p_{пар}}{p_{нас}} \\cdot 100\\%$$
+
+**Психрометрический метод:** по разности показаний сухого ($T_{с}$) и влажного ($T_{в}$) термометров определяют влажность с помощью психрометрической таблицы.
+
+Чем суше воздух, тем интенсивнее испарение с влажного термометра, тем больше его охлаждение и тем больше разность $\\Delta T = T_{с} - T_{в}$.`,
+      equipment: JSON.stringify(["Психрометр", "Сухой термометр", "Влажный термометр", "Психрометрическая таблица"]),
+      instruction: `1. Запишите показания сухого термометра T_с.
+2. Запишите показания влажного термометра T_в.
+3. Вычислите разность температур ΔT = T_с - T_в.
+4. По психрометрической таблице найдите относительную влажность φ.
+5. Повторите измерения в других условиях (например, после проветривания).`,
+      conclusionTemplate: "При температуре сухого термометра T_с = {{dryTemp}} °C и влажного T_в = {{wetTemp}} °C разность составила ΔT = {{deltaT}} °C. Относительная влажность воздуха φ = {{relativeHumidity}}%.",
+      status: "published" as const,
+    },
+    {
+      categoryId: catMap.get("molecular-thermodynamics")!,
+      subcategoryId: subMap.get("thermodynamics")!,
+      topicNodeId: null,
+      order: 3,
+      title: "Определение коэффициента поверхностного натяжения жидкости",
+      slug: "surface-tension",
+      law: "σ = F / l",
+      skills: "Измерение силы отрыва капли, работа с капельницей или сталагмометром, расчёт коэффициента поверхностного натяжения.",
+      difficulty: "medium" as const,
+      duration: 35,
+      goal: "Определить коэффициент поверхностного натяжения жидкости по силе отрыва капли с капельницы.",
+      theory: `**Поверхностное натяжение** жидкости характеризуется коэффициентом $\\sigma$, равным отношению силы поверхностного натяжения $F$ к длине смыкающейся поверхности $l$:
+
+$$\\sigma = \\frac{F}{l}$$
+
+Для капли, отрывающейся от капельницы радиусом $r$, в момент отрыва сила поверхностного натяжения уравновешивается весом капли:
+
+$$F = mg = \\sigma \\cdot 2\\pi r$$
+
+Отсюда:
+
+$$\\sigma = \\frac{mg}{2\\pi r}$$
+
+где:
+- $m$ — масса оторвавшейся капли
+- $g \\approx 9.8$ м/с²
+- $r$ — радиус отверстия капельницы`,
+      equipment: JSON.stringify(["Капельница", "Мензурка", "Весы", "Исследуемая жидкость", "Штатив"]),
+      instruction: `1. Измерьте массу пустой мензурки.
+2. Соберите из капельницы N капель жидкости в мензурку.
+3. Измерьте общую массу жидкости и вычислите массу одной капли m = m_общ / N.
+4. Измерьте радиус отверстия капельницы r.
+5. Рассчитайте силу отрыва F = mg.
+6. Рассчитайте коэффициент поверхностного натяжения по формуле σ = F / (2πr).
+7. Сравните результат с табличным значением для данной жидкости.`,
+      conclusionTemplate: "Масса одной капли жидкости составила m = {{dropMass}} мг, сила отрыва F = {{detachForce}} мН. Коэффициент поверхностного натяжения {{liquidName}} σ = {{surfaceTension}} мН/м. Табличное значение σ_табл = {{tabularTension}} мН/м.",
+      status: "published" as const,
+    },
   ];
 
   for (const work of works) {
@@ -1042,6 +1343,72 @@ $$h\\nu = E_m - E_n$$
       const params = [
         { key: "substance", label: "Вещество", paramType: "select" as const, defaultValue: "hydrogen", options: "[{\"value\":\"hydrogen\",\"label\":\"Водород\"},{\"value\":\"helium\",\"label\":\"Гелий\"},{\"value\":\"neon\",\"label\":\"Неон\"},{\"value\":\"sodium\",\"label\":\"Натрий\"},{\"value\":\"mercury\",\"label\":\"Ртуть\"},{\"value\":\"tungsten\",\"label\":\"Вольфрам (сплошной спектр)\"}]", unit: "" },
         { key: "spectrumType", label: "Тип спектра", paramType: "select" as const, defaultValue: "line", options: "[{\"value\":\"line\",\"label\":\"Линейчатый\"},{\"value\":\"continuous\",\"label\":\"Сплошной\"}]", unit: "" },
+      ];
+      for (const p of params) {
+        await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+      }
+    } else if (work.slug === "boyle-mariotte") {
+      const params = [
+        { key: "temperature", label: "Температура газа", paramType: "slider" as const, min: "250", max: "400", step: "10", defaultValue: "300", unit: "К" },
+        { key: "volume", label: "Объём газа", paramType: "slider" as const, min: "0.5", max: "5", step: "0.1", defaultValue: "2", unit: "л" },
+        { key: "amount", label: "Количество вещества", paramType: "slider" as const, min: "0.01", max: "0.2", step: "0.01", defaultValue: "0.05", unit: "моль" },
+      ];
+      for (const p of params) {
+        await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+      }
+    } else if (work.slug === "isobaric-process") {
+      const params = [
+        { key: "pressure", label: "Давление газа", paramType: "slider" as const, min: "50", max: "200", step: "5", defaultValue: "100", unit: "кПа" },
+        { key: "temperature", label: "Температура газа", paramType: "slider" as const, min: "200", max: "500", step: "10", defaultValue: "300", unit: "К" },
+        { key: "amount", label: "Количество вещества", paramType: "slider" as const, min: "0.01", max: "0.2", step: "0.01", defaultValue: "0.05", unit: "моль" },
+      ];
+      for (const p of params) {
+        await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+      }
+    } else if (work.slug === "isochoric-process") {
+      const params = [
+        { key: "volume", label: "Объём сосуда", paramType: "slider" as const, min: "0.5", max: "3", step: "0.1", defaultValue: "1", unit: "л" },
+        { key: "temperature", label: "Температура газа", paramType: "slider" as const, min: "200", max: "500", step: "10", defaultValue: "300", unit: "К" },
+        { key: "amount", label: "Количество вещества", paramType: "slider" as const, min: "0.01", max: "0.2", step: "0.01", defaultValue: "0.05", unit: "моль" },
+      ];
+      for (const p of params) {
+        await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+      }
+    } else if (work.slug === "specific-heat-capacity") {
+      const params = [
+        { key: "bodyMass", label: "Масса тела", paramType: "slider" as const, min: "10", max: "500", step: "5", defaultValue: "200", unit: "г" },
+        { key: "waterMass", label: "Масса воды", paramType: "slider" as const, min: "50", max: "500", step: "10", defaultValue: "200", unit: "г" },
+        { key: "bodyTemp", label: "Начальная температура тела", paramType: "slider" as const, min: "50", max: "150", step: "5", defaultValue: "100", unit: "°C" },
+        { key: "waterTemp", label: "Начальная температура воды", paramType: "slider" as const, min: "10", max: "40", step: "1", defaultValue: "20", unit: "°C" },
+        { key: "material", label: "Материал тела", paramType: "select" as const, defaultValue: "aluminum", options: "[{\"value\":\"aluminum\",\"label\":\"Алюминий\"},{\"value\":\"copper\",\"label\":\"Медь\"},{\"value\":\"steel\",\"label\":\"Сталь\"},{\"value\":\"lead\",\"label\":\"Свинец\"}]", unit: "" },
+      ];
+      for (const p of params) {
+        await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+      }
+    } else if (work.slug === "relative-humidity") {
+      const params = [
+        { key: "dryTemp", label: "Температура сухого термометра", paramType: "slider" as const, min: "10", max: "40", step: "1", defaultValue: "25", unit: "°C" },
+        { key: "wetTemp", label: "Температура влажного термометра", paramType: "slider" as const, min: "5", max: "35", step: "1", defaultValue: "20", unit: "°C" },
+      ];
+      for (const p of params) {
+        await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+      }
+    } else if (work.slug === "surface-tension") {
+      const params = [
+        { key: "dropCount", label: "Число капель", paramType: "slider" as const, min: "5", max: "100", step: "1", defaultValue: "20", unit: "" },
+        { key: "totalMass", label: "Масса жидкости", paramType: "slider" as const, min: "0.5", max: "20", step: "0.1", defaultValue: "5", unit: "г" },
+        { key: "radius", label: "Радиус отверстия капельницы", paramType: "slider" as const, min: "0.5", max: "3", step: "0.1", defaultValue: "1.5", unit: "мм" },
+        { key: "liquid", label: "Жидкость", paramType: "select" as const, defaultValue: "water", options: "[{\"value\":\"water\",\"label\":\"Вода\"},{\"value\":\"alcohol\",\"label\":\"Спирт\"},{\"value\":\"glycerol\",\"label\":\"Глицерин\"}]", unit: "" },
+      ];
+      for (const p of params) {
+        await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
+      }
+    } else if (work.slug === "balancing-act") {
+      const params = [
+        { key: "leftMass", label: "Масса на левом плече", paramType: "slider" as const, min: "10", max: "500", step: "10", defaultValue: "100", unit: "г" },
+        { key: "leftDistance", label: "Расстояние слева от опоры", paramType: "slider" as const, min: "5", max: "50", step: "1", defaultValue: "20", unit: "см" },
+        { key: "rightMass", label: "Масса на правом плече", paramType: "slider" as const, min: "10", max: "500", step: "10", defaultValue: "100", unit: "г" },
+        { key: "rightDistance", label: "Расстояние справа от опоры", paramType: "slider" as const, min: "5", max: "50", step: "1", defaultValue: "20", unit: "см" },
       ];
       for (const p of params) {
         await db.insert(labSimulationParams).values({ labWorkId: workId, ...p });
