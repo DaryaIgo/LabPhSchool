@@ -1,5 +1,5 @@
 import { trpc } from "@/providers/trpc";
-import { Link, useParams } from "react-router";
+import { Link, Navigate, useParams } from "react-router";
 import { ArrowLeft, FlaskConical, Clock, BookOpen, Search, ChevronRight } from "lucide-react";
 
 const difficultyLabel: Record<string, string> = {
@@ -14,8 +14,15 @@ const difficultyColor: Record<string, string> = {
   hard: "bg-red-500/10 text-red-400",
 };
 
+const LEGACY_CATEGORY_SLUGS = new Set(["electricity", "magnetism"]);
+
 export default function LabCategoryPage() {
   const { slug } = useParams<{ slug: string }>();
+
+  if (slug && LEGACY_CATEGORY_SLUGS.has(slug)) {
+    return <Navigate to="/labs/category/electrodynamics" replace />;
+  }
+
   const { data: category } = trpc.virtualLab.categoryBySlug.useQuery(
     { slug: slug! },
     { enabled: !!slug }

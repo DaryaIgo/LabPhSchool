@@ -32,7 +32,7 @@ export default function Labs() {
     enabled: isStudent,
   });
 
-  // Merge atomic-nuclear into nuclear-physics
+  // Merge legacy categories into their canonical sections
   const categories = rawCategories?.reduce((acc, cat) => {
     if (cat.slug === "atomic-nuclear") {
       const existing = acc.find((c) => c.slug === "nuclear-physics");
@@ -43,6 +43,22 @@ export default function Labs() {
       }
       return acc;
     }
+
+    if (cat.slug === "electricity" || cat.slug === "magnetism") {
+      const existing = acc.find((c) => c.slug === "electrodynamics");
+      if (existing) {
+        existing.labCount += cat.labCount;
+      } else {
+        acc.push({
+          ...cat,
+          slug: "electrodynamics",
+          title: "Электродинамика",
+          iconType: "circuit",
+        });
+      }
+      return acc;
+    }
+
     acc.push(cat);
     return acc;
   }, [] as typeof rawCategories);

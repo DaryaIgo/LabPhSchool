@@ -139,26 +139,21 @@ async function seedVirtualLabs() {
     }
   }
 
-  // Remove legacy "Электричество" and "Магнитные явления" categories (now included in electrodynamics)
+  // Move legacy "Электричество" and "Магнитные явления" categories into electrodynamics
+  const electrodynamicsId = catMap.get("electrodynamics");
   for (const slug of ["electricity", "magnetism"] as const) {
     const legacy = await db
       .select({ id: labCategories.id })
       .from(labCategories)
       .where(eq(labCategories.slug, slug))
       .limit(1);
-    if (legacy.length > 0) {
-      const linkedWorks = await db
-        .select({ count: count() })
-        .from(labWorks)
+    if (legacy.length > 0 && electrodynamicsId) {
+      await db
+        .update(labWorks)
+        .set({ categoryId: electrodynamicsId, subcategoryId: null })
         .where(eq(labWorks.categoryId, legacy[0].id));
-      if (linkedWorks[0].count === 0) {
-        await db.delete(labCategories).where(eq(labCategories.slug, slug));
-        console.log(`Removed legacy category: ${slug}`);
-      } else {
-        console.log(
-          `Legacy category '${slug}' has linked works, skipping removal`
-        );
-      }
+      await db.delete(labCategories).where(eq(labCategories.slug, slug));
+      console.log(`Moved legacy category '${slug}' into electrodynamics`);
     }
   }
 
