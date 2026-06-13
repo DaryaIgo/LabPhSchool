@@ -12,7 +12,7 @@ export default function UniformLinearMotion({ params, isRunning, onStateChange }
   const time = Number(params["time"] || 10);
   const startX = Number(params["startX"] || 0);
 
-  const startTimeRef = useRef<number>(Date.now());
+  const startTimeRef = useRef<number>(0);
 
   useEffect(() => {
     if (isRunning) {

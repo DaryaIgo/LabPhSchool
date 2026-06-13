@@ -284,14 +284,18 @@ export default function Course() {
         const node = findNode(topic.children);
         if (node) {
           deeplinkApplied.current = true;
-          setOpenTopicId(topic.id);
-          setActiveNodeId(node.id);
+          queueMicrotask(() => {
+            setOpenTopicId(topic.id);
+            setActiveNodeId(node.id);
+          });
           return;
         }
       } else if (decodedTopic && topic.title === decodedTopic) {
         deeplinkApplied.current = true;
-        setOpenTopicId(topic.id);
-        setActiveNodeId(null);
+        queueMicrotask(() => {
+          setOpenTopicId(topic.id);
+          setActiveNodeId(null);
+        });
         return;
       }
     }

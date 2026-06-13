@@ -12,7 +12,7 @@ export default function ProjectileMotion({ params, isRunning, onStateChange }: P
   const angleDeg = Number(params["angle"] || 45);
   const g = Number(params["g"] || 9.8);
 
-  const startTimeRef = useRef<number>(Date.now());
+  const startTimeRef = useRef<number>(0);
 
   useEffect(() => {
     if (isRunning) {

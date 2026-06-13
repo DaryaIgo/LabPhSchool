@@ -46,7 +46,7 @@ export default function AdminProblems() {
 
   useEffect(() => {
     if (types && types.length > 0 && !selectedType) {
-      setSelectedType(types[0].id);
+      queueMicrotask(() => setSelectedType(types[0].id));
     }
   }, [types, selectedType]);
 

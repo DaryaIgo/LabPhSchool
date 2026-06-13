@@ -15,7 +15,7 @@ export default function FreeFallG({ params, isRunning }: Props) {
   const fallTime = Number(params["fallTime"] || 0.64);
   const trials = Number(params["trials"] || 5);
 
-  const startTimeRef = useRef<number>(Date.now());
+  const startTimeRef = useRef<number>(0);
 
   useEffect(() => {
     if (isRunning) {

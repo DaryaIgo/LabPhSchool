@@ -15,7 +15,7 @@ export default function UniformlyAcceleratedMotion({ params, isRunning, onStateC
   const angleRad = (angleDeg * Math.PI) / 180;
   const a = 9.8 * Math.sin(angleRad);
 
-  const startTimeRef = useRef<number>(Date.now());
+  const startTimeRef = useRef<number>(0);
   const finishedRef = useRef(false);
 
   useEffect(() => {

@@ -7,12 +7,10 @@ import App from './App.tsx'
 import { ErrorBoundary } from "@/components/ErrorFallback"
 
 window.addEventListener('error', (e) => {
-  // eslint-disable-next-line no-console
   console.error('Global error:', e.error);
 });
 
 window.addEventListener('unhandledrejection', (e) => {
-  // eslint-disable-next-line no-console
   console.error('Unhandled rejection:', e.reason);
 });
 

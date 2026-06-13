@@ -1,3 +1,4 @@
+import type { HTMLAttributes, ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -93,7 +94,7 @@ export default function MarkdownRenderer({
               {children}
             </td>
           ),
-          code: ({ inline, className, children, ...props }: any) => {
+          code: ({ inline, className, children, ...props }: { inline?: boolean; className?: string; children?: ReactNode } & HTMLAttributes<HTMLElement>) => {
             const match = /language-(\w+)/.exec(className || "");
             return !inline && match ? (
               <pre className="bg-[#1e2529] border border-[#434e54] rounded-lg p-4 overflow-x-auto my-4 text-sm">

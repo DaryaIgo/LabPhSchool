@@ -102,7 +102,7 @@ interface TheoryTab {
 }
 
 function parseTheoryTabs(theory: string): TheoryTab[] | null {
-  const regex = /\*\*Способ\s+(\d+):\s*([^\*]+)\*\*/g;
+  const regex = /\*\*Способ\s+(\d+):\s*([^*]+)\*\*/g;
   const matches = Array.from(theory.matchAll(regex));
   if (matches.length < 2) return null;
 

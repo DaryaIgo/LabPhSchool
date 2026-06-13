@@ -25,7 +25,7 @@ async function seedVirtualLabs() {
       iconType: "mechanics",
     },
     {
-      order: 3,
+      order: 2,
       title: "Давление и Архимедова сила",
       slug: "pressure-archimedes",
       grade: "7 класс",
@@ -36,40 +36,18 @@ async function seedVirtualLabs() {
       iconType: "pressure",
     },
     {
-      order: 4,
-      title: "Электричество",
-      slug: "electricity",
-      grade: "8 класс",
+      order: 3,
+      title: "Электродинамика",
+      slug: "electrodynamics",
+      grade: "8–11 класс",
       description:
-        "Электрический ток, напряжение, сопротивление, закон Ома, работа и мощность тока.",
-      shortDesc: "Ток, напряжение, Ом",
+        "Электростатика, постоянный ток, магнитное поле, электромагнитная индукция.",
+      shortDesc: "Электричество и магнетизм",
       color: "#ffd600",
       iconType: "circuit",
     },
     {
-      order: 5,
-      title: "Магнитные явления",
-      slug: "magnetism",
-      grade: "8 класс",
-      description:
-        "Магнитное поле, электромагниты, сила Ампера, электромагнитная индукция.",
-      shortDesc: "Магнитное поле",
-      color: "#ab47bc",
-      iconType: "magnetism",
-    },
-    {
-      order: 6,
-      title: "Колебания и волны",
-      slug: "oscillations-waves",
-      grade: "9 класс",
-      description:
-        "Механические и электромагнитные колебания, волны, звук, резонанс.",
-      shortDesc: "Колебания, волны, звук",
-      color: "#26c6da",
-      iconType: "oscillations",
-    },
-    {
-      order: 7,
+      order: 4,
       title: "Оптика",
       slug: "optics",
       grade: "8–11 класс",
@@ -80,7 +58,7 @@ async function seedVirtualLabs() {
       iconType: "optics",
     },
     {
-      order: 8,
+      order: 6,
       title: "Атомная и ядерная физика",
       slug: "atomic-nuclear",
       grade: "9–11 класс",
@@ -91,7 +69,7 @@ async function seedVirtualLabs() {
       iconType: "atomic",
     },
     {
-      order: 9,
+      order: 7,
       title: "Молекулярная физика и термодинамика",
       slug: "molecular-thermodynamics",
       grade: "8–10 класс",
@@ -140,6 +118,50 @@ async function seedVirtualLabs() {
     }
   }
 
+  // Remove legacy "Колебания и волны" category (now included in mechanics)
+  const legacyOscillations = await db
+    .select({ id: labCategories.id })
+    .from(labCategories)
+    .where(eq(labCategories.slug, "oscillations-waves"))
+    .limit(1);
+  if (legacyOscillations.length > 0) {
+    const linkedWorks = await db
+      .select({ count: count() })
+      .from(labWorks)
+      .where(eq(labWorks.categoryId, legacyOscillations[0].id));
+    if (linkedWorks[0].count === 0) {
+      await db.delete(labCategories).where(eq(labCategories.slug, "oscillations-waves"));
+      console.log("Removed legacy category: Колебания и волны");
+    } else {
+      console.log(
+        "Legacy category 'oscillations-waves' has linked works, skipping removal"
+      );
+    }
+  }
+
+  // Remove legacy "Электричество" and "Магнитные явления" categories (now included in electrodynamics)
+  for (const slug of ["electricity", "magnetism"] as const) {
+    const legacy = await db
+      .select({ id: labCategories.id })
+      .from(labCategories)
+      .where(eq(labCategories.slug, slug))
+      .limit(1);
+    if (legacy.length > 0) {
+      const linkedWorks = await db
+        .select({ count: count() })
+        .from(labWorks)
+        .where(eq(labWorks.categoryId, legacy[0].id));
+      if (linkedWorks[0].count === 0) {
+        await db.delete(labCategories).where(eq(labCategories.slug, slug));
+        console.log(`Removed legacy category: ${slug}`);
+      } else {
+        console.log(
+          `Legacy category '${slug}' has linked works, skipping removal`
+        );
+      }
+    }
+  }
+
   // Subcategories
   const subcategories = [
     {
@@ -157,6 +179,13 @@ async function seedVirtualLabs() {
       description: "Условия равновесия тел, момент силы, рычаг, простые механизмы.",
     },
     {
+      categoryId: catMap.get("mechanics")!,
+      order: 3,
+      title: "Колебания и волны",
+      slug: "oscillations-waves",
+      description: "Механические колебания и волны, маятник, звук, резонанс.",
+    },
+    {
       categoryId: catMap.get("optics")!,
       order: 1,
       title: "Геометрическая оптика",
@@ -169,6 +198,20 @@ async function seedVirtualLabs() {
       title: "Волновая и квантовая оптика",
       slug: "wave-quantum-optics",
       description: "Интерференция, дифракция, спектры, волновая и квантовая природа света.",
+    },
+    {
+      categoryId: catMap.get("electrodynamics")!,
+      order: 1,
+      title: "Электричество",
+      slug: "electricity",
+      description: "Электрический ток, напряжение, сопротивление, закон Ома, работа и мощность тока.",
+    },
+    {
+      categoryId: catMap.get("electrodynamics")!,
+      order: 2,
+      title: "Магнитные явления",
+      slug: "magnetism",
+      description: "Магнитное поле, электромагниты, сила Ампера, электромагнитная индукция.",
     },
     {
       categoryId: catMap.get("molecular-thermodynamics")!,
@@ -577,7 +620,8 @@ $$\\rho_{т} = \\frac{m}{V}$$
       status: "published" as const,
     },
     {
-      categoryId: catMap.get("electricity")!,
+      categoryId: catMap.get("electrodynamics")!,
+      subcategoryId: subMap.get("electricity")!,
       topicNodeId: 38,
       order: 1,
       title: "Измерение работы электрического тока",
@@ -856,7 +900,7 @@ $$y = v_0 \\cdot \\sin\\alpha \\cdot t - \\frac{g \\cdot t^2}{2}$$
       goal: "Экспериментально проверить условие равновесия рычага: сумма моментов сил относительно точки опоры равна нулю.",
       theory: `**Момент силы** относительно точки опоры:
 
-$$M = F \cdot d$$
+$$M = F \\cdot d$$
 
 где:
 - $F$ — сила, действующая на рычаг (Н)
@@ -868,7 +912,7 @@ $$M_1 = M_2$$
 
 или
 
-$$F_1 \cdot d_1 = F_2 \cdot d_2$$
+$$F_1 \\cdot d_1 = F_2 \\cdot d_2$$
 
 Вес груза массой $m$: $F = mg$.
 
@@ -1251,7 +1295,7 @@ $$\\frac{V}{T} = \\text{const}$$
 
 или
 
-$$\\frac{V_1}{T_1} = \rac{V_2}{T_2}$$
+$$\\frac{V_1}{T_1} = \\frac{V_2}{T_2}$$
 
 где:
 - $V$ — объём газа (м³)
@@ -1316,7 +1360,7 @@ $$\\frac{p_1}{T_1} = \\frac{p_2}{T_2}$$
       difficulty: "medium" as const,
       duration: 40,
       goal: "Определить удельную теплоёмкость металлического тела по результатам теплообмена с водой в калориметре.",
-      theory: `**Количество теплоты**, необходимое для нагревания тела массой $m$ на $\Delta T$ градусов:
+      theory: `**Количество теплоты**, необходимое для нагревания тела массой $m$ на $\\Delta T$ градусов:
 
 $$Q = c \\cdot m \\cdot \\Delta T$$
 

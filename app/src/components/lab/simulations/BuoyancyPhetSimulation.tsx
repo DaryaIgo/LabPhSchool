@@ -3,6 +3,7 @@ interface Props {
   isRunning?: boolean;
 }
 
+// eslint-disable-next-line no-empty-pattern
 export default function BuoyancyPhetSimulation({}: Props) {
   const url = "https://phet.colorado.edu/sims/html/buoyancy/latest/buoyancy_all.html";
 

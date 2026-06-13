@@ -316,22 +316,22 @@ export default function LabSubmissions() {
 
           {detailData && (
             <div className="space-y-6">
-              {(() => { (detailData as any); return null; })()}
+
               {/* Status & Dates */}
               <div className="flex flex-wrap gap-3">
-                <Badge className={`${STATUS_COLORS[String((detailData as any).status)] ?? ""}`}>
-                  {STATUS_LABELS[String((detailData as any).status)] ?? String((detailData as any).status)}
+                <Badge className={`${STATUS_COLORS[String(detailData.status)] ?? ""}`}>
+                  {STATUS_LABELS[String(detailData.status)] ?? String(detailData.status)}
                 </Badge>
-                {(detailData as any).grade && (
+                {detailData.grade && (
                   <Badge className="bg-[#ffc832] text-[#0d1117]">
                     <Star className="h-3 w-3 mr-1 fill-current" />
-                    Оценка: {(detailData as any).grade}
+                    Оценка: {detailData.grade}
                   </Badge>
                 )}
               </div>
 
               {/* Measurements */}
-              {(detailData as any).measurements && Array.isArray((detailData as any).measurements) && (detailData as any).measurements.length > 0 && (
+              {Array.isArray(detailData.measurements) && detailData.measurements.length > 0 && (
                 <div>
                   <h4 className="text-sm font-semibold text-[#2eff8c] mb-2 flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4" />
@@ -341,7 +341,7 @@ export default function LabSubmissions() {
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-[#37474f]">
-                          {Object.keys((detailData as any).measurements[0]).map((key) => (
+                          {Object.keys(detailData.measurements[0] as Record<string, unknown>).map((key) => (
                             <th key={key} className="px-3 py-2 text-left text-xs text-gray-400 uppercase">
                               {key}
                             </th>
@@ -349,7 +349,7 @@ export default function LabSubmissions() {
                         </tr>
                       </thead>
                       <tbody>
-                        {(detailData as any).measurements.map((row: Record<string, unknown>, i: number) => (
+                        {(detailData.measurements as Record<string, unknown>[]).map((row, i) => (
                           <tr key={i} className="border-b border-[#2a3237]">
                             {Object.values(row).map((val, j) => (
                               <td key={j} className="px-3 py-2 text-[#c8cdd1]">{String(val)}</td>
@@ -363,27 +363,27 @@ export default function LabSubmissions() {
               )}
 
               {/* Conclusion */}
-              {(detailData as any).conclusion && (
+              {detailData.conclusion && (
                 <div>
                   <h4 className="text-sm font-semibold text-[#2eff8c] mb-2 flex items-center gap-2">
                     <MessageSquare className="h-4 w-4" />
                     Вывод студента
                   </h4>
                   <div className="bg-[#0d1117] border border-[#37474f] rounded-lg p-4 text-sm text-[#c8cdd1] whitespace-pre-wrap">
-                    {(detailData as any).conclusion}
+                    {detailData.conclusion}
                   </div>
                 </div>
               )}
 
               {/* Teacher Comment (existing) */}
-              {(detailData as any).teacherComment && (
+              {detailData.teacherComment && (
                 <div>
                   <h4 className="text-sm font-semibold text-[#01acff] mb-2 flex items-center gap-2">
                     <MessageSquare className="h-4 w-4" />
                     Комментарий преподавателя
                   </h4>
                   <div className="bg-[#0d1117] border border-[#37474f] rounded-lg p-4 text-sm text-[#c8cdd1] whitespace-pre-wrap">
-                    {(detailData as any).teacherComment}
+                    {detailData.teacherComment}
                   </div>
                 </div>
               )}

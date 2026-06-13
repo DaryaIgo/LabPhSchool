@@ -557,6 +557,7 @@ export default function OhmsLawCircuit({ state, onAddMeasurement }: Props) {
       ctx.stroke();
     }
 
+    // eslint-disable-next-line react-hooks/immutability
     animRef.current = requestAnimationFrame(draw);
   }, [state, brightness, current]);
 

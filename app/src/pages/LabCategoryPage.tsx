@@ -133,62 +133,59 @@ export default function LabCategoryPage() {
         )}
 
         {/* All Labs in Category */}
-        <section>
-          <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
-            <FlaskConical size={22} className="text-[#2eff8c]" />
-            Все лабораторные работы
-          </h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {labs?.map((lab) => (
-              <Link
-                key={lab.id}
-                to={`/labs/work/${lab.slug}`}
-                className="group bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 transition-all duration-300 hover:border-[#2eff8c]/50 hover:-translate-y-1 hover:shadow-xl"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <span
-                    className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                      difficultyColor[lab.difficulty || "medium"]
-                    }`}
-                  >
-                    {difficultyLabel[lab.difficulty || "medium"]}
-                  </span>
-                  <span className="flex items-center gap-1 text-xs text-[#798389]">
-                    <Clock size={12} />
-                    {lab.duration || 30} мин
-                  </span>
-                </div>
+        {labs && labs.length > 0 && (
+          <section>
+            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+              <FlaskConical size={22} className="text-[#2eff8c]" />
+              Все лабораторные работы
+            </h2>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {labs.map((lab) => (
+                <Link
+                  key={lab.id}
+                  to={`/labs/work/${lab.slug}`}
+                  className="group bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 transition-all duration-300 hover:border-[#2eff8c]/50 hover:-translate-y-1 hover:shadow-xl"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                        difficultyColor[lab.difficulty || "medium"]
+                      }`}
+                    >
+                      {difficultyLabel[lab.difficulty || "medium"]}
+                    </span>
+                    <span className="flex items-center gap-1 text-xs text-[#798389]">
+                      <Clock size={12} />
+                      {lab.duration || 30} мин
+                    </span>
+                  </div>
 
-                <h3 className="text-lg font-bold text-white mb-2 group-hover:text-[#2eff8c] transition-colors">
-                  {lab.title}
-                </h3>
-                <p className="text-sm text-[#798389] mb-3">
-                  Изучаемый закон: <span className="text-[#c8cdd1]">{lab.law}</span>
-                </p>
-                <p className="text-sm text-[#c8cdd1] line-clamp-2 mb-4">
-                  {lab.skills}
-                </p>
-                {lab.subcategoryTitle && (
-                  <p className="text-xs text-[#798389] mb-3">
-                    {lab.subcategoryTitle}
+                  <h3 className="text-lg font-bold text-white mb-2 group-hover:text-[#2eff8c] transition-colors">
+                    {lab.title}
+                  </h3>
+                  <p className="text-sm text-[#798389] mb-3">
+                    Изучаемый закон: <span className="text-[#c8cdd1]">{lab.law}</span>
                   </p>
-                )}
+                  <p className="text-sm text-[#c8cdd1] line-clamp-2 mb-4">
+                    {lab.skills}
+                  </p>
+                  {lab.subcategoryTitle && (
+                    <p className="text-xs text-[#798389] mb-3">
+                      {lab.subcategoryTitle}
+                    </p>
+                  )}
 
-                <div className="pt-4 border-t border-white/5">
-                  <span className="inline-flex items-center gap-1 text-[#2eff8c] text-sm font-medium group-hover:gap-2 transition-all">
-                    Начать работу
-                    <ArrowLeft size={14} className="rotate-180" />
-                  </span>
-                </div>
-              </Link>
-            ))}
-            {labs?.length === 0 && (
-              <div className="col-span-full text-center text-[#798389] py-12 bg-[#2a3237] rounded-2xl border border-[#434e54]">
-                В этом разделе пока нет опубликованных лабораторных работ.
-              </div>
-            )}
-          </div>
-        </section>
+                  <div className="pt-4 border-t border-white/5">
+                    <span className="inline-flex items-center gap-1 text-[#2eff8c] text-sm font-medium group-hover:gap-2 transition-all">
+                      Начать работу
+                      <ArrowLeft size={14} className="rotate-180" />
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Research Tasks */}
         <section>
@@ -233,6 +230,8 @@ function getResearchTasks(slug: string): Array<{ title: string; description: str
   const map: Record<string, Array<{ title: string; description: string; url?: string }>> = {
     mechanics: [
       { title: "Массы и пружины", description: "Интерактивная симуляция для изучения колебаний пружинного маятника", url: "https://phet.colorado.edu/sims/html/masses-and-springs/latest/masses-and-springs_all.html" },
+      { title: "Интерференция волн", description: "Интерактивная симуляция для изучения интерференции волн", url: "https://phet.colorado.edu/sims/html/wave-interference/latest/wave-interference_ru.html" },
+      { title: "Звуковые волны", description: "Интерактивная симуляция для изучения звуковых волн", url: "https://phet.colorado.edu/sims/html/sound-waves/latest/sound-waves_all.html" },
     ],
     "molecular-thermodynamics": [
       { title: "Состояния веществ: Основы", description: "Интерактивная симуляция для изучения агрегатных состояний вещества", url: "https://phet.colorado.edu/sims/html/states-of-matter-basics/latest/states-of-matter-basics_en.html" },
@@ -240,10 +239,11 @@ function getResearchTasks(slug: string): Array<{ title: string; description: str
     ],
     electrodynamics: [
       { title: "Заряды и поля", description: "Интерактивная симуляция для изучения электрических зарядов и напряжённости электрического поля", url: "https://phet.colorado.edu/sims/html/charges-and-fields/latest/charges-and-fields_ru.html" },
-    ],
-    electricity: [
       { title: "Интерактивная карта потребления и генерации электроэнергии", description: "Изучите в реальном времени, как различные страны производят и потребляют электроэнергию", url: "https://app.electricitymaps.com/map/live/fifteen_minutes" },
       { title: "Электрическая цепь постоянного тока", description: "Виртуальная лаборатория для сборки и исследования электрических цепей постоянного тока", url: "https://phet.colorado.edu/sims/html/circuit-construction-kit-dc-virtual-lab/latest/circuit-construction-kit-dc-virtual-lab_ru.html" },
+      { title: "Магнит и компас", description: "Исследуйте магнитное поле постоянного магнита и его влияние на компас", url: "https://phet.colorado.edu/sims/html/magnet-and-compass/latest/magnet-and-compass_all.html" },
+      { title: "Закон электромагнитной индукции Фарадея", description: "Изучите явление электромагнитной индукции при движении магнита в катушке", url: "https://phet.colorado.edu/sims/html/faradays-law/latest/faradays-law_all.html" },
+      { title: "Электромагнитная лаборатория Фарадея", description: "Соберите электромагнит и исследуйте магнитное поле соленоида и катушки", url: "https://phet.colorado.edu/sims/html/faradays-electromagnetic-lab/latest/faradays-electromagnetic-lab_all.html" },
     ],
     optics: [
       { title: "Геометрическая оптика", description: "Интерактивная симуляция для изучения поведения света при прохождении через линзы", url: "https://phet.colorado.edu/sims/html/geometric-optics/latest/geometric-optics_ru.html" },
@@ -259,10 +259,6 @@ function getResearchTasks(slug: string): Array<{ title: string; description: str
     "atomic-nuclear": [
       { title: "Определение периода полураспада", description: "По кривой распада радиоактивного изотопа определите период полураспада." },
       { title: "Исследование фотоэффекта", description: "Изучите зависимость фототока от частоты падающего света и материала катода." },
-    ],
-    "oscillations-waves": [
-      { title: "Интерференция волн", description: "Интерактивная симуляция для изучения интерференции волн", url: "https://phet.colorado.edu/sims/html/wave-interference/latest/wave-interference_ru.html" },
-      { title: "Звуковые волны", description: "Интерактивная симуляция для изучения звуковых волн", url: "https://phet.colorado.edu/sims/html/sound-waves/latest/sound-waves_all.html" },
     ],
     "pressure-archimedes": [
       { title: "Под давлением (PhET)", description: "Исследуйте, как меняется давление в жидкости с глубиной, плотностью и формой сосуда", url: "https://phet.colorado.edu/sims/html/under-pressure/latest/under-pressure_all.html" },

@@ -207,7 +207,7 @@ export default function JupyterNotebookManagement() {
     });
   }
 
-  function openJupyterLite(_notebookId: number) {
+  function openJupyterLite() {
     const url = `https://jupyterlite.github.io/demo/lab/index.html`;
     window.open(url, "_blank", "noopener,noreferrer");
   }
@@ -309,7 +309,7 @@ export default function JupyterNotebookManagement() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => openJupyterLite(n.id)}
+                            onClick={() => openJupyterLite()}
                             title="Открыть в JupyterLite"
                           >
                             <ExternalLink className="h-4 w-4 text-[#2eff8c]" />

@@ -3,6 +3,7 @@ interface Props {
   isRunning?: boolean;
 }
 
+// eslint-disable-next-line no-empty-pattern
 export default function UnderPressurePhetSimulation({}: Props) {
   const url = "https://phet.colorado.edu/sims/html/under-pressure/latest/under-pressure_all.html";
 

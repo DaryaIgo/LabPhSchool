@@ -11,7 +11,7 @@ export default function CircularMotion({ params, isRunning }: Props) {
   const period = Number(params["period"] || 1);
   const mass = Number(params["mass"] || 0.2);
 
-  const startTimeRef = useRef<number>(Date.now());
+  const startTimeRef = useRef<number>(0);
 
   useEffect(() => {
     if (isRunning) {
