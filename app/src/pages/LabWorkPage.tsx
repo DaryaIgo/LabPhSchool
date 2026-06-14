@@ -36,7 +36,7 @@ import UniformLinearMotion from "@/components/lab/simulations/UniformLinearMotio
 import UniformlyAcceleratedMotion from "@/components/lab/simulations/UniformlyAcceleratedMotion";
 import FreeFallG from "@/components/lab/simulations/FreeFallG";
 import CircularMotion from "@/components/lab/simulations/CircularMotion";
-import ProjectileMotion from "@/components/lab/simulations/ProjectileMotion";
+import ProjectilePhetSimulation from "@/components/lab/simulations/ProjectilePhetSimulation";
 import LightReflectionSimulation from "@/components/lab/simulations/LightReflectionSimulation";
 import LightRefractionSimulation from "@/components/lab/simulations/LightRefractionSimulation";
 import RefractionIndexSimulation from "@/components/lab/simulations/RefractionIndexSimulation";
@@ -77,7 +77,7 @@ const simComponents: Record<string, React.FC<SimComponentProps>> = {
   "uniformly-accelerated-motion": UniformlyAcceleratedMotion,
   "free-fall-g": FreeFallG,
   "circular-motion": CircularMotion,
-  "projectile-motion": ProjectileMotion,
+  "projectile-motion": ProjectilePhetSimulation,
   "light-reflection": LightReflectionSimulation,
   "light-refraction": LightRefractionSimulation,
   "glass-refraction-index": RefractionIndexSimulation,
