@@ -1,9 +1,9 @@
-import { useState, useMemo, useLayoutEffect, useRef } from "react";
+import { useState, useMemo, useLayoutEffect, useCallback } from "react";
 import { trpc } from "@/providers/trpc";
 import { useAuth } from "@/hooks/useAuth";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import { ChevronDown, ChevronRight, FlaskConical, FileText, ArrowLeft, Loader2, ExternalLink } from "lucide-react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import type { TopicNode } from "@db/schema";
 
 interface TreeNode extends TopicNode {
@@ -241,6 +241,7 @@ export default function Course() {
   const [activeNodeId, setActiveNodeId] = useState<number | null>(null);
   const { isAuthenticated } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const { data: nodes, isLoading } = trpc.course.topicNodes.useQuery();
   const { data: subtopics } = trpc.course.listSubtopics.useQuery();
@@ -256,15 +257,43 @@ export default function Course() {
     return map;
   }, [subtopics]);
 
-  // Deeplink: open topic/node from URL query params (by title)
-  const deeplinkApplied = useRef(false);
+  const syncUrlWithState = useCallback((topicId: number | null, nodeId: number | null) => {
+    const params = new URLSearchParams();
+    if (topicId !== null && tree.length > 0) {
+      const topic = tree.find((t) => t.id === topicId);
+      if (topic) {
+        params.set("topic", topic.title);
+        if (nodeId !== null) {
+          const findNodeTitle = (nodes: TreeNode[]): string | null => {
+            for (const n of nodes) {
+              if (n.id === nodeId) return n.title;
+              const found = findNodeTitle(n.children);
+              if (found) return found;
+            }
+            return null;
+          };
+          const nodeTitle = findNodeTitle(topic.children);
+          if (nodeTitle) params.set("node", nodeTitle);
+        }
+      }
+    }
+    navigate({ search: params.toString() }, { replace: true });
+  }, [navigate, tree]);
+
+  // Restore state from URL on load and keep it in sync when URL changes externally
   useLayoutEffect(() => {
-    if (deeplinkApplied.current) return;
     if (tree.length === 0) return;
     const params = new URLSearchParams(location.search);
     const topicTitle = params.get("topic");
     const nodeTitle = params.get("node");
-    if (!topicTitle && !nodeTitle) return;
+
+    if (!topicTitle && !nodeTitle) {
+      queueMicrotask(() => {
+        setOpenTopicId(null);
+        setActiveNodeId(null);
+      });
+      return;
+    }
 
     const decodedTopic = topicTitle ? decodeURIComponent(topicTitle) : null;
     const decodedNode = nodeTitle ? decodeURIComponent(nodeTitle) : null;
@@ -283,7 +312,6 @@ export default function Course() {
         };
         const node = findNode(topic.children);
         if (node) {
-          deeplinkApplied.current = true;
           queueMicrotask(() => {
             setOpenTopicId(topic.id);
             setActiveNodeId(node.id);
@@ -291,7 +319,6 @@ export default function Course() {
           return;
         }
       } else if (decodedTopic && topic.title === decodedTopic) {
-        deeplinkApplied.current = true;
         queueMicrotask(() => {
           setOpenTopicId(topic.id);
           setActiveNodeId(null);
@@ -299,15 +326,29 @@ export default function Course() {
         return;
       }
     }
+
+    // Unknown params: reset
+    queueMicrotask(() => {
+      setOpenTopicId(null);
+      setActiveNodeId(null);
+    });
   }, [location.search, tree]);
 
   const handleToggleTopic = (id: number) => {
-    setOpenTopicId((prev) => (prev === id ? null : id));
-    setActiveNodeId(null);
+    setOpenTopicId((prev) => {
+      const next = prev === id ? null : id;
+      setActiveNodeId(null);
+      syncUrlWithState(next, null);
+      return next;
+    });
   };
 
   const handleSelectNode = (id: number) => {
-    setActiveNodeId((prev) => (prev === id ? null : id));
+    setActiveNodeId((prev) => {
+      const next = prev === id ? null : id;
+      syncUrlWithState(openTopicId, next);
+      return next;
+    });
   };
 
   return (
@@ -403,7 +444,10 @@ export default function Course() {
                       onToggle={() => handleToggleTopic(openTopicId)}
                       activeNodeId={activeNodeId}
                       onSelectNode={handleSelectNode}
-                      onBack={() => setActiveNodeId(null)}
+                      onBack={() => {
+                        setActiveNodeId(null);
+                        syncUrlWithState(openTopicId, null);
+                      }}
                       jupyterUrlMap={jupyterUrlMap}
                       showJupyter={isAuthenticated}
                     />
