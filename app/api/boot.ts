@@ -14,15 +14,14 @@ import {
   jupyterNotebookAccess,
   localUsers,
   roles,
+  images,
 } from "@db/schema";
 import { eq, and } from "drizzle-orm";
+import { nanoid } from "nanoid";
 
 const app = new Hono<{ Bindings: HttpBindings }>();
 
-// Block direct access to uploads directory
-app.get("/uploads/*", (c) => c.json({ error: "Forbidden" }, 403));
-
-// File upload endpoint for markdown images
+// File upload endpoint for markdown images — stores files in the database
 app.post("/api/upload/image", async (c) => {
   try {
     const body = await c.req.parseBody();
@@ -41,20 +40,98 @@ app.post("/api/upload/image", async (c) => {
       return c.json({ error: "File too large (max 5MB)" }, 400);
     }
 
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
-    await fs.mkdir(uploadsDir, { recursive: true });
-
-    const ext = path.extname(file.name) || ".png";
-    const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
-    const filepath = path.join(uploadsDir, filename);
-
+    const db = getDb();
     const arrayBuffer = await file.arrayBuffer();
-    await fs.writeFile(filepath, Buffer.from(arrayBuffer));
+    const buffer = Buffer.from(arrayBuffer);
+    const ext = path.extname(file.name) || ".png";
+    const filename = `${Date.now()}-${nanoid(12)}${ext}`;
 
-    return c.json({ url: `/uploads/${filename}` });
+    const [result] = await db.insert(images).values({
+      filename,
+      originalName: file.name,
+      mimeType: file.type,
+      data: buffer.toString("base64"),
+    });
+
+    const id = Number(result.insertId);
+    return c.json({ url: `/uploads/${id}/${filename}` });
   } catch (err) {
     console.error("Upload error:", err);
     return c.json({ error: "Upload failed" }, 500);
+  }
+});
+
+// Serve uploaded images from the database
+app.get("/uploads/:id/:filename", async (c) => {
+  try {
+    const id = Number(c.req.param("id"));
+    if (!Number.isFinite(id) || id <= 0) {
+      return c.json({ error: "Invalid image ID" }, 400);
+    }
+
+    const db = getDb();
+    const [image] = await db
+      .select()
+      .from(images)
+      .where(eq(images.id, id))
+      .limit(1);
+
+    if (!image) {
+      return c.json({ error: "Not found" }, 404);
+    }
+
+    c.header("Content-Type", image.mimeType);
+    c.header("Cache-Control", "public, max-age=86400");
+    return c.body(Buffer.from(image.data, "base64"));
+  } catch (err) {
+    console.error("Image serve error:", err);
+    return c.json({ error: "Failed to serve image" }, 500);
+  }
+});
+
+// Fallback for legacy image links and filesystem uploads
+app.get("/uploads/:filename", async (c) => {
+  try {
+    const filename = path.basename(c.req.param("filename"));
+    const db = getDb();
+
+    // First try to find the image in the database by filename
+    const [image] = await db
+      .select()
+      .from(images)
+      .where(eq(images.filename, filename))
+      .limit(1);
+
+    if (image) {
+      c.header("Content-Type", image.mimeType);
+      c.header("Cache-Control", "public, max-age=86400");
+      return c.body(Buffer.from(image.data, "base64"));
+    }
+
+    // Fallback to filesystem for images uploaded before DB storage
+    const filepath = path.join(process.cwd(), "public", "uploads", filename);
+    const fileBuffer = await fs.readFile(filepath);
+    const ext = path.extname(filename).toLowerCase();
+    const mimeType =
+      ext === ".png"
+        ? "image/png"
+        : ext === ".jpg" || ext === ".jpeg"
+        ? "image/jpeg"
+        : ext === ".gif"
+        ? "image/gif"
+        : ext === ".webp"
+        ? "image/webp"
+        : "application/octet-stream";
+
+    c.header("Content-Type", mimeType);
+    c.header("Cache-Control", "public, max-age=86400");
+    return c.body(fileBuffer);
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") {
+      return c.json({ error: "Not found" }, 404);
+    }
+    console.error("Legacy image serve error:", err);
+    return c.json({ error: "Failed to serve image" }, 500);
   }
 });
 

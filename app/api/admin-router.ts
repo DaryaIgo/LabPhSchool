@@ -21,6 +21,7 @@ import {
   jupyterNotebooks,
   jupyterNotebookAccess,
   notifications,
+  images,
 } from "@db/schema";
 import { eq, asc, desc, count, and } from "drizzle-orm";
 import { createAuditEntry } from "./queries/audit";
@@ -955,5 +956,23 @@ export const adminRouter = createRouter({
 
       return { success: true };
     }),
+
+  // ═══════════════════════════════════════════════════════════
+  // Uploaded Images Gallery
+  // ═══════════════════════════════════════════════════════════
+
+  listImages: adminQuery.query(async () => {
+    const db = getDb();
+    return db
+      .select({
+        id: images.id,
+        filename: images.filename,
+        originalName: images.originalName,
+        mimeType: images.mimeType,
+        createdAt: images.createdAt,
+      })
+      .from(images)
+      .orderBy(desc(images.createdAt));
+  }),
 
 });

@@ -20,6 +20,7 @@ import {
   Download,
   Upload,
   Image as ImageIcon,
+  Images,
   ChevronRight,
   ChevronDown,
   FileText,
@@ -137,6 +138,7 @@ export default function TopicManagement() {
   const [form, setForm] = useState({ ...initialForm });
   const [isEditing, setIsEditing] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [galleryOpen, setGalleryOpen] = useState(false);
   const [importMd, setImportMd] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const importFileRef = useRef<HTMLInputElement>(null);
@@ -146,6 +148,11 @@ export default function TopicManagement() {
     enabled: !!user && user.role === "admin",
     refetchOnWindowFocus: false,
     staleTime: 60_000,
+  });
+
+  const { data: images } = trpc.admin.listImages.useQuery(undefined, {
+    enabled: !!user && user.role === "admin" && galleryOpen,
+    refetchOnWindowFocus: false,
   });
 
   const tree = useMemo(() => buildTree(nodes || []), [nodes]);
@@ -272,15 +279,19 @@ export default function TopicManagement() {
           body: formData,
         });
         const data = await res.json();
+        if (!res.ok) {
+          toast(`Ошибка загрузки: ${data.error || res.statusText}`);
+          return;
+        }
         if (data.url) {
           const imageMarkdown = `\n![${file.name}](${data.url})\n`;
           setForm((f) => ({ ...f, content: f.content + imageMarkdown }));
           toast("Картинка загружена");
         } else {
-          toast("Ошибка загрузки");
+          toast("Ошибка загрузки: сервер не вернул ссылку");
         }
-      } catch {
-        toast("Ошибка загрузки");
+      } catch (err) {
+        toast(`Ошибка загрузки: ${err instanceof Error ? err.message : "неизвестная ошибка"}`);
       }
       if (fileInputRef.current) fileInputRef.current.value = "";
     },
@@ -555,6 +566,15 @@ export default function TopicManagement() {
                       <ImageIcon className="h-3 w-3 mr-1" />
                       Загрузить картинку
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-[#37474f] h-7 text-xs text-black"
+                      onClick={() => setGalleryOpen(true)}
+                    >
+                      <Images className="h-3 w-3 mr-1" />
+                      Галерея
+                    </Button>
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -587,6 +607,55 @@ export default function TopicManagement() {
           )}
         </div>
       </div>
+
+      {/* Image Gallery Dialog */}
+      <Dialog open={galleryOpen} onOpenChange={setGalleryOpen}>
+        <DialogContent className="bg-[#1e2529] border-[#37474f] text-white max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Галерея загруженных картинок</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-2">
+            {images && images.length > 0 ? (
+              images.map((img) => {
+                const url = `/uploads/${img.id}/${img.filename}`;
+                const markdown = `![${img.originalName}](${url})`;
+                return (
+                  <div
+                    key={img.id}
+                    className="bg-[#1a1f22] border border-[#37474f] rounded-lg p-2 flex flex-col"
+                  >
+                    <div className="aspect-square rounded bg-[#0d1117] overflow-hidden mb-2 flex items-center justify-center">
+                      <img
+                        src={url}
+                        alt={img.originalName}
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    </div>
+                    <p className="text-xs text-[#798389] truncate mb-2" title={img.originalName}>
+                      {img.originalName}
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-[#37474f] text-black mt-auto"
+                      onClick={() => {
+                        navigator.clipboard.writeText(markdown);
+                        toast("Ссылка скопирована");
+                      }}
+                    >
+                      Копировать ссылку
+                    </Button>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="text-sm text-[#798389] col-span-full">
+                {images ? "Картинок пока нет" : "Загрузка..."}
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Import Dialog */}
       <Dialog open={importOpen} onOpenChange={setImportOpen}>
