@@ -1,5 +1,7 @@
 import { Hono } from "hono";
 import type { HttpBindings } from "@hono/node-server";
+import { serve } from "@hono/node-server";
+import { serveStaticFiles } from "./lib/vite";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { appRouter } from "./router";
 import { createContext } from "./context";
@@ -184,5 +186,12 @@ app.use("/api/trpc/*", async (c) => {
   });
 });
 app.all("/api/*", (c) => c.json({ error: "Not Found" }, 404));
+
+if (process.env.NODE_ENV === "production") {
+  serveStaticFiles(app);
+  const port = Number(process.env.PORT) || 3000;
+  serve({ fetch: app.fetch, port });
+  console.log(`Server running on port ${port}`);
+}
 
 export default app;

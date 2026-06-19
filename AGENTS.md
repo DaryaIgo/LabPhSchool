@@ -195,7 +195,7 @@ npm run db:push       # Push схемы (для разработки)
 
 В production:
 - Фронтенд собирается в `dist/public/`
-- Бэкенд бандлится esbuild в `dist/boot.js`
+- Бэкенд бандлится esbuild в `dist/boot.cjs` (CommonJS для совместимости с Phusion Passenger)
 - Hono node-server раздаёт статику из `dist/public/` и обрабатывает API
 
 ### Двойная система аутентификации

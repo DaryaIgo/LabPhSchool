@@ -1,1 +1,8 @@
 /.DS_Store
+/.venv-deploy/
+/deploy.tar.gz
+/deploy.py
+/deploy-minimal/
+/deploy-minimal.tar.gz
+/deploy.log
+/app/db/fresh-schema.sql

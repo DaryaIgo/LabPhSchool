@@ -18,7 +18,7 @@ export default function MarkdownRenderer({
     <div className={`markdown-body ${className}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[rehypeKatex]}
+        rehypePlugins={[[rehypeKatex, { output: "html" }]]}
         components={{
           h1: ({ children }) => (
             <h1 className="text-2xl font-bold mt-8 mb-4 text-white">{children}</h1>
