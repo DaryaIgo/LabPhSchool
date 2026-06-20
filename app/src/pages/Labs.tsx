@@ -50,27 +50,17 @@ export default function Labs() {
 
   return (
     <div className="pt-16">
-      {/* Hero */}
-      <section className="bg-[#262e33] py-24 lg:py-32">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <p className="formula-text text-sm mb-4">под давлением всё ухудшается</p>
-          <h1 className="text-4xl lg:text-5xl font-black uppercase tracking-tight mb-6">
-            Виртуальные лабораторные работы
-          </h1>
-          <p className="text-[#c8cdd1] max-w-2xl mx-auto">
-            Интерактивные симуляции физических экспериментов для учащихся 7–11 классов.
-            Меняйте параметры, наблюдайте результаты, фиксируйте данные и формируйте научные выводы.
-          </p>
-        </div>
-      </section>
-
-      {/* Categories Grid */}
-      <section className="section-dark py-16 lg:py-24">
+      <section className="section-dark pt-8 pb-16 lg:pt-12 lg:pb-20">
         <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-2xl font-bold text-white mb-10 flex items-center gap-3">
-            <span className="w-2 h-8 bg-[#2eff8c] rounded-full" />
-            Разделы физики
-          </h2>
+          <div className="mb-10">
+            <h2 className="text-2xl lg:text-3xl font-bold text-white mb-3 flex items-center gap-3">
+              <span className="w-2 h-8 bg-[#2eff8c] rounded-full" />
+              Разделы физики
+            </h2>
+            <p className="text-[#c8cdd1] max-w-2xl">
+              Выберите раздел, чтобы перейти к виртуальным лабораторным работам
+            </p>
+          </div>
 
           {isLoading ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

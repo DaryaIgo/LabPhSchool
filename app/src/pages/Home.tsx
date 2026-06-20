@@ -7,6 +7,10 @@ import {
   Calendar,
   MapPin,
   ExternalLink,
+  ArrowRight,
+  Brain,
+  Target,
+  TrendingUp,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -198,9 +202,7 @@ export default function Home() {
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className="absolute -bottom-4 -right-4 lg:right-8 bg-[#2eff8c] text-black font-mono-phys text-xs px-4 py-2 rounded-full">
-                F = ma
-              </div>
+
             </div>
             <div>
               <h2 className="text-3xl lg:text-4xl font-bold text-[#1a1a1a] mb-6 leading-tight">
@@ -224,66 +226,177 @@ export default function Home() {
                 видеосвязь в Яндекс Телемост, удобную онлайн-доску Chattern и
                 ноутбуки Jupyter для наглядного разбора сложных задач.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/course" className="btn-lime flex items-center justify-center gap-2">
-                  <BookOpen size={18} />
-                  Начать обучение
-                </Link>
-                <Link to="/labs" className="btn-outline flex items-center justify-center gap-2">
-                  <FlaskConical size={18} />
-                  Посмотреть лабораторные
-                </Link>
-              </div>
+
             </div>
           </div>
         </div>
       </section>
 
+      {/* ====== SECTION TABS ====== */}
+      <section className="section-dark py-16 lg:py-24">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="mb-10 text-center">
+            <h2 className="text-2xl lg:text-3xl font-bold text-white mb-3">
+              Разделы платформы
+            </h2>
+            <p className="text-[#c8cdd1] max-w-2xl mx-auto">
+              Курс, лабораторные и дополнительные материалы
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                to: "/course",
+                formula: "понятнее всего то, чего не будет на экзамене",
+                title: "Курс физики",
+                titleAccent: "школьная программа",
+                description:
+                  "От кинематики до квантовой физики — структурированный материал с алгоритмами, формулами и примерами.",
+                icon: BookOpen,
+                color: "#2eff8c",
+              },
+              {
+                to: "/labs",
+                formula: "под давлением всё ухудшается",
+                title: "Виртуальные лабораторные работы",
+                titleAccent: null,
+                description:
+                  "Интерактивные симуляции физических экспериментов для учащихся 7–11 классов. Меняйте параметры, наблюдайте результаты, фиксируйте данные и формируйте научные выводы.",
+                icon: FlaskConical,
+                color: "#01acff",
+              },
+              {
+                to: "/resources",
+                formula: "усталость - это иллюзия",
+                title: "Дополнительные ресурсы",
+                titleAccent: null,
+                description:
+                  "Видеолекции, справочники, задачники и интерактивные модели для углублённого изучения физики.",
+                icon: ExternalLink,
+                color: "#ffcb3d",
+              },
+            ].map((card) => {
+              const Icon = card.icon;
+              return (
+                <Link
+                  key={card.to}
+                  to={card.to}
+                  className="group bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 transition-all duration-300 hover:border-[#2eff8c]/50 hover:-translate-y-1 hover:shadow-xl flex flex-col"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div
+                      className="w-12 h-12 rounded-xl flex items-center justify-center"
+                      style={{
+                        backgroundColor: `${card.color}15`,
+                      }}
+                    >
+                      <Icon size={24} style={{ color: card.color }} />
+                    </div>
+                    <span className="inline-flex items-center text-[#2eff8c] text-sm font-medium group-hover:gap-2 transition-all">
+                      Перейти
+                      <ArrowRight size={14} className="ml-1" />
+                    </span>
+                  </div>
+                  <p className="formula-text text-xs mb-3">{card.formula}</p>
+                  <h3 className="text-xl font-black uppercase tracking-tight mb-3 leading-tight">
+                    {card.title}
+                    {card.titleAccent && (
+                      <span className="text-[#2eff8c]"> {card.titleAccent}</span>
+                    )}
+                  </h3>
+                  <p className="text-sm text-[#c8cdd1] leading-relaxed flex-1">
+                    {card.description}
+                  </p>
+                </Link>
+              );
+            })}
+          </div>
+
+          <div className="mt-16 lg:mt-20 border-t border-[#434e54]" />
+        </div>
+      </section>
+
       {/* ====== TEACHING METHODOLOGY ====== */}
       <section className="section-dark py-16 lg:py-24">
-        <div className="max-w-4xl mx-auto px-6">
-          <h2 className="text-2xl lg:text-3xl font-bold mb-10 text-center">
-            Методика преподавания
-          </h2>
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="mb-10 text-center">
+            <div className="inline-flex items-center justify-center gap-3 mb-3">
+              <span className="w-2 h-8 bg-[#2eff8c] rounded-full" />
+              <h2 className="text-2xl lg:text-3xl font-bold text-white">
+                Методика преподавания
+              </h2>
+            </div>
+            <p className="text-[#c8cdd1] max-w-2xl mx-auto">
+              Как устроен процесс обучения
+            </p>
+          </div>
 
-          <div className="grid sm:grid-cols-2 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
                 num: "01",
                 title: "Алгоритмический подход",
                 desc: "Каждая задача решается по чёткому алгоритму: от анализа условия до проверки ответа. Это исключает хаотичные попытки и вырабатывает системное мышление.",
+                icon: Brain,
+                color: "#2eff8c",
               },
               {
                 num: "02",
                 title: "Интерактивные лабораторные",
                 desc: "Вместо статичных описаний — живые симуляции. Ученик может менять параметры эксперимента и наблюдать результат в реальном времени.",
+                icon: FlaskConical,
+                color: "#01acff",
               },
               {
                 num: "03",
                 title: "Персональный трекинг",
                 desc: "Каждый ученик видит свой прогресс по всем темам. Система автоматически подсвечивает слабые места и рекомендует материалы для изучения.",
+                icon: Target,
+                color: "#ffcb3d",
               },
               {
                 num: "04",
                 title: "От простого к сложному",
                 desc: "Курс построен по принципу нарастающей сложности. Каждая новая тема опирается на предыдущие, создавая цельную картину мира.",
+                icon: TrendingUp,
+                color: "#ff6b6b",
               },
-            ].map((item) => (
-              <div
-                key={item.num}
-                className="bg-[#2a3237] border border-[#434e54] rounded-xl p-6"
-              >
-                <span className="font-mono-phys text-2xl font-bold text-[#2eff8c]">
-                  {item.num}
-                </span>
-                <h3 className="text-lg font-semibold mt-3 mb-3">
-                  {item.title}
-                </h3>
-                <p className="text-sm text-[#c8cdd1] leading-relaxed">
-                  {item.desc}
-                </p>
-              </div>
-            ))}
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <div
+                  key={item.num}
+                  className="group bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 transition-all duration-300 hover:border-[#2eff8c]/50 hover:-translate-y-1 hover:shadow-xl flex flex-col"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div
+                      className="w-12 h-12 rounded-xl flex items-center justify-center"
+                      style={{
+                        backgroundColor: `${item.color}15`,
+                      }}
+                    >
+                      <Icon size={24} style={{ color: item.color }} />
+                    </div>
+                    <span
+                      className="font-mono-phys text-xs font-bold px-2 py-1 rounded-md"
+                      style={{
+                        backgroundColor: `${item.color}15`,
+                        color: item.color,
+                      }}
+                    >
+                      {item.num}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-bold mb-2">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-[#c8cdd1] leading-relaxed flex-1">
+                    {item.desc}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -339,18 +452,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ====== FOOTER ====== */}
-      <footer className="bg-[#1a1a1a] py-16">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center">
-            <h4 className="font-semibold mb-4 text-white">Контакты</h4>
-            <ul className="space-y-2 text-sm text-[#798389]">
-              <li>Telegram: @igoshinadarya</li>
-              <li>Email: igoshina.physics@yandex.com</li>
-            </ul>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

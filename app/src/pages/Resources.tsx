@@ -192,48 +192,18 @@ export default function Resources() {
 
   return (
     <div className="pt-16">
-      {/* Hero */}
-      <section className="relative bg-[#262e33] py-24 lg:py-32 overflow-hidden">
-        {/* Diffraction pattern background */}
-        <div className="absolute inset-0 opacity-10">
-          <svg width="100%" height="100%">
-            <defs>
-              <linearGradient id="lightGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#2eff8c" stopOpacity="0" />
-                <stop offset="100%" stopColor="#2eff8c" stopOpacity="1" />
-              </linearGradient>
-            </defs>
-            {[0, 1, 2, 3, 4].map((i) => (
-              <ellipse
-                key={i}
-                cx="60%"
-                cy="50%"
-                rx={80 + i * 40}
-                ry={30 + i * 15}
-                fill="none"
-                stroke="url(#lightGrad)"
-                strokeWidth="1"
-                opacity={0.3 - i * 0.05}
-              />
-            ))}
-          </svg>
-        </div>
+      <section className="section-dark pt-8 pb-16 lg:pt-12 lg:pb-20">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="mb-10">
+            <h2 className="text-2xl lg:text-3xl font-bold text-white mb-3 flex items-center gap-3">
+              <span className="w-2 h-8 bg-[#2eff8c] rounded-full" />
+              Дополнительные ресурсы
+            </h2>
+            <p className="text-[#c8cdd1] max-w-2xl">
+              Отфильтруйте материалы по типу или теме
+            </p>
+          </div>
 
-        <div className="relative max-w-4xl mx-auto px-6 text-center">
-          <p className="formula-text text-sm mb-4">усталость - это иллюзия</p>
-          <h1 className="text-4xl lg:text-5xl font-black uppercase tracking-tight mb-6">
-            Дополнительные ресурсы
-          </h1>
-          <p className="text-[#c8cdd1] max-w-2xl mx-auto">
-            Видеолекции, справочники, задачники и интерактивные модели для
-            углублённого изучения физики
-          </p>
-        </div>
-      </section>
-
-      {/* Resources */}
-      <section className="section-dark py-16 lg:py-24">
-        <div className="max-w-6xl mx-auto px-6">
           {/* Filters */}
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-8">
             {/* Type Filters */}
@@ -307,7 +277,7 @@ export default function Resources() {
                 return (
                   <div
                     key={resource.id}
-                    className="bg-[#2a3237] border border-[#434e54] rounded-xl p-6 transition-all hover:border-[#2eff8c]/30 hover:-translate-y-1"
+                    className="group bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 transition-all duration-300 hover:border-[#2eff8c]/50 hover:-translate-y-1 hover:shadow-xl flex flex-col"
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div
@@ -372,8 +342,6 @@ export default function Resources() {
           )}
         </div>
       </section>
-
-
     </div>
   );
 }

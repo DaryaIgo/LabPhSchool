@@ -356,47 +356,17 @@ export default function Course() {
 
   return (
     <div className="pt-16">
-      {/* Hero */}
-      <section className="relative bg-[#262e33] py-24 lg:py-32 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <svg width="100%" height="100%">
-            <defs>
-              <pattern
-                id="grid"
-                width="40"
-                height="40"
-                patternUnits="userSpaceOnUse"
-              >
-                <path
-                  d="M 40 0 L 0 0 0 40"
-                  fill="none"
-                  stroke="#2eff8c"
-                  strokeWidth="0.5"
-                />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#grid)" />
-          </svg>
-        </div>
-        <div className="relative max-w-4xl mx-auto px-6 text-center">
-          <p className="formula-text text-sm mb-4">понятнее всего то, чего не будет на экзамене</p>
-          <h1 className="text-4xl lg:text-5xl font-black uppercase tracking-tight mb-6">
-            Курс физики <br></br>
-            школьная программа
-          </h1>
-          <p className="text-[#c8cdd1] max-w-2xl mx-auto">
-            От кинематики до квантовой физики — структурированный материал с
-            алгоритмами, формулами и примерами
-          </p>
-        </div>
-      </section>
-
-      {/* Topics */}
-      <section className="bg-[#1e2529] py-16 lg:py-24">
-        <div className="max-w-4xl mx-auto px-6">
-          <h2 className="text-2xl lg:text-3xl font-bold text-white mb-8 text-center">
-            Темы курса
-          </h2>
+      <section className="section-dark pt-8 pb-16 lg:pt-12 lg:pb-20">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="mb-10">
+            <h2 className="text-2xl lg:text-3xl font-bold text-white mb-3 flex items-center gap-3">
+              <span className="w-2 h-8 bg-[#2eff8c] rounded-full" />
+              Темы курса
+            </h2>
+            <p className="text-[#c8cdd1] max-w-2xl">
+              Выберите тему, чтобы открыть теорию, задачи и лабораторные работы
+            </p>
+          </div>
 
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
@@ -415,7 +385,7 @@ export default function Course() {
                     onClick={() => handleToggleTopic(topic.id)}
                     className="group bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 transition-all duration-300 hover:border-[#2eff8c]/50 hover:-translate-y-1 hover:shadow-xl text-left flex flex-col"
                   >
-                    <div className="flex items-start justify-between gap-3 mb-4">
+                    <div className="flex items-start gap-3">
                       <span
                         className="inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-semibold shrink-0 mt-0.5"
                         style={{
@@ -425,11 +395,11 @@ export default function Course() {
                       >
                         {String(topic.order).padStart(2, "0")}
                       </span>
+                      <h3 className="text-xl font-bold text-white group-hover:text-[#2eff8c] transition-colors leading-snug flex-1">
+                        {topic.title}
+                      </h3>
                       <ChevronRight size={18} className="text-[#798389] group-hover:text-[#2eff8c] transition-colors shrink-0 mt-1" />
                     </div>
-                    <h3 className="text-lg font-bold text-white group-hover:text-[#2eff8c] transition-colors leading-snug">
-                      {topic.title}
-                    </h3>
                   </button>
                 ))}
               </div>
