@@ -1,5 +1,6 @@
 import { trpc } from "@/providers/trpc";
 import { Link, Navigate, useParams } from "react-router";
+import { useAuth } from "@/hooks/useAuth";
 import { ArrowLeft, FlaskConical, Clock, BookOpen, Search, ChevronRight } from "lucide-react";
 
 const difficultyLabel: Record<string, string> = {
@@ -18,6 +19,8 @@ const LEGACY_CATEGORY_SLUGS = new Set(["electricity", "magnetism"]);
 
 export default function LabCategoryPage() {
   const { slug } = useParams<{ slug: string }>();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   if (slug && LEGACY_CATEGORY_SLUGS.has(slug)) {
     return <Navigate to="/labs/category/electrodynamics" replace />;
@@ -144,14 +147,14 @@ export default function LabCategoryPage() {
           <section>
             <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
               <FlaskConical size={22} className="text-[#2eff8c]" />
-              Все лабораторные работы
+              Лабораторные работы раздела
             </h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {labs.map((lab) => (
                 <Link
                   key={lab.id}
                   to={`/labs/work/${lab.slug}`}
-                  className="group bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 transition-all duration-300 hover:border-[#2eff8c]/50 hover:-translate-y-1 hover:shadow-xl"
+                  className="group bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 transition-all duration-300 hover:border-[#2eff8c]/50 hover:-translate-y-1 hover:shadow-xl flex flex-col"
                 >
                   <div className="flex items-center justify-between mb-4">
                     <span
@@ -161,10 +164,23 @@ export default function LabCategoryPage() {
                     >
                       {difficultyLabel[lab.difficulty || "medium"]}
                     </span>
-                    <span className="flex items-center gap-1 text-xs text-[#798389]">
-                      <Clock size={12} />
-                      {lab.duration || 30} мин
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {isAdmin && (
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                            lab.status === "published"
+                              ? "bg-green-500/10 text-green-400"
+                              : "bg-yellow-500/10 text-yellow-400"
+                          }`}
+                        >
+                          {lab.status === "published" ? "Опубликовано" : "Черновик"}
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1 text-xs text-[#798389]">
+                        <Clock size={12} />
+                        {lab.duration || 30} мин
+                      </span>
+                    </div>
                   </div>
 
                   <h3 className="text-lg font-bold text-white mb-2 group-hover:text-[#2eff8c] transition-colors">
@@ -173,7 +189,7 @@ export default function LabCategoryPage() {
                   <p className="text-sm text-[#798389] mb-3">
                     Изучаемый закон: <span className="text-[#c8cdd1]">{lab.law}</span>
                   </p>
-                  <p className="text-sm text-[#c8cdd1] line-clamp-2 mb-4">
+                  <p className="text-sm text-[#c8cdd1] line-clamp-2 mb-4 flex-1">
                     {lab.skills}
                   </p>
                   {lab.subcategoryTitle && (

@@ -1045,7 +1045,8 @@ export default function LabWorkPage() {
     });
   };
 
-  const SimComponent = slug ? simComponents[slug] : null;
+  const simSlug = labWork?.simulationSlug ?? slug;
+  const SimComponent = simSlug ? simComponents[simSlug] : null;
 
   if (isLoading) {
     return (
@@ -1092,7 +1093,9 @@ export default function LabWorkPage() {
                       <Target size={20} className="text-[#2eff8c]" />
                       <h3 className="text-lg font-bold text-white">Цель работы</h3>
                     </div>
-                    <p className="text-[#c8cdd1] leading-relaxed">{labWork.goal}</p>
+                    <div className="prose prose-invert prose-sm max-w-none text-[#c8cdd1] leading-relaxed">
+                      <MarkdownRenderer content={labWork.goal || ""} />
+                    </div>
                   </div>
 
                   <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
@@ -1138,14 +1141,20 @@ export default function LabWorkPage() {
                       <h3 className="text-lg font-bold text-white">Оборудование</h3>
                     </div>
                     {labWork.equipment && (
-                      <ul className="space-y-2">
-                        {JSON.parse(labWork.equipment).map((item: string, i: number) => (
-                          <li key={i} className="flex items-center gap-2 text-[#c8cdd1]">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#2eff8c]" />
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
+                      <div className="prose prose-invert prose-sm max-w-none text-[#c8cdd1]">
+                        {labWork.equipment.trim().startsWith("[") ? (
+                          <ul className="space-y-2">
+                            {JSON.parse(labWork.equipment).map((item: string, i: number) => (
+                              <li key={i} className="flex items-center gap-2 text-[#c8cdd1]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#2eff8c]" />
+                                {item}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <MarkdownRenderer content={labWork.equipment} />
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1180,11 +1189,9 @@ export default function LabWorkPage() {
                           );
                         }
                         return (
-                          <ol className="list-decimal list-inside space-y-1">
-                            {labWork.instruction.split("\n").filter(Boolean).map((step, i) => (
-                              <li key={i}>{step.replace(/^\d+\.\s*/, "")}</li>
-                            ))}
-                          </ol>
+                          <div className="prose prose-invert prose-sm max-w-none text-[#c8cdd1]">
+                            <MarkdownRenderer content={labWork.instruction} />
+                          </div>
                         );
                       })()}
                     </div>

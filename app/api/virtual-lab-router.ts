@@ -14,8 +14,9 @@ import {
   labSubcategories,
   labWorks,
   labBlocks,
-  labSimulationParams,
   labAnalytics,
+  simulations,
+  type SimulationParamConfig,
 } from "@db/schema/labs";
 import { labProgress } from "@db/schema/learning";
 import { topicNodes } from "@db/schema/content";
@@ -114,6 +115,7 @@ export const virtualLabRouter = createRouter({
           equipment: labWorks.equipment,
           instruction: labWorks.instruction,
           conclusionTemplate: labWorks.conclusionTemplate,
+          simulationSlug: labWorks.simulationSlug,
           status: labWorks.status,
           categoryTitle: labCategories.title,
           subcategoryTitle: labSubcategories.title,
@@ -156,6 +158,7 @@ export const virtualLabRouter = createRouter({
           equipment: labWorks.equipment,
           instruction: labWorks.instruction,
           conclusionTemplate: labWorks.conclusionTemplate,
+          simulationSlug: labWorks.simulationSlug,
           status: labWorks.status,
           categoryTitle: labCategories.title,
           subcategoryTitle: labSubcategories.title,
@@ -173,12 +176,6 @@ export const virtualLabRouter = createRouter({
         .where(eq(labBlocks.labWorkId, work[0].id))
         .orderBy(asc(labBlocks.order));
 
-      const params = await labsDb
-        .select()
-        .from(labSimulationParams)
-        .where(eq(labSimulationParams.labWorkId, work[0].id))
-        .orderBy(asc(labSimulationParams.id));
-
       // Pull theory from linked course topic node if available
       let topicNodeContent: string | null = null;
       if (work[0].topicNodeId) {
@@ -192,7 +189,19 @@ export const virtualLabRouter = createRouter({
         }
       }
 
-      return { ...work[0], blocks, params, topicNodeContent };
+      const simulation = work[0].simulationSlug
+        ? await labsDb
+            .select()
+            .from(simulations)
+            .where(eq(simulations.slug, work[0].simulationSlug))
+            .limit(1)
+            .then((rows) => rows[0] ?? null)
+        : null;
+
+      const params =
+        (simulation?.config as SimulationParamConfig[] | null) ?? [];
+
+      return { ...work[0], blocks, params, topicNodeContent, simulation };
     }),
 
   // ═══════════════════════════════════════════════════════════
@@ -531,6 +540,7 @@ export const virtualLabRouter = createRouter({
         equipment: labWorks.equipment,
         instruction: labWorks.instruction,
         conclusionTemplate: labWorks.conclusionTemplate,
+        simulationSlug: labWorks.simulationSlug,
         status: labWorks.status,
         categoryTitle: labCategories.title,
         subcategoryTitle: labSubcategories.title,
@@ -558,6 +568,7 @@ export const virtualLabRouter = createRouter({
         equipment: z.string().max(5000).optional(),
         instruction: z.string().max(50000).optional(),
         conclusionTemplate: z.string().max(5000).optional(),
+        simulationSlug: z.string().max(255).optional(),
         status: z.enum(["draft", "published"]).optional(),
       })
     )
@@ -578,6 +589,7 @@ export const virtualLabRouter = createRouter({
         equipment: input.equipment ?? null,
         instruction: input.instruction ?? null,
         conclusionTemplate: input.conclusionTemplate ?? null,
+        simulationSlug: input.simulationSlug ?? null,
         status: input.status ?? "draft",
       });
       const id = Number(result[0].insertId);
@@ -609,6 +621,7 @@ export const virtualLabRouter = createRouter({
         equipment: z.string().max(5000).optional(),
         instruction: z.string().max(50000).optional(),
         conclusionTemplate: z.string().max(5000).optional(),
+        simulationSlug: z.string().max(255).optional().nullable(),
         status: z.enum(["draft", "published"]).optional(),
       })
     )
@@ -631,6 +644,8 @@ export const virtualLabRouter = createRouter({
         updateData.instruction = data.instruction;
       if (data.conclusionTemplate !== undefined)
         updateData.conclusionTemplate = data.conclusionTemplate;
+      if (data.simulationSlug !== undefined)
+        updateData.simulationSlug = data.simulationSlug;
       if (data.status !== undefined) updateData.status = data.status;
 
       await db.update(labWorks).set(updateData).where(eq(labWorks.id, id));
@@ -775,114 +790,139 @@ export const virtualLabRouter = createRouter({
       return { success: true };
     }),
 
+
   // ═══════════════════════════════════════════════════════════
-  // ADMIN: Simulation Params CRUD
+  // ADMIN: Simulation Registry CRUD
   // ═══════════════════════════════════════════════════════════
 
-  adminListSimulationParams: adminQuery
-    .input(z.object({ labWorkId: z.number().positive() }))
-    .query(async ({ input }) => {
-      return getLabsDb()
-        .select()
-        .from(labSimulationParams)
-        .where(eq(labSimulationParams.labWorkId, input.labWorkId))
-        .orderBy(asc(labSimulationParams.id));
-    }),
+  listSimulations: publicQuery.query(async () => {
+    return getLabsDb()
+      .select()
+      .from(simulations)
+      .where(eq(simulations.isActive, true))
+      .orderBy(asc(simulations.title));
+  }),
 
-  adminCreateSimulationParam: adminQuery
+  adminListSimulations: adminQuery.query(async () => {
+    return getLabsDb()
+      .select()
+      .from(simulations)
+      .orderBy(asc(simulations.category), asc(simulations.title));
+  }),
+
+  adminCreateSimulation: adminQuery
     .input(
       z.object({
-        labWorkId: z.number().positive(),
-        key: z.string().min(1).max(100),
-        label: z.string().min(1).max(255),
-        paramType: z.enum(["slider", "select", "number"]),
-        min: z.string().max(50).optional(),
-        max: z.string().max(50).optional(),
-        step: z.string().max(50).optional(),
-        defaultValue: z.string().max(255).optional(),
-        options: z.string().max(1000).optional(),
-        unit: z.string().max(50).optional(),
+        slug: z.string().min(1).max(255).regex(/^[a-z0-9-]+$/),
+        title: z.string().min(1).max(255),
+        description: z.string().max(5000).optional(),
+        category: z.string().max(50).optional(),
+        thumbnail: z.string().max(500).optional(),
+        componentRef: z.string().min(1).max(100),
+        config: z
+          .array(
+            z.object({
+              key: z.string(),
+              label: z.string(),
+              paramType: z.enum(["slider", "select", "number"]),
+              min: z.string().optional(),
+              max: z.string().optional(),
+              step: z.string().optional(),
+              defaultValue: z.string().optional(),
+              options: z.string().optional(),
+              unit: z.string().optional(),
+            })
+          )
+          .optional(),
+        isActive: z.boolean().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const db = getLabsDb();
-      const result = await db.insert(labSimulationParams).values({
-        labWorkId: input.labWorkId,
-        key: input.key,
-        label: input.label,
-        paramType: input.paramType,
-        min: input.min ?? null,
-        max: input.max ?? null,
-        step: input.step ?? null,
-        defaultValue: input.defaultValue ?? null,
-        options: input.options ?? null,
-        unit: input.unit ?? null,
+      const result = await db.insert(simulations).values({
+        slug: input.slug,
+        title: input.title,
+        description: input.description ?? null,
+        category: input.category ?? null,
+        thumbnail: input.thumbnail ?? null,
+        componentRef: input.componentRef,
+        config: input.config ?? null,
+        isActive: input.isActive ?? true,
       });
       const id = Number(result[0].insertId);
       await createAuditEntry({
         actorId: ctx.localUser!.id,
         actorType: "user",
         action: "create",
-        resource: "lab_simulation_params",
+        resource: "simulations",
         resourceId: id,
-        details: { labWorkId: input.labWorkId, key: input.key },
+        details: { slug: input.slug, title: input.title },
       });
       return { id, success: true };
     }),
 
-  adminUpdateSimulationParam: adminQuery
+  adminUpdateSimulation: adminQuery
     .input(
       z.object({
         id: z.number().positive(),
-        label: z.string().max(255).optional(),
-        paramType: z.enum(["slider", "select", "number"]).optional(),
-        min: z.string().max(50).optional(),
-        max: z.string().max(50).optional(),
-        step: z.string().max(50).optional(),
-        defaultValue: z.string().max(255).optional(),
-        options: z.string().max(1000).optional(),
-        unit: z.string().max(50).optional(),
+        title: z.string().min(1).max(255).optional(),
+        description: z.string().max(5000).optional(),
+        category: z.string().max(50).optional(),
+        thumbnail: z.string().max(500).optional(),
+        componentRef: z.string().min(1).max(100).optional(),
+        config: z
+          .array(
+            z.object({
+              key: z.string(),
+              label: z.string(),
+              paramType: z.enum(["slider", "select", "number"]),
+              min: z.string().optional(),
+              max: z.string().optional(),
+              step: z.string().optional(),
+              defaultValue: z.string().optional(),
+              options: z.string().optional(),
+              unit: z.string().optional(),
+            })
+          )
+          .optional(),
+        isActive: z.boolean().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const db = getLabsDb();
       const { id, ...data } = input;
       const updateData: Record<string, unknown> = {};
-      if (data.label !== undefined) updateData.label = data.label;
-      if (data.paramType !== undefined) updateData.paramType = data.paramType;
-      if (data.min !== undefined) updateData.min = data.min;
-      if (data.max !== undefined) updateData.max = data.max;
-      if (data.step !== undefined) updateData.step = data.step;
-      if (data.defaultValue !== undefined)
-        updateData.defaultValue = data.defaultValue;
-      if (data.options !== undefined) updateData.options = data.options;
-      if (data.unit !== undefined) updateData.unit = data.unit;
+      if (data.title !== undefined) updateData.title = data.title;
+      if (data.description !== undefined)
+        updateData.description = data.description;
+      if (data.category !== undefined) updateData.category = data.category;
+      if (data.thumbnail !== undefined) updateData.thumbnail = data.thumbnail;
+      if (data.componentRef !== undefined)
+        updateData.componentRef = data.componentRef;
+      if (data.config !== undefined) updateData.config = data.config;
+      if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
-      await db
-        .update(labSimulationParams)
-        .set(updateData)
-        .where(eq(labSimulationParams.id, id));
+      await db.update(simulations).set(updateData).where(eq(simulations.id, id));
       await createAuditEntry({
         actorId: ctx.localUser!.id,
         actorType: "user",
         action: "update",
-        resource: "lab_simulation_params",
+        resource: "simulations",
         resourceId: id,
+        details: { fields: Object.keys(data) },
       });
       return { success: true };
     }),
 
-  adminDeleteSimulationParam: adminQuery
+  adminDeleteSimulation: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
-      await getLabsDb()
-        .delete(labSimulationParams)
-        .where(eq(labSimulationParams.id, input.id));
+      await getLabsDb().delete(simulations).where(eq(simulations.id, input.id));
       await createAuditEntry({
         actorId: ctx.localUser!.id,
         actorType: "user",
         action: "delete",
-        resource: "lab_simulation_params",
+        resource: "simulations",
         resourceId: input.id,
       });
       return { success: true };

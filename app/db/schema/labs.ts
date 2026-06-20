@@ -8,6 +8,7 @@ import {
   int,
   bigint,
   json,
+  boolean,
 } from "drizzle-orm/mysql-core";
 
 // ═══════════════════════════════════════════════════════════════
@@ -66,6 +67,7 @@ export const labWorks = mysqlTable("lab_works", {
   equipment: text("equipment"),
   instruction: text("instruction"),
   conclusionTemplate: text("conclusion_template"),
+  simulationSlug: varchar("simulation_slug", { length: 255 }),
   status: mysqlEnum("status", ["draft", "published"]).default("draft").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
@@ -103,24 +105,41 @@ export const labBlocks = mysqlTable("lab_blocks", {
 export type LabBlock = typeof labBlocks.$inferSelect;
 export type InsertLabBlock = typeof labBlocks.$inferInsert;
 
-export const labSimulationParams = mysqlTable("lab_simulation_params", {
+// ═══════════════════════════════════════════════════════════════
+// Simulation Registry
+// ═══════════════════════════════════════════════════════════════
+
+export interface SimulationParamConfig {
+  key: string;
+  label: string;
+  paramType: "slider" | "select" | "number";
+  min?: string;
+  max?: string;
+  step?: string;
+  defaultValue?: string;
+  options?: string;
+  unit?: string;
+}
+
+export const simulations = mysqlTable("simulations", {
   id: serial("id").primaryKey(),
-  labWorkId: bigint("lab_work_id", { mode: "number", unsigned: true })
-    .notNull()
-    .references(() => labWorks.id, { onDelete: "cascade" }),
-  key: varchar("key", { length: 100 }).notNull(),
-  label: varchar("label", { length: 255 }).notNull(),
-  paramType: mysqlEnum("param_type", ["slider", "select", "number"]).default("slider").notNull(),
-  min: varchar("min", { length: 50 }),
-  max: varchar("max", { length: 50 }),
-  step: varchar("step", { length: 50 }),
-  defaultValue: varchar("default_value", { length: 255 }),
-  options: text("options"),
-  unit: varchar("unit", { length: 50 }),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  category: varchar("category", { length: 50 }),
+  thumbnail: varchar("thumbnail", { length: 500 }),
+  componentRef: varchar("component_ref", { length: 100 }).notNull(),
+  config: json("config").$type<SimulationParamConfig[] | null>(),
+  isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
 });
 
-export type LabSimulationParam = typeof labSimulationParams.$inferSelect;
+export type Simulation = typeof simulations.$inferSelect;
+export type InsertSimulation = typeof simulations.$inferInsert;
 
 export const labAnalytics = mysqlTable("lab_analytics", {
   id: serial("id").primaryKey(),

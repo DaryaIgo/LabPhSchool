@@ -17,7 +17,7 @@ import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import StudentManagement from "./pages/admin/StudentManagement";
 import TopicManagement from "./pages/admin/TopicManagement";
-import VirtualLabManagement from "./pages/admin/VirtualLabManagement";
+import LabManagement from "./pages/admin/LabManagement";
 import EnrollmentManagement from "./pages/admin/EnrollmentManagement";
 import AuditLogViewer from "./pages/admin/AuditLogViewer";
 import ResourceManagement from "./pages/admin/ResourceManagement";
@@ -57,7 +57,7 @@ export default function App() {
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/students" element={<StudentManagement />} />
         <Route path="/admin/topics" element={<TopicManagement />} />
-        <Route path="/admin/virtual-labs" element={<VirtualLabManagement />} />
+        <Route path="/admin/lab-management" element={<LabManagement />} />
         <Route path="/admin/enrollments" element={<EnrollmentManagement />} />
         <Route path="/admin/audit" element={<AuditLogViewer />} />
         <Route path="/admin/resources" element={<ResourceManagement />} />

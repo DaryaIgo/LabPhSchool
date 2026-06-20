@@ -8,12 +8,14 @@ import {
   Thermometer,
   Wrench,
   Eye,
+  Beaker,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/useAuth";
 
 const categoryIconMap: Record<string, React.ReactNode> = {
   mechanics: <Wrench size={40} className="text-[#2eff8c]" />,
+  "fluid-mechanics": <Beaker size={40} className="text-[#01acff]" />,
   "molecular-thermodynamics": <Thermometer size={40} className="text-[#ff7043]" />,
   electrodynamics: <Zap size={40} className="text-[#ffd600]" />,
   circuit: <Zap size={40} className="text-[#ffd600]" />,
@@ -26,42 +28,11 @@ export default function Labs() {
   const { user } = useAuth();
   const isStudent = user?.type === "student" && user?.role === "student";
 
-  const { data: rawCategories, isLoading } = trpc.virtualLab.listCategories.useQuery();
+  const { data: categories, isLoading } = trpc.virtualLab.listCategories.useQuery();
   const { data: myProgress } = trpc.virtualLab.getMyLabProgress.useQuery(undefined, {
     retry: false,
     enabled: isStudent,
   });
-
-  // Merge legacy categories into their canonical sections
-  const categories = rawCategories?.reduce((acc, cat) => {
-    if (cat.slug === "atomic-nuclear") {
-      const existing = acc.find((c) => c.slug === "nuclear-physics");
-      if (existing) {
-        existing.labCount += cat.labCount;
-      } else {
-        acc.push({ ...cat, slug: "nuclear-physics", title: "Атомная и ядерная физика" });
-      }
-      return acc;
-    }
-
-    if (cat.slug === "electricity" || cat.slug === "magnetism") {
-      const existing = acc.find((c) => c.slug === "electrodynamics");
-      if (existing) {
-        existing.labCount += cat.labCount;
-      } else {
-        acc.push({
-          ...cat,
-          slug: "electrodynamics",
-          title: "Электродинамика",
-          iconType: "circuit",
-        });
-      }
-      return acc;
-    }
-
-    acc.push(cat);
-    return acc;
-  }, [] as typeof rawCategories);
 
   function getCategoryProgress(categoryId: number, labCount: number) {
     if (!myProgress || !Array.isArray(myProgress) || labCount === 0) return 0;

@@ -4,7 +4,6 @@ import {
   labSubcategories,
   labWorks,
   labBlocks,
-  labSimulationParams,
   labAnalytics,
 } from "../labs";
 
@@ -30,7 +29,6 @@ export const labWorksRelations = relations(labWorks, ({ one, many }) => ({
     references: [labSubcategories.id],
   }),
   blocks: many(labBlocks),
-  simulationParams: many(labSimulationParams),
   analytics: one(labAnalytics),
 }));
 
@@ -41,15 +39,6 @@ export const labBlocksRelations = relations(labBlocks, ({ one }) => ({
   }),
 }));
 
-export const labSimulationParamsRelations = relations(
-  labSimulationParams,
-  ({ one }) => ({
-    labWork: one(labWorks, {
-      fields: [labSimulationParams.labWorkId],
-      references: [labWorks.id],
-    }),
-  })
-);
 
 export const labAnalyticsRelations = relations(labAnalytics, ({ one }) => ({
   labWork: one(labWorks, {

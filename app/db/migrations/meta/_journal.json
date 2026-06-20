@@ -120,6 +120,20 @@
       "when": 1781933993847,
       "tag": "0016_open_doorman",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "5",
+      "when": 1781948948154,
+      "tag": "0017_ordinary_earthquake",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1781954926835,
+      "tag": "0018_striped_raza",
+      "breakpoints": true
     }
   ]
 }

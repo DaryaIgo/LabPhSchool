@@ -76,6 +76,7 @@ app/
 │   │   ├── StudentDashboard.tsx
 │   │   ├── LabPendulum.tsx, OhmsLawLab.tsx, ProjectileLab.tsx ...
 │   │   └── admin/AdminProblems.tsx
+│   │   └── admin/LabManagement.tsx   # Редактор лабораторий (категории/темы/работы/симуляции)
 │   ├── components/         # React-компоненты
 │   │   ├── Header.tsx
 │   │   ├── AuthLayout.tsx
@@ -102,7 +103,7 @@ app/
 │   │   ├── auth.ts         # Роли, разрешения, пользователи
 │   │   ├── content.ts      # Темы, подтемы, topic_nodes, labs, resources
 │   │   ├── learning.ts     # enrollments, student_progress, lab_progress
-│   │   ├── labs.ts         # Виртуальные лаборатории
+│   │   ├── labs.ts         # Виртуальные лаборатории + реестр симуляций
 │   │   ├── problems.ts     # Банк задач
 │   │   ├── jupyter.ts      # Jupyter-ноутбуки
 │   │   ├── notifications.ts
@@ -115,7 +116,8 @@ app/
 │   ├── relations.ts        # Реэкспорт relations/
 │   ├── seed.ts             # Начальные данные (12 тем, 48 подтем, 6 лаб, ресурсы)
 │   ├── migrations/         # SQL-миграции Drizzle Kit
-│   └── problems-seed.ts    # Сид задач
+│   ├── problems-seed.ts    # Сид задач
+│   └── simulations-seed.ts # Реестр физических симуляций
 ├── public/                 # Статические ассеты (изображения)
 └── scripts/                # Вспомогательные скрипты
 ```
@@ -202,10 +204,16 @@ npm run db:push       # Push схемы (для разработки)
 
 1. Запустить MySQL: `brew services start mysql`
 2. Установить зависимости: `npm install`
-3. Применить миграции: `npm run db:migrate`
-4. Заполнить начальные данные: `npx tsx db/seed.ts`
+3. Создать/обновить схему БД:
+   - Вариант A (миграции): `npm run db:migrate`
+   - Вариант B (пересоздать БД): удалить базу вручную и выполнить `npm run db:push` (интерактивно) или применить все миграции с нуля
+4. Заполнить начальные данные:
+   - `npx tsx db/seed.ts`
+   - `npx tsx db/simulations-seed.ts`
 5. Запустить dev: `npm run dev`
 6. Открыть http://localhost:3000
+
+> **Миграции не являются критичными для сохранности данных.** В проекте нет требования сохранять пользовательские данные на хостинге, поэтому при конфликтах схемы проще пересоздать базу данных и запустить сиды заново.
 
 ---
 
@@ -253,7 +261,7 @@ npm run db:push       # Push схемы (для разработки)
 | `auth` | `roles`, `permissions`, `role_permissions`, `users`, `local_users` | `getAuthDb()` |
 | `content` | `topics`, `subtopics`, `topic_nodes`, `labs`, `resources` | `getContentDb()` |
 | `learning` | `enrollments`, `student_progress`, `lab_progress` | `getLearningDb()` |
-| `labs` | `lab_categories`, `lab_subcategories`, `lab_works`, `lab_blocks`, `lab_simulation_params`, `lab_analytics` | `getLabsDb()` |
+| `labs` | `lab_categories`, `lab_subcategories`, `lab_works`, `lab_blocks`, `lab_analytics`, `simulations` | `getLabsDb()` |
 | `problems` | `problem_types`, `problems` | `getProblemsDb()` |
 | `jupyter` | `jupyter_notebooks`, `jupyter_notebook_access` | `getJupyterDb()` |
 | `notifications` | `notifications` | `getNotificationsDb()` |
@@ -262,6 +270,48 @@ npm run db:push       # Push схемы (для разработки)
 | `media` | `images` | `getMediaDb()` |
 
 Между доменами нет внешних ключей на уровне БД — связи реализованы через soft-ссылки (`id` + домен). Это позволяет в будущем разнести домены по разным физическим базам данных, изменив только переменные окружения `DATABASE_URL_*`.
+
+---
+
+## Архитектура лабораторных работ
+
+Лабораторные работы строятся по принципу «каталог + карточка»:
+
+- **Каталог** (`/labs`) показывает разделы физики (`lab_categories`).
+- **Категория** (`/labs/category/:slug`) группирует работы по подкатегориям (`lab_subcategories`).
+- **Карточка** (`/labs/work/:slug`) отображает теорию, выбранную симуляцию, измерения, графики и вывод.
+
+### Реестр симуляций
+
+Все интерактивные симуляции зарегистрированы в таблице `simulations`:
+
+| Поле | Назначение |
+|------|-----------|
+| `slug` | Уникальный идентификатор, совпадает с ключом в кодовом объекте `simComponents` |
+| `title` | Название для админки |
+| `description` | Описание |
+| `category` | Раздел физики |
+| `componentRef` | Ссылка на React-компонент (обычно совпадает со `slug`) |
+| `config` | JSON с готовыми параметрами симуляции (`SimulationParamConfig[]`) |
+| `isActive` | Видна ли симуляция в списке выбора |
+
+Список существующих симуляций заполняется скриптом `db/simulations-seed.ts`.
+
+### Lab Management
+
+Админ-страница `/admin/lab-management` объединяет управление:
+- разделами (`lab_categories`)
+- темами (`lab_subcategories`)
+- лабораторными работами (`lab_works`)
+- выбором симуляции из реестра (`simulations`)
+
+Параметры симуляции задаются один раз в реестре (`simulations.config`) и не требуют настройки при подключении к работе.
+
+Теоретическая часть пишется в Markdown (редактор `@uiw/react-md-editor`) с поддержкой формул и картинок. Картинки загружаются через `/api/upload/image` и вставляются в Markdown.
+
+### Связь работы и симуляции
+
+Поле `lab_works.simulationSlug` — soft-link на `simulations.slug`. Страница `LabWorkPage.tsx` выбирает React-компонент симуляции по `simulationSlug`, а не по `slug` лаборатории. Это позволяет переиспользовать одну симуляцию в разных работах.
 
 ---
 
@@ -317,13 +367,10 @@ npm run db:push       # Push схемы (для разработки)
 |------|----------|--------|
 | `/` | Главная | Публичный |
 | `/course` | Курс физики | Публичный |
-| `/labs` | Список лабораторных | Публичный |
-| `/labs/:slug` | Детальная лабораторной | Публичный |
-| `/labs/ohms-law` | Закон Ома (интерактив) | Публичный |
-| `/labs/pendulum` | Маятник (интерактив) | Публичный |
-| `/labs/projectile` | Баллистика (интерактив) | Публичный |
-| `/labs/spring` | Пружинный маятник | Публичный |
-| `/labs/energy` | Сохранение энергии | Публичный |
+| `/labs` | Разделы физики / каталог лабораторий | Публичный |
+| `/labs/category/:slug` | Категория лабораторных работ | Публичный |
+| `/labs/work/:slug` | Карточка лабораторной работы | Публичный |
+| `/admin/lab-management` | Lab Management (редактор) | Требуется admin |
 | `/resources` | Ресурсы | Публичный |
 | `/about` | О проекте | Публичный |
 | `/login` | Вход для преподавателя | Публичный |

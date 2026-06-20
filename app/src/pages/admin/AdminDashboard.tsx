@@ -24,6 +24,7 @@ import {
   FileCheck,
   NotebookPen,
   History,
+  Beaker,
 } from "lucide-react";
 
 function StatCard({
@@ -203,14 +204,14 @@ export default function AdminDashboard() {
           onClick={() => navigate("/admin/students")}
         />
         <QuickAction
-          label="Topics"
+          label="Topic Management"
           icon={BookOpen}
           onClick={() => navigate("/admin/topics")}
         />
         <QuickAction
-          label="Virtual Labs"
-          icon={FlaskConical}
-          onClick={() => navigate("/admin/virtual-labs")}
+          label="Lab Management"
+          icon={Beaker}
+          onClick={() => navigate("/admin/lab-management")}
         />
         <QuickAction
           label="Enrollments"
