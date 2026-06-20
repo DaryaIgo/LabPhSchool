@@ -6,11 +6,16 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { trpc } from "@/providers/trpc";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -25,54 +30,74 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
 import {
-  ClipboardList,
-  Plus,
-  Trash2,
-  PauseCircle,
-  PlayCircle,
-  ChevronDown,
-  Settings,
-  CheckCircle2,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
+import type { inferRouterOutputs } from "@trpc/server";
+import type { AppRouter } from "../../../api/router";
+import {
   BookOpen,
   Beaker,
   FileText,
-  GraduationCap,
-  Save,
-  X,
-  Eye,
-  EyeOff,
+  CheckCircle2,
   Circle,
   Clock,
+  ChevronDown,
+  MoreHorizontal,
+  Pause,
+  Play,
+  Trash2,
+  Plus,
+  GraduationCap,
+  ExternalLink,
   User,
+  ClipboardList,
 } from "lucide-react";
 
-const ENROLLMENT_STATUS_COLORS: Record<string, string> = {
-  active: "bg-green-600 text-white hover:bg-green-700",
-  completed: "bg-blue-600 text-white hover:bg-blue-700",
-  suspended: "bg-red-600 text-white hover:bg-red-700",
+type RouterOutput = inferRouterOutputs<AppRouter>;
+type EnrollmentItem = RouterOutput["enrollment"]["listForStudent"][number];
+type StudentUser = RouterOutput["student"]["list"]["users"][number];
+type SubtopicProgressItem = RouterOutput["student"]["getTopicProgress"][number];
+type LabItem = RouterOutput["course"]["topicLabWorks"][number];
+type TopicItem = RouterOutput["admin"]["listTopics"][number];
+
+type EnrollmentStatus = EnrollmentItem["status"];
+type SubtopicStatus = SubtopicProgressItem["status"];
+
+const ENROLLMENT_STATUS_LABELS: Record<EnrollmentStatus, string> = {
+  active: "Активна",
+  completed: "Завершена",
+  suspended: "Приостановлена",
 };
 
-const SUBTOPIC_STATUS_COLORS: Record<string, string> = {
-  not_started: "bg-[#434e54] text-[#c8cdd1] border-[#434e54]",
-  in_progress: "bg-[#01acff]/20 text-[#01acff] border-[#01acff]/40",
-  completed: "bg-[#2eff8c]/20 text-[#2eff8c] border-[#2eff8c]/40",
+const ENROLLMENT_STATUS_COLORS: Record<EnrollmentStatus, string> = {
+  active: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
+  completed: "bg-blue-500/15 text-blue-400 border-blue-500/20",
+  suspended: "bg-amber-500/15 text-amber-400 border-amber-500/20",
 };
 
-const SUBTOPIC_STATUS_LABELS: Record<string, string> = {
+const SUBTOPIC_STATUS_LABELS: Record<SubtopicStatus, string> = {
   not_started: "Не начато",
   in_progress: "Изучается",
   completed: "Завершено",
 };
 
+const SUBTOPIC_STATUS_COLORS: Record<SubtopicStatus, string> = {
+  not_started: "text-slate-400",
+  in_progress: "text-sky-400",
+  completed: "text-emerald-400",
+};
+
 export default function EnrollmentManagement() {
   const { user } = useAuth({ redirectOnUnauthenticated: true });
-
   const utils = trpc.useUtils();
 
   const [expandedStudent, setExpandedStudent] = useState<number | null>(null);
-  const [enrollOpen, setEnrollOpen] = useState(false);
+  const [enrollDialogOpen, setEnrollDialogOpen] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
   const [selectedTopicId, setSelectedTopicId] = useState<number | null>(null);
 
@@ -90,7 +115,7 @@ export default function EnrollmentManagement() {
     onSuccess: () => {
       toast("Ученик записан на тему");
       utils.enrollment.listForStudent.invalidate();
-      setEnrollOpen(false);
+      setEnrollDialogOpen(false);
       setSelectedTopicId(null);
     },
     onError: (err) => toast(err.message),
@@ -116,17 +141,17 @@ export default function EnrollmentManagement() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <ClipboardList className="h-7 w-7 text-[#2eff8c]" />
-          <div>
-            <h1 className="text-2xl font-bold">Управление доступом к курсу</h1>
-            <p className="text-sm text-gray-400">
-              Открывайте темы, управляйте прогрессом и комментариями
-            </p>
-          </div>
+      <header className="mb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <ClipboardList className="h-6 w-6 text-[#2eff8c]" />
+          <h1 className="text-2xl font-bold text-white">
+            Управление доступом к курсу
+          </h1>
         </div>
-      </div>
+        <p className="text-sm text-slate-400">
+          Открывайте темы, управляйте прогрессом и комментариями
+        </p>
+      </header>
 
       {studentsLoading ? (
         <div className="space-y-3">
@@ -136,134 +161,176 @@ export default function EnrollmentManagement() {
         </div>
       ) : (
         <div className="space-y-3">
-          {students?.users.filter((s) => s.roleName !== "admin").map((student) => (
-            <Card
-              key={student.id}
-              className="bg-[#1e2529] border-[#37474f]"
-            >
-              <CardContent className="p-4">
-                <div
-                  className="flex items-center justify-between cursor-pointer"
-                  onClick={() =>
-                    setExpandedStudent(
-                      expandedStudent === student.id ? null : student.id
-                    )
-                  }
-                >
-                  <div className="flex items-center gap-3">
-                    <ChevronDown
-                      className={`h-4 w-4 text-gray-400 transition-transform ${
-                        expandedStudent === student.id ? "rotate-180" : ""
-                      }`}
-                    />
-                    <div className="w-9 h-9 rounded-full bg-[#2eff8c]/10 flex items-center justify-center shrink-0">
-                      <User className="h-4 w-4 text-[#2eff8c]" />
-                    </div>
-                    <div>
-                      <p className="text-white font-semibold text-base leading-tight">
-                        {student.name}
-                      </p>
-                      <p className="text-sm text-gray-300 leading-tight mt-0.5">
-                        @{student.login}
-                        <Badge
-                          className="ml-2 text-[10px]"
-                          variant={
-                            student.status === "active"
-                              ? "default"
-                              : "secondary"
-                          }
-                        >
-                          {student.status}
-                        </Badge>
-                      </p>
-                    </div>
-                  </div>
-                  <Dialog
-                    open={enrollOpen && selectedStudentId === student.id}
+          {students?.users
+            .filter((s) => s.roleName !== "admin")
+            .map((student) => (
+              <StudentCard
+                key={student.id}
+                student={student}
+                isExpanded={expandedStudent === student.id}
+                onToggle={() =>
+                  setExpandedStudent(
+                    expandedStudent === student.id ? null : student.id
+                  )
+                }
+                enrollDialog={
+                  <EnrollDialog
+                    student={student}
+                    topics={topics ?? []}
+                    open={
+                      enrollDialogOpen && selectedStudentId === student.id
+                    }
                     onOpenChange={(open) => {
-                      setEnrollOpen(open);
+                      setEnrollDialogOpen(open);
                       if (open) setSelectedStudentId(student.id);
                     }}
-                  >
-                    <DialogTrigger asChild>
-                      <Button
-                        size="sm"
-                        className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedStudentId(student.id);
-                        }}
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Открыть тему
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="bg-[#1e2529] border-[#37474f] text-white">
-                      <DialogHeader>
-                        <DialogTitle>
-                          Открыть тему для {student.name}
-                        </DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4 mt-4">
-                        <Select
-                          value={selectedTopicId?.toString() ?? ""}
-                          onValueChange={(v) =>
-                            setSelectedTopicId(Number(v))
-                          }
-                        >
-                          <SelectTrigger className="bg-[#263238] border-[#37474f]">
-                            <SelectValue placeholder="Выберите тему..." />
-                          </SelectTrigger>
-                          <SelectContent className="bg-[#1e2529] border-[#37474f]">
-                            {topics?.map((t) => (
-                              <SelectItem
-                                key={t.id}
-                                value={t.id.toString()}
-                              >
-                                {t.title}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Button
-                          className="w-full bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
-                          disabled={!selectedTopicId || enrollMutation.isPending}
-                          onClick={() => {
-                            if (selectedTopicId && selectedStudentId) {
-                              enrollMutation.mutate({
-                                studentId: selectedStudentId,
-                                topicId: selectedTopicId,
-                              });
-                            }
-                          }}
-                        >
-                          {enrollMutation.isPending
-                            ? "Открываем..."
-                            : "Подтвердить"}
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-
+                    selectedTopicId={selectedTopicId}
+                    onSelectTopic={setSelectedTopicId}
+                    onEnroll={() => {
+                      if (selectedTopicId && selectedStudentId) {
+                        enrollMutation.mutate({
+                          studentId: selectedStudentId,
+                          topicId: selectedTopicId,
+                        });
+                      }
+                    }}
+                    isEnrolling={enrollMutation.isPending}
+                  />
+                }
+              >
                 {expandedStudent === student.id && (
                   <StudentEnrollments
                     studentId={student.id}
-                    onUnenroll={(id) => unenrollMutation.mutate({ enrollmentId: id })}
+                    onUnenroll={(id) =>
+                      unenrollMutation.mutate({ enrollmentId: id })
+                    }
                     onUpdateStatus={(id, status) =>
                       updateStatusMutation.mutate({ enrollmentId: id, status })
                     }
                     isPending={
-                      unenrollMutation.isPending || updateStatusMutation.isPending
+                      unenrollMutation.isPending ||
+                      updateStatusMutation.isPending
                     }
                   />
                 )}
-              </CardContent>
-            </Card>
-          ))}
+              </StudentCard>
+            ))}
         </div>
       )}
     </div>
+  );
+}
+
+function StudentCard({
+  student,
+  isExpanded,
+  onToggle,
+  enrollDialog,
+  children,
+}: {
+  student: StudentUser;
+  isExpanded: boolean;
+  onToggle: () => void;
+  enrollDialog: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card className="bg-[#1e2529] border-[#2a3338] overflow-hidden">
+      <CardContent className="p-0">
+        <div
+          className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-[#232b2f] transition-colors"
+          onClick={onToggle}
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <ChevronDown
+              className={`h-4 w-4 text-slate-400 transition-transform shrink-0 ${
+                isExpanded ? "rotate-180" : ""
+              }`}
+            />
+            <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center shrink-0">
+              <User className="h-4 w-4 text-slate-400" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-white font-medium text-sm truncate">
+                {student.name}
+              </p>
+              <p className="text-xs text-slate-400 truncate">
+                @{student.login}
+              </p>
+            </div>
+          </div>
+          <div onClick={(e) => e.stopPropagation()}>{enrollDialog}</div>
+        </div>
+
+        {isExpanded && (
+          <div className="border-t border-[#2a3338] px-4 py-4">{children}</div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function EnrollDialog({
+  student,
+  topics,
+  open,
+  onOpenChange,
+  selectedTopicId,
+  onSelectTopic,
+  onEnroll,
+  isEnrolling,
+}: {
+  student: StudentUser;
+  topics: TopicItem[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  selectedTopicId: number | null;
+  onSelectTopic: (id: number | null) => void;
+  onEnroll: () => void;
+  isEnrolling: boolean;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>
+        <Button
+          size="sm"
+          className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a] font-medium"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Plus className="h-4 w-4 mr-1" />
+          Открыть тему
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="bg-[#1e2529] border-[#37474f] text-white sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Открыть тему для {student.name}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 mt-2">
+          <Select
+            value={selectedTopicId?.toString() ?? ""}
+            onValueChange={(v) => onSelectTopic(Number(v))}
+          >
+            <SelectTrigger className="bg-[#263238] border-[#37474f]">
+              <SelectValue placeholder="Выберите тему..." />
+            </SelectTrigger>
+            <SelectContent className="bg-[#1e2529] border-[#37474f]">
+              {topics.map((t) => (
+                <SelectItem key={t.id} value={t.id.toString()}>
+                  {t.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            className="w-full bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
+            disabled={!selectedTopicId || isEnrolling}
+            onClick={onEnroll}
+          >
+            {isEnrolling ? "Открываем..." : "Подтвердить"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -275,239 +342,212 @@ function StudentEnrollments({
 }: {
   studentId: number;
   onUnenroll: (id: number) => void;
-  onUpdateStatus: (id: number, status: "active" | "completed" | "suspended") => void;
+  onUpdateStatus: (id: number, status: EnrollmentStatus) => void;
   isPending: boolean;
 }) {
   const { data: enrollments, isLoading } =
     trpc.enrollment.listForStudent.useQuery({ studentId });
-
-  const [expandedEnrollment, setExpandedEnrollment] = useState<number | null>(null);
-  const [editEnrollment, setEditEnrollment] = useState<number | null>(null);
-  const [currentSubtopicId, setCurrentSubtopicId] = useState<string>("");
-  const [comment, setComment] = useState("");
-
-  const utils = trpc.useUtils();
-
-  const updateDetailsMutation = trpc.enrollment.updateDetails.useMutation({
-    onSuccess: () => {
-      toast("Данные обновлены");
-      utils.enrollment.listForStudent.invalidate({ studentId });
-      setEditEnrollment(null);
-    },
-    onError: (err) => toast(err.message),
-  });
-
   const { data: allSubtopics } = trpc.course.listSubtopics.useQuery();
 
   if (isLoading) {
     return (
-      <div className="mt-4 pl-8">
-        <Skeleton className="h-8 bg-[#37474f]" />
+      <div className="space-y-2">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <Skeleton key={i} className="h-14 bg-[#37474f]" />
+        ))}
       </div>
     );
   }
 
   if (!enrollments?.length) {
     return (
-      <p className="mt-4 pl-8 text-sm text-gray-500">
+      <p className="text-sm text-slate-500">
         У ученика пока нет открытых тем
       </p>
     );
   }
 
   return (
-    <div className="mt-4 pl-8 space-y-3">
-      {enrollments.map((e) => (
-        <div key={e.id} className="space-y-2">
-          {/* Enrollment header */}
-          <div className="flex items-center justify-between py-2 px-3 bg-[#263238] rounded-lg">
-            <div className="flex items-center gap-3 min-w-0">
-              <span
-                className="w-2 h-2 rounded-full shrink-0"
-                style={{ backgroundColor: e.topicColor ?? "#2eff8c" }}
-              />
-              <span className="text-sm font-medium text-white truncate">{e.topicTitle}</span>
-              <Badge
-                className={`${ENROLLMENT_STATUS_COLORS[e.status]} text-[10px] shrink-0`}
-              >
-                {e.status === "active" && "Активна"}
-                {e.status === "completed" && "Завершена"}
-                {e.status === "suspended" && "Приостановлена"}
-              </Badge>
-              {e.currentSubtopicId && allSubtopics && (
-                <Badge className="bg-[#01acff]/20 text-[#01acff] text-[10px] shrink-0">
-                  <GraduationCap size={10} className="mr-1" />
-                  {allSubtopics.find((s) => s.id === e.currentSubtopicId)?.title ?? `ID ${e.currentSubtopicId}`}
-                </Badge>
-              )}
-              {e.comment && (
-                <span className="text-xs text-[#798389] truncate max-w-[180px] hidden lg:inline">
-                  {e.comment}
-                </span>
-              )}
-            </div>
-            <div className="flex gap-1 shrink-0">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                title="Настройки"
-                onClick={() => {
-                  setEditEnrollment(editEnrollment === e.id ? null : e.id);
-                  setCurrentSubtopicId(e.currentSubtopicId?.toString() ?? "none");
-                  setComment(e.comment ?? "");
-                }}
-              >
-                <Settings className="h-4 w-4 text-[#c8cdd1]" />
-              </Button>
-              {e.status === "active" ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  title="Приостановить"
-                  onClick={() => onUpdateStatus(e.id, "suspended")}
-                  disabled={isPending}
-                >
-                  <PauseCircle className="h-4 w-4 text-yellow-400" />
-                </Button>
-              ) : e.status === "suspended" ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  title="Активировать"
-                  onClick={() => onUpdateStatus(e.id, "active")}
-                  disabled={isPending}
-                >
-                  <PlayCircle className="h-4 w-4 text-green-400" />
-                </Button>
-              ) : null}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                title="Удалить доступ"
-                onClick={() => {
-                  if (confirm("Удалить доступ к этой теме?")) {
-                    onUnenroll(e.id);
-                  }
-                }}
-                disabled={isPending}
-              >
-                <Trash2 className="h-4 w-4 text-red-400" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Edit enrollment details */}
-          {editEnrollment === e.id && (
-            <div className="px-3 py-3 bg-[#1e2529] rounded-lg border border-[#37474f] space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-[#798389] mb-1 block">
-                    Текущая подтема
-                  </label>
-                  <Select
-                    value={currentSubtopicId}
-                    onValueChange={setCurrentSubtopicId}
-                  >
-                    <SelectTrigger className="bg-[#263238] border-[#37474f] text-white text-sm">
-                      <SelectValue placeholder="Выберите подтему..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#1e2529] border-[#37474f]">
-                      <SelectItem value="none">Не назначена</SelectItem>
-                      {allSubtopics
-                        ?.filter((s) => s.topicId === e.topicId)
-                        .map((s) => (
-                          <SelectItem key={s.id} value={s.id.toString()}>
-                            {s.title}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-xs text-[#798389] mb-1 block">
-                    Комментарий для ученика
-                  </label>
-                  <Input
-                    value={comment}
-                    onChange={(ev) => setComment(ev.target.value)}
-                    placeholder="Например, изучить к следующему занятию..."
-                    className="bg-[#263238] border-[#37474f] text-white text-sm"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
-                  disabled={updateDetailsMutation.isPending}
-                  onClick={() => {
-                    updateDetailsMutation.mutate({
-                      enrollmentId: e.id,
-                      currentSubtopicId: currentSubtopicId && currentSubtopicId !== "none"
-                        ? Number(currentSubtopicId)
-                        : null,
-                      comment: comment || undefined,
-                    });
-                  }}
-                >
-                  <Save className="h-3.5 w-3.5 mr-1" />
-                  Сохранить
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setEditEnrollment(null)}
-                >
-                  <X className="h-3.5 w-3.5 mr-1" />
-                  Отмена
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Subtopic progress manager */}
-          <div className="px-3">
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full justify-between border-[#37474f] bg-[#1e2529] hover:bg-[#263238] hover:text-[#2eff8c] text-[#c8cdd1] text-xs h-8"
-              onClick={() =>
-                setExpandedEnrollment(
-                  expandedEnrollment === e.id ? null : e.id
-                )
-              }
-            >
-              <span className="flex items-center gap-2">
-                {expandedEnrollment === e.id ? (
-                  <EyeOff size={14} />
-                ) : (
-                  <Eye size={14} />
-                )}
-                {expandedEnrollment === e.id
-                  ? "Скрыть темы раздела"
-                  : "Управлять темами и прогрессом"}
-              </span>
-              <ChevronDown
-                className={`h-3.5 w-3.5 transition-transform ${
-                  expandedEnrollment === e.id ? "rotate-180" : ""
-                }`}
-              />
-            </Button>
-
-            {expandedEnrollment === e.id && (
-              <SubtopicProgressManager
-                studentId={studentId}
-                topicId={e.topicId}
-              />
-            )}
-          </div>
-        </div>
+    <div className="space-y-2">
+      {enrollments.map((enrollment) => (
+        <TopicRow
+          key={enrollment.id}
+          studentId={studentId}
+          enrollment={enrollment}
+          allSubtopics={allSubtopics ?? []}
+          onUnenroll={onUnenroll}
+          onUpdateStatus={onUpdateStatus}
+          isPending={isPending}
+        />
       ))}
     </div>
+  );
+}
+
+function TopicRow({
+  studentId,
+  enrollment,
+  allSubtopics,
+  onUnenroll,
+  onUpdateStatus,
+  isPending,
+}: {
+  studentId: number;
+  enrollment: EnrollmentItem;
+  allSubtopics: { id: number; topicId: number; title: string }[];
+  onUnenroll: (id: number) => void;
+  onUpdateStatus: (id: number, status: EnrollmentStatus) => void;
+  isPending: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const { data: progress } = trpc.student.getTopicProgress.useQuery({
+    studentId,
+    topicId: enrollment.topicId,
+  });
+  const { data: topicLabs } = trpc.course.topicLabWorks.useQuery(
+    { topicId: enrollment.topicId },
+    { enabled: isOpen }
+  );
+
+  const completedCount =
+    progress?.filter((p) => p.status === "completed").length ?? 0;
+  const totalCount = progress?.length ?? 0;
+  const progressPercent =
+    totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+  const currentSubtopicId = progress?.find((p) => p.status === "in_progress")
+    ?.subtopicId;
+  const currentSubtopic = allSubtopics.find((s) => s.id === currentSubtopicId);
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <div className="relative">
+        <CollapsibleTrigger asChild>
+          <button className="w-full flex items-center gap-3 px-3 py-3 bg-[#232b2f] hover:bg-[#263238] rounded-lg border border-[#2a3338] text-left transition-colors pr-12">
+            <span
+              className="w-2 h-2 rounded-full shrink-0"
+              style={{ backgroundColor: enrollment.topicColor ?? "#2eff8c" }}
+            />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-medium text-white truncate">
+                  {enrollment.topicTitle}
+                </span>
+                <Badge
+                  variant="outline"
+                  className={`${ENROLLMENT_STATUS_COLORS[enrollment.status]} text-[10px] px-1.5 py-0 h-5`}
+                >
+                  {ENROLLMENT_STATUS_LABELS[enrollment.status]}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                <div className="w-28 sm:w-40">
+                  <Progress
+                    value={progressPercent}
+                    className="h-1.5 bg-slate-700"
+                  />
+                </div>
+                <span className="text-xs text-slate-400">
+                  {completedCount} из {totalCount} подтем
+                </span>
+                {currentSubtopic && (
+                  <span className="text-xs text-sky-400 truncate max-w-[200px] hidden sm:inline">
+                    <GraduationCap className="h-3 w-3 inline mr-1" />
+                    {currentSubtopic.title}
+                  </span>
+                )}
+              </div>
+            </div>
+            <ChevronDown
+              className={`h-4 w-4 text-slate-400 shrink-0 transition-transform ${
+                isOpen ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+        </CollapsibleTrigger>
+        <div
+          className="absolute right-2 top-1/2 -translate-y-1/2"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <TopicActions
+            status={enrollment.status}
+            onToggleStatus={() =>
+              onUpdateStatus(
+                enrollment.id,
+                enrollment.status === "active" ? "suspended" : "active"
+              )
+            }
+            onUnenroll={() => {
+              if (confirm("Удалить доступ к этой теме?")) {
+                onUnenroll(enrollment.id);
+              }
+            }}
+            isPending={isPending}
+          />
+        </div>
+      </div>
+
+      <CollapsibleContent className="mt-2 pl-3 border-l-2 border-[#2a3338] space-y-3">
+        <SubtopicProgressManager
+          studentId={studentId}
+          topicId={enrollment.topicId}
+        />
+        {topicLabs && topicLabs.length > 0 && <LabList labs={topicLabs} />}
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+function TopicActions({
+  status,
+  onToggleStatus,
+  onUnenroll,
+  isPending,
+}: {
+  status: EnrollmentStatus;
+  onToggleStatus: () => void;
+  onUnenroll: () => void;
+  isPending: boolean;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0 text-slate-400 hover:text-white hover:bg-slate-800"
+          disabled={isPending}
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        className="bg-[#1e2529] border-[#37474f] text-white"
+        align="end"
+      >
+        <DropdownMenuItem onClick={onToggleStatus} className="cursor-pointer">
+          {status === "active" ? (
+            <>
+              <Pause className="h-4 w-4 mr-2 text-amber-400" />
+              Приостановить
+            </>
+          ) : (
+            <>
+              <Play className="h-4 w-4 mr-2 text-emerald-400" />
+              Активировать
+            </>
+          )}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={onUnenroll}
+          className="cursor-pointer text-red-400 focus:text-red-400"
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          Удалить доступ
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -518,10 +558,10 @@ function SubtopicProgressManager({
   studentId: number;
   topicId: number;
 }) {
-  const { data: progress, isLoading } = trpc.student.getTopicProgress.useQuery(
-    { studentId, topicId }
-  );
-  const { data: topicLabs } = trpc.course.topicLabWorks.useQuery({ topicId });
+  const { data: progress, isLoading } = trpc.student.getTopicProgress.useQuery({
+    studentId,
+    topicId,
+  });
   const utils = trpc.useUtils();
 
   const updateProgress = trpc.student.updateProgress.useMutation({
@@ -536,9 +576,9 @@ function SubtopicProgressManager({
 
   if (isLoading) {
     return (
-      <div className="mt-2 space-y-2">
+      <div className="space-y-2">
         {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="h-12 bg-[#37474f]" />
+          <Skeleton key={i} className="h-10 bg-[#37474f]" />
         ))}
       </div>
     );
@@ -546,159 +586,197 @@ function SubtopicProgressManager({
 
   if (!progress?.length) {
     return (
-      <div className="mt-2 p-3 bg-[#1e2529] rounded-lg border border-[#37474f] text-sm text-[#798389]">
-        В этом разделе пока нет подтем
+      <div className="text-sm text-slate-500 bg-[#1a2024] rounded-md px-3 py-2 border border-[#2a3338]">
+        В этой теме пока нет подтем
       </div>
     );
   }
 
   return (
-    <div className="mt-2 space-y-2">
-      {progress.map((sub) => (
-        <div
-          key={sub.subtopicId}
-          className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 px-3 bg-[#1e2529] rounded-lg border border-[#37474f]"
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-sm font-medium text-white truncate">{sub.title}</span>
-            <Badge className={`${SUBTOPIC_STATUS_COLORS[sub.status]} text-[10px] border`}>
-              {SUBTOPIC_STATUS_LABELS[sub.status]}
-            </Badge>
+    <div className="bg-[#1a2024] rounded-lg border border-[#2a3338] overflow-hidden">
+      <div className="overflow-x-auto">
+        <div className="min-w-[560px] pr-4">
+          <div className="grid grid-cols-[1fr_180px_64px_64px_64px_120px] gap-2 px-3 py-2 bg-[#232b2f] text-xs font-medium text-slate-400 border-b border-[#2a3338]">
+            <span>Подтема</span>
+            <span>Комментарий</span>
+            <span className="text-center">Теория</span>
+            <span className="text-center">Практика</span>
+            <span className="text-center">Лаба</span>
+            <span>Статус</span>
           </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Theory toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`h-7 w-7 p-0 rounded-md ${
-                sub.theoryCompleted
-                  ? "bg-[#2eff8c]/10 text-[#2eff8c]"
-                  : "text-[#434e54] hover:text-[#c8cdd1]"
-              }`}
-              title="Теория"
-              onClick={() =>
-                updateProgress.mutate({
-                  studentId,
-                  subtopicId: sub.subtopicId,
-                  theoryCompleted: !sub.theoryCompleted,
-                })
-              }
-            >
-              <BookOpen size={14} />
-            </Button>
-
-            {/* Practice toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`h-7 w-7 p-0 rounded-md ${
-                sub.practiceCompleted
-                  ? "bg-[#01acff]/10 text-[#01acff]"
-                  : "text-[#434e54] hover:text-[#c8cdd1]"
-              }`}
-              title="Практика"
-              onClick={() =>
-                updateProgress.mutate({
-                  studentId,
-                  subtopicId: sub.subtopicId,
-                  practiceCompleted: !sub.practiceCompleted,
-                })
-              }
-            >
-              <FileText size={14} />
-            </Button>
-
-            {/* Lab toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`h-7 w-7 p-0 rounded-md ${
-                sub.labCompleted
-                  ? "bg-[#ffcb3d]/10 text-[#ffcb3d]"
-                  : "text-[#434e54] hover:text-[#c8cdd1]"
-              }`}
-              title="Лабораторная"
-              onClick={() =>
-                updateProgress.mutate({
-                  studentId,
-                  subtopicId: sub.subtopicId,
-                  labCompleted: !sub.labCompleted,
-                })
-              }
-            >
-              <Beaker size={14} />
-            </Button>
-
-            <div className="w-px h-4 bg-[#37474f]" />
-
-            {/* Status dropdown */}
-            <Select
-              value={sub.status}
-              onValueChange={(val) =>
-                updateProgress.mutate({
-                  studentId,
-                  subtopicId: sub.subtopicId,
-                  status: val as "not_started" | "in_progress" | "completed",
-                })
-              }
-            >
-              <SelectTrigger className="h-7 w-[120px] text-[10px] bg-[#263238] border-[#37474f] text-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-[#1e2529] border-[#37474f]">
-                <SelectItem value="not_started">
-                  <span className="flex items-center gap-1.5 text-xs">
-                    <Circle size={12} className="text-[#434e54]" />
-                    Не начато
-                  </span>
-                </SelectItem>
-                <SelectItem value="in_progress">
-                  <span className="flex items-center gap-1.5 text-xs">
-                    <Clock size={12} className="text-[#01acff]" />
-                    Изучается
-                  </span>
-                </SelectItem>
-                <SelectItem value="completed">
-                  <span className="flex items-center gap-1.5 text-xs">
-                    <CheckCircle2 size={12} className="text-[#2eff8c]" />
-                    Завершено
-                  </span>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="divide-y divide-[#2a3338]">
+            {progress.map((sub) => (
+              <SubtopicRow
+                key={sub.subtopicId}
+                sub={sub}
+                onUpdate={(data) =>
+                  updateProgress.mutate({
+                    studentId,
+                    subtopicId: sub.subtopicId,
+                    ...data,
+                  })
+                }
+                isPending={updateProgress.isPending}
+              />
+            ))}
           </div>
         </div>
-      ))}
-
-      {/* Labs */}
-      {topicLabs && topicLabs.length > 0 && (
-        <div className="mt-2 space-y-1">
-          <p className="text-xs text-[#798389] px-1">Лабораторные работы</p>
-          {topicLabs.map((lab) => (
-            <div
-              key={lab.id}
-              className="flex items-center gap-3 py-2 px-3 bg-[#263238]/50 rounded-lg border border-[#37474f]/50"
-            >
-              <Beaker size={14} className="text-[#2eff8c] shrink-0" />
-              <div className="flex-1 min-w-0">
-                <span className="text-sm text-white truncate">{lab.title}</span>
-                {lab.shortDesc && (
-                  <p className="text-xs text-[#798389]">{lab.shortDesc}</p>
-                )}
-              </div>
-              <a
-                href={`/#/labs/${lab.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-[#01acff] hover:underline shrink-0"
-              >
-                Открыть
-              </a>
-            </div>
-          ))}
-        </div>
-      )}
+      </div>
     </div>
   );
 }
+
+function SubtopicRow({
+  sub,
+  onUpdate,
+  isPending,
+}: {
+  sub: SubtopicProgressItem;
+  onUpdate: (data: {
+    status?: SubtopicStatus;
+    theoryCompleted?: boolean;
+    practiceCompleted?: boolean;
+    labCompleted?: boolean;
+    comment?: string;
+  }) => void;
+  isPending: boolean;
+}) {
+  return (
+    <div className="grid grid-cols-[1fr_180px_64px_64px_64px_120px] gap-2 px-3 py-2 items-center hover:bg-[#1e2529] transition-colors">
+      <span className="text-sm text-white truncate" title={sub.title}>
+        {sub.title}
+      </span>
+      <Input
+        defaultValue={sub.comment ?? ""}
+        onBlur={(ev) => {
+          const value = ev.target.value;
+          if (value !== (sub.comment ?? "")) {
+            onUpdate({ comment: value });
+          }
+        }}
+        placeholder="Комментарий..."
+        className="h-7 text-xs bg-[#232b2f] border-[#37474f] text-white placeholder:text-slate-600"
+        disabled={isPending}
+      />
+      <CompletionToggle
+        completed={sub.theoryCompleted}
+        onToggle={() => onUpdate({ theoryCompleted: !sub.theoryCompleted })}
+        icon={<BookOpen className="h-4 w-4" />}
+        activeClass="text-emerald-400 bg-emerald-400/10"
+        title="Теория"
+        isPending={isPending}
+      />
+      <CompletionToggle
+        completed={sub.practiceCompleted}
+        onToggle={() => onUpdate({ practiceCompleted: !sub.practiceCompleted })}
+        icon={<FileText className="h-4 w-4" />}
+        activeClass="text-sky-400 bg-sky-400/10"
+        title="Практика"
+        isPending={isPending}
+      />
+      <CompletionToggle
+        completed={sub.labCompleted}
+        onToggle={() => onUpdate({ labCompleted: !sub.labCompleted })}
+        icon={<Beaker className="h-4 w-4" />}
+        activeClass="text-amber-400 bg-amber-400/10"
+        title="Лабораторная"
+        isPending={isPending}
+      />
+      <Select
+        value={sub.status}
+        onValueChange={(val) => onUpdate({ status: val as SubtopicStatus })}
+        disabled={isPending}
+      >
+        <SelectTrigger className="h-7 text-xs bg-[#232b2f] border-[#37474f] text-white">
+          <SelectValue>
+            <StatusLabel status={sub.status} />
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent className="bg-[#1e2529] border-[#37474f]">
+          <SelectItem value="not_started">
+            <StatusLabel status="not_started" />
+          </SelectItem>
+          <SelectItem value="in_progress">
+            <StatusLabel status="in_progress" />
+          </SelectItem>
+          <SelectItem value="completed">
+            <StatusLabel status="completed" />
+          </SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+function CompletionToggle({
+  completed,
+  onToggle,
+  icon,
+  activeClass,
+  title,
+  isPending,
+}: {
+  completed: boolean;
+  onToggle: () => void;
+  icon: React.ReactNode;
+  activeClass: string;
+  title: string;
+  isPending: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      disabled={isPending}
+      title={title}
+      className={`flex justify-center items-center h-7 w-7 mx-auto rounded-md transition-colors ${
+        completed
+          ? activeClass
+          : "text-slate-600 hover:text-slate-400 hover:bg-slate-800"
+      } disabled:opacity-50`}
+    >
+      {icon}
+    </button>
+  );
+}
+
+function StatusLabel({ status }: { status: SubtopicStatus }) {
+  return (
+    <span
+      className={`flex items-center gap-1.5 text-xs ${SUBTOPIC_STATUS_COLORS[status]}`}
+    >
+      {status === "not_started" && <Circle className="h-3 w-3" />}
+      {status === "in_progress" && <Clock className="h-3 w-3" />}
+      {status === "completed" && <CheckCircle2 className="h-3 w-3" />}
+      {SUBTOPIC_STATUS_LABELS[status]}
+    </span>
+  );
+}
+
+function LabList({ labs }: { labs: LabItem[] }) {
+  return (
+    <div className="space-y-1.5">
+      <h4 className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
+        <Beaker className="h-3.5 w-3.5" />
+        Лабораторные работы
+      </h4>
+      <div className="grid gap-1.5">
+        {labs.map((lab) => (
+          <a
+            key={lab.id}
+            href={`/#/labs/${lab.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between px-3 py-2 bg-[#1a2024] hover:bg-[#232b2f] rounded-md border border-[#2a3338] transition-colors group"
+          >
+            <span className="text-sm text-white group-hover:text-[#2eff8c] transition-colors truncate pr-2">
+              {lab.title}
+            </span>
+            <ExternalLink className="h-3.5 w-3.5 text-slate-500 group-hover:text-[#2eff8c] shrink-0" />
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+

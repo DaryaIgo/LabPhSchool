@@ -33,6 +33,7 @@ import {
   ExternalLink,
   NotebookPen,
   Download,
+  MessageSquare,
 } from "lucide-react";
 
 const AVATARS = [
@@ -471,9 +472,7 @@ export default function StudentProfile() {
                                     </Badge>
                                   </div>
                                   {sub.comment && (
-                                    <p className="text-xs text-[#798389] mt-0.5">
-                                      {sub.comment}
-                                    </p>
+                                    <SubtopicComment text={sub.comment} />
                                   )}
                                   {sub.jupyterUrl && (
                                     <a
@@ -706,6 +705,36 @@ function ActivityCard({
           {new Date(date).toLocaleDateString("ru-RU")}
         </div>
       )}
+    </div>
+  );
+}
+
+function SubtopicComment({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const limit = 100;
+  const isLong = text.length > limit;
+  const preview = isLong && !expanded ? text.slice(0, limit).trimEnd() + "…" : text;
+
+  return (
+    <div className="mt-2 bg-[#2eff8c]/10 border border-[#2eff8c]/30 rounded-lg px-3 py-2">
+      <div className="flex items-start gap-2">
+        <MessageSquare
+          size={14}
+          className="text-[#2eff8c] shrink-0 mt-0.5"
+        />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm text-[#c8cdd1] leading-relaxed">{preview}</p>
+          {isLong && (
+            <button
+              type="button"
+              onClick={() => setExpanded(!expanded)}
+              className="text-xs text-[#2eff8c] hover:underline mt-1"
+            >
+              {expanded ? "Свернуть" : "Развернуть"}
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
