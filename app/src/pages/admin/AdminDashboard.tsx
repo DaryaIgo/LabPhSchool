@@ -130,37 +130,58 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Statistics */}
+      {/* System Overview */}
       <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
         <Activity className="h-5 w-5 text-[#2eff8c]" />
         System Overview
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+
+      {/* Students */}
+      <h3 className="text-base font-semibold mb-3 text-gray-300 flex items-center gap-2">
+        <Users className="h-4 w-4 text-[#2eff8c]" />
+        Ученики
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <StatCard
-          title="Total Students"
+          title="Работы"
+          value={stats?.content.labSubmissions ?? "—"}
+          subtitle="На проверке"
+          icon={FileCheck}
+          onClick={() => navigate("/admin/lab-submissions")}
+        />
+        <StatCard
+          title="Всего учеников"
           value={stats?.students.total ?? "—"}
-          subtitle={`${stats?.students.active ?? 0} active`}
+          subtitle={`${stats?.students.active ?? 0} активных`}
           icon={GraduationCap}
           onClick={() => navigate("/admin/students")}
         />
         <StatCard
-          title="Suspended"
+          title="Приостановлены"
           value={stats?.students.suspended ?? "—"}
-          subtitle="Require attention"
+          subtitle="Требуют внимания"
           icon={Users}
           onClick={() => navigate("/admin/students")}
         />
+      </div>
+
+      {/* Learning Materials */}
+      <h3 className="text-base font-semibold mb-3 text-gray-300 flex items-center gap-2">
+        <BookOpen className="h-4 w-4 text-[#ffcb3d]" />
+        Учебные материалы
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
-          title="Topics"
+          title="Темы курса"
           value={stats?.content.topics ?? "—"}
-          subtitle="Course topics"
+          subtitle="Разделы курса"
           icon={BookOpen}
           onClick={() => navigate("/admin/topics")}
         />
         <StatCard
-          title="Virtual Labs"
+          title="Лабораторные"
           value={stats?.content.labWorks ?? "—"}
-          subtitle="Interactive simulations"
+          subtitle="Интерактивные симуляции"
           icon={FlaskConical}
           onClick={() => navigate("/admin/virtual-labs")}
         />
@@ -170,13 +191,6 @@ export default function AdminDashboard() {
           subtitle="Дополнительные материалы"
           icon={Library}
           onClick={() => navigate("/admin/resources")}
-        />
-        <StatCard
-          title="Работы"
-          value={stats?.content.labSubmissions ?? "—"}
-          subtitle="На проверке"
-          icon={FileCheck}
-          onClick={() => navigate("/admin/lab-submissions")}
         />
       </div>
 

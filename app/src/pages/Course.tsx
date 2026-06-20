@@ -378,7 +378,8 @@ export default function Course() {
         <div className="relative max-w-4xl mx-auto px-6 text-center">
           <p className="formula-text text-sm mb-4">понятнее всего то, чего не будет на экзамене</p>
           <h1 className="text-4xl lg:text-5xl font-black uppercase tracking-tight mb-6">
-            Курс физики: полная программа
+            Курс физики <br></br>
+            программа 7-11 классов
           </h1>
           <p className="text-[#c8cdd1] max-w-2xl mx-auto">
             От кинематики до квантовой физики — структурированный материал с

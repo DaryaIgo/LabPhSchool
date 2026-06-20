@@ -234,21 +234,59 @@ export default function Resources() {
       {/* Resources */}
       <section className="section-dark py-16 lg:py-24">
         <div className="max-w-6xl mx-auto px-6">
-          {/* Type Filters */}
-          <div className="flex flex-wrap gap-2 mb-8">
-            {filters.map((f) => (
-              <button
-                key={f.label}
-                onClick={() => setFilter(f.key)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  filter === f.key
-                    ? "bg-[#2eff8c] text-black"
-                    : "bg-[#2a3237] border border-[#434e54] text-[#c8cdd1] hover:border-[#2eff8c]/50"
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
+          {/* Filters */}
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-8">
+            {/* Type Filters */}
+            <div className="flex flex-wrap gap-2">
+              {filters.map((f) => (
+                <button
+                  key={f.label}
+                  onClick={() => setFilter(f.key)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    filter === f.key
+                      ? "bg-[#2eff8c] text-black"
+                      : "bg-[#2a3237] border border-[#434e54] text-[#c8cdd1] hover:border-[#2eff8c]/50"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Tag Cloud */}
+            <div className="flex flex-col items-start lg:items-end gap-2 max-w-md">
+              <span className="text-xs text-[#798389] uppercase tracking-wider">
+                Темы
+              </span>
+              <div className="flex flex-wrap gap-1.5 justify-start lg:justify-end">
+                {allTags.map((tag) => {
+                  const isActive = tagFilter === tag.name;
+                  return (
+                    <button
+                      key={tag.name}
+                      onClick={() =>
+                        setTagFilter(isActive ? null : tag.name)
+                      }
+                      className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                        isActive
+                          ? "bg-[#2eff8c] text-black border-[#2eff8c] font-medium"
+                          : "bg-[#2a3237] text-[#c8cdd1] border-[#434e54] hover:border-[#2eff8c]/50 hover:text-[#2eff8c]"
+                      }`}
+                    >
+                      {tag.name}
+                    </button>
+                  );
+                })}
+                {tagFilter && (
+                  <button
+                    onClick={() => setTagFilter(null)}
+                    className="text-xs text-[#798389] hover:text-[#2eff8c] px-2 py-1 transition-colors"
+                  >
+                    Сбросить
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
           {isLoading ? (
@@ -335,84 +373,7 @@ export default function Resources() {
         </div>
       </section>
 
-      {/* Universal Algorithm */}
-      <section className="section-dark py-16 lg:py-24">
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl lg:text-3xl font-bold mb-4">
-              Универсальный алгоритм
-            </h2>
-            <p className="text-[#c8cdd1]">
-              Шесть шагов для решения любой физической задачи
-            </p>
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              { num: "1", title: "Прочитать", desc: "Внимательно прочитать условие, выделить вопрос" },
-              { num: "2", title: "Записать данные", desc: "Выписать известные величины, перевести в СИ" },
-              { num: "3", title: "Определить тип", desc: "Классифицировать задачу по теме и типу" },
-              { num: "4", title: "Найти формулу", desc: "Выбрать закон или формулу из справочника" },
-              { num: "5", title: "Решить", desc: "Подставить данные, вычислить ответ" },
-              { num: "6", title: "Проверить", desc: "Проверить размерность и адекватность" },
-            ].map((step) => (
-              <div
-                key={step.num}
-                className="bg-[#2a3237] border border-[#434e54] rounded-xl p-5"
-              >
-                <span className="font-mono-phys text-3xl font-bold text-[#2eff8c]">
-                  {step.num}
-                </span>
-                <h3 className="font-semibold mt-2">{step.title}</h3>
-                <p className="text-sm text-[#798389] mt-1">{step.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* Tag Cloud */}
-      <section className="section-light py-16">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-2xl font-bold text-[#1a1a1a] mb-8">
-            Темы ресурсов
-          </h2>
-
-          <div className="flex flex-wrap justify-center gap-3">
-            {allTags.map((tag) => {
-              const sizeMap = {
-                sm: "text-sm px-3 py-1.5",
-                md: "text-base px-4 py-2",
-                lg: "text-lg px-5 py-2.5",
-              };
-              const isActive = tagFilter === tag.name;
-              return (
-                <button
-                  key={tag.name}
-                  onClick={() =>
-                    setTagFilter(isActive ? null : tag.name)
-                  }
-                  className={`${sizeMap[tag.size as keyof typeof sizeMap]} rounded-full transition-all ${
-                    isActive
-                      ? "bg-[#2eff8c] text-black font-medium"
-                      : "bg-white text-[#434e54] border border-gray-200 hover:border-[#2eff8c] hover:text-[#2eff8c]"
-                  }`}
-                >
-                  {tag.name}
-                </button>
-              );
-            })}
-          </div>
-
-          {tagFilter && (
-            <button
-              onClick={() => setTagFilter(null)}
-              className="mt-6 text-sm text-[#798389] hover:text-[#1a1a1a] transition-colors"
-            >
-              Сбросить фильтр
-            </button>
-          )}
-        </div>
-      </section>
     </div>
   );
 }

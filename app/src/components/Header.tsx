@@ -165,9 +165,9 @@ export default function Header() {
             {isAuthenticated && user ? (
               <div className="flex items-center gap-3">
                 {user.role === "student" && <StudentNotifications />}
-                <Link to="/profile"
+                <Link to={user.role === "admin" ? "/admin" : "/profile"}
                   className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    isActive("/profile") || isActive("/student/profile") ? "text-[#2eff8c] bg-[#2eff8c]/10" : "text-[#c8cdd1] hover:text-white"
+                    isActive("/profile") || isActive("/student/profile") || isActive("/admin") ? "text-[#2eff8c] bg-[#2eff8c]/10" : "text-[#c8cdd1] hover:text-white"
                   }`}>
                   {user.avatar ? (
                     <img src={`/avatars/${user.avatar}.svg`} alt="" className="w-5 h-5 rounded-full" />
@@ -208,7 +208,7 @@ export default function Header() {
             <div className="pt-3 border-t border-white/5">
               {isAuthenticated && user ? (
                 <div className="space-y-2">
-                  <Link to="/profile" onClick={() => setMobileOpen(false)}
+                  <Link to={user.role === "admin" ? "/admin" : "/profile"} onClick={() => setMobileOpen(false)}
                     className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#2eff8c] bg-[#2eff8c]/10">
                     {user.avatar ? (
                       <img src={`/avatars/${user.avatar}.svg`} alt="" className="w-5 h-5 rounded-full" />
