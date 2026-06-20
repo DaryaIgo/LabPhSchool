@@ -8,18 +8,18 @@
 
 import { z } from "zod";
 import { createRouter, publicQuery, adminQuery, studentQuery } from "./middleware";
-import { getDb } from "./queries/connection";
+import { getLabsDb, getLearningDb, getContentDb } from "./queries/connection";
 import {
   labCategories,
   labSubcategories,
   labWorks,
   labBlocks,
   labSimulationParams,
-  labProgress,
   labAnalytics,
-  topicNodes,
-} from "@db/schema";
-import { eq, asc, count, and } from "drizzle-orm";
+} from "@db/schema/labs";
+import { labProgress } from "@db/schema/learning";
+import { topicNodes } from "@db/schema/content";
+import { eq, asc, count, and, inArray } from "drizzle-orm";
 import { createAuditEntry } from "./queries/audit";
 
 export const virtualLabRouter = createRouter({
@@ -28,7 +28,7 @@ export const virtualLabRouter = createRouter({
   // ═══════════════════════════════════════════════════════════
 
   listCategories: publicQuery.query(async () => {
-    const db = getDb();
+    const db = getLabsDb();
     const categories = await db
       .select()
       .from(labCategories)
@@ -54,7 +54,7 @@ export const virtualLabRouter = createRouter({
   categoryBySlug: publicQuery
     .input(z.object({ slug: z.string() }))
     .query(async ({ input }) => {
-      const db = getDb();
+      const db = getLabsDb();
       const cat = await db
         .select()
         .from(labCategories)
@@ -74,7 +74,7 @@ export const virtualLabRouter = createRouter({
   listSubcategories: publicQuery
     .input(z.object({ categoryId: z.number().positive() }))
     .query(async ({ input }) => {
-      return getDb()
+      return getLabsDb()
         .select()
         .from(labSubcategories)
         .where(eq(labSubcategories.categoryId, input.categoryId))
@@ -96,7 +96,7 @@ export const virtualLabRouter = createRouter({
         .optional()
     )
     .query(async ({ input }) => {
-      const db = getDb();
+      const db = getLabsDb();
       const query = db
         .select({
           id: labWorks.id,
@@ -127,7 +127,8 @@ export const virtualLabRouter = createRouter({
       const results = await query;
       return results.filter((r) => {
         if (input?.categoryId && r.categoryId !== input.categoryId) return false;
-        if (input?.subcategoryId && r.subcategoryId !== input.subcategoryId) return false;
+        if (input?.subcategoryId && r.subcategoryId !== input.subcategoryId)
+          return false;
         if (input?.status && r.status !== input.status) return false;
         return true;
       });
@@ -136,8 +137,8 @@ export const virtualLabRouter = createRouter({
   labWorkBySlug: publicQuery
     .input(z.object({ slug: z.string() }))
     .query(async ({ input }) => {
-      const db = getDb();
-      const work = await db
+      const labsDb = getLabsDb();
+      const work = await labsDb
         .select({
           id: labWorks.id,
           categoryId: labWorks.categoryId,
@@ -166,13 +167,13 @@ export const virtualLabRouter = createRouter({
         .limit(1);
       if (!work[0]) return null;
 
-      const blocks = await db
+      const blocks = await labsDb
         .select()
         .from(labBlocks)
         .where(eq(labBlocks.labWorkId, work[0].id))
         .orderBy(asc(labBlocks.order));
 
-      const params = await db
+      const params = await labsDb
         .select()
         .from(labSimulationParams)
         .where(eq(labSimulationParams.labWorkId, work[0].id))
@@ -181,7 +182,7 @@ export const virtualLabRouter = createRouter({
       // Pull theory from linked course topic node if available
       let topicNodeContent: string | null = null;
       if (work[0].topicNodeId) {
-        const node = await db
+        const node = await getContentDb()
           .select({ content: topicNodes.content })
           .from(topicNodes)
           .where(eq(topicNodes.id, work[0].topicNodeId))
@@ -201,10 +202,12 @@ export const virtualLabRouter = createRouter({
   getMyLabProgress: studentQuery
     .input(z.object({ labWorkId: z.number().positive() }).optional())
     .query(async ({ ctx, input }) => {
-      const db = getDb();
+      const learningDb = getLearningDb();
+      const labsDb = getLabsDb();
       const userId = ctx.localUser!.id;
+
       if (input?.labWorkId) {
-        const rows = await db
+        const rows = await learningDb
           .select()
           .from(labProgress)
           .where(
@@ -216,25 +219,37 @@ export const virtualLabRouter = createRouter({
           .limit(1);
         return rows[0] ?? null;
       }
-      return db
-        .select({
-          id: labProgress.id,
-          localUserId: labProgress.localUserId,
-          labWorkId: labProgress.labWorkId,
-          mode: labProgress.mode,
-          status: labProgress.status,
-          data: labProgress.data,
-          measurements: labProgress.measurements,
-          conclusion: labProgress.conclusion,
-          startedAt: labProgress.startedAt,
-          completedAt: labProgress.completedAt,
-          createdAt: labProgress.createdAt,
-          updatedAt: labProgress.updatedAt,
-          categoryId: labWorks.categoryId,
-        })
+
+      const progressRows = await learningDb
+        .select()
         .from(labProgress)
-        .innerJoin(labWorks, eq(labProgress.labWorkId, labWorks.id))
         .where(eq(labProgress.localUserId, userId));
+
+      const labWorkIds = progressRows.map((p) => p.labWorkId);
+      const labWorksMap = new Map<number, typeof labWorks.$inferSelect>();
+      if (labWorkIds.length > 0) {
+        const works = await labsDb
+          .select()
+          .from(labWorks)
+          .where(inArray(labWorks.id, labWorkIds));
+        for (const w of works) labWorksMap.set(w.id, w);
+      }
+
+      return progressRows.map((p) => ({
+        id: p.id,
+        localUserId: p.localUserId,
+        labWorkId: p.labWorkId,
+        mode: p.mode,
+        status: p.status,
+        data: p.data,
+        measurements: p.measurements,
+        conclusion: p.conclusion,
+        startedAt: p.startedAt,
+        completedAt: p.completedAt,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
+        categoryId: labWorksMap.get(p.labWorkId)?.categoryId ?? null,
+      }));
     }),
 
   saveLabProgress: studentQuery
@@ -249,7 +264,7 @@ export const virtualLabRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getLearningDb();
       const userId = ctx.localUser!.id;
 
       const existing = await db
@@ -304,7 +319,7 @@ export const virtualLabRouter = createRouter({
   // ═══════════════════════════════════════════════════════════
 
   adminListCategories: adminQuery.query(async () => {
-    return getDb()
+    return getLabsDb()
       .select()
       .from(labCategories)
       .orderBy(asc(labCategories.order));
@@ -324,7 +339,7 @@ export const virtualLabRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getLabsDb();
       const result = await db.insert(labCategories).values({
         order: input.order,
         title: input.title,
@@ -361,7 +376,7 @@ export const virtualLabRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getLabsDb();
       const { id, ...data } = input;
       const updateData: Record<string, unknown> = {};
       if (data.order !== undefined) updateData.order = data.order;
@@ -388,7 +403,7 @@ export const virtualLabRouter = createRouter({
   adminDeleteCategory: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
-      await getDb().delete(labCategories).where(eq(labCategories.id, input.id));
+      await getLabsDb().delete(labCategories).where(eq(labCategories.id, input.id));
       await createAuditEntry({
         actorId: ctx.localUser!.id,
         actorType: "user",
@@ -406,7 +421,7 @@ export const virtualLabRouter = createRouter({
   adminListSubcategories: adminQuery
     .input(z.object({ categoryId: z.number().positive() }).optional())
     .query(async ({ input }) => {
-      const db = getDb();
+      const db = getLabsDb();
       if (input?.categoryId) {
         return db
           .select()
@@ -428,7 +443,7 @@ export const virtualLabRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getLabsDb();
       const result = await db.insert(labSubcategories).values({
         categoryId: input.categoryId,
         order: input.order,
@@ -459,7 +474,7 @@ export const virtualLabRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getLabsDb();
       const { id, ...data } = input;
       const updateData: Record<string, unknown> = {};
       if (data.order !== undefined) updateData.order = data.order;
@@ -482,7 +497,7 @@ export const virtualLabRouter = createRouter({
   adminDeleteSubcategory: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
-      await getDb().delete(labSubcategories).where(eq(labSubcategories.id, input.id));
+      await getLabsDb().delete(labSubcategories).where(eq(labSubcategories.id, input.id));
       await createAuditEntry({
         actorId: ctx.localUser!.id,
         actorType: "user",
@@ -495,10 +510,10 @@ export const virtualLabRouter = createRouter({
 
   // ═══════════════════════════════════════════════════════════
   // ADMIN: Lab Works CRUD
-  // ═════════════════════════════════════════════════════════==
+  // ═══════════════════════════════════════════════════════════
 
   adminListLabWorks: adminQuery.query(async () => {
-    const db = getDb();
+    const db = getLabsDb();
     return db
       .select({
         id: labWorks.id,
@@ -547,7 +562,7 @@ export const virtualLabRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getLabsDb();
       const result = await db.insert(labWorks).values({
         categoryId: input.categoryId,
         subcategoryId: input.subcategoryId ?? null,
@@ -598,7 +613,7 @@ export const virtualLabRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getLabsDb();
       const { id, ...data } = input;
       const updateData: Record<string, unknown> = {};
       if (data.categoryId !== undefined) updateData.categoryId = data.categoryId;
@@ -633,7 +648,7 @@ export const virtualLabRouter = createRouter({
   adminDeleteLabWork: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
-      await getDb().delete(labWorks).where(eq(labWorks.id, input.id));
+      await getLabsDb().delete(labWorks).where(eq(labWorks.id, input.id));
       await createAuditEntry({
         actorId: ctx.localUser!.id,
         actorType: "user",
@@ -651,7 +666,7 @@ export const virtualLabRouter = createRouter({
   adminListBlocks: adminQuery
     .input(z.object({ labWorkId: z.number().positive() }))
     .query(async ({ input }) => {
-      return getDb()
+      return getLabsDb()
         .select()
         .from(labBlocks)
         .where(eq(labBlocks.labWorkId, input.labWorkId))
@@ -680,7 +695,7 @@ export const virtualLabRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getLabsDb();
       const result = await db.insert(labBlocks).values({
         labWorkId: input.labWorkId,
         order: input.order,
@@ -725,7 +740,7 @@ export const virtualLabRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getLabsDb();
       const { id, ...data } = input;
       const updateData: Record<string, unknown> = {};
       if (data.order !== undefined) updateData.order = data.order;
@@ -749,7 +764,7 @@ export const virtualLabRouter = createRouter({
   adminDeleteBlock: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
-      await getDb().delete(labBlocks).where(eq(labBlocks.id, input.id));
+      await getLabsDb().delete(labBlocks).where(eq(labBlocks.id, input.id));
       await createAuditEntry({
         actorId: ctx.localUser!.id,
         actorType: "user",
@@ -767,7 +782,7 @@ export const virtualLabRouter = createRouter({
   adminListSimulationParams: adminQuery
     .input(z.object({ labWorkId: z.number().positive() }))
     .query(async ({ input }) => {
-      return getDb()
+      return getLabsDb()
         .select()
         .from(labSimulationParams)
         .where(eq(labSimulationParams.labWorkId, input.labWorkId))
@@ -790,7 +805,7 @@ export const virtualLabRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getLabsDb();
       const result = await db.insert(labSimulationParams).values({
         labWorkId: input.labWorkId,
         key: input.key,
@@ -830,7 +845,7 @@ export const virtualLabRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getLabsDb();
       const { id, ...data } = input;
       const updateData: Record<string, unknown> = {};
       if (data.label !== undefined) updateData.label = data.label;
@@ -860,7 +875,7 @@ export const virtualLabRouter = createRouter({
   adminDeleteSimulationParam: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
-      await getDb()
+      await getLabsDb()
         .delete(labSimulationParams)
         .where(eq(labSimulationParams.id, input.id));
       await createAuditEntry({
@@ -880,15 +895,17 @@ export const virtualLabRouter = createRouter({
   adminGetAnalytics: adminQuery
     .input(z.object({ labWorkId: z.number().positive() }))
     .query(async ({ input }) => {
-      const db = getDb();
-      const rows = await db
+      const labsDb = getLabsDb();
+      const learningDb = getLearningDb();
+
+      const rows = await labsDb
         .select()
         .from(labAnalytics)
         .where(eq(labAnalytics.labWorkId, input.labWorkId))
         .limit(1);
 
       // Compute dynamic stats from lab_progress
-      const progressStats = await db
+      const progressStats = await learningDb
         .select({
           total: count(),
           completed: count(),

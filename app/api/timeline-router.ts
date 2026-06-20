@@ -7,8 +7,8 @@
 
 import { z } from "zod";
 import { createRouter, publicQuery, adminQuery } from "./middleware";
-import { getDb } from "./queries/connection";
-import { timelineEntries } from "@db/schema";
+import { getTimelineDb } from "./queries/connection";
+import { timelineEntries } from "@db/schema/timeline";
 import { eq, asc } from "drizzle-orm";
 import { createAuditEntry } from "./queries/audit";
 
@@ -18,7 +18,7 @@ export const timelineRouter = createRouter({
   // ═══════════════════════════════════════════════════════════
 
   list: publicQuery.query(async () => {
-    const db = getDb();
+    const db = getTimelineDb();
     return db
       .select()
       .from(timelineEntries)
@@ -43,7 +43,7 @@ export const timelineRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getTimelineDb();
       const result = await db.insert(timelineEntries).values({
         type: input.type,
         name: input.name,
@@ -84,7 +84,7 @@ export const timelineRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getTimelineDb();
       const { id, ...data } = input;
       const updateData: Record<string, unknown> = {};
       if (data.type !== undefined) updateData.type = data.type;
@@ -113,7 +113,7 @@ export const timelineRouter = createRouter({
   delete: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
-      await getDb().delete(timelineEntries).where(eq(timelineEntries.id, input.id));
+      await getTimelineDb().delete(timelineEntries).where(eq(timelineEntries.id, input.id));
 
       await createAuditEntry({
         actorId: ctx.localUser!.id,

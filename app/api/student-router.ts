@@ -23,9 +23,31 @@ import {
   getEnrollmentsWithDetails,
 } from "./queries/enrollments";
 import { createAuditEntry } from "./queries/audit";
-import { getDb } from "./queries/connection";
 import { eq, and, desc, sql, inArray, count } from "drizzle-orm";
-import * as schema from "@db/schema";
+
+import {
+  getAuthDb,
+  getContentDb,
+  getLearningDb,
+  getProblemsDb,
+  getJupyterDb,
+  getNotificationsDb,
+} from "./queries/connection";
+
+import { localUsers } from "@db/schema/auth";
+import { topics, subtopics, labs } from "@db/schema/content";
+import {
+  enrollments,
+  studentProgress,
+  labProgress,
+  type StudentProgress,
+} from "@db/schema/learning";
+import { problemTypes } from "@db/schema/problems";
+import {
+  jupyterNotebooks,
+  jupyterNotebookAccess,
+} from "@db/schema/jupyter";
+import { notifications } from "@db/schema/notifications";
 
 // ─── Student Endpoints ───
 
@@ -62,9 +84,9 @@ export const studentRouter = createRouter({
 
   // ── Get student enrollments ──
   getEnrollments: studentQuery.query(async ({ ctx }) => {
-    const db = getDb();
+    const contentDb = getContentDb();
     if (ctx.role?.name === "admin") {
-      const allTopics = await db.select().from(schema.topics).orderBy(schema.topics.order);
+      const allTopics = await contentDb.select().from(topics).orderBy(topics.order);
       return allTopics.map((t) => ({
         id: 0,
         localUserId: ctx.localUser!.id,
@@ -82,7 +104,8 @@ export const studentRouter = createRouter({
 
   // ── Get full student profile with stats ──
   getProfile: studentQuery.query(async ({ ctx }) => {
-    const db = getDb();
+    const contentDb = getContentDb();
+    const learningDb = getLearningDb();
     const studentId = ctx.localUser!.id;
 
     const user = await findLocalUserById(studentId);
@@ -91,10 +114,10 @@ export const studentRouter = createRouter({
     }
 
     // Get enrollments with topics
-    let enrollments;
+    let enrollmentsList;
     if (ctx.role?.name === "admin") {
-      const allTopics = await db.select().from(schema.topics).orderBy(schema.topics.order);
-      enrollments = allTopics.map((t) => ({
+      const allTopics = await contentDb.select().from(topics).orderBy(topics.order);
+      enrollmentsList = allTopics.map((t) => ({
         id: 0,
         localUserId: studentId,
         topicId: t.id,
@@ -110,31 +133,31 @@ export const studentRouter = createRouter({
         topicColor: t.color,
       }));
     } else {
-      enrollments = await getEnrollmentsWithDetails(studentId);
+      enrollmentsList = await getEnrollmentsWithDetails(studentId);
     }
 
     // Get student progress for all enrolled topics' subtopics
-    const enrolledTopicIds = enrollments.map((e) => e.topicId);
+    const enrolledTopicIds = enrollmentsList.map((e) => e.topicId);
 
-    let progress: schema.StudentProgress[] = [];
+    let progress: StudentProgress[] = [];
     let enrolledSubtopics: { id: number; topicId: number }[] = [];
     if (enrolledTopicIds.length > 0) {
       // Get subtopics for enrolled topics
-      enrolledSubtopics = await db
-        .select({ id: schema.subtopics.id, topicId: schema.subtopics.topicId })
-        .from(schema.subtopics)
-        .where(inArray(schema.subtopics.topicId, enrolledTopicIds));
+      enrolledSubtopics = await contentDb
+        .select({ id: subtopics.id, topicId: subtopics.topicId })
+        .from(subtopics)
+        .where(inArray(subtopics.topicId, enrolledTopicIds));
 
       const subtopicIds = enrolledSubtopics.map((s) => s.id);
 
       if (subtopicIds.length > 0) {
-        progress = await db
+        progress = await learningDb
           .select()
-          .from(schema.studentProgress)
+          .from(studentProgress)
           .where(
             and(
-              eq(schema.studentProgress.localUserId, studentId),
-              inArray(schema.studentProgress.subtopicId, subtopicIds)
+              eq(studentProgress.localUserId, studentId),
+              inArray(studentProgress.subtopicId, subtopicIds)
             )
           );
       }
@@ -158,7 +181,7 @@ export const studentRouter = createRouter({
         : 0;
 
     // Section (topic) progress
-    const topicProgress = enrollments.map((e) => {
+    const topicProgress = enrollmentsList.map((e) => {
       const topicSubtopicIds = new Set(
         enrolledSubtopics.filter((s) => s.topicId === e.topicId).map((s) => s.id)
       );
@@ -188,20 +211,21 @@ export const studentRouter = createRouter({
       completedSubtopics,
       inProgressSubtopics,
       notStartedSubtopics,
-      enrollments,
+      enrollments: enrollmentsList,
       topicProgress,
     };
   }),
 
   // ── Get learning path (roadmap) ──
   getLearningPath: studentQuery.query(async ({ ctx }) => {
-    const db = getDb();
+    const contentDb = getContentDb();
+    const learningDb = getLearningDb();
     const studentId = ctx.localUser!.id;
 
-    let enrollments;
+    let enrollmentsList;
     if (ctx.role?.name === "admin") {
-      const allTopics = await db.select().from(schema.topics).orderBy(schema.topics.order);
-      enrollments = allTopics.map((t) => ({
+      const allTopics = await contentDb.select().from(topics).orderBy(topics.order);
+      enrollmentsList = allTopics.map((t) => ({
         id: 0,
         localUserId: studentId,
         topicId: t.id,
@@ -217,64 +241,64 @@ export const studentRouter = createRouter({
         topicColor: t.color,
       }));
     } else {
-      enrollments = await getEnrollmentsWithDetails(studentId);
+      enrollmentsList = await getEnrollmentsWithDetails(studentId);
     }
-    const enrolledTopicIds = enrollments.map((e) => e.topicId);
+    const enrolledTopicIds = enrollmentsList.map((e) => e.topicId);
 
     if (enrolledTopicIds.length === 0) {
       return { topics: [] };
     }
 
     // Get all subtopics for enrolled topics
-    const subtopics = await db
+    const subtopicsList = await contentDb
       .select({
-        id: schema.subtopics.id,
-        topicId: schema.subtopics.topicId,
-        title: schema.subtopics.title,
-        order: schema.subtopics.order,
-        jupyterUrl: schema.subtopics.jupyterUrl,
+        id: subtopics.id,
+        topicId: subtopics.topicId,
+        title: subtopics.title,
+        order: subtopics.order,
+        jupyterUrl: subtopics.jupyterUrl,
       })
-      .from(schema.subtopics)
-      .where(inArray(schema.subtopics.topicId, enrolledTopicIds))
-      .orderBy(schema.subtopics.topicId, schema.subtopics.order);
+      .from(subtopics)
+      .where(inArray(subtopics.topicId, enrolledTopicIds))
+      .orderBy(subtopics.topicId, subtopics.order);
 
-    const subtopicIds = subtopics.map((s) => s.id);
+    const subtopicIds = subtopicsList.map((s) => s.id);
 
     // Get progress for these subtopics
     const progress =
       subtopicIds.length > 0
-        ? await db
+        ? await learningDb
             .select()
-            .from(schema.studentProgress)
+            .from(studentProgress)
             .where(
               and(
-                eq(schema.studentProgress.localUserId, studentId),
-                inArray(schema.studentProgress.subtopicId, subtopicIds)
+                eq(studentProgress.localUserId, studentId),
+                inArray(studentProgress.subtopicId, subtopicIds)
               )
             )
         : [];
 
     // Get legacy labs for these topics
     const topicLabs = enrolledTopicIds.length > 0
-      ? await db
+      ? await contentDb
           .select()
-          .from(schema.labs)
-          .where(inArray(schema.labs.topicId, enrolledTopicIds))
+          .from(labs)
+          .where(inArray(labs.topicId, enrolledTopicIds))
       : [];
 
     // Get lab progress for virtual labs
-    const labProgress = await db
+    const labProgressList = await learningDb
       .select({
-        labWorkId: schema.labProgress.labWorkId,
-        status: schema.labProgress.status,
-        completedAt: schema.labProgress.completedAt,
+        labWorkId: labProgress.labWorkId,
+        status: labProgress.status,
+        completedAt: labProgress.completedAt,
       })
-      .from(schema.labProgress)
-      .where(eq(schema.labProgress.localUserId, studentId));
+      .from(labProgress)
+      .where(eq(labProgress.localUserId, studentId));
 
     // Group by topic
-    const topicsWithSubtopics = enrollments.map((enrollment) => {
-      const topicSubs = subtopics.filter(
+    const topicsWithSubtopics = enrollmentsList.map((enrollment) => {
+      const topicSubs = subtopicsList.filter(
         (s) => s.topicId === enrollment.topicId
       );
       const subsWithProgress = topicSubs.map((sub) => {
@@ -320,204 +344,214 @@ export const studentRouter = createRouter({
       };
     });
 
-    return { topics: topicsWithSubtopics, labProgress };
+    return { topics: topicsWithSubtopics, labProgress: labProgressList };
   }),
 
   // ── Get current active topic ──
   getCurrentTopic: studentQuery.query(async ({ ctx }) => {
-    const db = getDb();
+    const contentDb = getContentDb();
+    const learningDb = getLearningDb();
+    const problemsDb = getProblemsDb();
     const studentId = ctx.localUser!.id;
 
     if (ctx.role?.name === "admin") {
       // Admin sees the first topic as current
-      const firstTopic = await db.select().from(schema.topics).orderBy(schema.topics.order).limit(1);
+      const firstTopic = await contentDb.select().from(topics).orderBy(topics.order).limit(1);
       if (!firstTopic.length) return null;
       const topic = firstTopic[0];
-      const subtopics = await db.select().from(schema.subtopics).where(eq(schema.subtopics.topicId, topic.id)).orderBy(schema.subtopics.order).limit(1);
-      const labs = await db.select().from(schema.labs).where(eq(schema.labs.topicId, topic.id));
-      const problemTypes = subtopics.length
-        ? await db.select().from(schema.problemTypes).where(eq(schema.problemTypes.subtopicId, subtopics[0].id))
+      const topicSubtopics = await contentDb.select().from(subtopics).where(eq(subtopics.topicId, topic.id)).orderBy(subtopics.order).limit(1);
+      const topicLabs = await contentDb.select().from(labs).where(eq(labs.topicId, topic.id));
+      const subtopicProblemTypes = topicSubtopics.length
+        ? await problemsDb.select().from(problemTypes).where(eq(problemTypes.subtopicId, topicSubtopics[0].id))
         : [];
       return {
-        subtopic: subtopics[0] ?? null,
+        subtopic: topicSubtopics[0] ?? null,
         topic: topic,
-        labs,
-        problemTypes,
+        labs: topicLabs,
+        problemTypes: subtopicProblemTypes,
         enrollmentComment: null,
       };
     }
 
     // Find enrollment with currentSubtopicId
-    const enrollment = await db
+    const enrollment = await learningDb
       .select({
-        id: schema.enrollments.id,
-        topicId: schema.enrollments.topicId,
-        currentSubtopicId: schema.enrollments.currentSubtopicId,
-        status: schema.enrollments.status,
-        comment: schema.enrollments.comment,
+        id: enrollments.id,
+        topicId: enrollments.topicId,
+        currentSubtopicId: enrollments.currentSubtopicId,
+        status: enrollments.status,
+        comment: enrollments.comment,
       })
-      .from(schema.enrollments)
+      .from(enrollments)
       .where(
         and(
-          eq(schema.enrollments.localUserId, studentId),
-          eq(schema.enrollments.status, "active"),
-          sql`${schema.enrollments.currentSubtopicId} IS NOT NULL`
+          eq(enrollments.localUserId, studentId),
+          eq(enrollments.status, "active"),
+          sql`${enrollments.currentSubtopicId} IS NOT NULL`
         )
       )
       .limit(1);
 
     if (!enrollment.length) {
       // Fallback: find first in_progress subtopic
-      const inProgress = await db
+      const inProgressProgress = await learningDb
         .select({
-          subtopicId: schema.studentProgress.subtopicId,
-          topicId: schema.subtopics.topicId,
+          subtopicId: studentProgress.subtopicId,
         })
-        .from(schema.studentProgress)
-        .innerJoin(
-          schema.subtopics,
-          eq(schema.studentProgress.subtopicId, schema.subtopics.id)
-        )
+        .from(studentProgress)
         .where(
           and(
-            eq(schema.studentProgress.localUserId, studentId),
-            eq(schema.studentProgress.status, "in_progress")
+            eq(studentProgress.localUserId, studentId),
+            eq(studentProgress.status, "in_progress")
           )
         )
         .limit(1);
 
-      if (!inProgress.length) {
+      if (!inProgressProgress.length) {
         return null;
       }
 
-      const subtopic = await db
-        .select()
-        .from(schema.subtopics)
-        .where(eq(schema.subtopics.id, inProgress[0].subtopicId))
+      const inProgressSubtopicId = inProgressProgress[0].subtopicId;
+
+      const subtopicRow = await contentDb
+        .select({ id: subtopics.id, topicId: subtopics.topicId })
+        .from(subtopics)
+        .where(eq(subtopics.id, inProgressSubtopicId))
         .limit(1);
 
-      const topic = await db
+      const topicId = subtopicRow[0]?.topicId;
+      if (!topicId) {
+        return null;
+      }
+
+      const subtopic = await contentDb
         .select()
-        .from(schema.topics)
-        .where(eq(schema.topics.id, inProgress[0].topicId))
+        .from(subtopics)
+        .where(eq(subtopics.id, inProgressSubtopicId))
         .limit(1);
 
-      const labs = await db
+      const topic = await contentDb
         .select()
-        .from(schema.labs)
-        .where(eq(schema.labs.topicId, inProgress[0].topicId));
+        .from(topics)
+        .where(eq(topics.id, topicId))
+        .limit(1);
 
-      const problemTypes = await db
+      const topicLabs = await contentDb
         .select()
-        .from(schema.problemTypes)
-        .where(eq(schema.problemTypes.subtopicId, inProgress[0].subtopicId));
+        .from(labs)
+        .where(eq(labs.topicId, topicId));
+
+      const subtopicProblemTypes = await problemsDb
+        .select()
+        .from(problemTypes)
+        .where(eq(problemTypes.subtopicId, inProgressSubtopicId));
 
       return {
         subtopic: subtopic[0] ?? null,
         topic: topic[0] ?? null,
-        labs,
-        problemTypes,
+        labs: topicLabs,
+        problemTypes: subtopicProblemTypes,
         enrollmentComment: null,
       };
     }
 
     const e = enrollment[0];
-    const subtopic = await db
+    const subtopic = await contentDb
       .select()
-      .from(schema.subtopics)
-      .where(eq(schema.subtopics.id, e.currentSubtopicId!))
+      .from(subtopics)
+      .where(eq(subtopics.id, e.currentSubtopicId!))
       .limit(1);
 
-    const topic = await db
+    const topic = await contentDb
       .select()
-      .from(schema.topics)
-      .where(eq(schema.topics.id, e.topicId))
+      .from(topics)
+      .where(eq(topics.id, e.topicId))
       .limit(1);
 
-    const labs = await db
+    const topicLabs = await contentDb
       .select()
-      .from(schema.labs)
-      .where(eq(schema.labs.topicId, e.topicId));
+      .from(labs)
+      .where(eq(labs.topicId, e.topicId));
 
-    const problemTypes = await db
+    const subtopicProblemTypes = await problemsDb
       .select()
-      .from(schema.problemTypes)
-      .where(eq(schema.problemTypes.subtopicId, e.currentSubtopicId!));
+      .from(problemTypes)
+      .where(eq(problemTypes.subtopicId, e.currentSubtopicId!));
 
     return {
       subtopic: subtopic[0] ?? null,
       topic: topic[0] ?? null,
-      labs,
-      problemTypes,
+      labs: topicLabs,
+      problemTypes: subtopicProblemTypes,
       enrollmentComment: e.comment,
     };
   }),
 
   // ── Get recent activity ──
   getActivity: studentQuery.query(async ({ ctx }) => {
-    const db = getDb();
+    const learningDb = getLearningDb();
     const studentId = ctx.localUser!.id;
 
     // Last opened topic (latest enrollment)
-    const lastEnrollment = await db
+    const lastEnrollment = await learningDb
       .select({
-        id: schema.enrollments.id,
-        topicId: schema.enrollments.topicId,
-        enrolledAt: schema.enrollments.enrolledAt,
-        status: schema.enrollments.status,
+        id: enrollments.id,
+        topicId: enrollments.topicId,
+        enrolledAt: enrollments.enrolledAt,
+        status: enrollments.status,
       })
-      .from(schema.enrollments)
-      .where(eq(schema.enrollments.localUserId, studentId))
-      .orderBy(desc(schema.enrollments.enrolledAt))
+      .from(enrollments)
+      .where(eq(enrollments.localUserId, studentId))
+      .orderBy(desc(enrollments.enrolledAt))
       .limit(1);
 
     // Last completed topic
-    const lastCompleted = await db
+    const lastCompleted = await learningDb
       .select({
-        id: schema.enrollments.id,
-        topicId: schema.enrollments.topicId,
-        completedAt: schema.enrollments.completedAt,
+        id: enrollments.id,
+        topicId: enrollments.topicId,
+        completedAt: enrollments.completedAt,
       })
-      .from(schema.enrollments)
+      .from(enrollments)
       .where(
         and(
-          eq(schema.enrollments.localUserId, studentId),
-          eq(schema.enrollments.status, "completed")
+          eq(enrollments.localUserId, studentId),
+          eq(enrollments.status, "completed")
         )
       )
-      .orderBy(desc(schema.enrollments.completedAt))
+      .orderBy(desc(enrollments.completedAt))
       .limit(1);
 
     // Last completed subtopic
-    const lastCompletedSubtopic = await db
+    const lastCompletedSubtopic = await learningDb
       .select({
-        subtopicId: schema.studentProgress.subtopicId,
-        completedAt: schema.studentProgress.completedAt,
+        subtopicId: studentProgress.subtopicId,
+        completedAt: studentProgress.completedAt,
       })
-      .from(schema.studentProgress)
+      .from(studentProgress)
       .where(
         and(
-          eq(schema.studentProgress.localUserId, studentId),
-          eq(schema.studentProgress.status, "completed")
+          eq(studentProgress.localUserId, studentId),
+          eq(studentProgress.status, "completed")
         )
       )
-      .orderBy(desc(schema.studentProgress.completedAt))
+      .orderBy(desc(studentProgress.completedAt))
       .limit(1);
 
     // Last completed lab
-    const lastCompletedLab = await db
+    const lastCompletedLab = await learningDb
       .select({
-        labWorkId: schema.labProgress.labWorkId,
-        completedAt: schema.labProgress.completedAt,
+        labWorkId: labProgress.labWorkId,
+        completedAt: labProgress.completedAt,
       })
-      .from(schema.labProgress)
+      .from(labProgress)
       .where(
         and(
-          eq(schema.labProgress.localUserId, studentId),
-          eq(schema.labProgress.status, "completed")
+          eq(labProgress.localUserId, studentId),
+          eq(labProgress.status, "completed")
         )
       )
-      .orderBy(desc(schema.labProgress.completedAt))
+      .orderBy(desc(labProgress.completedAt))
       .limit(1);
 
     // Last login
@@ -580,11 +614,11 @@ export const studentRouter = createRouter({
         });
       }
 
-      const db = getDb();
-      const [found] = await db
-        .select({ id: schema.localUsers.id })
-        .from(schema.localUsers)
-        .where(eq(schema.localUsers.login, input.login))
+      const authDb = getAuthDb();
+      const [found] = await authDb
+        .select({ id: localUsers.id })
+        .from(localUsers)
+        .where(eq(localUsers.login, input.login))
         .limit(1);
 
       if (found) {
@@ -722,7 +756,8 @@ export const studentRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const contentDb = getContentDb();
+      const learningDb = getLearningDb();
       const { studentId, subtopicId, ...data } = input;
 
       // Check if student exists
@@ -732,28 +767,28 @@ export const studentRouter = createRouter({
       }
 
       // Check if subtopic exists
-      const [subtopic] = await db
+      const [subtopic] = await contentDb
         .select()
-        .from(schema.subtopics)
-        .where(eq(schema.subtopics.id, subtopicId))
+        .from(subtopics)
+        .where(eq(subtopics.id, subtopicId))
         .limit(1);
       if (!subtopic) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Subtopic not found" });
       }
 
       // Find existing progress
-      const [existing] = await db
+      const [existing] = await learningDb
         .select()
-        .from(schema.studentProgress)
+        .from(studentProgress)
         .where(
           and(
-            eq(schema.studentProgress.localUserId, studentId),
-            eq(schema.studentProgress.subtopicId, subtopicId)
+            eq(studentProgress.localUserId, studentId),
+            eq(studentProgress.subtopicId, subtopicId)
           )
         )
         .limit(1);
 
-      const updateData: Partial<schema.StudentProgress> = {};
+      const updateData: Partial<StudentProgress> = {};
       if (data.status) {
         updateData.status = data.status;
         if (data.status === "in_progress" && !existing?.startedAt) {
@@ -777,12 +812,12 @@ export const studentRouter = createRouter({
       }
 
       if (existing) {
-        await db
-          .update(schema.studentProgress)
+        await learningDb
+          .update(studentProgress)
           .set(updateData)
-          .where(eq(schema.studentProgress.id, existing.id));
+          .where(eq(studentProgress.id, existing.id));
       } else {
-        await db.insert(schema.studentProgress).values({
+        await learningDb.insert(studentProgress).values({
           localUserId: studentId,
           subtopicId,
           status: data.status ?? "not_started",
@@ -815,29 +850,30 @@ export const studentRouter = createRouter({
       })
     )
     .query(async ({ input }) => {
-      const db = getDb();
-      const subtopics = await db
+      const contentDb = getContentDb();
+      const learningDb = getLearningDb();
+      const subtopicsList = await contentDb
         .select()
-        .from(schema.subtopics)
-        .where(eq(schema.subtopics.topicId, input.topicId))
-        .orderBy(schema.subtopics.order);
+        .from(subtopics)
+        .where(eq(subtopics.topicId, input.topicId))
+        .orderBy(subtopics.order);
 
-      const subtopicIds = subtopics.map((s) => s.id);
+      const subtopicIds = subtopicsList.map((s) => s.id);
 
       const progress =
         subtopicIds.length > 0
-          ? await db
+          ? await learningDb
               .select()
-              .from(schema.studentProgress)
+              .from(studentProgress)
               .where(
                 and(
-                  eq(schema.studentProgress.localUserId, input.studentId),
-                  inArray(schema.studentProgress.subtopicId, subtopicIds)
+                  eq(studentProgress.localUserId, input.studentId),
+                  inArray(studentProgress.subtopicId, subtopicIds)
                 )
               )
           : [];
 
-      return subtopics.map((sub) => {
+      return subtopicsList.map((sub) => {
         const prog = progress.find((p) => p.subtopicId === sub.id);
         return {
           subtopicId: sub.id,
@@ -861,29 +897,30 @@ export const studentRouter = createRouter({
   // ═══════════════════════════════════════════════════════════
 
   getMyJupyterNotebooks: studentQuery.query(async ({ ctx }) => {
-    const db = getDb();
+    const jupyterDb = getJupyterDb();
+    const contentDb = getContentDb();
     const studentId = ctx.localUser!.id;
 
-    const accesses = await db
+    const accesses = await jupyterDb
       .select({
-        notebookId: schema.jupyterNotebookAccess.notebookId,
-        grantedAt: schema.jupyterNotebookAccess.grantedAt,
+        notebookId: jupyterNotebookAccess.notebookId,
+        grantedAt: jupyterNotebookAccess.grantedAt,
       })
-      .from(schema.jupyterNotebookAccess)
-      .where(eq(schema.jupyterNotebookAccess.localUserId, studentId));
+      .from(jupyterNotebookAccess)
+      .where(eq(jupyterNotebookAccess.localUserId, studentId));
 
     const notebookIds = accesses.map((a) => a.notebookId);
     if (notebookIds.length === 0) return [];
 
-    const notebooks = await db
+    const notebooks = await jupyterDb
       .select()
-      .from(schema.jupyterNotebooks)
-      .where(inArray(schema.jupyterNotebooks.id, notebookIds));
+      .from(jupyterNotebooks)
+      .where(inArray(jupyterNotebooks.id, notebookIds));
 
-    const subtopicList = await db
+    const subtopicList = await contentDb
       .select()
-      .from(schema.subtopics)
-      .where(inArray(schema.subtopics.id, notebooks.map((n) => n.subtopicId)));
+      .from(subtopics)
+      .where(inArray(subtopics.id, notebooks.map((n) => n.subtopicId)));
     const subtopicMap = new Map(subtopicList.map((s) => [s.id, s.title]));
 
     return notebooks.map((n) => ({
@@ -897,24 +934,24 @@ export const studentRouter = createRouter({
   // ═══════════════════════════════════════════════════════════
 
   getNotifications: studentQuery.query(async ({ ctx }) => {
-    const db = getDb();
-    return db
+    const notificationsDb = getNotificationsDb();
+    return notificationsDb
       .select()
-      .from(schema.notifications)
-      .where(eq(schema.notifications.localUserId, ctx.localUser!.id))
-      .orderBy(desc(schema.notifications.createdAt))
+      .from(notifications)
+      .where(eq(notifications.localUserId, ctx.localUser!.id))
+      .orderBy(desc(notifications.createdAt))
       .limit(50);
   }),
 
   getUnreadNotificationCount: studentQuery.query(async ({ ctx }) => {
-    const db = getDb();
-    const result = await db
+    const notificationsDb = getNotificationsDb();
+    const result = await notificationsDb
       .select({ count: count() })
-      .from(schema.notifications)
+      .from(notifications)
       .where(
         and(
-          eq(schema.notifications.localUserId, ctx.localUser!.id),
-          eq(schema.notifications.read, false)
+          eq(notifications.localUserId, ctx.localUser!.id),
+          eq(notifications.read, false)
         )
       );
     return result[0]?.count ?? 0;
@@ -923,25 +960,25 @@ export const studentRouter = createRouter({
   markNotificationRead: studentQuery
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
-      await db
-        .update(schema.notifications)
+      const notificationsDb = getNotificationsDb();
+      await notificationsDb
+        .update(notifications)
         .set({ read: true })
         .where(
           and(
-            eq(schema.notifications.id, input.id),
-            eq(schema.notifications.localUserId, ctx.localUser!.id)
+            eq(notifications.id, input.id),
+            eq(notifications.localUserId, ctx.localUser!.id)
           )
         );
       return { success: true };
     }),
 
   markAllNotificationsRead: studentQuery.mutation(async ({ ctx }) => {
-    const db = getDb();
-    await db
-      .update(schema.notifications)
+    const notificationsDb = getNotificationsDb();
+    await notificationsDb
+      .update(notifications)
       .set({ read: true })
-      .where(eq(schema.notifications.localUserId, ctx.localUser!.id));
+      .where(eq(notifications.localUserId, ctx.localUser!.id));
     return { success: true };
   }),
 });

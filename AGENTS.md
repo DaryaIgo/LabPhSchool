@@ -98,8 +98,21 @@ app/
 │   ├── errors.ts           # Фабрика ошибок приложения
 │   └── types.ts            # Реэкспорт типов из db/schema
 ├── db/                     # Схема БД и миграции
-│   ├── schema.ts           # Описание всех таблиц Drizzle
-│   ├── relations.ts        # Отношения между таблицами
+│   ├── schema/             # Доменные модули схемы Drizzle
+│   │   ├── auth.ts         # Роли, разрешения, пользователи
+│   │   ├── content.ts      # Темы, подтемы, topic_nodes, labs, resources
+│   │   ├── learning.ts     # enrollments, student_progress, lab_progress
+│   │   ├── labs.ts         # Виртуальные лаборатории
+│   │   ├── problems.ts     # Банк задач
+│   │   ├── jupyter.ts      # Jupyter-ноутбуки
+│   │   ├── notifications.ts
+│   │   ├── timeline.ts
+│   │   ├── audit.ts
+│   │   ├── media.ts
+│   │   └── index.ts        # Реэкспорт всех доменов
+│   ├── schema.ts           # Реэкспорт schema/ для обратной совместимости
+│   ├── relations/          # Доменные Drizzle-отношения
+│   ├── relations.ts        # Реэкспорт relations/
 │   ├── seed.ts             # Начальные данные (12 тем, 48 подтем, 6 лаб, ресурсы)
 │   ├── migrations/         # SQL-миграции Drizzle Kit
 │   └── problems-seed.ts    # Сид задач
@@ -126,6 +139,17 @@ APP_SECRET=               # Секрет для подписи JWT
 
 # ── База данных ──
 DATABASE_URL=             # mysql://user:pass@host:port/db
+# Опционально: отдельные базы для каждого домена (если не заданы, используется DATABASE_URL)
+# DATABASE_URL_AUTH=      # mysql://user:pass@host:port/labphschool_auth
+# DATABASE_URL_CONTENT=
+# DATABASE_URL_LEARNING=
+# DATABASE_URL_LABS=
+# DATABASE_URL_PROBLEMS=
+# DATABASE_URL_JUPYTER=
+# DATABASE_URL_NOTIFICATIONS=
+# DATABASE_URL_TIMELINE=
+# DATABASE_URL_AUDIT=
+# DATABASE_URL_MEDIA=
 
 # ── Фронтенд (доступны в браузере через Vite) ──
 VITE_KIMI_AUTH_URL=       # URL OAuth-сервера Kimi
@@ -222,18 +246,22 @@ npm run db:push       # Push схемы (для разработки)
 
 ### База данных (MySQL + Drizzle ORM)
 
-Основные таблицы:
-- `users` — преподаватели (OAuth через Kimi)
-- `students` — ученики (логин/пароль, создаются админом)
-- `topics` — темы курса физики (12 тем)
-- `subtopics` — подтемы (48 подтем)
-- `labs` — лабораторные работы
-- `progress` — прогресс преподавателей по подтемам
-- `lab_results` — результаты лабораторных работ
-- `problem_types` — типы задач
-- `problems` — задачи с решениями
-- `resources` — дополнительные ресурсы
-- `student_progress` — прогресс учеников (theory/practice/lab)
+Схема разбита на bounded contexts (домены) в `app/db/schema/`:
+
+| Домен | Таблицы | Подключение |
+|---|---|---|
+| `auth` | `roles`, `permissions`, `role_permissions`, `users`, `local_users` | `getAuthDb()` |
+| `content` | `topics`, `subtopics`, `topic_nodes`, `labs`, `resources` | `getContentDb()` |
+| `learning` | `enrollments`, `student_progress`, `lab_progress` | `getLearningDb()` |
+| `labs` | `lab_categories`, `lab_subcategories`, `lab_works`, `lab_blocks`, `lab_simulation_params`, `lab_analytics` | `getLabsDb()` |
+| `problems` | `problem_types`, `problems` | `getProblemsDb()` |
+| `jupyter` | `jupyter_notebooks`, `jupyter_notebook_access` | `getJupyterDb()` |
+| `notifications` | `notifications` | `getNotificationsDb()` |
+| `timeline` | `timeline_entries` | `getTimelineDb()` |
+| `audit` | `audit_log` | `getAuditDb()` |
+| `media` | `images` | `getMediaDb()` |
+
+Между доменами нет внешних ключей на уровне БД — связи реализованы через soft-ссылки (`id` + домен). Это позволяет в будущем разнести домены по разным физическим базам данных, изменив только переменные окружения `DATABASE_URL_*`.
 
 ---
 
@@ -324,8 +352,9 @@ npm run db:push       # Push схемы (для разработки)
 
 ### Работа с БД
 
-- Всегда используй `getDb()` из `api/queries/connection.ts`
-- Схема описана в `db/schema.ts`
+- Используй фабрику нужного домена из `api/queries/connection.ts`: `getAuthDb()`, `getContentDb()`, `getLearningDb()` и т.д.
+- Устаревший `getDb()` оставлен только для обратной совместимости; в новом коде не используй его.
+- Схема разделена по доменам в `db/schema/<domain>.ts`; `db/schema.ts` — реэкспорт для совместимости.
 - Для новых таблиц добавь типы в `contracts/types.ts` (реэкспорт из `db/schema`)
 
 ### Добавление новой страницы

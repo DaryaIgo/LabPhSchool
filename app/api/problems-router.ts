@@ -1,19 +1,19 @@
 import { z } from "zod";
 import { createRouter, adminQuery } from "./middleware";
-import { getDb } from "./queries/connection";
-import { problems, problemTypes } from "@db/schema";
+import { getProblemsDb } from "./queries/connection";
+import { problems, problemTypes } from "@db/schema/problems";
 import { eq, and, asc } from "drizzle-orm";
 
 export const problemsRouter = createRouter({
   listTypes: adminQuery.query(async () => {
-    const db = getDb();
+    const db = getProblemsDb();
     return db.select().from(problemTypes).orderBy(asc(problemTypes.order));
   }),
 
   listByType: adminQuery
     .input(z.object({ typeId: z.number() }))
     .query(async ({ input }) => {
-      const db = getDb();
+      const db = getProblemsDb();
       return db
         .select()
         .from(problems)
@@ -29,7 +29,7 @@ export const problemsRouter = createRouter({
       })
     )
     .query(async ({ input }) => {
-      const db = getDb();
+      const db = getProblemsDb();
       return db
         .select()
         .from(problems)
@@ -45,7 +45,7 @@ export const problemsRouter = createRouter({
   getById: adminQuery
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
-      const db = getDb();
+      const db = getProblemsDb();
       const result = await db
         .select()
         .from(problems)
@@ -69,7 +69,7 @@ export const problemsRouter = createRouter({
       })
     )
     .mutation(async ({ input }) => {
-      const db = getDb();
+      const db = getProblemsDb();
       const result = await db.insert(problems).values([
         {
           problemTypeId: input.problemTypeId,

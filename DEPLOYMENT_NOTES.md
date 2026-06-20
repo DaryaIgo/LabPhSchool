@@ -23,15 +23,35 @@
    - легче избежать ошибок дублирования ключей;
    - можно проверить результат до того, как Passenger подхватит новую версию приложения.
 
+## Архитектура базы данных
+
+Проект перешёл на модульную (domain-driven) организацию данных. Все таблицы логически разбиты на домены:
+
+| Домен | Таблицы |
+|---|---|
+| `auth` | `roles`, `permissions`, `role_permissions`, `users`, `local_users` |
+| `content` | `topics`, `subtopics`, `topic_nodes`, `labs`, `resources` |
+| `learning` | `enrollments`, `student_progress`, `lab_progress` |
+| `labs` | `lab_categories`, `lab_subcategories`, `lab_works`, `lab_blocks`, `lab_simulation_params`, `lab_analytics` |
+| `problems` | `problem_types`, `problems` |
+| `jupyter` | `jupyter_notebooks`, `jupyter_notebook_access` |
+| `notifications` | `notifications` |
+| `timeline` | `timeline_entries` |
+| `audit` | `audit_log` |
+| `media` | `images` |
+
+На текущем хостинге SprintHost физически используется одна база данных (`darigoshin_labphschool_bd`). В коде каждый домен подключается через собственную фабрику `get*Db()`, но по умолчанию они все используют переменную `DATABASE_URL`. При необходимости каждому домену можно задать отдельную базу через `DATABASE_URL_<DOMAIN>` (см. `app/.env.example`).
+
+Между доменами не осталось жёстких внешних ключей: связи реализованы через soft-ссылки (`id` + домен). Это позволяет в будущем разнести домены по разным физическим базам без изменения кода приложения.
+
 ## Файлы с данными для БД
 
 | Файл | Что содержит | Когда импортировать |
 |------|--------------|---------------------|
 | `db/admin-seed.sql` | роли `admin`/`student`/`teacher` и пользователь `admin` | один раз при первой настройке |
 | `db/virtual-lab-data.sql` | категории, подкатегории, лабораторные работы, блоки, параметры симуляций | один раз, если таблицы `lab_*` пустые |
-| `db/timeline-data.sql` | учёные и открытия для таймлайна | один раз, если `timeline_entries` пустая |
-| `db/problems-data.sql` | типы задач и сами задачи | один раз, если `problems` пустая |
-| `db/extra-data.sql` | `timeline-data.sql` + `problems-data.sql` без `lab_*` | если виртуальные лабы уже импортированы, а таймлайн/задачи — нет |
+| `db/timeline-data.sql` | учёные и открытия для таймлайна (`timeline_entries`) | один раз, если `timeline_entries` пустая |
+| `db/problems-data.sql` | типы задач (`problem_types`) и сами задачи (`problems`) | один раз, если таблицы `problem_types`/`problems` пустые |
 | `db/topic-nodes-data.sql` | полный контент тем и подтем (`topic_nodes`) | если курс отображается в сокращённом виде / после пересоздания таблиц |
 | `db/subtopics-jupyter-update.sql` | ссылки на Jupyter/Colab для подтем (`subtopics`) | если на карточках подтем не отображается ссылка Jupyter |
 | `db/image-storage-migration.sql` | таблица `images` для хранения загруженных картинок | при обновлении на версию, где картинки хранятся в БД |
@@ -52,7 +72,7 @@
 #1062 - Дублирующаяся запись '1' по ключу 'lab_categories.PRIMARY'
 ```
 
-значит, эти данные уже импортированы. Не нужно импортировать их повторно. Используйте файл, в котором нет уже загруженных таблиц (например, `extra-data.sql` вместо `seed-data.sql`).
+значит, эти данные уже импортированы. Не нужно импортировать их повторно. Импортируйте только те файлы, таблицы которых ещё пусты (например, `problems-data.sql`, если `timeline_entries` уже заполнена).
 
 ## Проверка после импорта
 

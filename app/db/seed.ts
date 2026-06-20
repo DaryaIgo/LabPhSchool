@@ -1,8 +1,8 @@
-import { getDb } from "../api/queries/connection";
-import { topics, subtopics, labs, resources, topicNodes } from "./schema";
+import { getContentDb } from "../api/queries/connection";
+import { topics, subtopics, labs, resources, topicNodes } from "./schema/content";
 
 async function seed() {
-  const db = getDb();
+  const db = getContentDb();
 
   // Seed topics (12 themes of school physics)
   const topicData = [

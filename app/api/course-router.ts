@@ -1,19 +1,26 @@
 import { z } from "zod";
 import { createRouter, publicQuery } from "./middleware";
-import { getDb } from "./queries/connection";
-import { topics, subtopics, resources, topicNodes, labs, labWorks, labCategories } from "@db/schema";
+import { getContentDb, getLabsDb } from "./queries/connection";
+import {
+  topics,
+  subtopics,
+  resources,
+  topicNodes,
+  labs,
+} from "@db/schema/content";
+import { labWorks, labCategories } from "@db/schema/labs";
 import { eq, asc, or, like, inArray } from "drizzle-orm";
 
 export const courseRouter = createRouter({
   topics: publicQuery.query(async () => {
-    const db = getDb();
+    const db = getContentDb();
     return db.select().from(topics).orderBy(asc(topics.order));
   }),
 
   topicBySlug: publicQuery
     .input(z.object({ slug: z.string() }))
     .query(async ({ input }) => {
-      const db = getDb();
+      const db = getContentDb();
       const topic = await db
         .select()
         .from(topics)
@@ -23,20 +30,20 @@ export const courseRouter = createRouter({
     }),
 
   resources: publicQuery.query(async () => {
-    const db = getDb();
+    const db = getContentDb();
     return db.select().from(resources);
   }),
 
   // ── Hierarchical Topic Nodes ──
   topicNodes: publicQuery.query(async () => {
-    const db = getDb();
+    const db = getContentDb();
     return db.select().from(topicNodes).orderBy(asc(topicNodes.order));
   }),
 
   topicNodeBySlug: publicQuery
     .input(z.object({ slug: z.string() }))
     .query(async ({ input }) => {
-      const db = getDb();
+      const db = getContentDb();
       const node = await db
         .select()
         .from(topicNodes)
@@ -52,12 +59,15 @@ export const courseRouter = createRouter({
     }),
 
   listSubtopics: publicQuery.query(async () => {
-    const db = getDb();
-    return db.select().from(subtopics).orderBy(asc(subtopics.topicId), asc(subtopics.order));
+    const db = getContentDb();
+    return db
+      .select()
+      .from(subtopics)
+      .orderBy(asc(subtopics.topicId), asc(subtopics.order));
   }),
 
   labs: publicQuery.query(async () => {
-    const db = getDb();
+    const db = getContentDb();
     return db.select().from(labs).orderBy(asc(labs.topicId), asc(labs.order));
   }),
 
@@ -65,8 +75,10 @@ export const courseRouter = createRouter({
   topicLabWorks: publicQuery
     .input(z.object({ topicId: z.number().positive() }))
     .query(async ({ input }) => {
-      const db = getDb();
-      const [topic] = await db
+      const contentDb = getContentDb();
+      const labsDb = getLabsDb();
+
+      const [topic] = await contentDb
         .select()
         .from(topics)
         .where(eq(topics.id, input.topicId))
@@ -74,7 +86,7 @@ export const courseRouter = createRouter({
       if (!topic) return [];
 
       // Find matching topic nodes by slug or title
-      const nodes = await db
+      const nodes = await contentDb
         .select()
         .from(topicNodes)
         .where(
@@ -93,7 +105,7 @@ export const courseRouter = createRouter({
 
       let categoryIds: number[] = [];
       if (categorySlugs.length > 0) {
-        const cats = await db
+        const cats = await labsDb
           .select({ id: labCategories.id })
           .from(labCategories)
           .where(inArray(labCategories.slug, categorySlugs));
@@ -110,7 +122,7 @@ export const courseRouter = createRouter({
 
       if (conditions.length === 0) return [];
 
-      return db
+      return labsDb
         .select({
           id: labWorks.id,
           title: labWorks.title,

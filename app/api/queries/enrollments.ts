@@ -4,12 +4,15 @@
  * Manages course topic access for students.
  */
 
-import { eq, and } from "drizzle-orm";
-import { getDb } from "./connection";
-import { enrollments, topics } from "@db/schema";
+import { eq, and, inArray } from "drizzle-orm";
+import { getLearningDb, getContentDb } from "./connection";
+import { enrollments } from "@db/schema/learning";
+import { topics } from "@db/schema/content";
+
+// ── READ ──
 
 export async function findEnrollment(localUserId: number, topicId: number) {
-  const rows = await getDb()
+  const rows = await getLearningDb()
     .select()
     .from(enrollments)
     .where(
@@ -22,71 +25,103 @@ export async function findEnrollment(localUserId: number, topicId: number) {
   return rows.at(0);
 }
 
+async function loadTopicMap(topicIds: number[]) {
+  if (topicIds.length === 0) return new Map<number, typeof topics.$inferSelect>();
+  const rows = await getContentDb()
+    .select()
+    .from(topics)
+    .where(inArray(topics.id, topicIds));
+  return new Map(rows.map((t) => [t.id, t]));
+}
+
 export async function getEnrollmentsByLocalUser(localUserId: number) {
-  return getDb()
-    .select({
-      id: enrollments.id,
-      localUserId: enrollments.localUserId,
-      topicId: enrollments.topicId,
-      status: enrollments.status,
-      enrolledAt: enrollments.enrolledAt,
-      expiresAt: enrollments.expiresAt,
-      topicTitle: topics.title,
-      topicSlug: topics.slug,
-      topicColor: topics.color,
-    })
+  const rows = await getLearningDb()
+    .select()
     .from(enrollments)
-    .innerJoin(topics, eq(enrollments.topicId, topics.id))
     .where(eq(enrollments.localUserId, localUserId));
+
+  const topicIds = rows.map((r) => r.topicId);
+  const topicMap = await loadTopicMap(topicIds);
+
+  return rows.map((row) => {
+    const topic = topicMap.get(row.topicId);
+    return {
+      id: row.id,
+      localUserId: row.localUserId,
+      topicId: row.topicId,
+      status: row.status,
+      enrolledAt: row.enrolledAt,
+      expiresAt: row.expiresAt,
+      topicTitle: topic?.title ?? null,
+      topicSlug: topic?.slug ?? null,
+      topicColor: topic?.color ?? null,
+    };
+  });
 }
 
 export async function getEnrollmentsWithDetails(localUserId: number) {
-  return getDb()
-    .select({
-      id: enrollments.id,
-      localUserId: enrollments.localUserId,
-      topicId: enrollments.topicId,
-      status: enrollments.status,
-      startedAt: enrollments.startedAt,
-      completedAt: enrollments.completedAt,
-      comment: enrollments.comment,
-      currentSubtopicId: enrollments.currentSubtopicId,
-      enrolledAt: enrollments.enrolledAt,
-      expiresAt: enrollments.expiresAt,
-      topicTitle: topics.title,
-      topicSlug: topics.slug,
-      topicColor: topics.color,
-    })
+  const rows = await getLearningDb()
+    .select()
     .from(enrollments)
-    .innerJoin(topics, eq(enrollments.topicId, topics.id))
     .where(eq(enrollments.localUserId, localUserId));
+
+  const topicIds = rows.map((r) => r.topicId);
+  const topicMap = await loadTopicMap(topicIds);
+
+  return rows.map((row) => {
+    const topic = topicMap.get(row.topicId);
+    return {
+      id: row.id,
+      localUserId: row.localUserId,
+      topicId: row.topicId,
+      status: row.status,
+      startedAt: row.startedAt,
+      completedAt: row.completedAt,
+      comment: row.comment,
+      currentSubtopicId: row.currentSubtopicId,
+      enrolledAt: row.enrolledAt,
+      expiresAt: row.expiresAt,
+      topicTitle: topic?.title ?? null,
+      topicSlug: topic?.slug ?? null,
+      topicColor: topic?.color ?? null,
+    };
+  });
 }
 
 export async function getActiveEnrollmentsByLocalUser(localUserId: number) {
-  return getDb()
-    .select({
-      id: enrollments.id,
-      topicId: enrollments.topicId,
-      status: enrollments.status,
-      topicTitle: topics.title,
-      topicSlug: topics.slug,
-    })
+  const rows = await getLearningDb()
+    .select()
     .from(enrollments)
-    .innerJoin(topics, eq(enrollments.topicId, topics.id))
     .where(
       and(
         eq(enrollments.localUserId, localUserId),
         eq(enrollments.status, "active")
       )
     );
+
+  const topicIds = rows.map((r) => r.topicId);
+  const topicMap = await loadTopicMap(topicIds);
+
+  return rows.map((row) => {
+    const topic = topicMap.get(row.topicId);
+    return {
+      id: row.id,
+      topicId: row.topicId,
+      status: row.status,
+      topicTitle: topic?.title ?? null,
+      topicSlug: topic?.slug ?? null,
+    };
+  });
 }
+
+// ── CREATE ──
 
 export async function createEnrollment(data: {
   localUserId: number;
   topicId: number;
   createdBy: number;
 }) {
-  return getDb().insert(enrollments).values({
+  return getLearningDb().insert(enrollments).values({
     localUserId: data.localUserId,
     topicId: data.topicId,
     status: "active",
@@ -94,11 +129,13 @@ export async function createEnrollment(data: {
   });
 }
 
+// ── UPDATE ──
+
 export async function updateEnrollmentStatus(
   id: number,
   status: "active" | "completed" | "suspended"
 ) {
-  return getDb()
+  return getLearningDb()
     .update(enrollments)
     .set({ status })
     .where(eq(enrollments.id, id));
@@ -122,14 +159,16 @@ export async function updateEnrollmentDetails(
   if (data.startedAt !== undefined) setData.startedAt = data.startedAt;
   if (data.completedAt !== undefined) setData.completedAt = data.completedAt;
 
-  return getDb()
+  return getLearningDb()
     .update(enrollments)
     .set(setData)
     .where(eq(enrollments.id, id));
 }
 
+// ── DELETE ──
+
 export async function deleteEnrollment(id: number) {
-  return getDb().delete(enrollments).where(eq(enrollments.id, id));
+  return getLearningDb().delete(enrollments).where(eq(enrollments.id, id));
 }
 
 export async function isEnrolled(

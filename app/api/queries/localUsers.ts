@@ -6,14 +6,14 @@
  */
 
 import { eq, and, like, desc, count } from "drizzle-orm";
-import { getDb } from "./connection";
-import { localUsers, roles } from "@db/schema";
-import type { InsertLocalUser } from "@db/schema";
+import { getAuthDb } from "./connection";
+import { localUsers, roles } from "@db/schema/auth";
+import type { InsertLocalUser } from "@db/schema/auth";
 
 // ── READ ──
 
 export async function findLocalUserByLogin(login: string) {
-  const rows = await getDb()
+  const rows = await getAuthDb()
     .select()
     .from(localUsers)
     .where(eq(localUsers.login, login))
@@ -22,7 +22,7 @@ export async function findLocalUserByLogin(login: string) {
 }
 
 export async function findLocalUserById(id: number) {
-  const rows = await getDb()
+  const rows = await getAuthDb()
     .select()
     .from(localUsers)
     .where(eq(localUsers.id, id))
@@ -31,7 +31,7 @@ export async function findLocalUserById(id: number) {
 }
 
 export async function findLocalUserWithRole(id: number) {
-  const rows = await getDb()
+  const rows = await getAuthDb()
     .select({
       id: localUsers.id,
       login: localUsers.login,
@@ -57,7 +57,7 @@ export async function listLocalUsers(options?: {
   page?: number;
   pageSize?: number;
 }) {
-  const db = getDb();
+  const db = getAuthDb();
   const { status, search, page = 1, pageSize = 50 } = options ?? {};
 
   const conditions = [];
@@ -113,7 +113,7 @@ export async function listLocalUsers(options?: {
 // ── CREATE ──
 
 export async function createLocalUser(data: InsertLocalUser) {
-  const result = await getDb().insert(localUsers).values(data);
+  const result = await getAuthDb().insert(localUsers).values(data);
   return result;
 }
 
@@ -128,14 +128,14 @@ export async function updateLocalUser(
     avatar: string | null;
   }>
 ) {
-  return getDb()
+  return getAuthDb()
     .update(localUsers)
     .set({ ...data, updatedAt: new Date() })
     .where(eq(localUsers.id, id));
 }
 
 export async function updateLocalUserLastLogin(id: number) {
-  return getDb()
+  return getAuthDb()
     .update(localUsers)
     .set({ lastLoginAt: new Date() })
     .where(eq(localUsers.id, id));
@@ -144,20 +144,20 @@ export async function updateLocalUserLastLogin(id: number) {
 // ── DELETE ──
 
 export async function deleteLocalUser(id: number) {
-  return getDb().delete(localUsers).where(eq(localUsers.id, id));
+  return getAuthDb().delete(localUsers).where(eq(localUsers.id, id));
 }
 
 // ── STATUS ──
 
 export async function suspendLocalUser(id: number) {
-  return getDb()
+  return getAuthDb()
     .update(localUsers)
     .set({ status: "suspended", updatedAt: new Date() })
     .where(eq(localUsers.id, id));
 }
 
 export async function activateLocalUser(id: number) {
-  return getDb()
+  return getAuthDb()
     .update(localUsers)
     .set({ status: "active", updatedAt: new Date() })
     .where(eq(localUsers.id, id));

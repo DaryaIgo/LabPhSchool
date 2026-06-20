@@ -9,6 +9,7 @@ import type { CookieOptions } from "hono/utils/cookie";
  * which works for both HTTP and HTTPS in normal same-site navigation.
  */
 export function getSessionCookieOptions(_headers?: Headers): CookieOptions {
+  void _headers;
   return {
     httpOnly: true,
     path: "/",

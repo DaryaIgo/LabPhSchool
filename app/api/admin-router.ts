@@ -7,23 +7,28 @@
 
 import { z } from "zod";
 import { createRouter, adminQuery } from "./middleware";
-import { getDb } from "./queries/connection";
 import {
-  topics,
-  subtopics,
-  problems,
-  localUsers,
-  roles,
-  topicNodes,
-  labWorks,
-  resources,
-  labProgress,
+  getAuthDb,
+  getContentDb,
+  getLearningDb,
+  getLabsDb,
+  getProblemsDb,
+  getJupyterDb,
+  getNotificationsDb,
+  getMediaDb,
+} from "./queries/connection";
+import { topics, subtopics, topicNodes, resources } from "@db/schema/content";
+import { problems } from "@db/schema/problems";
+import { labWorks } from "@db/schema/labs";
+import { labProgress } from "@db/schema/learning";
+import { localUsers, roles } from "@db/schema/auth";
+import {
   jupyterNotebooks,
   jupyterNotebookAccess,
-  notifications,
-  images,
-} from "@db/schema";
-import { eq, asc, desc, count, and } from "drizzle-orm";
+} from "@db/schema/jupyter";
+import { notifications } from "@db/schema/notifications";
+import { images } from "@db/schema/media";
+import { eq, asc, desc, count, and, inArray } from "drizzle-orm";
 import { createAuditEntry } from "./queries/audit";
 
 export const adminRouter = createRouter({
@@ -32,27 +37,32 @@ export const adminRouter = createRouter({
   // ═══════════════════════════════════════════════════════════
 
   dashboardStats: adminQuery.query(async () => {
-    const db = getDb();
+    const authDb = getAuthDb();
+    const contentDb = getContentDb();
+    const labsDb = getLabsDb();
+    const learningDb = getLearningDb();
 
-    const [studentCount] = await db
+    const [studentCount] = await authDb
       .select({ count: count() })
       .from(localUsers)
       .innerJoin(roles, eq(localUsers.roleId, roles.id))
       .where(eq(roles.name, "student"));
-    const [activeCount] = await db
+    const [activeCount] = await authDb
       .select({ count: count() })
       .from(localUsers)
       .innerJoin(roles, eq(localUsers.roleId, roles.id))
       .where(and(eq(roles.name, "student"), eq(localUsers.status, "active")));
-    const [suspendedCount] = await db
+    const [suspendedCount] = await authDb
       .select({ count: count() })
       .from(localUsers)
       .innerJoin(roles, eq(localUsers.roleId, roles.id))
       .where(and(eq(roles.name, "student"), eq(localUsers.status, "suspended")));
-    const [topicCount] = await db.select({ count: count() }).from(topics);
-    const [labWorkCount] = await db.select({ count: count() }).from(labWorks);
-    const [resourceCount] = await db.select({ count: count() }).from(resources);
-    const [submissionCount] = await db
+    const [topicCount] = await contentDb.select({ count: count() }).from(topics);
+    const [labWorkCount] = await labsDb.select({ count: count() }).from(labWorks);
+    const [resourceCount] = await contentDb
+      .select({ count: count() })
+      .from(resources);
+    const [submissionCount] = await learningDb
       .select({ count: count() })
       .from(labProgress)
       .where(eq(labProgress.status, "submitted"));
@@ -77,7 +87,7 @@ export const adminRouter = createRouter({
   // ═══════════════════════════════════════════════════════════
 
   listTopics: adminQuery.query(async () => {
-    return getDb().select().from(topics).orderBy(asc(topics.order));
+    return getContentDb().select().from(topics).orderBy(asc(topics.order));
   }),
 
   createTopic: adminQuery
@@ -93,7 +103,7 @@ export const adminRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getContentDb();
       const result = await db.insert(topics).values({
         order: input.order,
         title: input.title,
@@ -131,7 +141,7 @@ export const adminRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getContentDb();
       const { id, ...data } = input;
       const updateData: Record<string, unknown> = {};
       if (data.title !== undefined) updateData.title = data.title;
@@ -159,7 +169,7 @@ export const adminRouter = createRouter({
   deleteTopic: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
-      await getDb().delete(topics).where(eq(topics.id, input.id));
+      await getContentDb().delete(topics).where(eq(topics.id, input.id));
 
       await createAuditEntry({
         actorId: ctx.localUser!.id,
@@ -177,13 +187,16 @@ export const adminRouter = createRouter({
   // ═══════════════════════════════════════════════════════════
 
   listTopicNodes: adminQuery.query(async () => {
-    return getDb().select().from(topicNodes).orderBy(asc(topicNodes.order));
+    return getContentDb()
+      .select()
+      .from(topicNodes)
+      .orderBy(asc(topicNodes.order));
   }),
 
   getTopicNode: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .query(async ({ input }) => {
-      const db = getDb();
+      const db = getContentDb();
       const node = await db
         .select()
         .from(topicNodes)
@@ -211,7 +224,7 @@ export const adminRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getContentDb();
       const result = await db.insert(topicNodes).values({
         parentId: input.parentId ?? null,
         order: input.order,
@@ -247,7 +260,7 @@ export const adminRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getContentDb();
       const { id, ...data } = input;
       const updateData: Record<string, unknown> = {};
       if (data.parentId !== undefined) updateData.parentId = data.parentId;
@@ -256,7 +269,8 @@ export const adminRouter = createRouter({
       if (data.slug !== undefined) updateData.slug = data.slug;
       if (data.content !== undefined) updateData.content = data.content;
       if (data.color !== undefined) updateData.color = data.color;
-      if (data.labCategorySlug !== undefined) updateData.labCategorySlug = data.labCategorySlug;
+      if (data.labCategorySlug !== undefined)
+        updateData.labCategorySlug = data.labCategorySlug;
 
       await db.update(topicNodes).set(updateData).where(eq(topicNodes.id, id));
 
@@ -275,7 +289,7 @@ export const adminRouter = createRouter({
   deleteTopicNode: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getContentDb();
       const allNodes = await db
         .select({ id: topicNodes.id, parentId: topicNodes.parentId })
         .from(topicNodes);
@@ -329,7 +343,7 @@ export const adminRouter = createRouter({
         throw new Error("Front matter must include 'title' and 'slug'");
       }
 
-      const db = getDb();
+      const db = getContentDb();
       const result = await db.insert(topicNodes).values({
         parentId: input.parentId ?? null,
         order: Number(front.order ?? 1),
@@ -355,7 +369,7 @@ export const adminRouter = createRouter({
   exportTopicNode: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .query(async ({ input }) => {
-      const db = getDb();
+      const db = getContentDb();
       const node = await db
         .select()
         .from(topicNodes)
@@ -383,7 +397,7 @@ export const adminRouter = createRouter({
   // ═══════════════════════════════════════════════════════════
 
   listSubtopics: adminQuery.query(async () => {
-    return getDb()
+    return getContentDb()
       .select()
       .from(subtopics)
       .orderBy(asc(subtopics.topicId), asc(subtopics.order));
@@ -401,7 +415,7 @@ export const adminRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getContentDb();
       const { id, ...data } = input;
       const updateData: Record<string, unknown> = {};
       if (data.title !== undefined) updateData.title = data.title;
@@ -443,7 +457,7 @@ export const adminRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getProblemsDb();
       const result = await db.insert(problems).values({
         problemTypeId: input.problemTypeId,
         order: input.order,
@@ -483,7 +497,7 @@ export const adminRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getProblemsDb();
       const { id, ...data } = input;
       const updateData: Record<string, unknown> = {};
       if (data.condition !== undefined) updateData.condition = data.condition;
@@ -510,7 +524,7 @@ export const adminRouter = createRouter({
   deleteProblem: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
-      await getDb().delete(problems).where(eq(problems.id, input.id));
+      await getProblemsDb().delete(problems).where(eq(problems.id, input.id));
 
       await createAuditEntry({
         actorId: ctx.localUser!.id,
@@ -528,7 +542,10 @@ export const adminRouter = createRouter({
   // ═══════════════════════════════════════════════════════════
 
   listResources: adminQuery.query(async () => {
-    return getDb().select().from(resources).orderBy(asc(resources.id));
+    return getContentDb()
+      .select()
+      .from(resources)
+      .orderBy(asc(resources.id));
   }),
 
   createResource: adminQuery
@@ -542,7 +559,7 @@ export const adminRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getContentDb();
       const result = await db.insert(resources).values({
         title: input.title,
         description: input.description ?? null,
@@ -577,7 +594,7 @@ export const adminRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getContentDb();
       const { id, ...data } = input;
       const updateData: Record<string, unknown> = {};
       if (data.title !== undefined) updateData.title = data.title;
@@ -603,7 +620,7 @@ export const adminRouter = createRouter({
   deleteResource: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
-      await getDb().delete(resources).where(eq(resources.id, input.id));
+      await getContentDb().delete(resources).where(eq(resources.id, input.id));
 
       await createAuditEntry({
         actorId: ctx.localUser!.id,
@@ -632,7 +649,10 @@ export const adminRouter = createRouter({
       }).optional()
     )
     .query(async ({ input }) => {
-      const db = getDb();
+      const learningDb = getLearningDb();
+      const authDb = getAuthDb();
+      const labsDb = getLabsDb();
+
       const page = input?.page ?? 1;
       const pageSize = input?.pageSize ?? 20;
       const offset = (page - 1) * pageSize;
@@ -652,40 +672,63 @@ export const adminRouter = createRouter({
 
       const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-      const items = await db
-        .select({
-          id: labProgress.id,
-          status: labProgress.status,
-          mode: labProgress.mode,
-          data: labProgress.data,
-          measurements: labProgress.measurements,
-          conclusion: labProgress.conclusion,
-          grade: labProgress.grade,
-          teacherComment: labProgress.teacherComment,
-          startedAt: labProgress.startedAt,
-          completedAt: labProgress.completedAt,
-          updatedAt: labProgress.updatedAt,
-          studentId: labProgress.localUserId,
-          studentName: localUsers.name,
-          studentLogin: localUsers.login,
-          labWorkId: labProgress.labWorkId,
-          labWorkTitle: labWorks.title,
-          labWorkSlug: labWorks.slug,
-        })
+      const progressRows = await learningDb
+        .select()
         .from(labProgress)
-        .innerJoin(localUsers, eq(labProgress.localUserId, localUsers.id))
-        .innerJoin(labWorks, eq(labProgress.labWorkId, labWorks.id))
         .where(whereClause)
         .orderBy(desc(labProgress.updatedAt))
         .limit(pageSize)
         .offset(offset);
 
-      const [countResult] = await db
+      const [countResult] = await learningDb
         .select({ count: count() })
         .from(labProgress)
-        .innerJoin(localUsers, eq(labProgress.localUserId, localUsers.id))
-        .innerJoin(labWorks, eq(labProgress.labWorkId, labWorks.id))
         .where(whereClause);
+
+      const studentIds = progressRows.map((p) => p.localUserId);
+      const labWorkIds = progressRows.map((p) => p.labWorkId);
+
+      const studentMap = new Map<number, typeof localUsers.$inferSelect>();
+      if (studentIds.length > 0) {
+        const students = await authDb
+          .select()
+          .from(localUsers)
+          .where(inArray(localUsers.id, studentIds));
+        for (const s of students) studentMap.set(s.id, s);
+      }
+
+      const labWorkMap = new Map<number, typeof labWorks.$inferSelect>();
+      if (labWorkIds.length > 0) {
+        const works = await labsDb
+          .select()
+          .from(labWorks)
+          .where(inArray(labWorks.id, labWorkIds));
+        for (const w of works) labWorkMap.set(w.id, w);
+      }
+
+      const items = progressRows.map((p) => {
+        const student = studentMap.get(p.localUserId);
+        const work = labWorkMap.get(p.labWorkId);
+        return {
+          id: p.id,
+          status: p.status,
+          mode: p.mode,
+          data: p.data,
+          measurements: p.measurements,
+          conclusion: p.conclusion,
+          grade: p.grade,
+          teacherComment: p.teacherComment,
+          startedAt: p.startedAt,
+          completedAt: p.completedAt,
+          updatedAt: p.updatedAt,
+          studentId: p.localUserId,
+          studentName: student?.name ?? "—",
+          studentLogin: student?.login ?? "—",
+          labWorkId: p.labWorkId,
+          labWorkTitle: work?.title ?? "—",
+          labWorkSlug: work?.slug ?? "—",
+        };
+      });
 
       return {
         items,
@@ -699,39 +742,52 @@ export const adminRouter = createRouter({
   getLabSubmissionById: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .query(async ({ input }) => {
-      const db = getDb();
-      const [item] = await db
-        .select({
-          id: labProgress.id,
-          status: labProgress.status,
-          mode: labProgress.mode,
-          data: labProgress.data,
-          measurements: labProgress.measurements,
-          conclusion: labProgress.conclusion,
-          grade: labProgress.grade,
-          teacherComment: labProgress.teacherComment,
-          startedAt: labProgress.startedAt,
-          completedAt: labProgress.completedAt,
-          updatedAt: labProgress.updatedAt,
-          studentId: labProgress.localUserId,
-          studentName: localUsers.name,
-          studentLogin: localUsers.login,
-          labWorkId: labProgress.labWorkId,
-          labWorkTitle: labWorks.title,
-          labWorkSlug: labWorks.slug,
-          labWorkGoal: labWorks.goal,
-          labWorkTheory: labWorks.theory,
-        })
+      const learningDb = getLearningDb();
+      const authDb = getAuthDb();
+      const labsDb = getLabsDb();
+
+      const [progressRow] = await learningDb
+        .select()
         .from(labProgress)
-        .innerJoin(localUsers, eq(labProgress.localUserId, localUsers.id))
-        .innerJoin(labWorks, eq(labProgress.labWorkId, labWorks.id))
         .where(eq(labProgress.id, input.id));
 
-      if (!item) {
+      if (!progressRow) {
         throw new Error("Submission not found");
       }
 
-      return item;
+      const [student] = await authDb
+        .select()
+        .from(localUsers)
+        .where(eq(localUsers.id, progressRow.localUserId))
+        .limit(1);
+
+      const [work] = await labsDb
+        .select()
+        .from(labWorks)
+        .where(eq(labWorks.id, progressRow.labWorkId))
+        .limit(1);
+
+      return {
+        id: progressRow.id,
+        status: progressRow.status,
+        mode: progressRow.mode,
+        data: progressRow.data,
+        measurements: progressRow.measurements,
+        conclusion: progressRow.conclusion,
+        grade: progressRow.grade,
+        teacherComment: progressRow.teacherComment,
+        startedAt: progressRow.startedAt,
+        completedAt: progressRow.completedAt,
+        updatedAt: progressRow.updatedAt,
+        studentId: progressRow.localUserId,
+        studentName: student?.name ?? "—",
+        studentLogin: student?.login ?? "—",
+        labWorkId: progressRow.labWorkId,
+        labWorkTitle: work?.title ?? "—",
+        labWorkSlug: work?.slug ?? "—",
+        labWorkGoal: work?.goal ?? null,
+        labWorkTheory: work?.theory ?? null,
+      };
     }),
 
   gradeLabSubmission: adminQuery
@@ -744,12 +800,13 @@ export const adminRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getLearningDb();
       const updateData: Record<string, unknown> = {
         updatedAt: new Date(),
       };
       if (input.grade !== undefined) updateData.grade = input.grade;
-      if (input.teacherComment !== undefined) updateData.teacherComment = input.teacherComment;
+      if (input.teacherComment !== undefined)
+        updateData.teacherComment = input.teacherComment;
       if (input.status !== undefined) updateData.status = input.status;
 
       await db
@@ -774,18 +831,27 @@ export const adminRouter = createRouter({
   // ═══════════════════════════════════════════════════════════
 
   listJupyterNotebooks: adminQuery.query(async () => {
-    const db = getDb();
-    const notebooks = await db
+    const jupyterDb = getJupyterDb();
+    const contentDb = getContentDb();
+
+    const notebooks = await jupyterDb
       .select()
       .from(jupyterNotebooks)
       .orderBy(desc(jupyterNotebooks.createdAt));
 
     // Get subtopic names
-    const subtopicList = await db.select().from(subtopics);
-    const subtopicMap = new Map(subtopicList.map((s) => [s.id, s.title]));
+    const subtopicIds = notebooks.map((n) => n.subtopicId);
+    const subtopicMap = new Map<number, string>();
+    if (subtopicIds.length > 0) {
+      const subtopicList = await contentDb
+        .select({ id: subtopics.id, title: subtopics.title })
+        .from(subtopics)
+        .where(inArray(subtopics.id, subtopicIds));
+      for (const s of subtopicList) subtopicMap.set(s.id, s.title);
+    }
 
     // Get access counts
-    const accessList = await db
+    const accessList = await jupyterDb
       .select({
         notebookId: jupyterNotebookAccess.notebookId,
         count: count(),
@@ -811,7 +877,7 @@ export const adminRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getJupyterDb();
       const result = await db.insert(jupyterNotebooks).values({
         subtopicId: input.subtopicId,
         title: input.title,
@@ -837,7 +903,7 @@ export const adminRouter = createRouter({
   deleteJupyterNotebook: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getJupyterDb();
       // Delete access entries first
       await db
         .delete(jupyterNotebookAccess)
@@ -861,21 +927,32 @@ export const adminRouter = createRouter({
   listJupyterAccess: adminQuery
     .input(z.object({ notebookId: z.number().positive() }))
     .query(async ({ input }) => {
-      const db = getDb();
-      const accesses = await db
-        .select({
-          id: jupyterNotebookAccess.id,
-          notebookId: jupyterNotebookAccess.notebookId,
-          localUserId: jupyterNotebookAccess.localUserId,
-          grantedAt: jupyterNotebookAccess.grantedAt,
-          studentName: localUsers.name,
-          studentLogin: localUsers.login,
-        })
+      const jupyterDb = getJupyterDb();
+      const authDb = getAuthDb();
+
+      const accesses = await jupyterDb
+        .select()
         .from(jupyterNotebookAccess)
-        .innerJoin(localUsers, eq(jupyterNotebookAccess.localUserId, localUsers.id))
         .where(eq(jupyterNotebookAccess.notebookId, input.notebookId));
 
-      return accesses;
+      const studentIds = accesses.map((a) => a.localUserId);
+      const studentMap = new Map<number, typeof localUsers.$inferSelect>();
+      if (studentIds.length > 0) {
+        const students = await authDb
+          .select()
+          .from(localUsers)
+          .where(inArray(localUsers.id, studentIds));
+        for (const s of students) studentMap.set(s.id, s);
+      }
+
+      return accesses.map((a) => ({
+        id: a.id,
+        notebookId: a.notebookId,
+        localUserId: a.localUserId,
+        grantedAt: a.grantedAt,
+        studentName: studentMap.get(a.localUserId)?.name ?? "—",
+        studentLogin: studentMap.get(a.localUserId)?.login ?? "—",
+      }));
     }),
 
   grantJupyterAccess: adminQuery
@@ -886,10 +963,11 @@ export const adminRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const jupyterDb = getJupyterDb();
+      const notificationsDb = getNotificationsDb();
 
       // Check if already granted
-      const existing = await db
+      const existing = await jupyterDb
         .select()
         .from(jupyterNotebookAccess)
         .where(
@@ -904,21 +982,21 @@ export const adminRouter = createRouter({
         return { success: true, alreadyGranted: true };
       }
 
-      await db.insert(jupyterNotebookAccess).values({
+      await jupyterDb.insert(jupyterNotebookAccess).values({
         notebookId: input.notebookId,
         localUserId: input.localUserId,
         grantedBy: ctx.localUser!.id,
       });
 
       // Get notebook info for notification
-      const notebook = await db
+      const notebook = await jupyterDb
         .select()
         .from(jupyterNotebooks)
         .where(eq(jupyterNotebooks.id, input.notebookId))
         .limit(1);
 
       // Create notification for student
-      await db.insert(notifications).values({
+      await notificationsDb.insert(notifications).values({
         localUserId: input.localUserId,
         type: "jupyter_notebook",
         title: "Доступен новый Jupyter-ноутбук",
@@ -941,7 +1019,7 @@ export const adminRouter = createRouter({
   revokeJupyterAccess: adminQuery
     .input(z.object({ accessId: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
+      const db = getJupyterDb();
       await db
         .delete(jupyterNotebookAccess)
         .where(eq(jupyterNotebookAccess.id, input.accessId));
@@ -962,7 +1040,7 @@ export const adminRouter = createRouter({
   // ═══════════════════════════════════════════════════════════
 
   listImages: adminQuery.query(async () => {
-    const db = getDb();
+    const db = getMediaDb();
     return db
       .select({
         id: images.id,
@@ -974,5 +1052,4 @@ export const adminRouter = createRouter({
       .from(images)
       .orderBy(desc(images.createdAt));
   }),
-
 });

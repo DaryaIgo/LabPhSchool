@@ -5,8 +5,8 @@
  */
 
 import { eq, and, desc, gte, lte, count } from "drizzle-orm";
-import { getDb } from "./connection";
-import { auditLog } from "@db/schema";
+import { getAuditDb } from "./connection";
+import { auditLog } from "@db/schema/audit";
 
 export async function createAuditEntry(data: {
   actorId: number;
@@ -20,7 +20,7 @@ export async function createAuditEntry(data: {
   success?: boolean;
   errorMessage?: string;
 }) {
-  return getDb().insert(auditLog).values({
+  return getAuditDb().insert(auditLog).values({
     actorId: data.actorId,
     actorType: data.actorType,
     action: data.action,
@@ -44,7 +44,7 @@ export async function listAuditEntries(options?: {
   startDate?: Date;
   endDate?: Date;
 }) {
-  const db = getDb();
+  const db = getAuditDb();
   const {
     actorId,
     actorType,
@@ -102,7 +102,7 @@ export async function listAuditEntries(options?: {
 }
 
 export async function getAuditStats() {
-  const db = getDb();
+  const db = getAuditDb();
 
   const [totalResult] = await db.select({ count: count() }).from(auditLog);
   const [loginResult] = await db

@@ -8,14 +8,13 @@ import { createContext } from "./context";
 import path from "node:path";
 import fs from "node:fs/promises";
 import { verifyStudentSession } from "./student-session";
-import { getDb } from "./queries/connection";
+import { getAuthDb, getJupyterDb, getMediaDb } from "./queries/connection";
+import { localUsers, roles } from "@db/schema/auth";
 import {
   jupyterNotebooks,
   jupyterNotebookAccess,
-  localUsers,
-  roles,
-  images,
-} from "@db/schema";
+} from "@db/schema/jupyter";
+import { images } from "@db/schema/media";
 import { eq, and } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
@@ -40,7 +39,7 @@ app.post("/api/upload/image", async (c) => {
       return c.json({ error: "File too large (max 5MB)" }, 400);
     }
 
-    const db = getDb();
+    const db = getMediaDb();
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const ext = path.extname(file.name) || ".png";
@@ -69,7 +68,7 @@ app.get("/uploads/:id/:filename", async (c) => {
       return c.json({ error: "Invalid image ID" }, 400);
     }
 
-    const db = getDb();
+    const db = getMediaDb();
     const [image] = await db
       .select()
       .from(images)
@@ -93,7 +92,7 @@ app.get("/uploads/:id/:filename", async (c) => {
 app.get("/uploads/:filename", async (c) => {
   try {
     const filename = path.basename(c.req.param("filename"));
-    const db = getDb();
+    const db = getMediaDb();
 
     // First try to find the image in the database by filename
     const [image] = await db
@@ -188,10 +187,11 @@ app.get("/api/jupyter/download/:id", async (c) => {
       return c.json({ error: "Unauthorized" }, 401);
     }
 
-    const db = getDb();
+    const authDb = getAuthDb();
+    const jupyterDb = getJupyterDb();
 
     // Check role
-    const user = await db
+    const user = await authDb
       .select({ roleId: localUsers.roleId })
       .from(localUsers)
       .where(eq(localUsers.id, session.localUserId))
@@ -201,7 +201,7 @@ app.get("/api/jupyter/download/:id", async (c) => {
       return c.json({ error: "User not found" }, 404);
     }
 
-    const role = await db
+    const role = await authDb
       .select({ name: roles.name })
       .from(roles)
       .where(eq(roles.id, user[0].roleId))
@@ -211,7 +211,7 @@ app.get("/api/jupyter/download/:id", async (c) => {
 
     if (!isAdmin) {
       // Check notebook access for students
-      const access = await db
+      const access = await jupyterDb
         .select()
         .from(jupyterNotebookAccess)
         .where(
@@ -228,7 +228,7 @@ app.get("/api/jupyter/download/:id", async (c) => {
     }
 
     // Get notebook
-    const notebook = await db
+    const notebook = await jupyterDb
       .select()
       .from(jupyterNotebooks)
       .where(eq(jupyterNotebooks.id, notebookId))

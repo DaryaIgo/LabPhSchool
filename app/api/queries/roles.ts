@@ -5,8 +5,8 @@
  */
 
 import { eq } from "drizzle-orm";
-import { getDb } from "./connection";
-import { roles, permissions, rolePermissions } from "@db/schema";
+import { getAuthDb } from "./connection";
+import { roles, permissions, rolePermissions } from "@db/schema/auth";
 
 export type RoleWithPermissions = {
   id: number;
@@ -21,7 +21,7 @@ export type RoleWithPermissions = {
 export async function findRoleByName(
   name: string
 ): Promise<RoleWithPermissions | null> {
-  const db = getDb();
+  const db = getAuthDb();
 
   const role = await db.query.roles.findFirst({
     where: eq(roles.name, name),
@@ -55,7 +55,7 @@ export async function findRoleByName(
 export async function getRoleWithPermissions(
   roleId: number
 ): Promise<RoleWithPermissions | null> {
-  const db = getDb();
+  const db = getAuthDb();
 
   const role = await db.query.roles.findFirst({
     where: eq(roles.id, roleId),
@@ -100,21 +100,21 @@ export function hasPermission(
  * List all roles.
  */
 export async function listRoles() {
-  return getDb().select().from(roles);
+  return getAuthDb().select().from(roles);
 }
 
 /**
  * List all permissions.
  */
 export async function listPermissions() {
-  return getDb().select().from(permissions);
+  return getAuthDb().select().from(permissions);
 }
 
 /**
  * Get permissions for a specific role.
  */
 export async function getRolePermissions(roleId: number) {
-  return getDb()
+  return getAuthDb()
     .select({
       id: permissions.id,
       name: permissions.name,
