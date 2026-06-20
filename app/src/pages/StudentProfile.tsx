@@ -22,7 +22,6 @@ import {
   Circle,
   Clock,
   Calendar,
-  TrendingUp,
   Award,
   Activity,
   Loader2,
@@ -69,40 +68,30 @@ export default function StudentProfile() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  const {
-    data: profile,
-    isLoading: profileLoading,
-  } = trpc.student.getProfile.useQuery(undefined, {
-    enabled: isAuthenticated && user?.role === "student",
-  });
+  const { data: profile, isLoading: profileLoading } =
+    trpc.student.getProfile.useQuery(undefined, {
+      enabled: isAuthenticated && user?.role === "student",
+    });
 
-  const {
-    data: learningPath,
-    isLoading: pathLoading,
-  } = trpc.student.getLearningPath.useQuery(undefined, {
-    enabled: isAuthenticated && user?.role === "student",
-  });
+  const { data: learningPath, isLoading: pathLoading } =
+    trpc.student.getLearningPath.useQuery(undefined, {
+      enabled: isAuthenticated && user?.role === "student",
+    });
 
-  const {
-    data: currentTopic,
-    isLoading: currentLoading,
-  } = trpc.student.getCurrentTopic.useQuery(undefined, {
-    enabled: isAuthenticated && user?.role === "student",
-  });
+  const { data: currentTopic, isLoading: currentLoading } =
+    trpc.student.getCurrentTopic.useQuery(undefined, {
+      enabled: isAuthenticated && user?.role === "student",
+    });
 
-  const {
-    data: activity,
-    isLoading: activityLoading,
-  } = trpc.student.getActivity.useQuery(undefined, {
-    enabled: isAuthenticated && user?.role === "student",
-  });
+  const { data: activity, isLoading: activityLoading } =
+    trpc.student.getActivity.useQuery(undefined, {
+      enabled: isAuthenticated && user?.role === "student",
+    });
 
-  const {
-    data: myNotebooks,
-    isLoading: notebooksLoading,
-  } = trpc.student.getMyJupyterNotebooks.useQuery(undefined, {
-    enabled: isAuthenticated && user?.role === "student",
-  });
+  const { data: myNotebooks, isLoading: notebooksLoading } =
+    trpc.student.getMyJupyterNotebooks.useQuery(undefined, {
+      enabled: isAuthenticated && user?.role === "student",
+    });
 
   const utils = trpc.useUtils();
 
@@ -138,17 +127,21 @@ export default function StudentProfile() {
     );
   }
 
-  const isLoading = profileLoading || pathLoading || currentLoading || activityLoading;
+  const isLoading =
+    profileLoading || pathLoading || currentLoading || activityLoading;
 
   return (
     <div className="pt-16 min-h-screen bg-[#262e33]">
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-8">
         {/* Header / Student Info */}
         <section className="mb-8">
-          <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 lg:p-8">
+          <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 lg:p-8 text-white">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
               {/* Avatar */}
-              <Dialog open={avatarDialogOpen} onOpenChange={setAvatarDialogOpen}>
+              <Dialog
+                open={avatarDialogOpen}
+                onOpenChange={setAvatarDialogOpen}
+              >
                 <DialogTrigger asChild>
                   <button className="relative group shrink-0">
                     <div className="w-24 h-24 lg:w-28 lg:h-28 rounded-2xl overflow-hidden border-2 border-[#434e54] group-hover:border-[#2eff8c] transition-colors bg-[#1a1f22]">
@@ -165,7 +158,9 @@ export default function StudentProfile() {
                       )}
                     </div>
                     <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
-                      <span className="text-xs text-white font-medium">Изменить</span>
+                      <span className="text-xs text-white font-medium">
+                        Изменить
+                      </span>
                     </div>
                   </button>
                 </DialogTrigger>
@@ -174,7 +169,7 @@ export default function StudentProfile() {
                     <DialogTitle>Выберите аватар</DialogTitle>
                   </DialogHeader>
                   <div className="grid grid-cols-3 gap-4 mt-4">
-                    {AVATARS.map((avatar) => (
+                    {AVATARS.map(avatar => (
                       <button
                         key={avatar.id}
                         onClick={() => {
@@ -192,7 +187,9 @@ export default function StudentProfile() {
                           alt={avatar.name}
                           className="w-14 h-14 rounded-full"
                         />
-                        <span className="text-xs text-[#c8cdd1]">{avatar.name}</span>
+                        <span className="text-xs text-[#c8cdd1]">
+                          {avatar.name}
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -202,7 +199,9 @@ export default function StudentProfile() {
               <div className="flex-1 min-w-0">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                    <h1 className="text-2xl lg:text-3xl font-bold">{user.name}</h1>
+                    <h1 className="text-2xl lg:text-3xl font-bold">
+                      {user.name}
+                    </h1>
                     <p className="text-sm text-[#798389] mt-1">
                       Ученик · Логин: {user.login}
                     </p>
@@ -218,77 +217,44 @@ export default function StudentProfile() {
                 ) : (
                   <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="bg-[#1e2529] rounded-xl p-3 border border-[#37474f]">
-                      <div className="text-xs text-[#798389] mb-1">Общий прогресс</div>
+                      <div className="text-xs text-[#798389] mb-1">
+                        Общий прогресс
+                      </div>
                       <div className="text-xl font-bold text-[#2eff8c]">
                         {profile?.overallProgress ?? 0}%
                       </div>
                     </div>
                     <div className="bg-[#1e2529] rounded-xl p-3 border border-[#37474f]">
-                      <div className="text-xs text-[#798389] mb-1">Завершено тем</div>
+                      <div className="text-xs text-[#798389] mb-1">
+                        Завершено тем
+                      </div>
                       <div className="text-xl font-bold text-[#01acff]">
                         {profile?.completedSubtopics ?? 0}
                       </div>
                     </div>
                     <div className="bg-[#1e2529] rounded-xl p-3 border border-[#37474f]">
-                      <div className="text-xs text-[#798389] mb-1">В процессе</div>
+                      <div className="text-xs text-[#798389] mb-1">
+                        В процессе
+                      </div>
                       <div className="text-xl font-bold text-[#ffcb3d]">
                         {profile?.inProgressSubtopics ?? 0}
                       </div>
                     </div>
                     <div className="bg-[#1e2529] rounded-xl p-3 border border-[#37474f]">
-                      <div className="text-xs text-[#798389] mb-1">Дата начала</div>
+                      <div className="text-xs text-[#798389] mb-1">
+                        Дата начала
+                      </div>
                       <div className="text-sm font-bold text-[#c8cdd1]">
                         {profile?.createdAt
-                          ? new Date(profile.createdAt).toLocaleDateString("ru-RU")
+                          ? new Date(profile.createdAt).toLocaleDateString(
+                              "ru-RU"
+                            )
                           : "—"}
                       </div>
                     </div>
                   </div>
                 )}
               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Overall Progress Bar */}
-        <section className="mb-8">
-          <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                <TrendingUp size={18} className="text-[#2eff8c]" />
-                Прогресс обучения
-              </h2>
-              <span className="text-2xl font-bold text-[#2eff8c]">
-                {profile?.overallProgress ?? 0}%
-              </span>
-            </div>
-            <div className="relative h-4 bg-[#1e2529] rounded-full overflow-hidden">
-              <div
-                className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#2eff8c] to-[#01acff] rounded-full transition-all duration-1000 ease-out"
-                style={{ width: `${profile?.overallProgress ?? 0}%` }}
-              />
-            </div>
-            <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {profile?.topicProgress?.map((tp) => (
-                <div
-                  key={tp.topicId}
-                  className="bg-[#1e2529] rounded-xl p-3 border border-[#37474f]"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium truncate">{tp.topicTitle}</span>
-                    <span className="text-xs text-[#2eff8c] font-bold">{tp.progress}%</span>
-                  </div>
-                  <div className="h-2 bg-[#37474f] rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-700"
-                      style={{
-                        width: `${tp.progress}%`,
-                        backgroundColor: tp.topicColor ?? "#2eff8c",
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         </section>
@@ -308,11 +274,15 @@ export default function StudentProfile() {
                   <div className="flex flex-col md:flex-row md:items-start gap-4">
                     <div
                       className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: `${currentTopic.topic?.color ?? "#2eff8c"}20` }}
+                      style={{
+                        backgroundColor: `${currentTopic.topic?.color ?? "#2eff8c"}20`,
+                      }}
                     >
                       <GraduationCap
                         size={24}
-                        style={{ color: currentTopic.topic?.color ?? "#2eff8c" }}
+                        style={{
+                          color: currentTopic.topic?.color ?? "#2eff8c",
+                        }}
                       />
                     </div>
                     <div className="flex-1">
@@ -326,7 +296,7 @@ export default function StudentProfile() {
                           </span>
                         )}
                       </div>
-                      <h3 className="text-xl font-bold mt-2">
+                      <h3 className="text-xl font-bold mt-2 text-white">
                         {currentTopic.subtopic?.title}
                       </h3>
                       <p className="text-sm text-[#798389] mt-1">
@@ -388,7 +358,7 @@ export default function StudentProfile() {
             </div>
           ) : learningPath?.topics && learningPath.topics.length > 0 ? (
             <div className="space-y-3">
-              {learningPath.topics.map((topic) => (
+              {learningPath.topics.map(topic => (
                 <Card
                   key={topic.topicId}
                   className="bg-[#2a3237] border-[#434e54] overflow-hidden"
@@ -405,16 +375,21 @@ export default function StudentProfile() {
                       <div className="flex items-center gap-3">
                         <div
                           className="w-3 h-3 rounded-full shrink-0"
-                          style={{ backgroundColor: topic.topicColor ?? "#2eff8c" }}
+                          style={{
+                            backgroundColor: topic.topicColor ?? "#2eff8c",
+                          }}
                         />
                         <div>
-                          <h3 className="font-semibold text-sm sm:text-base">
+                          <h3 className="font-semibold text-sm sm:text-base text-white">
                             {topic.topicTitle}
                           </h3>
                           <div className="flex items-center gap-3 mt-1 text-xs text-[#798389]">
                             <span>
-                              {topic.subtopics.filter((s) => s.status === "completed")
-                                .length}{" "}
+                              {
+                                topic.subtopics.filter(
+                                  s => s.status === "completed"
+                                ).length
+                              }{" "}
                               / {topic.subtopics.length} завершено
                             </span>
                             {topic.comment && (
@@ -435,7 +410,7 @@ export default function StudentProfile() {
                                   topic.subtopics.length > 0
                                     ? Math.round(
                                         (topic.subtopics.filter(
-                                          (s) => s.status === "completed"
+                                          s => s.status === "completed"
                                         ).length /
                                           topic.subtopics.length) *
                                           100
@@ -447,7 +422,11 @@ export default function StudentProfile() {
                             />
                           </div>
                         </div>
-                        <Badge className={STATUS_CONFIG[topic.enrollmentStatus]?.color}>
+                        <Badge
+                          className={
+                            STATUS_CONFIG[topic.enrollmentStatus]?.color
+                          }
+                        >
                           {STATUS_CONFIG[topic.enrollmentStatus]?.label ??
                             topic.enrollmentStatus}
                         </Badge>
@@ -474,7 +453,7 @@ export default function StudentProfile() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2">
-                                    <span className="text-sm font-medium truncate">
+                                    <span className="text-sm font-medium truncate text-[#c8cdd1]">
                                       {sub.title}
                                     </span>
                                     {sub.isCurrent && (
@@ -482,9 +461,13 @@ export default function StudentProfile() {
                                         Текущая
                                       </Badge>
                                     )}
-                                    <Badge className={`${status.color} text-[10px] px-1.5 py-0`}>
+                                    <Badge
+                                      className={`${status.color} text-[10px] px-1.5 py-0`}
+                                    >
                                       {status.icon}
-                                      <span className="ml-1">{status.label}</span>
+                                      <span className="ml-1">
+                                        {status.label}
+                                      </span>
                                     </Badge>
                                   </div>
                                   {sub.comment && (
@@ -506,13 +489,22 @@ export default function StudentProfile() {
                                 </div>
                                 <div className="flex items-center gap-1 shrink-0">
                                   {sub.theoryCompleted && (
-                                    <BookOpen size={12} className="text-[#2eff8c]" />
+                                    <BookOpen
+                                      size={12}
+                                      className="text-[#2eff8c]"
+                                    />
                                   )}
                                   {sub.practiceCompleted && (
-                                    <FileText size={12} className="text-[#01acff]" />
+                                    <FileText
+                                      size={12}
+                                      className="text-[#01acff]"
+                                    />
                                   )}
                                   {sub.labCompleted && (
-                                    <Beaker size={12} className="text-[#ffcb3d]" />
+                                    <Beaker
+                                      size={12}
+                                      className="text-[#ffcb3d]"
+                                    />
                                   )}
                                 </div>
                               </div>
@@ -522,16 +514,25 @@ export default function StudentProfile() {
                           {/* Labs for this topic */}
                           {topic.labs && topic.labs.length > 0 && (
                             <div className="mt-2 space-y-1">
-                              <p className="text-xs text-[#798389] px-1 mb-1">Лабораторные работы</p>
-                              {topic.labs.map((lab) => (
+                              <p className="text-xs text-[#798389] px-1 mb-1">
+                                Лабораторные работы
+                              </p>
+                              {topic.labs.map(lab => (
                                 <div
                                   key={lab.id}
                                   className="flex items-center gap-3 py-2 px-3 bg-[#1e2529] rounded-lg border border-[#37474f]/50"
                                 >
-                                  <Beaker size={14} className="text-[#2eff8c] shrink-0" />
+                                  <Beaker
+                                    size={14}
+                                    className="text-[#2eff8c] shrink-0"
+                                  />
                                   <div className="flex-1 min-w-0">
-                                    <span className="text-sm truncate">{lab.title}</span>
-                                    <p className="text-xs text-[#798389]">{lab.shortDesc}</p>
+                                    <span className="text-sm truncate text-[#c8cdd1]">
+                                      {lab.title}
+                                    </span>
+                                    <p className="text-xs text-[#798389]">
+                                      {lab.shortDesc}
+                                    </p>
                                   </div>
                                   <Link
                                     to={`/labs/${lab.slug}`}
@@ -574,14 +575,17 @@ export default function StudentProfile() {
             </div>
           ) : myNotebooks && myNotebooks.length > 0 ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {myNotebooks.map((nb) => (
+              {myNotebooks.map(nb => (
                 <Card
                   key={nb.id}
                   className="bg-[#2a3237] border-[#434e54] hover:border-[#2eff8c]/50 transition-colors"
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
-                      <NotebookPen size={20} className="text-[#2eff8c] shrink-0 mt-0.5" />
+                      <NotebookPen
+                        size={20}
+                        className="text-[#2eff8c] shrink-0 mt-0.5"
+                      />
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-semibold text-[#c8cdd1] truncate">
                           {nb.title}

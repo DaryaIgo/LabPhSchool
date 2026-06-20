@@ -35,15 +35,15 @@ function buildTree(nodes: TopicNode[]): TreeNode[] {
 
 function NodeContent({ node, onBack, jupyterUrl, showJupyter }: { node: TreeNode; onBack: () => void; jupyterUrl?: string | null; showJupyter?: boolean }) {
   return (
-    <div className="bg-[#1a1f22] border border-[#2eff8c]/20 rounded-xl p-5 mb-4">
+    <div className="bg-[#222a2f] border border-[#2eff8c]/20 rounded-xl p-6 mb-5">
       <button
         onClick={onBack}
-        className="inline-flex items-center gap-1.5 text-xs text-[#798389] hover:text-[#2eff8c] transition-colors mb-3"
+        className="inline-flex items-center gap-1.5 text-sm text-[#a0a8ad] hover:text-[#2eff8c] transition-colors mb-3"
       >
-        <ArrowLeft size={12} /> Назад
+        <ArrowLeft size={14} /> Назад
       </button>
-      <h4 className="text-base font-semibold text-[#2eff8c] mb-1">{node.title}</h4>
-      <div className="border-t border-white/5 pt-3">
+      <h4 className="text-lg font-semibold text-[#2eff8c] mb-3">{node.title}</h4>
+      <div className="border-t border-white/5 pt-4">
         {node.content ? (
           <MarkdownRenderer content={node.content} />
         ) : (
@@ -105,7 +105,7 @@ function SubtopicList({
               </div>
               <ChevronRight size={18} className="text-[#798389] group-hover:text-[#2eff8c] transition-colors" />
             </div>
-            <h5 className="text-sm font-semibold text-white group-hover:text-[#2eff8c] transition-colors mb-3">
+            <h5 className="text-base font-medium text-white group-hover:text-[#2eff8c] transition-colors mb-3 leading-snug">
               {sub.title}
             </h5>
             {showJupyter && (
@@ -172,8 +172,11 @@ function TopicAccordion({
         className="w-full flex items-center gap-4 p-5 text-left transition-colors hover:bg-white/5"
       >
         <span
-          className="font-mono-phys text-2xl font-bold shrink-0"
-          style={{ color: topic.color || "#2eff8c" }}
+          className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-xs font-semibold shrink-0"
+          style={{
+            backgroundColor: `${topic.color || "#2eff8c"}1a`,
+            color: topic.color || "#2eff8c",
+          }}
         >
           {String(topic.order).padStart(2, "0")}
         </span>
@@ -190,7 +193,7 @@ function TopicAccordion({
       {isOpen && (
         <div className="px-5 pb-5 border-t border-white/5 pt-4">
           {topic.content && (
-            <div className="text-[#c8cdd1] text-sm mb-4 leading-relaxed">
+            <div className="mb-5">
               <MarkdownRenderer content={topic.content} />
             </div>
           )}
@@ -379,7 +382,7 @@ export default function Course() {
           <p className="formula-text text-sm mb-4">понятнее всего то, чего не будет на экзамене</p>
           <h1 className="text-4xl lg:text-5xl font-black uppercase tracking-tight mb-6">
             Курс физики <br></br>
-            программа 7-11 классов
+            школьная программа
           </h1>
           <p className="text-[#c8cdd1] max-w-2xl mx-auto">
             От кинематики до квантовой физики — структурированный материал с
@@ -389,9 +392,9 @@ export default function Course() {
       </section>
 
       {/* Topics */}
-      <section className="section-light py-16 lg:py-24">
+      <section className="bg-[#1e2529] py-16 lg:py-24">
         <div className="max-w-4xl mx-auto px-6">
-          <h2 className="text-2xl lg:text-3xl font-bold text-[#1a1a1a] mb-8 text-center">
+          <h2 className="text-2xl lg:text-3xl font-bold text-white mb-8 text-center">
             Темы курса
           </h2>
 
@@ -400,7 +403,7 @@ export default function Course() {
               <Loader2 className="animate-spin text-[#2eff8c]" size={32} />
             </div>
           ) : tree.length === 0 ? (
-            <div className="text-center text-[#798389] py-12">
+            <div className="text-center text-[#a0a8ad] py-12">
               Пока нет тем. Добавьте их в панели администратора.
             </div>
           ) : (
@@ -412,16 +415,19 @@ export default function Course() {
                     onClick={() => handleToggleTopic(topic.id)}
                     className="group bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 transition-all duration-300 hover:border-[#2eff8c]/50 hover:-translate-y-1 hover:shadow-xl text-left flex flex-col"
                   >
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-start justify-between gap-3 mb-4">
                       <span
-                        className="font-mono-phys text-3xl font-bold"
-                        style={{ color: topic.color || "#2eff8c" }}
+                        className="inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-semibold shrink-0 mt-0.5"
+                        style={{
+                          backgroundColor: `${topic.color || "#2eff8c"}1a`,
+                          color: topic.color || "#2eff8c",
+                        }}
                       >
                         {String(topic.order).padStart(2, "0")}
                       </span>
-                      <ChevronRight size={20} className="text-[#798389] group-hover:text-[#2eff8c] transition-colors" />
+                      <ChevronRight size={18} className="text-[#798389] group-hover:text-[#2eff8c] transition-colors shrink-0 mt-1" />
                     </div>
-                    <h3 className="text-lg font-bold text-white group-hover:text-[#2eff8c] transition-colors">
+                    <h3 className="text-lg font-bold text-white group-hover:text-[#2eff8c] transition-colors leading-snug">
                       {topic.title}
                     </h3>
                   </button>
