@@ -79,8 +79,8 @@ export default function StudentProfile() {
       enabled: isAuthenticated && user?.role === "student",
     });
 
-  const { data: currentTopic, isLoading: currentLoading } =
-    trpc.student.getCurrentTopic.useQuery(undefined, {
+  const { data: currentTopics, isLoading: currentLoading } =
+    trpc.student.getCurrentTopics.useQuery(undefined, {
       enabled: isAuthenticated && user?.role === "student",
     });
 
@@ -260,7 +260,7 @@ export default function StudentProfile() {
           </div>
         </section>
 
-        {/* Current Topic */}
+        {/* Current Topics */}
         <section className="mb-8">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <BookOpen size={18} className="text-[#01acff]" />
@@ -268,73 +268,88 @@ export default function StudentProfile() {
           </h2>
           {currentLoading ? (
             <Skeleton className="h-48 bg-[#37474f]" />
-          ) : currentTopic ? (
-            <Card className="bg-[#2a3237] border-[#434e54] overflow-hidden">
-              <CardContent className="p-0">
-                <div className="p-6">
-                  <div className="flex flex-col md:flex-row md:items-start gap-4">
-                    <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-                      style={{
-                        backgroundColor: `${currentTopic.topic?.color ?? "#2eff8c"}20`,
-                      }}
-                    >
-                      <GraduationCap
-                        size={24}
-                        style={{
-                          color: currentTopic.topic?.color ?? "#2eff8c",
-                        }}
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Badge className="bg-[#01acff]/20 text-[#01acff]">
-                          {currentTopic.topic?.title}
-                        </Badge>
-                        {currentTopic.enrollmentComment && (
-                          <span className="text-xs text-[#798389]">
-                            {currentTopic.enrollmentComment}
-                          </span>
-                        )}
-                      </div>
-                      <h3 className="text-xl font-bold mt-2 text-white">
-                        {currentTopic.subtopic?.title}
-                      </h3>
-                      <p className="text-sm text-[#798389] mt-1">
-                        {currentTopic.subtopic?.description ?? "Нет описания"}
-                      </p>
-
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {currentTopic.labs && currentTopic.labs.length > 0 && (
-                          <div className="flex items-center gap-2 px-3 py-1.5 bg-[#1e2529] rounded-lg border border-[#37474f]">
-                            <Beaker size={14} className="text-[#2eff8c]" />
-                            <span className="text-xs text-[#c8cdd1]">
-                              {currentTopic.labs.length} лаб.
-                            </span>
-                          </div>
-                        )}
-                        {currentTopic.problemTypes &&
-                          currentTopic.problemTypes.length > 0 && (
-                            <div className="flex items-center gap-2 px-3 py-1.5 bg-[#1e2529] rounded-lg border border-[#37474f]">
-                              <FileText size={14} className="text-[#ffcb3d]" />
-                              <span className="text-xs text-[#c8cdd1]">
-                                {currentTopic.problemTypes.length} задач
-                              </span>
-                            </div>
-                          )}
-                        <Link
-                          to={`/course?topic=${encodeURIComponent(currentTopic.topic?.title ?? "")}&node=${encodeURIComponent(currentTopic.subtopic?.title ?? "")}`}
-                          className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#2eff8c]/10 text-[#2eff8c] rounded-lg border border-[#2eff8c]/30 text-xs hover:bg-[#2eff8c]/20 transition-colors"
+          ) : currentTopics && currentTopics.length > 0 ? (
+            <div className="space-y-4">
+              {currentTopics.map((currentTopic, index) => (
+                <Card
+                  key={currentTopic.subtopic?.id ?? `current-topic-${index}`}
+                  className="bg-[#2a3237] border-[#434e54] overflow-hidden"
+                >
+                  <CardContent className="p-0">
+                    <div className="p-6">
+                      <div className="flex flex-col md:flex-row md:items-start gap-4">
+                        <div
+                          className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                          style={{
+                            backgroundColor: `${currentTopic.topic?.color ?? "#2eff8c"}20`,
+                          }}
                         >
-                          <BookOpen size={14} />
-                          Перейти к теории
-                        </Link>
+                          <GraduationCap
+                            size={24}
+                            style={{
+                              color: currentTopic.topic?.color ?? "#2eff8c",
+                            }}
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge className="bg-[#01acff]/20 text-[#01acff]">
+                              {currentTopic.topic?.title}
+                            </Badge>
+                            {currentTopic.enrollmentComment && (
+                              <span className="text-xs text-[#798389]">
+                                {currentTopic.enrollmentComment}
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="text-xl font-bold mt-2 text-white">
+                            {currentTopic.subtopic?.title}
+                          </h3>
+                          <p className="text-sm text-[#798389] mt-1">
+                            {currentTopic.subtopic?.description ??
+                              "Нет описания"}
+                          </p>
+
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            {currentTopic.labs &&
+                              currentTopic.labs.length > 0 && (
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-[#1e2529] rounded-lg border border-[#37474f]">
+                                  <Beaker
+                                    size={14}
+                                    className="text-[#2eff8c]"
+                                  />
+                                  <span className="text-xs text-[#c8cdd1]">
+                                    {currentTopic.labs.length} лаб.
+                                  </span>
+                                </div>
+                              )}
+                            {currentTopic.problemTypes &&
+                              currentTopic.problemTypes.length > 0 && (
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-[#1e2529] rounded-lg border border-[#37474f]">
+                                  <FileText
+                                    size={14}
+                                    className="text-[#ffcb3d]"
+                                  />
+                                  <span className="text-xs text-[#c8cdd1]">
+                                    {currentTopic.problemTypes.length} задач
+                                  </span>
+                                </div>
+                              )}
+                            <Link
+                              to={`/course?topic=${encodeURIComponent(currentTopic.topic?.title ?? "")}&node=${encodeURIComponent(currentTopic.subtopic?.title ?? "")}`}
+                              className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#2eff8c]/10 text-[#2eff8c] rounded-lg border border-[#2eff8c]/30 text-xs hover:bg-[#2eff8c]/20 transition-colors"
+                            >
+                              <BookOpen size={14} />
+                              Перейти к теории
+                            </Link>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           ) : (
             <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-8 text-center">
               <BookOpen size={32} className="text-[#798389] mx-auto mb-3" />
@@ -713,15 +728,13 @@ function SubtopicComment({ text }: { text: string }) {
   const [expanded, setExpanded] = useState(false);
   const limit = 100;
   const isLong = text.length > limit;
-  const preview = isLong && !expanded ? text.slice(0, limit).trimEnd() + "…" : text;
+  const preview =
+    isLong && !expanded ? text.slice(0, limit).trimEnd() + "…" : text;
 
   return (
     <div className="mt-2 bg-[#2eff8c]/10 border border-[#2eff8c]/30 rounded-lg px-3 py-2">
       <div className="flex items-start gap-2">
-        <MessageSquare
-          size={14}
-          className="text-[#2eff8c] shrink-0 mt-0.5"
-        />
+        <MessageSquare size={14} className="text-[#2eff8c] shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0">
           <p className="text-sm text-[#c8cdd1] leading-relaxed">{preview}</p>
           {isLong && (

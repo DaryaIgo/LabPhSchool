@@ -348,8 +348,8 @@ export const studentRouter = createRouter({
     return { topics: topicsWithSubtopics, labProgress: labProgressList };
   }),
 
-  // ── Get current active topic ──
-  getCurrentTopic: studentQuery.query(async ({ ctx }) => {
+  // ── Get current active topics ──
+  getCurrentTopics: studentQuery.query(async ({ ctx }) => {
     const contentDb = getContentDb();
     const learningDb = getLearningDb();
     const problemsDb = getProblemsDb();
@@ -362,7 +362,7 @@ export const studentRouter = createRouter({
         .from(topics)
         .orderBy(topics.order)
         .limit(1);
-      if (!firstTopic.length) return null;
+      if (!firstTopic.length) return [];
       const topic = firstTopic[0];
       const topicSubtopics = await contentDb
         .select()
@@ -380,22 +380,29 @@ export const studentRouter = createRouter({
             .from(problemTypes)
             .where(eq(problemTypes.subtopicId, topicSubtopics[0].id))
         : [];
-      return {
-        subtopic: topicSubtopics[0] ?? null,
-        topic: topic,
-        labs: topicLabs,
-        problemTypes: subtopicProblemTypes,
-        enrollmentComment: null,
-      };
+      return [
+        {
+          subtopic: topicSubtopics[0] ?? null,
+          topic,
+          labs: topicLabs,
+          problemTypes: subtopicProblemTypes,
+          enrollmentComment: null,
+        },
+      ];
     }
 
-    // Find enrollment with currentSubtopicId
-    const enrollment = await learningDb
+    const currentItems: {
+      subtopicId: number;
+      topicId: number | null;
+      enrollmentComment: string | null;
+    }[] = [];
+
+    // 1. Current subtopics from active enrollments
+    const activeEnrollments = await learningDb
       .select({
         id: enrollments.id,
         topicId: enrollments.topicId,
         currentSubtopicId: enrollments.currentSubtopicId,
-        status: enrollments.status,
         comment: enrollments.comment,
       })
       .from(enrollments)
@@ -405,102 +412,125 @@ export const studentRouter = createRouter({
           eq(enrollments.status, "active"),
           sql`${enrollments.currentSubtopicId} IS NOT NULL`
         )
-      )
-      .limit(1);
+      );
 
-    if (!enrollment.length) {
-      // Fallback: find first in_progress subtopic
-      const inProgressProgress = await learningDb
-        .select({
-          subtopicId: studentProgress.subtopicId,
-        })
-        .from(studentProgress)
-        .where(
-          and(
-            eq(studentProgress.localUserId, studentId),
-            eq(studentProgress.status, "in_progress")
-          )
-        )
-        .limit(1);
-
-      if (!inProgressProgress.length) {
-        return null;
-      }
-
-      const inProgressSubtopicId = inProgressProgress[0].subtopicId;
-
-      const subtopicRow = await contentDb
-        .select({ id: subtopics.id, topicId: subtopics.topicId })
-        .from(subtopics)
-        .where(eq(subtopics.id, inProgressSubtopicId))
-        .limit(1);
-
-      const topicId = subtopicRow[0]?.topicId;
-      if (!topicId) {
-        return null;
-      }
-
-      const subtopic = await contentDb
-        .select()
-        .from(subtopics)
-        .where(eq(subtopics.id, inProgressSubtopicId))
-        .limit(1);
-
-      const topic = await contentDb
-        .select()
-        .from(topics)
-        .where(eq(topics.id, topicId))
-        .limit(1);
-
-      const topicLabs = await contentDb
-        .select()
-        .from(labs)
-        .where(eq(labs.topicId, topicId));
-
-      const subtopicProblemTypes = await problemsDb
-        .select()
-        .from(problemTypes)
-        .where(eq(problemTypes.subtopicId, inProgressSubtopicId));
-
-      return {
-        subtopic: subtopic[0] ?? null,
-        topic: topic[0] ?? null,
-        labs: topicLabs,
-        problemTypes: subtopicProblemTypes,
-        enrollmentComment: null,
-      };
+    for (const e of activeEnrollments) {
+      currentItems.push({
+        subtopicId: e.currentSubtopicId!,
+        topicId: e.topicId,
+        enrollmentComment: e.comment,
+      });
     }
 
-    const e = enrollment[0];
-    const subtopic = await contentDb
+    // 2. All subtopics explicitly marked as in_progress
+    const existingSubtopicIds = new Set(currentItems.map(i => i.subtopicId));
+    const inProgressProgress = await learningDb
+      .select({
+        subtopicId: studentProgress.subtopicId,
+      })
+      .from(studentProgress)
+      .where(
+        and(
+          eq(studentProgress.localUserId, studentId),
+          eq(studentProgress.status, "in_progress")
+        )
+      );
+
+    for (const row of inProgressProgress) {
+      if (!existingSubtopicIds.has(row.subtopicId)) {
+        currentItems.push({
+          subtopicId: row.subtopicId,
+          topicId: null,
+          enrollmentComment: null,
+        });
+        existingSubtopicIds.add(row.subtopicId);
+      }
+    }
+
+    if (!currentItems.length) {
+      return [];
+    }
+
+    // Fetch related data in batches
+    const subtopicIds = currentItems.map(i => i.subtopicId);
+    const subtopicRows = await contentDb
       .select()
       .from(subtopics)
-      .where(eq(subtopics.id, e.currentSubtopicId!))
-      .limit(1);
+      .where(inArray(subtopics.id, subtopicIds));
+    const subtopicById = new Map(subtopicRows.map(s => [s.id, s]));
 
-    const topic = await contentDb
-      .select()
-      .from(topics)
-      .where(eq(topics.id, e.topicId))
-      .limit(1);
+    const topicIdsSet = new Set<number>();
+    for (const item of currentItems) {
+      if (item.topicId) {
+        topicIdsSet.add(item.topicId);
+      } else {
+        const s = subtopicById.get(item.subtopicId);
+        if (s?.topicId) topicIdsSet.add(s.topicId);
+      }
+    }
+    const topicIds = Array.from(topicIdsSet);
+    const topicRows =
+      topicIds.length > 0
+        ? await contentDb
+            .select()
+            .from(topics)
+            .where(inArray(topics.id, topicIds))
+        : [];
+    const topicById = new Map(topicRows.map(t => [t.id, t]));
 
-    const topicLabs = await contentDb
-      .select()
-      .from(labs)
-      .where(eq(labs.topicId, e.topicId));
+    const labTopicIds = Array.from(
+      new Set(
+        currentItems
+          .map(i => i.topicId ?? subtopicById.get(i.subtopicId)?.topicId)
+          .filter((id): id is number => Boolean(id))
+      )
+    );
+    const allLabs =
+      labTopicIds.length > 0
+        ? await contentDb
+            .select()
+            .from(labs)
+            .where(inArray(labs.topicId, labTopicIds))
+        : [];
+    const allProblemTypes =
+      subtopicIds.length > 0
+        ? await problemsDb
+            .select()
+            .from(problemTypes)
+            .where(inArray(problemTypes.subtopicId, subtopicIds))
+        : [];
 
-    const subtopicProblemTypes = await problemsDb
-      .select()
-      .from(problemTypes)
-      .where(eq(problemTypes.subtopicId, e.currentSubtopicId!));
+    // Keep a stable order: topic order → subtopic order
+    currentItems.sort((a, b) => {
+      const aSubtopic = subtopicById.get(a.subtopicId);
+      const bSubtopic = subtopicById.get(b.subtopicId);
+      const aTopicId = a.topicId ?? aSubtopic?.topicId ?? 0;
+      const bTopicId = b.topicId ?? bSubtopic?.topicId ?? 0;
+      const aTopic = aTopicId ? topicById.get(aTopicId) : undefined;
+      const bTopic = bTopicId ? topicById.get(bTopicId) : undefined;
+      const topicDiff = (aTopic?.order ?? 0) - (bTopic?.order ?? 0);
+      if (topicDiff !== 0) return topicDiff;
+      return (aSubtopic?.order ?? 0) - (bSubtopic?.order ?? 0);
+    });
 
-    return {
-      subtopic: subtopic[0] ?? null,
-      topic: topic[0] ?? null,
-      labs: topicLabs,
-      problemTypes: subtopicProblemTypes,
-      enrollmentComment: e.comment,
-    };
+    return currentItems.map(item => {
+      const subtopic = subtopicById.get(item.subtopicId) ?? null;
+      const topicId = item.topicId ?? subtopic?.topicId;
+      const topic = topicId ? (topicById.get(topicId) ?? null) : null;
+      const topicLabs = topicId
+        ? allLabs.filter(l => l.topicId === topicId)
+        : [];
+      const subtopicProblemTypes = allProblemTypes.filter(
+        p => p.subtopicId === item.subtopicId
+      );
+      return {
+        subtopic,
+        topic,
+        labs: topicLabs,
+        problemTypes: subtopicProblemTypes,
+        enrollmentComment: item.enrollmentComment,
+      };
+    });
   }),
 
   // ── Get recent activity ──
