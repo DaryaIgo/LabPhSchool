@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import StudentLabsSection from "@/components/StudentLabsSection";
 import {
   Dialog,
   DialogContent,
@@ -575,6 +576,9 @@ export default function StudentProfile() {
             </div>
           )}
         </section>
+
+        {/* My Labs */}
+        <StudentLabsSection />
 
         {/* Jupyter Notebooks */}
         <section className="mb-8">

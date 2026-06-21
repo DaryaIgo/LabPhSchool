@@ -10,6 +10,7 @@ import { TRPCError } from "@trpc/server";
 import { createRouter, adminQuery, studentQuery } from "./middleware";
 import {
   findEnrollment,
+  getEnrollmentById,
   getEnrollmentsWithDetails,
   createEnrollment,
   updateEnrollmentStatus,
@@ -22,6 +23,14 @@ import { createAuditEntry } from "./queries/audit";
 import { getContentDb } from "./queries/connection";
 import { topicNodes } from "@db/schema/content";
 import { eq, and, isNull, isNotNull } from "drizzle-orm";
+import {
+  getAssignedLabWorksByEnrollment,
+  findAssignedLabWork,
+  createAssignedLabWork,
+  updateAssignedLabWork,
+  deleteAssignedLabWork,
+  getMaxOrderForEnrollment,
+} from "./queries/assignedLabWorks";
 
 export const enrollmentRouter = createRouter({
   // ── Admin: List enrollments for a student ──
@@ -191,5 +200,120 @@ export const enrollmentRouter = createRouter({
     .input(z.object({ topicNodeId: z.number().positive() }))
     .query(async ({ ctx, input }) => {
       return isEnrolled(ctx.localUser!.id, input.topicNodeId);
+    }),
+
+  // ═══════════════════════════════════════════════════════════════
+  // ADMIN: Assigned Lab Works
+  // ═══════════════════════════════════════════════════════════════
+
+  listAssignedLabWorks: adminQuery
+    .input(z.object({ enrollmentId: z.number().positive() }))
+    .query(async ({ input }) => {
+      return getAssignedLabWorksByEnrollment(input.enrollmentId);
+    }),
+
+  assignLabWork: adminQuery
+    .input(
+      z.object({
+        enrollmentId: z.number().positive(),
+        labWorkId: z.number().positive(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const enrollment = await getEnrollmentById(input.enrollmentId);
+      if (!enrollment) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Enrollment not found",
+        });
+      }
+
+      const existing = await findAssignedLabWork(
+        input.enrollmentId,
+        input.labWorkId
+      );
+      if (existing) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "Lab work already assigned for this enrollment",
+        });
+      }
+
+      const maxOrder = await getMaxOrderForEnrollment(input.enrollmentId);
+
+      const result = await createAssignedLabWork({
+        enrollmentId: input.enrollmentId,
+        localUserId: enrollment.localUserId,
+        labWorkId: input.labWorkId,
+        order: maxOrder + 1,
+        assignedBy: ctx.localUser!.id,
+      });
+
+      const assignmentId = Number(result[0].insertId);
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "create",
+        resource: "assigned_lab_works",
+        resourceId: assignmentId,
+        details: {
+          enrollmentId: input.enrollmentId,
+          labWorkId: input.labWorkId,
+          localUserId: enrollment.localUserId,
+        },
+      });
+
+      return { id: assignmentId, success: true };
+    }),
+
+  unassignLabWork: adminQuery
+    .input(z.object({ assignmentId: z.number().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      await deleteAssignedLabWork(input.assignmentId);
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "delete",
+        resource: "assigned_lab_works",
+        resourceId: input.assignmentId,
+      });
+
+      return { success: true };
+    }),
+
+  updateAssignedLabWork: adminQuery
+    .input(
+      z.object({
+        assignmentId: z.number().positive(),
+        status: z.enum(["assigned", "completed"]).optional(),
+        grade: z.number().int().min(1).max(5).nullable().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { assignmentId, status, grade } = input;
+
+      await updateAssignedLabWork(assignmentId, {
+        status,
+        grade: grade === null ? null : grade,
+        completedAt:
+          status === "completed"
+            ? new Date()
+            : status === "assigned"
+              ? null
+              : undefined,
+      });
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "update",
+        resource: "assigned_lab_works",
+        resourceId: assignmentId,
+        details: { status, grade },
+      });
+
+      return { success: true };
     }),
 });

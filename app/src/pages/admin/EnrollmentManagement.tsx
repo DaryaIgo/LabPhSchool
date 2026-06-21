@@ -62,7 +62,6 @@ type RouterOutput = inferRouterOutputs<AppRouter>;
 type EnrollmentItem = RouterOutput["enrollment"]["listForStudent"][number];
 type StudentUser = RouterOutput["student"]["list"]["users"][number];
 type SubtopicProgressItem = RouterOutput["student"]["getTopicProgress"][number];
-type LabItem = RouterOutput["course"]["topicLabWorks"][number];
 type TopicItem = RouterOutput["course"]["topics"][number];
 
 type EnrollmentStatus = EnrollmentItem["status"];
@@ -405,10 +404,6 @@ function TopicRow({
     studentId,
     topicNodeId: enrollment.topicNodeId,
   });
-  const { data: topicLabs } = trpc.course.topicLabWorks.useQuery(
-    { topicNodeId: enrollment.topicNodeId },
-    { enabled: isOpen }
-  );
 
   const completedCount =
     progress?.filter((p) => p.status === "completed").length ?? 0;
@@ -493,7 +488,10 @@ function TopicRow({
           studentId={studentId}
           topicNodeId={enrollment.topicNodeId}
         />
-        {topicLabs && topicLabs.length > 0 && <LabList labs={topicLabs} />}
+        <AssignedLabWorksManager
+          enrollmentId={enrollment.id}
+          isOpen={isOpen}
+        />
       </CollapsibleContent>
     </Collapsible>
   );
@@ -753,29 +751,209 @@ function StatusLabel({ status }: { status: SubtopicStatus }) {
   );
 }
 
-function LabList({ labs }: { labs: LabItem[] }) {
+function AssignedLabWorksManager({
+  enrollmentId,
+  isOpen,
+}: {
+  enrollmentId: number;
+  isOpen: boolean;
+}) {
+  const utils = trpc.useUtils();
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [selectedLabWorkId, setSelectedLabWorkId] = useState<number | null>(
+    null
+  );
+
+  const { data: assignedLabs, isLoading } =
+    trpc.enrollment.listAssignedLabWorks.useQuery(
+      { enrollmentId },
+      { enabled: isOpen }
+    );
+  const { data: allLabWorks } = trpc.virtualLab.adminListLabWorks.useQuery(
+    undefined,
+    { enabled: isOpen }
+  );
+
+  const assignMutation = trpc.enrollment.assignLabWork.useMutation({
+    onSuccess: () => {
+      toast("Лабораторная работа назначена");
+      utils.enrollment.listAssignedLabWorks.invalidate({ enrollmentId });
+      utils.student.getMyAssignedLabWorks.invalidate();
+      setAddDialogOpen(false);
+      setSelectedLabWorkId(null);
+    },
+    onError: (err) => toast(err.message),
+  });
+
+  const unassignMutation = trpc.enrollment.unassignLabWork.useMutation({
+    onSuccess: () => {
+      toast("Назначение удалено");
+      utils.enrollment.listAssignedLabWorks.invalidate({ enrollmentId });
+      utils.student.getMyAssignedLabWorks.invalidate();
+    },
+    onError: (err) => toast(err.message),
+  });
+
+  const updateMutation = trpc.enrollment.updateAssignedLabWork.useMutation({
+    onSuccess: () => {
+      utils.enrollment.listAssignedLabWorks.invalidate({ enrollmentId });
+      utils.student.getMyAssignedLabWorks.invalidate();
+    },
+    onError: (err) => toast(err.message),
+  });
+
+  const availableLabWorks =
+    allLabWorks?.filter(
+      (lw) => !assignedLabs?.some((a) => a.labWorkId === lw.id)
+    ) ?? [];
+
   return (
-    <div className="space-y-1.5">
-      <h4 className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
-        <Beaker className="h-3.5 w-3.5" />
-        Лабораторные работы
-      </h4>
-      <div className="grid gap-1.5">
-        {labs.map((lab) => (
-          <a
-            key={lab.id}
-            href={`/#/labs/${lab.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-between px-3 py-2 bg-[#1a2024] hover:bg-[#232b2f] rounded-md border border-[#2a3338] transition-colors group"
-          >
-            <span className="text-sm text-white group-hover:text-[#2eff8c] transition-colors truncate pr-2">
-              {lab.title}
-            </span>
-            <ExternalLink className="h-3.5 w-3.5 text-slate-500 group-hover:text-[#2eff8c] shrink-0" />
-          </a>
-        ))}
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <h4 className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
+          <Beaker className="h-3.5 w-3.5" />
+          Назначенные лабораторные работы
+        </h4>
+        <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+          <DialogTrigger asChild>
+            <button
+              type="button"
+              className="text-xs flex items-center gap-1 text-[#2eff8c] hover:text-[#26d97a] transition-colors"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Добавить новую лабораторную работу
+            </button>
+          </DialogTrigger>
+          <DialogContent className="bg-[#1e2529] border-[#37474f] text-white sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Назначить лабораторную работу</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 mt-2">
+              <Select
+                value={selectedLabWorkId?.toString() ?? ""}
+                onValueChange={(v) => setSelectedLabWorkId(Number(v))}
+              >
+                <SelectTrigger className="bg-[#263238] border-[#37474f]">
+                  <SelectValue placeholder="Выберите лабораторную работу..." />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1e2529] border-[#37474f] max-h-80">
+                  {availableLabWorks.map((lw) => (
+                    <SelectItem key={lw.id} value={lw.id.toString()}>
+                      <span className="truncate">{lw.title}</span>
+                      <span className="ml-2 text-xs text-slate-500">
+                        {lw.categoryTitle ?? "Без категории"}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                className="w-full bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
+                disabled={!selectedLabWorkId || assignMutation.isPending}
+                onClick={() => {
+                  if (selectedLabWorkId) {
+                    assignMutation.mutate({
+                      enrollmentId,
+                      labWorkId: selectedLabWorkId,
+                    });
+                  }
+                }}
+              >
+                {assignMutation.isPending ? "Назначаем..." : "Назначить"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
+
+      {isLoading ? (
+        <div className="space-y-1.5">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 bg-[#37474f]" />
+          ))}
+        </div>
+      ) : assignedLabs && assignedLabs.length > 0 ? (
+        <div className="grid gap-1.5">
+          {assignedLabs.map((lab, idx) => (
+            <div
+              key={lab.id}
+              className="flex items-center gap-2 px-3 py-2 bg-[#1a2024] rounded-md border border-[#2a3338] hover:border-[#37474f] transition-colors"
+            >
+              <span className="text-xs font-medium text-slate-500 w-5 shrink-0">
+                {idx + 1}.
+              </span>
+              <a
+                href={`/#/labs/work/${lab.labSlug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 min-w-0 flex items-center gap-2 group"
+              >
+                <span className="text-sm text-white group-hover:text-[#2eff8c] transition-colors truncate">
+                  {lab.labTitle}
+                </span>
+                <ExternalLink className="h-3 w-3 text-slate-500 group-hover:text-[#2eff8c] shrink-0" />
+              </a>
+              <Select
+                value={lab.status}
+                onValueChange={(val) =>
+                  updateMutation.mutate({
+                    assignmentId: lab.id,
+                    status: val as "assigned" | "completed",
+                  })
+                }
+                disabled={updateMutation.isPending}
+              >
+                <SelectTrigger className="h-7 text-xs bg-[#232b2f] border-[#37474f] text-white w-32 shrink-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1e2529] border-[#37474f]">
+                  <SelectItem value="assigned">Назначена</SelectItem>
+                  <SelectItem value="completed">Выполнена</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={lab.grade?.toString() ?? "none"}
+                onValueChange={(val) =>
+                  updateMutation.mutate({
+                    assignmentId: lab.id,
+                    grade: val === "none" ? null : Number(val),
+                  })
+                }
+                disabled={updateMutation.isPending}
+              >
+                <SelectTrigger className="h-7 text-xs bg-[#232b2f] border-[#37474f] text-white w-24 shrink-0">
+                  <SelectValue placeholder="Оценка" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1e2529] border-[#37474f]">
+                  <SelectItem value="none">Без оценки</SelectItem>
+                  {[1, 2, 3, 4, 5].map((g) => (
+                    <SelectItem key={g} value={g.toString()}>
+                      {g}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm("Удалить назначенную лабораторную работу?")) {
+                    unassignMutation.mutate({ assignmentId: lab.id });
+                  }
+                }}
+                disabled={unassignMutation.isPending}
+                className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-md transition-colors shrink-0"
+                title="Удалить"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-slate-500">
+          Нет назначенных лабораторных работ
+        </p>
+      )}
     </div>
   );
 }

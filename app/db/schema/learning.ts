@@ -112,3 +112,53 @@ export const labProgress = mysqlTable("lab_progress", {
 });
 
 export type LabProgress = typeof labProgress.$inferSelect;
+
+// ═══════════════════════════════════════════════════════════════
+// Teacher-assigned lab works per enrollment
+// ═══════════════════════════════════════════════════════════════
+
+// Soft references:
+// - enrollmentId -> learning.enrollments.id
+// - localUserId  -> auth.local_users.id
+// - labWorkId    -> labs.lab_works.id
+// - assignedBy   -> auth.users.id
+
+export const assignedLabWorks = mysqlTable(
+  "assigned_lab_works",
+  {
+    id: serial("id").primaryKey(),
+    enrollmentId: bigint("enrollment_id", { mode: "number", unsigned: true })
+      .notNull(),
+    localUserId: bigint("local_user_id", { mode: "number", unsigned: true })
+      .notNull(),
+    labWorkId: bigint("lab_work_id", { mode: "number", unsigned: true })
+      .notNull(),
+    order: int("order").notNull().default(1),
+    status: mysqlEnum("status", ["assigned", "completed"])
+      .default("assigned")
+      .notNull(),
+    grade: int("grade"),
+    assignedBy: bigint("assigned_by", { mode: "number", unsigned: true }),
+    assignedAt: timestamp("assigned_at").defaultNow().notNull(),
+    completedAt: timestamp("completed_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => ({
+    uniqueAssignment: uniqueIndex("unique_assignment").on(
+      table.enrollmentId,
+      table.labWorkId
+    ),
+    enrollmentIdx: index("assigned_lab_work_enrollment_idx").on(
+      table.enrollmentId
+    ),
+    localUserIdx: index("assigned_lab_work_local_user_idx").on(
+      table.localUserId
+    ),
+  })
+);
+
+export type AssignedLabWork = typeof assignedLabWorks.$inferSelect;

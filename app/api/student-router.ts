@@ -22,6 +22,7 @@ import {
   getEnrollmentsByLocalUser,
   getEnrollmentsWithDetails,
 } from "./queries/enrollments";
+import { getAssignedLabWorksByStudent } from "./queries/assignedLabWorks";
 import { createAuditEntry } from "./queries/audit";
 import { eq, and, desc, sql, inArray, count, isNull, isNotNull } from "drizzle-orm";
 
@@ -1024,5 +1025,13 @@ export const studentRouter = createRouter({
       .set({ read: true })
       .where(eq(notifications.localUserId, ctx.localUser!.id));
     return { success: true };
+  }),
+
+  // ── Get my assigned lab works (active + archived) ──
+  getMyAssignedLabWorks: studentQuery.query(async ({ ctx }) => {
+    const rows = await getAssignedLabWorksByStudent(ctx.localUser!.id);
+    const active = rows.filter((r) => r.status === "assigned");
+    const archived = rows.filter((r) => r.status === "completed");
+    return { active, archived };
   }),
 });

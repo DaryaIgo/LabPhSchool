@@ -11,6 +11,15 @@ import { topicNodes } from "@db/schema/content";
 
 // ── READ ──
 
+export async function getEnrollmentById(id: number) {
+  const rows = await getLearningDb()
+    .select()
+    .from(enrollments)
+    .where(eq(enrollments.id, id))
+    .limit(1);
+  return rows.at(0);
+}
+
 export async function findEnrollment(
   localUserId: number,
   topicNodeId: number
