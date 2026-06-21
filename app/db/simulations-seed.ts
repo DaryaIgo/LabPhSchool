@@ -1,4 +1,3 @@
-import { eq } from "drizzle-orm";
 import { getLabsDb } from "../api/queries/connection";
 import { simulations, type SimulationParamConfig } from "./schema/labs";
 

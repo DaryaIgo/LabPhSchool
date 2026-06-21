@@ -63,7 +63,7 @@ type EnrollmentItem = RouterOutput["enrollment"]["listForStudent"][number];
 type StudentUser = RouterOutput["student"]["list"]["users"][number];
 type SubtopicProgressItem = RouterOutput["student"]["getTopicProgress"][number];
 type LabItem = RouterOutput["course"]["topicLabWorks"][number];
-type TopicItem = RouterOutput["admin"]["listTopics"][number];
+type TopicItem = RouterOutput["course"]["topics"][number];
 
 type EnrollmentStatus = EnrollmentItem["status"];
 type SubtopicStatus = SubtopicProgressItem["status"];
@@ -99,7 +99,7 @@ export default function EnrollmentManagement() {
   const [expandedStudent, setExpandedStudent] = useState<number | null>(null);
   const [enrollDialogOpen, setEnrollDialogOpen] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
-  const [selectedTopicId, setSelectedTopicId] = useState<number | null>(null);
+  const [selectedTopicNodeId, setSelectedTopicNodeId] = useState<number | null>(null);
 
   const { data: students, isLoading: studentsLoading } =
     trpc.student.list.useQuery(
@@ -107,7 +107,7 @@ export default function EnrollmentManagement() {
       { enabled: !!user && user.role === "admin" }
     );
 
-  const { data: topics } = trpc.admin.listTopics.useQuery(undefined, {
+  const { data: topics } = trpc.course.topics.useQuery(undefined, {
     enabled: !!user && user.role === "admin",
   });
 
@@ -116,7 +116,7 @@ export default function EnrollmentManagement() {
       toast("Ученик записан на тему");
       utils.enrollment.listForStudent.invalidate();
       setEnrollDialogOpen(false);
-      setSelectedTopicId(null);
+      setSelectedTopicNodeId(null);
     },
     onError: (err) => toast(err.message),
   });
@@ -184,13 +184,13 @@ export default function EnrollmentManagement() {
                       setEnrollDialogOpen(open);
                       if (open) setSelectedStudentId(student.id);
                     }}
-                    selectedTopicId={selectedTopicId}
-                    onSelectTopic={setSelectedTopicId}
+                    selectedTopicNodeId={selectedTopicNodeId}
+                    onSelectTopic={setSelectedTopicNodeId}
                     onEnroll={() => {
-                      if (selectedTopicId && selectedStudentId) {
+                      if (selectedTopicNodeId && selectedStudentId) {
                         enrollMutation.mutate({
                           studentId: selectedStudentId,
-                          topicId: selectedTopicId,
+                          topicNodeId: selectedTopicNodeId,
                         });
                       }
                     }}
@@ -275,7 +275,7 @@ function EnrollDialog({
   topics,
   open,
   onOpenChange,
-  selectedTopicId,
+  selectedTopicNodeId,
   onSelectTopic,
   onEnroll,
   isEnrolling,
@@ -284,7 +284,7 @@ function EnrollDialog({
   topics: TopicItem[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  selectedTopicId: number | null;
+  selectedTopicNodeId: number | null;
   onSelectTopic: (id: number | null) => void;
   onEnroll: () => void;
   isEnrolling: boolean;
@@ -307,7 +307,7 @@ function EnrollDialog({
         </DialogHeader>
         <div className="space-y-4 mt-2">
           <Select
-            value={selectedTopicId?.toString() ?? ""}
+            value={selectedTopicNodeId?.toString() ?? ""}
             onValueChange={(v) => onSelectTopic(Number(v))}
           >
             <SelectTrigger className="bg-[#263238] border-[#37474f]">
@@ -323,7 +323,7 @@ function EnrollDialog({
           </Select>
           <Button
             className="w-full bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
-            disabled={!selectedTopicId || isEnrolling}
+            disabled={!selectedTopicNodeId || isEnrolling}
             onClick={onEnroll}
           >
             {isEnrolling ? "Открываем..." : "Подтвердить"}
@@ -394,7 +394,7 @@ function TopicRow({
 }: {
   studentId: number;
   enrollment: EnrollmentItem;
-  allSubtopics: { id: number; topicId: number; title: string }[];
+  allSubtopics: { id: number; parentId: number | null; title: string }[];
   onUnenroll: (id: number) => void;
   onUpdateStatus: (id: number, status: EnrollmentStatus) => void;
   isPending: boolean;
@@ -403,10 +403,10 @@ function TopicRow({
 
   const { data: progress } = trpc.student.getTopicProgress.useQuery({
     studentId,
-    topicId: enrollment.topicId,
+    topicNodeId: enrollment.topicNodeId,
   });
   const { data: topicLabs } = trpc.course.topicLabWorks.useQuery(
-    { topicId: enrollment.topicId },
+    { topicNodeId: enrollment.topicNodeId },
     { enabled: isOpen }
   );
 
@@ -416,9 +416,9 @@ function TopicRow({
   const progressPercent =
     totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
-  const currentSubtopicId = progress?.find((p) => p.status === "in_progress")
-    ?.subtopicId;
-  const currentSubtopic = allSubtopics.find((s) => s.id === currentSubtopicId);
+  const currentSubtopicNodeId = progress?.find((p) => p.status === "in_progress")
+    ?.subtopicNodeId;
+  const currentSubtopic = allSubtopics.find((s) => s.id === currentSubtopicNodeId);
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -491,7 +491,7 @@ function TopicRow({
       <CollapsibleContent className="mt-2 pl-3 border-l-2 border-[#2a3338] space-y-3">
         <SubtopicProgressManager
           studentId={studentId}
-          topicId={enrollment.topicId}
+          topicNodeId={enrollment.topicNodeId}
         />
         {topicLabs && topicLabs.length > 0 && <LabList labs={topicLabs} />}
       </CollapsibleContent>
@@ -553,21 +553,21 @@ function TopicActions({
 
 function SubtopicProgressManager({
   studentId,
-  topicId,
+  topicNodeId,
 }: {
   studentId: number;
-  topicId: number;
+  topicNodeId: number;
 }) {
   const { data: progress, isLoading } = trpc.student.getTopicProgress.useQuery({
     studentId,
-    topicId,
+    topicNodeId,
   });
   const utils = trpc.useUtils();
 
   const updateProgress = trpc.student.updateProgress.useMutation({
     onSuccess: () => {
       toast("Прогресс обновлён");
-      utils.student.getTopicProgress.invalidate({ studentId, topicId });
+      utils.student.getTopicProgress.invalidate({ studentId, topicNodeId });
       utils.student.getProfile.invalidate();
       utils.student.getLearningPath.invalidate();
     },
@@ -607,12 +607,12 @@ function SubtopicProgressManager({
           <div className="divide-y divide-[#2a3338]">
             {progress.map((sub) => (
               <SubtopicRow
-                key={sub.subtopicId}
+                key={sub.subtopicNodeId}
                 sub={sub}
                 onUpdate={(data) =>
                   updateProgress.mutate({
                     studentId,
-                    subtopicId: sub.subtopicId,
+                    subtopicNodeId: sub.subtopicNodeId,
                     ...data,
                   })
                 }

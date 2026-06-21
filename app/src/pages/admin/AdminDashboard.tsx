@@ -239,11 +239,6 @@ export default function AdminDashboard() {
           onClick={() => navigate("/admin/lab-submissions")}
         />
         <QuickAction
-          label="Jupyter-ссылки"
-          icon={NotebookPen}
-          onClick={() => navigate("/admin/subtopics")}
-        />
-        <QuickAction
           label="Jupyter-ноутбуки"
           icon={NotebookPen}
           onClick={() => navigate("/admin/jupyter-notebooks")}

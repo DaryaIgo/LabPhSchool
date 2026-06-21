@@ -15,8 +15,8 @@ import {
 
 export const problemTypes = mysqlTable("problem_types", {
   id: serial("id").primaryKey(),
-  // Soft reference to content.subtopics.id (content domain).
-  subtopicId: bigint("subtopic_id", { mode: "number", unsigned: true }).notNull(),
+  // Soft reference to content.topic_nodes.id (content domain).
+  subtopicNodeId: bigint("subtopic_node_id", { mode: "number", unsigned: true }).notNull(),
   order: int("order").notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   slug: varchar("slug", { length: 255 }).notNull().unique(),

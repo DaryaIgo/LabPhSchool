@@ -17,8 +17,8 @@ import {
 
 // Soft references to other domains:
 // - localUserId  -> auth.local_users.id
-// - topicId      -> content.topics.id
-// - currentSubtopicId / subtopicId -> content.subtopics.id
+// - topicNodeId  -> content.topic_nodes.id (root nodes = course topics)
+// - currentSubtopicNodeId / subtopicNodeId -> content.topic_nodes.id (child nodes)
 // - labWorkId    -> labs.lab_works.id
 
 export const enrollments = mysqlTable(
@@ -27,7 +27,7 @@ export const enrollments = mysqlTable(
     id: serial("id").primaryKey(),
     localUserId: bigint("local_user_id", { mode: "number", unsigned: true })
       .notNull(),
-    topicId: bigint("topic_id", { mode: "number", unsigned: true })
+    topicNodeId: bigint("topic_node_id", { mode: "number", unsigned: true })
       .notNull(),
     status: mysqlEnum("status", ["active", "completed", "suspended"])
       .default("active")
@@ -35,7 +35,7 @@ export const enrollments = mysqlTable(
     startedAt: timestamp("started_at"),
     completedAt: timestamp("completed_at"),
     comment: text("comment"),
-    currentSubtopicId: bigint("current_subtopic_id", {
+    currentSubtopicNodeId: bigint("current_subtopic_node_id", {
       mode: "number",
       unsigned: true,
     }),
@@ -47,10 +47,10 @@ export const enrollments = mysqlTable(
   (table) => ({
     uniqueEnrollment: uniqueIndex("unique_enrollment").on(
       table.localUserId,
-      table.topicId
+      table.topicNodeId
     ),
     localUserIdx: index("enrollment_local_user_idx").on(table.localUserId),
-    topicIdx: index("enrollment_topic_idx").on(table.topicId),
+    topicNodeIdx: index("enrollment_topic_node_idx").on(table.topicNodeId),
   })
 );
 
@@ -60,7 +60,7 @@ export const studentProgress = mysqlTable("student_progress", {
   id: serial("id").primaryKey(),
   localUserId: bigint("local_user_id", { mode: "number", unsigned: true })
     .notNull(),
-  subtopicId: bigint("subtopic_id", { mode: "number", unsigned: true })
+  subtopicNodeId: bigint("subtopic_node_id", { mode: "number", unsigned: true })
     .notNull(),
   theoryCompleted: mysqlEnum("theory_completed", ["pending", "completed"])
     .default("pending")

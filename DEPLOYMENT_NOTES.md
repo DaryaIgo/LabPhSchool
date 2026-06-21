@@ -30,7 +30,7 @@
 | Домен | Таблицы |
 |---|---|
 | `auth` | `roles`, `permissions`, `role_permissions`, `users`, `local_users` |
-| `content` | `topics`, `subtopics`, `topic_nodes`, `labs`, `resources` |
+| `content` | `topic_nodes`, `resources` |
 | `learning` | `enrollments`, `student_progress`, `lab_progress` |
 | `labs` | `lab_categories`, `lab_subcategories`, `lab_works`, `lab_blocks`, `lab_simulation_params`, `lab_analytics` |
 | `problems` | `problem_types`, `problems` |
@@ -40,9 +40,15 @@
 | `audit` | `audit_log` |
 | `media` | `images` |
 
+> **Важно:** таблицы `topics`, `subtopics` и устаревшая таблица `labs` были удалены. `topic_nodes` — единственный источник правды для структуры курса. Корневые узлы — темы курса, дочерние узлы — подтемы/уроки.
+
 На текущем хостинге SprintHost физически используется одна база данных (`darigoshin_labphschool_bd`). В коде каждый домен подключается через собственную фабрику `get*Db()`, но по умолчанию они все используют переменную `DATABASE_URL`. При необходимости каждому домену можно задать отдельную базу через `DATABASE_URL_<DOMAIN>` (см. `app/.env.example`).
 
 Между доменами не осталось жёстких внешних ключей: связи реализованы через soft-ссылки (`id` + домен). Это позволяет в будущем разнести домены по разным физическим базам без изменения кода приложения.
+
+## Миграции
+
+**На хостинге миграции не применяются.** База данных пересоздаётся заново через PHPMyAdmin (удаление старых таблиц и импорт актуальных SQL-дампов). При локальной разработке можно использовать `npm run db:push` или накатывать миграции с нуля.
 
 ## Файлы с данными для БД
 
@@ -53,8 +59,9 @@
 | `db/timeline-data.sql` | учёные и открытия для таймлайна (`timeline_entries`) | один раз, если `timeline_entries` пустая |
 | `db/problems-data.sql` | типы задач (`problem_types`) и сами задачи (`problems`) | один раз, если таблицы `problem_types`/`problems` пустые |
 | `db/topic-nodes-data.sql` | полный контент тем и подтем (`topic_nodes`) | если курс отображается в сокращённом виде / после пересоздания таблиц |
-| `db/subtopics-jupyter-update.sql` | ссылки на Jupyter/Colab для подтем (`subtopics`) | если на карточках подтем не отображается ссылка Jupyter |
 | `db/image-storage-migration.sql` | таблица `images` для хранения загруженных картинок | при обновлении на версию, где картинки хранятся в БД |
+
+> `db/subtopics-jupyter-update.sql` больше не используется — ссылки Jupyter теперь хранятся в колонке `topic_nodes.ipynb_url`.
 
 ## Как импортировать SQL через PHPMyAdmin
 

@@ -127,6 +127,7 @@ const initialForm = {
   order: 1,
   color: "#2eff8c",
   content: "",
+  jupyterUrl: "",
 };
 
 export default function TopicManagement() {
@@ -166,6 +167,7 @@ export default function TopicManagement() {
         order: node.order,
         color: node.color || "#2eff8c",
         content: node.content || "",
+        jupyterUrl: node.jupyterUrl || "",
       });
       setIsEditing(true);
     }
@@ -237,6 +239,7 @@ export default function TopicManagement() {
         order: form.order,
         color: form.color,
         content: form.content,
+        jupyterUrl: form.jupyterUrl || null,
       });
     } else {
       createMutation.mutate({
@@ -246,6 +249,7 @@ export default function TopicManagement() {
         order: form.order,
         color: form.color,
         content: form.content,
+        jupyterUrl: form.jupyterUrl || null,
       });
     }
   }, [form, isEditing, selectedId, creatingChildOf, updateMutation, createMutation]);
@@ -549,6 +553,20 @@ export default function TopicManagement() {
                     />
                   </div>
                 </div>
+              </div>
+
+              <div>
+                <Label className="text-xs text-[#798389]">
+                  Jupyter-ноутбук (URL)
+                </Label>
+                <Input
+                  value={form.jupyterUrl}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, jupyterUrl: e.target.value }))
+                  }
+                  className="bg-[#1e2529] border-[#37474f] mt-1"
+                  placeholder="https://..."
+                />
               </div>
 
               <div>

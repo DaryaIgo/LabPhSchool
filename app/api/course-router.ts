@@ -1,34 +1,11 @@
 import { z } from "zod";
 import { createRouter, publicQuery } from "./middleware";
 import { getContentDb, getLabsDb } from "./queries/connection";
-import {
-  topics,
-  subtopics,
-  resources,
-  topicNodes,
-  labs,
-} from "@db/schema/content";
+import { resources, topicNodes } from "@db/schema/content";
 import { labWorks, labCategories } from "@db/schema/labs";
-import { eq, asc, or, like, inArray } from "drizzle-orm";
+import { eq, asc, or, like, inArray, isNull, isNotNull } from "drizzle-orm";
 
 export const courseRouter = createRouter({
-  topics: publicQuery.query(async () => {
-    const db = getContentDb();
-    return db.select().from(topics).orderBy(asc(topics.order));
-  }),
-
-  topicBySlug: publicQuery
-    .input(z.object({ slug: z.string() }))
-    .query(async ({ input }) => {
-      const db = getContentDb();
-      const topic = await db
-        .select()
-        .from(topics)
-        .where(eq(topics.slug, input.slug))
-        .limit(1);
-      return topic[0] ?? null;
-    }),
-
   resources: publicQuery.query(async () => {
     const db = getContentDb();
     return db.select().from(resources);
@@ -58,30 +35,37 @@ export const courseRouter = createRouter({
       return { ...node[0], children };
     }),
 
+  // List root topic nodes (course topics)
+  topics: publicQuery.query(async () => {
+    const db = getContentDb();
+    return db
+      .select()
+      .from(topicNodes)
+      .where(isNull(topicNodes.parentId))
+      .orderBy(asc(topicNodes.order));
+  }),
+
+  // List subtopic nodes (children of root topics)
   listSubtopics: publicQuery.query(async () => {
     const db = getContentDb();
     return db
       .select()
-      .from(subtopics)
-      .orderBy(asc(subtopics.topicId), asc(subtopics.order));
-  }),
-
-  labs: publicQuery.query(async () => {
-    const db = getContentDb();
-    return db.select().from(labs).orderBy(asc(labs.topicId), asc(labs.order));
+      .from(topicNodes)
+      .where(isNotNull(topicNodes.parentId))
+      .orderBy(asc(topicNodes.parentId), asc(topicNodes.order));
   }),
 
   // ── Lab works for a topic (new virtual lab system) ──
   topicLabWorks: publicQuery
-    .input(z.object({ topicId: z.number().positive() }))
+    .input(z.object({ topicNodeId: z.number().positive() }))
     .query(async ({ input }) => {
       const contentDb = getContentDb();
       const labsDb = getLabsDb();
 
       const [topic] = await contentDb
         .select()
-        .from(topics)
-        .where(eq(topics.id, input.topicId))
+        .from(topicNodes)
+        .where(eq(topicNodes.id, input.topicNodeId))
         .limit(1);
       if (!topic) return [];
 
@@ -134,3 +118,4 @@ export const courseRouter = createRouter({
         .orderBy(asc(labWorks.order));
     }),
 });
+

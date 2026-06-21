@@ -17,7 +17,7 @@ import {
   getNotificationsDb,
   getMediaDb,
 } from "./queries/connection";
-import { topics, subtopics, topicNodes, resources } from "@db/schema/content";
+import { topicNodes, resources } from "@db/schema/content";
 import { problems } from "@db/schema/problems";
 import { labWorks } from "@db/schema/labs";
 import { labProgress } from "@db/schema/learning";
@@ -28,7 +28,7 @@ import {
 } from "@db/schema/jupyter";
 import { notifications } from "@db/schema/notifications";
 import { images } from "@db/schema/media";
-import { eq, asc, desc, count, and, inArray } from "drizzle-orm";
+import { eq, asc, desc, count, and, inArray, isNull } from "drizzle-orm";
 import { createAuditEntry } from "./queries/audit";
 
 export const adminRouter = createRouter({
@@ -57,7 +57,10 @@ export const adminRouter = createRouter({
       .from(localUsers)
       .innerJoin(roles, eq(localUsers.roleId, roles.id))
       .where(and(eq(roles.name, "student"), eq(localUsers.status, "suspended")));
-    const [topicCount] = await contentDb.select({ count: count() }).from(topics);
+    const [topicCount] = await contentDb
+      .select({ count: count() })
+      .from(topicNodes)
+      .where(isNull(topicNodes.parentId));
     const [labWorkCount] = await labsDb.select({ count: count() }).from(labWorks);
     const [resourceCount] = await contentDb
       .select({ count: count() })
@@ -81,106 +84,6 @@ export const adminRouter = createRouter({
       },
     };
   }),
-
-  // ═══════════════════════════════════════════════════════════
-  // TOPICS CRUD
-  // ═══════════════════════════════════════════════════════════
-
-  listTopics: adminQuery.query(async () => {
-    return getContentDb().select().from(topics).orderBy(asc(topics.order));
-  }),
-
-  createTopic: adminQuery
-    .input(
-      z.object({
-        order: z.number().int().min(1),
-        title: z.string().min(1).max(255),
-        slug: z.string().min(1).max(255).regex(/^[a-z0-9-]+$/),
-        formula: z.string().max(500).optional(),
-        description: z.string().max(5000).optional(),
-        shortDesc: z.string().max(500).optional(),
-        color: z.string().max(20).optional(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const db = getContentDb();
-      const result = await db.insert(topics).values({
-        order: input.order,
-        title: input.title,
-        slug: input.slug,
-        formula: input.formula ?? null,
-        description: input.description ?? null,
-        shortDesc: input.shortDesc ?? null,
-        color: input.color ?? "#2eff8c",
-      });
-
-      const id = Number(result[0].insertId);
-
-      await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
-        action: "create",
-        resource: "topics",
-        resourceId: id,
-        details: { title: input.title, slug: input.slug },
-      });
-
-      return { id, success: true };
-    }),
-
-  updateTopic: adminQuery
-    .input(
-      z.object({
-        id: z.number().positive(),
-        title: z.string().min(1).max(255).optional(),
-        formula: z.string().max(500).optional(),
-        description: z.string().max(5000).optional(),
-        shortDesc: z.string().max(500).optional(),
-        color: z.string().max(20).optional(),
-        order: z.number().int().min(1).optional(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const db = getContentDb();
-      const { id, ...data } = input;
-      const updateData: Record<string, unknown> = {};
-      if (data.title !== undefined) updateData.title = data.title;
-      if (data.formula !== undefined) updateData.formula = data.formula;
-      if (data.description !== undefined)
-        updateData.description = data.description;
-      if (data.shortDesc !== undefined) updateData.shortDesc = data.shortDesc;
-      if (data.color !== undefined) updateData.color = data.color;
-      if (data.order !== undefined) updateData.order = data.order;
-
-      await db.update(topics).set(updateData).where(eq(topics.id, id));
-
-      await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
-        action: "update",
-        resource: "topics",
-        resourceId: id,
-        details: { fields: Object.keys(data) },
-      });
-
-      return { success: true };
-    }),
-
-  deleteTopic: adminQuery
-    .input(z.object({ id: z.number().positive() }))
-    .mutation(async ({ ctx, input }) => {
-      await getContentDb().delete(topics).where(eq(topics.id, input.id));
-
-      await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
-        action: "delete",
-        resource: "topics",
-        resourceId: input.id,
-      });
-
-      return { success: true };
-    }),
 
   // ═══════════════════════════════════════════════════════════
   // TOPIC NODES CRUD (hierarchical markdown topics)
@@ -220,6 +123,7 @@ export const adminRouter = createRouter({
         slug: z.string().min(1).max(255).regex(/^[a-z0-9-]+$/),
         content: z.string().max(100000).optional(),
         color: z.string().max(20).optional(),
+        jupyterUrl: z.string().max(500).optional().nullable(),
         labCategorySlug: z.string().max(255).optional(),
       })
     )
@@ -232,6 +136,7 @@ export const adminRouter = createRouter({
         slug: input.slug,
         content: input.content ?? null,
         color: input.color ?? null,
+        jupyterUrl: input.jupyterUrl ?? null,
         labCategorySlug: input.labCategorySlug ?? null,
       });
       const id = Number(result[0].insertId);
@@ -256,6 +161,7 @@ export const adminRouter = createRouter({
         slug: z.string().min(1).max(255).regex(/^[a-z0-9-]+$/).optional(),
         content: z.string().max(100000).optional(),
         color: z.string().max(20).optional(),
+        jupyterUrl: z.string().max(500).optional().nullable(),
         labCategorySlug: z.string().max(255).optional().nullable(),
       })
     )
@@ -269,6 +175,7 @@ export const adminRouter = createRouter({
       if (data.slug !== undefined) updateData.slug = data.slug;
       if (data.content !== undefined) updateData.content = data.content;
       if (data.color !== undefined) updateData.color = data.color;
+      if (data.jupyterUrl !== undefined) updateData.jupyterUrl = data.jupyterUrl;
       if (data.labCategorySlug !== undefined)
         updateData.labCategorySlug = data.labCategorySlug;
 
@@ -390,52 +297,6 @@ export const adminRouter = createRouter({
         .filter(Boolean)
         .join("\n");
       return { markdown: frontMatter, filename: `${n.slug}.md` };
-    }),
-
-  // ═══════════════════════════════════════════════════════════
-  // SUBTOPICS CRUD
-  // ═══════════════════════════════════════════════════════════
-
-  listSubtopics: adminQuery.query(async () => {
-    return getContentDb()
-      .select()
-      .from(subtopics)
-      .orderBy(asc(subtopics.topicId), asc(subtopics.order));
-  }),
-
-  updateSubtopic: adminQuery
-    .input(
-      z.object({
-        id: z.number().positive(),
-        title: z.string().min(1).max(255).optional(),
-        description: z.string().max(5000).optional(),
-        content: z.string().max(100000).optional(),
-        jupyterUrl: z.string().max(500).optional().nullable(),
-        order: z.number().int().min(1).optional(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const db = getContentDb();
-      const { id, ...data } = input;
-      const updateData: Record<string, unknown> = {};
-      if (data.title !== undefined) updateData.title = data.title;
-      if (data.description !== undefined) updateData.description = data.description;
-      if (data.content !== undefined) updateData.content = data.content;
-      if (data.jupyterUrl !== undefined) updateData.jupyterUrl = data.jupyterUrl;
-      if (data.order !== undefined) updateData.order = data.order;
-
-      await db.update(subtopics).set(updateData).where(eq(subtopics.id, id));
-
-      await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
-        action: "update",
-        resource: "subtopics",
-        resourceId: id,
-        details: { fields: Object.keys(data) },
-      });
-
-      return { success: true };
     }),
 
   // ═══════════════════════════════════════════════════════════
@@ -839,14 +700,14 @@ export const adminRouter = createRouter({
       .from(jupyterNotebooks)
       .orderBy(desc(jupyterNotebooks.createdAt));
 
-    // Get subtopic names
-    const subtopicIds = notebooks.map((n) => n.subtopicId);
+    // Get subtopic node names
+    const subtopicNodeIds = notebooks.map((n) => n.subtopicNodeId);
     const subtopicMap = new Map<number, string>();
-    if (subtopicIds.length > 0) {
+    if (subtopicNodeIds.length > 0) {
       const subtopicList = await contentDb
-        .select({ id: subtopics.id, title: subtopics.title })
-        .from(subtopics)
-        .where(inArray(subtopics.id, subtopicIds));
+        .select({ id: topicNodes.id, title: topicNodes.title })
+        .from(topicNodes)
+        .where(inArray(topicNodes.id, subtopicNodeIds));
       for (const s of subtopicList) subtopicMap.set(s.id, s.title);
     }
 
@@ -862,7 +723,7 @@ export const adminRouter = createRouter({
 
     return notebooks.map((n) => ({
       ...n,
-      subtopicTitle: subtopicMap.get(n.subtopicId) ?? "—",
+      subtopicTitle: subtopicMap.get(n.subtopicNodeId) ?? "—",
       accessCount: accessCountMap.get(n.id) ?? 0,
     }));
   }),
@@ -870,7 +731,7 @@ export const adminRouter = createRouter({
   createJupyterNotebook: adminQuery
     .input(
       z.object({
-        subtopicId: z.number().positive(),
+        subtopicNodeId: z.number().positive(),
         title: z.string().min(1).max(255),
         filename: z.string().min(1).max(255),
         filePath: z.string().min(1).max(500),
@@ -879,7 +740,7 @@ export const adminRouter = createRouter({
     .mutation(async ({ ctx, input }) => {
       const db = getJupyterDb();
       const result = await db.insert(jupyterNotebooks).values({
-        subtopicId: input.subtopicId,
+        subtopicNodeId: input.subtopicNodeId,
         title: input.title,
         filename: input.filename,
         filePath: input.filePath,
@@ -894,7 +755,7 @@ export const adminRouter = createRouter({
         action: "create",
         resource: "jupyter_notebooks",
         resourceId: id,
-        details: { title: input.title, subtopicId: input.subtopicId },
+        details: { title: input.title, subtopicNodeId: input.subtopicNodeId },
       });
 
       return { id, success: true };

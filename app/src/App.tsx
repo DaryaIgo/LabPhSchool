@@ -22,7 +22,6 @@ import EnrollmentManagement from "./pages/admin/EnrollmentManagement";
 import AuditLogViewer from "./pages/admin/AuditLogViewer";
 import ResourceManagement from "./pages/admin/ResourceManagement";
 import LabSubmissions from "./pages/admin/LabSubmissions";
-import SubtopicManagement from "./pages/admin/SubtopicManagement";
 import JupyterNotebookManagement from "./pages/admin/JupyterNotebookManagement";
 import AdminTimeline from "./pages/admin/AdminTimeline";
 
@@ -62,7 +61,6 @@ export default function App() {
         <Route path="/admin/audit" element={<AuditLogViewer />} />
         <Route path="/admin/resources" element={<ResourceManagement />} />
         <Route path="/admin/lab-submissions" element={<LabSubmissions />} />
-        <Route path="/admin/subtopics" element={<SubtopicManagement />} />
         <Route path="/admin/jupyter-notebooks" element={<JupyterNotebookManagement />} />
         <Route path="/admin/timeline" element={<AdminTimeline />} />
 

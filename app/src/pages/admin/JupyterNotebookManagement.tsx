@@ -61,7 +61,7 @@ export default function JupyterNotebookManagement() {
 
   // Upload form
   const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploadSubtopicId, setUploadSubtopicId] = useState<string>("");
+  const [uploadSubtopicNodeId, setUploadSubtopicNodeId] = useState<string>("");
   const [uploadTitle, setUploadTitle] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
@@ -73,7 +73,7 @@ export default function JupyterNotebookManagement() {
       enabled: !!user && user.role === "admin",
     });
 
-  const { data: subtopics } = trpc.admin.listSubtopics.useQuery(undefined, {
+  const { data: topicNodes } = trpc.admin.listTopicNodes.useQuery(undefined, {
     enabled: !!user && user.role === "admin",
   });
 
@@ -135,29 +135,31 @@ export default function JupyterNotebookManagement() {
 
   const subtopicMap = useMemo(() => {
     const map = new Map<number, string>();
-    subtopics?.forEach((s) => map.set(s.id, s.title));
+    topicNodes?.forEach((n) => {
+      if (n.parentId !== null) map.set(n.id, n.title);
+    });
     return map;
-  }, [subtopics]);
+  }, [topicNodes]);
 
   const filtered = notebooks?.filter((n) => {
     if (!search) return true;
     const q = search.toLowerCase();
     return (
       n.title.toLowerCase().includes(q) ||
-      (subtopicMap.get(n.subtopicId) ?? "").toLowerCase().includes(q)
+      (subtopicMap.get(n.subtopicNodeId) ?? "").toLowerCase().includes(q)
     );
   });
 
   function resetUploadForm() {
     setUploadFile(null);
-    setUploadSubtopicId("");
+    setUploadSubtopicNodeId("");
     setUploadTitle("");
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault();
-    if (!uploadFile || !uploadSubtopicId || !uploadTitle.trim()) return;
+    if (!uploadFile || !uploadSubtopicNodeId || !uploadTitle.trim()) return;
 
     setIsUploading(true);
     try {
@@ -170,7 +172,7 @@ export default function JupyterNotebookManagement() {
       const data = await res.json();
       if (data.url) {
         createMutation.mutate({
-          subtopicId: Number(uploadSubtopicId),
+          subtopicNodeId: Number(uploadSubtopicNodeId),
           title: uploadTitle.trim(),
           filename: uploadFile.name,
           filePath: data.url,
@@ -286,7 +288,7 @@ export default function JupyterNotebookManagement() {
                     >
                       <td className="p-4 font-mono text-xs text-gray-400">{n.id}</td>
                       <td className="p-4 text-gray-300">
-                        {subtopicMap.get(n.subtopicId) ?? "—"}
+                        {subtopicMap.get(n.subtopicNodeId) ?? "—"}
                       </td>
                       <td className="p-4 font-medium">{n.title}</td>
                       <td className="p-4">
@@ -372,18 +374,20 @@ export default function JupyterNotebookManagement() {
             <div>
               <Label htmlFor="subtopic">Подраздел</Label>
               <Select
-                value={uploadSubtopicId}
-                onValueChange={setUploadSubtopicId}
+                value={uploadSubtopicNodeId}
+                onValueChange={setUploadSubtopicNodeId}
               >
                 <SelectTrigger className="bg-[#263238] border-[#37474f] mt-1">
                   <SelectValue placeholder="Выберите подраздел..." />
                 </SelectTrigger>
                 <SelectContent className="bg-[#1e2529] border-[#37474f]">
-                  {subtopics?.map((s) => (
-                    <SelectItem key={s.id} value={String(s.id)}>
-                      {s.title}
-                    </SelectItem>
-                  ))}
+                  {topicNodes
+                    ?.filter((n) => n.parentId !== null)
+                    .map((s) => (
+                      <SelectItem key={s.id} value={String(s.id)}>
+                        {s.title}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -413,7 +417,7 @@ export default function JupyterNotebookManagement() {
               </Button>
               <Button
                 type="submit"
-                disabled={isUploading || !uploadFile || !uploadSubtopicId}
+                disabled={isUploading || !uploadFile || !uploadSubtopicNodeId}
                 className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
               >
                 {isUploading ? (

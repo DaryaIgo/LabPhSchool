@@ -13,8 +13,8 @@ import {
 
 export const jupyterNotebooks = mysqlTable("jupyter_notebooks", {
   id: serial("id").primaryKey(),
-  // Soft reference to content.subtopics.id (content domain).
-  subtopicId: bigint("subtopic_id", { mode: "number", unsigned: true }).notNull(),
+  // Soft reference to content.topic_nodes.id (content domain).
+  subtopicNodeId: bigint("subtopic_node_id", { mode: "number", unsigned: true }).notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   filename: varchar("filename", { length: 255 }).notNull(),
   filePath: varchar("file_path", { length: 500 }).notNull(),

@@ -306,8 +306,7 @@ export default function StudentProfile() {
                             {currentTopic.subtopic?.title}
                           </h3>
                           <p className="text-sm text-[#798389] mt-1">
-                            {currentTopic.subtopic?.description ??
-                              "Нет описания"}
+                            {currentTopic.subtopic?.content ?? "Нет описания"}
                           </p>
 
                           <div className="mt-4 flex flex-wrap gap-2">
@@ -376,7 +375,7 @@ export default function StudentProfile() {
             <div className="space-y-3">
               {learningPath.topics.map(topic => (
                 <Card
-                  key={topic.topicId}
+                  key={topic.topicNodeId}
                   className="bg-[#2a3237] border-[#434e54] overflow-hidden"
                 >
                   <CardContent className="p-0">
@@ -384,7 +383,9 @@ export default function StudentProfile() {
                       className="w-full p-4 flex items-center justify-between text-left"
                       onClick={() =>
                         setExpandedTopic(
-                          expandedTopic === topic.topicId ? null : topic.topicId
+                          expandedTopic === topic.topicNodeId
+                            ? null
+                            : topic.topicNodeId
                         )
                       }
                     >
@@ -446,7 +447,7 @@ export default function StudentProfile() {
                           {STATUS_CONFIG[topic.enrollmentStatus]?.label ??
                             topic.enrollmentStatus}
                         </Badge>
-                        {expandedTopic === topic.topicId ? (
+                        {expandedTopic === topic.topicNodeId ? (
                           <ChevronUp size={16} className="text-[#798389]" />
                         ) : (
                           <ChevronDown size={16} className="text-[#798389]" />
@@ -454,7 +455,7 @@ export default function StudentProfile() {
                       </div>
                     </button>
 
-                    {expandedTopic === topic.topicId && (
+                    {expandedTopic === topic.topicNodeId && (
                       <div className="px-4 pb-4">
                         <div className="border-t border-[#37474f] pt-3 space-y-2">
                           {topic.subtopics.map((sub, idx) => {
@@ -654,7 +655,7 @@ export default function StudentProfile() {
                 label="Последняя открытая тема"
                 value={
                   activity?.lastEnrollment
-                    ? `Тема #${activity.lastEnrollment.topicId}`
+                    ? `Тема #${activity.lastEnrollment.topicNodeId}`
                     : "Нет данных"
                 }
                 date={activity?.lastEnrollment?.enrolledAt}
@@ -664,7 +665,7 @@ export default function StudentProfile() {
                 label="Последняя завершённая тема"
                 value={
                   activity?.lastCompletedTopic
-                    ? `Тема #${activity.lastCompletedTopic.topicId}`
+                    ? `Тема #${activity.lastCompletedTopic.topicNodeId}`
                     : "Нет данных"
                 }
                 date={activity?.lastCompletedTopic?.completedAt}

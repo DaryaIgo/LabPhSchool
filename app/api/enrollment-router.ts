@@ -19,6 +19,9 @@ import {
 } from "./queries/enrollments";
 import { findLocalUserById } from "./queries/localUsers";
 import { createAuditEntry } from "./queries/audit";
+import { getContentDb } from "./queries/connection";
+import { topicNodes } from "@db/schema/content";
+import { eq, and, isNull, isNotNull } from "drizzle-orm";
 
 export const enrollmentRouter = createRouter({
   // ── Admin: List enrollments for a student ──
@@ -33,12 +36,12 @@ export const enrollmentRouter = createRouter({
       return getEnrollmentsWithDetails(input.studentId);
     }),
 
-  // ── Admin: Enroll a student in a topic ──
+  // ── Admin: Enroll a student in a topic node ──
   enroll: adminQuery
     .input(
       z.object({
         studentId: z.number().positive(),
-        topicId: z.number().positive(),
+        topicNodeId: z.number().positive(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -47,7 +50,44 @@ export const enrollmentRouter = createRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Student not found" });
       }
 
-      const existing = await findEnrollment(input.studentId, input.topicId);
+      const contentDb = getContentDb();
+      const [topic] = await contentDb
+        .select()
+        .from(topicNodes)
+        .where(
+          and(
+            eq(topicNodes.id, input.topicNodeId),
+            isNull(topicNodes.parentId)
+          )
+        )
+        .limit(1);
+      if (!topic) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Course topic not found",
+        });
+      }
+
+      const [child] = await contentDb
+        .select({ count: topicNodes.id })
+        .from(topicNodes)
+        .where(
+          and(
+            eq(topicNodes.parentId, topic.id),
+            isNotNull(topicNodes.content)
+          )
+        )
+        .limit(1);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const childCount = (child as any)?.count ?? 0;
+      if (!childCount) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Cannot enroll: topic has no subtopics",
+        });
+      }
+
+      const existing = await findEnrollment(input.studentId, input.topicNodeId);
       if (existing) {
         throw new TRPCError({
           code: "CONFLICT",
@@ -57,7 +97,7 @@ export const enrollmentRouter = createRouter({
 
       await createEnrollment({
         localUserId: input.studentId,
-        topicId: input.topicId,
+        topicNodeId: input.topicNodeId,
         createdBy: ctx.localUser!.id,
       });
 
@@ -66,7 +106,7 @@ export const enrollmentRouter = createRouter({
         actorType: "user",
         action: "enroll",
         resource: "enrollments",
-        details: { studentId: input.studentId, topicId: input.topicId },
+        details: { studentId: input.studentId, topicNodeId: input.topicNodeId },
       });
 
       return { success: true };
@@ -118,7 +158,7 @@ export const enrollmentRouter = createRouter({
       z.object({
         enrollmentId: z.number().positive(),
         status: z.enum(["active", "completed", "suspended"]).optional(),
-        currentSubtopicId: z.number().positive().nullable().optional(),
+        currentSubtopicNodeId: z.number().positive().nullable().optional(),
         comment: z.string().max(500).optional(),
         startedAt: z.date().nullable().optional(),
         completedAt: z.date().nullable().optional(),
@@ -128,7 +168,7 @@ export const enrollmentRouter = createRouter({
       const { enrollmentId, ...data } = input;
       await updateEnrollmentDetails(enrollmentId, {
         status: data.status,
-        currentSubtopicId: data.currentSubtopicId,
+        currentSubtopicNodeId: data.currentSubtopicNodeId,
         comment: data.comment,
         startedAt: data.startedAt,
         completedAt: data.completedAt,
@@ -148,8 +188,8 @@ export const enrollmentRouter = createRouter({
 
   // ── Student: Check enrollment ──
   check: studentQuery
-    .input(z.object({ topicId: z.number().positive() }))
+    .input(z.object({ topicNodeId: z.number().positive() }))
     .query(async ({ ctx, input }) => {
-      return isEnrolled(ctx.localUser!.id, input.topicId);
+      return isEnrolled(ctx.localUser!.id, input.topicNodeId);
     }),
 });

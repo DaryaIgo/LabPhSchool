@@ -23,7 +23,7 @@ import {
   getEnrollmentsWithDetails,
 } from "./queries/enrollments";
 import { createAuditEntry } from "./queries/audit";
-import { eq, and, desc, sql, inArray, count } from "drizzle-orm";
+import { eq, and, desc, sql, inArray, count, isNull, isNotNull } from "drizzle-orm";
 
 import {
   getAuthDb,
@@ -35,7 +35,7 @@ import {
 } from "./queries/connection";
 
 import { localUsers } from "@db/schema/auth";
-import { topics, subtopics, labs } from "@db/schema/content";
+import { topicNodes } from "@db/schema/content";
 import {
   enrollments,
   studentProgress,
@@ -83,12 +83,13 @@ export const studentRouter = createRouter({
     if (ctx.role?.name === "admin") {
       const allTopics = await contentDb
         .select()
-        .from(topics)
-        .orderBy(topics.order);
+        .from(topicNodes)
+        .where(isNull(topicNodes.parentId))
+        .orderBy(topicNodes.order);
       return allTopics.map(t => ({
         id: 0,
         localUserId: ctx.localUser!.id,
-        topicId: t.id,
+        topicNodeId: t.id,
         status: "active" as const,
         enrolledAt: new Date(),
         expiresAt: null as Date | null,
@@ -111,22 +112,23 @@ export const studentRouter = createRouter({
       throw new TRPCError({ code: "NOT_FOUND", message: "Student not found" });
     }
 
-    // Get enrollments with topics
+    // Get enrollments with topic nodes
     let enrollmentsList;
     if (ctx.role?.name === "admin") {
       const allTopics = await contentDb
         .select()
-        .from(topics)
-        .orderBy(topics.order);
+        .from(topicNodes)
+        .where(isNull(topicNodes.parentId))
+        .orderBy(topicNodes.order);
       enrollmentsList = allTopics.map(t => ({
         id: 0,
         localUserId: studentId,
-        topicId: t.id,
+        topicNodeId: t.id,
         status: "active" as const,
         startedAt: null as Date | null,
         completedAt: null as Date | null,
         comment: null as string | null,
-        currentSubtopicId: null as number | null,
+        currentSubtopicNodeId: null as number | null,
         enrolledAt: new Date(),
         expiresAt: null as Date | null,
         topicTitle: t.title,
@@ -137,28 +139,29 @@ export const studentRouter = createRouter({
       enrollmentsList = await getEnrollmentsWithDetails(studentId);
     }
 
-    // Get progress for all existing subtopics (overall course progress)
-    const allSubtopics = await contentDb
-      .select({ id: subtopics.id, topicId: subtopics.topicId })
-      .from(subtopics);
+    // Get all subtopic nodes grouped by their parent topic
+    const allSubtopicNodes = await contentDb
+      .select({ id: topicNodes.id, parentId: topicNodes.parentId })
+      .from(topicNodes)
+      .where(isNotNull(topicNodes.parentId));
 
-    const allSubtopicIds = allSubtopics.map(s => s.id);
+    const allSubtopicNodeIds = allSubtopicNodes.map(s => s.id);
 
     const progress: StudentProgress[] =
-      allSubtopicIds.length > 0
+      allSubtopicNodeIds.length > 0
         ? await learningDb
             .select()
             .from(studentProgress)
             .where(
               and(
                 eq(studentProgress.localUserId, studentId),
-                inArray(studentProgress.subtopicId, allSubtopicIds)
+                inArray(studentProgress.subtopicNodeId, allSubtopicNodeIds)
               )
             )
         : [];
 
     // Calculate stats
-    const totalSubtopics = allSubtopics.length;
+    const totalSubtopics = allSubtopicNodes.length;
     const completedSubtopics = progress.filter(
       p => p.status === "completed"
     ).length;
@@ -177,17 +180,19 @@ export const studentRouter = createRouter({
     // Section (topic) progress
     const topicProgress = enrollmentsList.map(e => {
       const topicSubtopicIds = new Set(
-        allSubtopics.filter(s => s.topicId === e.topicId).map(s => s.id)
+        allSubtopicNodes
+          .filter(s => s.parentId === e.topicNodeId)
+          .map(s => s.id)
       );
       const topicSubtopics = progress.filter(p =>
-        topicSubtopicIds.has(p.subtopicId)
+        topicSubtopicIds.has(p.subtopicNodeId)
       );
       const topicCompleted = topicSubtopics.filter(
         p => p.status === "completed"
       ).length;
       const topicTotal = topicSubtopics.length;
       return {
-        topicId: e.topicId,
+        topicNodeId: e.topicNodeId,
         topicTitle: e.topicTitle,
         topicColor: e.topicColor,
         total: topicTotal,
@@ -223,17 +228,18 @@ export const studentRouter = createRouter({
     if (ctx.role?.name === "admin") {
       const allTopics = await contentDb
         .select()
-        .from(topics)
-        .orderBy(topics.order);
+        .from(topicNodes)
+        .where(isNull(topicNodes.parentId))
+        .orderBy(topicNodes.order);
       enrollmentsList = allTopics.map(t => ({
         id: 0,
         localUserId: studentId,
-        topicId: t.id,
+        topicNodeId: t.id,
         status: "active" as const,
         startedAt: null as Date | null,
         completedAt: null as Date | null,
         comment: null as string | null,
-        currentSubtopicId: null as number | null,
+        currentSubtopicNodeId: null as number | null,
         enrolledAt: new Date(),
         expiresAt: null as Date | null,
         topicTitle: t.title,
@@ -243,48 +249,39 @@ export const studentRouter = createRouter({
     } else {
       enrollmentsList = await getEnrollmentsWithDetails(studentId);
     }
-    const enrolledTopicIds = enrollmentsList.map(e => e.topicId);
+    const enrolledTopicNodeIds = enrollmentsList.map(e => e.topicNodeId);
 
-    if (enrolledTopicIds.length === 0) {
+    if (enrolledTopicNodeIds.length === 0) {
       return { topics: [] };
     }
 
-    // Get all subtopics for enrolled topics
-    const subtopicsList = await contentDb
+    // Get all subtopic nodes for enrolled topics
+    const subtopicNodesList = await contentDb
       .select({
-        id: subtopics.id,
-        topicId: subtopics.topicId,
-        title: subtopics.title,
-        order: subtopics.order,
-        jupyterUrl: subtopics.jupyterUrl,
+        id: topicNodes.id,
+        parentId: topicNodes.parentId,
+        title: topicNodes.title,
+        order: topicNodes.order,
+        jupyterUrl: topicNodes.jupyterUrl,
       })
-      .from(subtopics)
-      .where(inArray(subtopics.topicId, enrolledTopicIds))
-      .orderBy(subtopics.topicId, subtopics.order);
+      .from(topicNodes)
+      .where(inArray(topicNodes.parentId, enrolledTopicNodeIds))
+      .orderBy(topicNodes.parentId, topicNodes.order);
 
-    const subtopicIds = subtopicsList.map(s => s.id);
+    const subtopicNodeIds = subtopicNodesList.map(s => s.id);
 
-    // Get progress for these subtopics
+    // Get progress for these subtopic nodes
     const progress =
-      subtopicIds.length > 0
+      subtopicNodeIds.length > 0
         ? await learningDb
             .select()
             .from(studentProgress)
             .where(
               and(
                 eq(studentProgress.localUserId, studentId),
-                inArray(studentProgress.subtopicId, subtopicIds)
+                inArray(studentProgress.subtopicNodeId, subtopicNodeIds)
               )
             )
-        : [];
-
-    // Get legacy labs for these topics
-    const topicLabs =
-      enrolledTopicIds.length > 0
-        ? await contentDb
-            .select()
-            .from(labs)
-            .where(inArray(labs.topicId, enrolledTopicIds))
         : [];
 
     // Get lab progress for virtual labs
@@ -299,12 +296,12 @@ export const studentRouter = createRouter({
 
     // Group by topic
     const topicsWithSubtopics = enrollmentsList.map(enrollment => {
-      const topicSubs = subtopicsList.filter(
-        s => s.topicId === enrollment.topicId
+      const topicSubs = subtopicNodesList.filter(
+        s => s.parentId === enrollment.topicNodeId
       );
       const subsWithProgress = topicSubs.map(sub => {
-        const prog = progress.find(p => p.subtopicId === sub.id);
-        const isCurrent = enrollment.currentSubtopicId === sub.id;
+        const prog = progress.find(p => p.subtopicNodeId === sub.id);
+        const isCurrent = enrollment.currentSubtopicNodeId === sub.id;
         let status = (prog?.status ?? "not_started") as
           | "not_started"
           | "in_progress"
@@ -332,16 +329,16 @@ export const studentRouter = createRouter({
 
       return {
         enrollmentId: enrollment.id,
-        topicId: enrollment.topicId,
+        topicNodeId: enrollment.topicNodeId,
         topicTitle: enrollment.topicTitle,
         topicColor: enrollment.topicColor,
         enrollmentStatus: enrollment.status,
         startedAt: enrollment.startedAt,
         completedAt: enrollment.completedAt,
         comment: enrollment.comment,
-        currentSubtopicId: enrollment.currentSubtopicId,
+        currentSubtopicNodeId: enrollment.currentSubtopicNodeId,
         subtopics: subsWithProgress,
-        labs: topicLabs.filter(l => l.topicId === enrollment.topicId),
+        labs: [] as { id: number; title: string; slug: string; shortDesc: string | null }[],
       };
     });
 
@@ -359,32 +356,29 @@ export const studentRouter = createRouter({
       // Admin sees the first topic as current
       const firstTopic = await contentDb
         .select()
-        .from(topics)
-        .orderBy(topics.order)
+        .from(topicNodes)
+        .where(isNull(topicNodes.parentId))
+        .orderBy(topicNodes.order)
         .limit(1);
       if (!firstTopic.length) return [];
       const topic = firstTopic[0];
       const topicSubtopics = await contentDb
         .select()
-        .from(subtopics)
-        .where(eq(subtopics.topicId, topic.id))
-        .orderBy(subtopics.order)
+        .from(topicNodes)
+        .where(eq(topicNodes.parentId, topic.id))
+        .orderBy(topicNodes.order)
         .limit(1);
-      const topicLabs = await contentDb
-        .select()
-        .from(labs)
-        .where(eq(labs.topicId, topic.id));
       const subtopicProblemTypes = topicSubtopics.length
         ? await problemsDb
             .select()
             .from(problemTypes)
-            .where(eq(problemTypes.subtopicId, topicSubtopics[0].id))
+            .where(eq(problemTypes.subtopicNodeId, topicSubtopics[0].id))
         : [];
       return [
         {
           subtopic: topicSubtopics[0] ?? null,
           topic,
-          labs: topicLabs,
+          labs: [] as { id: number; title: string; slug: string; shortDesc: string | null }[],
           problemTypes: subtopicProblemTypes,
           enrollmentComment: null,
         },
@@ -392,8 +386,8 @@ export const studentRouter = createRouter({
     }
 
     const currentItems: {
-      subtopicId: number;
-      topicId: number | null;
+      subtopicNodeId: number;
+      topicNodeId: number | null;
       enrollmentComment: string | null;
     }[] = [];
 
@@ -401,8 +395,8 @@ export const studentRouter = createRouter({
     const activeEnrollments = await learningDb
       .select({
         id: enrollments.id,
-        topicId: enrollments.topicId,
-        currentSubtopicId: enrollments.currentSubtopicId,
+        topicNodeId: enrollments.topicNodeId,
+        currentSubtopicNodeId: enrollments.currentSubtopicNodeId,
         comment: enrollments.comment,
       })
       .from(enrollments)
@@ -410,23 +404,25 @@ export const studentRouter = createRouter({
         and(
           eq(enrollments.localUserId, studentId),
           eq(enrollments.status, "active"),
-          sql`${enrollments.currentSubtopicId} IS NOT NULL`
+          sql`${enrollments.currentSubtopicNodeId} IS NOT NULL`
         )
       );
 
     for (const e of activeEnrollments) {
       currentItems.push({
-        subtopicId: e.currentSubtopicId!,
-        topicId: e.topicId,
+        subtopicNodeId: e.currentSubtopicNodeId!,
+        topicNodeId: e.topicNodeId,
         enrollmentComment: e.comment,
       });
     }
 
     // 2. All subtopics explicitly marked as in_progress
-    const existingSubtopicIds = new Set(currentItems.map(i => i.subtopicId));
+    const existingSubtopicNodeIds = new Set(
+      currentItems.map(i => i.subtopicNodeId)
+    );
     const inProgressProgress = await learningDb
       .select({
-        subtopicId: studentProgress.subtopicId,
+        subtopicNodeId: studentProgress.subtopicNodeId,
       })
       .from(studentProgress)
       .where(
@@ -437,13 +433,13 @@ export const studentRouter = createRouter({
       );
 
     for (const row of inProgressProgress) {
-      if (!existingSubtopicIds.has(row.subtopicId)) {
+      if (!existingSubtopicNodeIds.has(row.subtopicNodeId)) {
         currentItems.push({
-          subtopicId: row.subtopicId,
-          topicId: null,
+          subtopicNodeId: row.subtopicNodeId,
+          topicNodeId: null,
           enrollmentComment: null,
         });
-        existingSubtopicIds.add(row.subtopicId);
+        existingSubtopicNodeIds.add(row.subtopicNodeId);
       }
     }
 
@@ -452,81 +448,64 @@ export const studentRouter = createRouter({
     }
 
     // Fetch related data in batches
-    const subtopicIds = currentItems.map(i => i.subtopicId);
+    const subtopicNodeIds = currentItems.map(i => i.subtopicNodeId);
     const subtopicRows = await contentDb
       .select()
-      .from(subtopics)
-      .where(inArray(subtopics.id, subtopicIds));
+      .from(topicNodes)
+      .where(inArray(topicNodes.id, subtopicNodeIds));
     const subtopicById = new Map(subtopicRows.map(s => [s.id, s]));
 
-    const topicIdsSet = new Set<number>();
+    const topicNodeIdsSet = new Set<number>();
     for (const item of currentItems) {
-      if (item.topicId) {
-        topicIdsSet.add(item.topicId);
+      if (item.topicNodeId) {
+        topicNodeIdsSet.add(item.topicNodeId);
       } else {
-        const s = subtopicById.get(item.subtopicId);
-        if (s?.topicId) topicIdsSet.add(s.topicId);
+        const s = subtopicById.get(item.subtopicNodeId);
+        if (s?.parentId) topicNodeIdsSet.add(s.parentId);
       }
     }
-    const topicIds = Array.from(topicIdsSet);
+    const topicNodeIds = Array.from(topicNodeIdsSet);
     const topicRows =
-      topicIds.length > 0
+      topicNodeIds.length > 0
         ? await contentDb
             .select()
-            .from(topics)
-            .where(inArray(topics.id, topicIds))
+            .from(topicNodes)
+            .where(inArray(topicNodes.id, topicNodeIds))
         : [];
     const topicById = new Map(topicRows.map(t => [t.id, t]));
 
-    const labTopicIds = Array.from(
-      new Set(
-        currentItems
-          .map(i => i.topicId ?? subtopicById.get(i.subtopicId)?.topicId)
-          .filter((id): id is number => Boolean(id))
-      )
-    );
-    const allLabs =
-      labTopicIds.length > 0
-        ? await contentDb
-            .select()
-            .from(labs)
-            .where(inArray(labs.topicId, labTopicIds))
-        : [];
     const allProblemTypes =
-      subtopicIds.length > 0
+      subtopicNodeIds.length > 0
         ? await problemsDb
             .select()
             .from(problemTypes)
-            .where(inArray(problemTypes.subtopicId, subtopicIds))
+            .where(inArray(problemTypes.subtopicNodeId, subtopicNodeIds))
         : [];
 
     // Keep a stable order: topic order → subtopic order
     currentItems.sort((a, b) => {
-      const aSubtopic = subtopicById.get(a.subtopicId);
-      const bSubtopic = subtopicById.get(b.subtopicId);
-      const aTopicId = a.topicId ?? aSubtopic?.topicId ?? 0;
-      const bTopicId = b.topicId ?? bSubtopic?.topicId ?? 0;
-      const aTopic = aTopicId ? topicById.get(aTopicId) : undefined;
-      const bTopic = bTopicId ? topicById.get(bTopicId) : undefined;
+      const aSubtopic = subtopicById.get(a.subtopicNodeId);
+      const bSubtopic = subtopicById.get(b.subtopicNodeId);
+      const aTopicNodeId = a.topicNodeId ?? aSubtopic?.parentId ?? 0;
+      const bTopicNodeId = b.topicNodeId ?? bSubtopic?.parentId ?? 0;
+      const aTopic = aTopicNodeId ? topicById.get(aTopicNodeId) : undefined;
+      const bTopic = bTopicNodeId ? topicById.get(bTopicNodeId) : undefined;
       const topicDiff = (aTopic?.order ?? 0) - (bTopic?.order ?? 0);
       if (topicDiff !== 0) return topicDiff;
       return (aSubtopic?.order ?? 0) - (bSubtopic?.order ?? 0);
     });
 
     return currentItems.map(item => {
-      const subtopic = subtopicById.get(item.subtopicId) ?? null;
-      const topicId = item.topicId ?? subtopic?.topicId;
-      const topic = topicId ? (topicById.get(topicId) ?? null) : null;
-      const topicLabs = topicId
-        ? allLabs.filter(l => l.topicId === topicId)
-        : [];
+      const subtopic = subtopicById.get(item.subtopicNodeId) ?? null;
+      const topicNodeId = item.topicNodeId ?? subtopic?.parentId;
+      const topic = topicNodeId ? (topicById.get(topicNodeId) ?? null) : null;
       const subtopicProblemTypes = allProblemTypes.filter(
-        p => p.subtopicId === item.subtopicId
+        p => p.subtopicNodeId === item.subtopicNodeId
       );
       return {
         subtopic,
         topic,
-        labs: topicLabs,
+        labs: [] as { id: number; title: string; slug: string; shortDesc: string | null }[],
         problemTypes: subtopicProblemTypes,
         enrollmentComment: item.enrollmentComment,
       };
@@ -542,7 +521,7 @@ export const studentRouter = createRouter({
     const lastEnrollment = await learningDb
       .select({
         id: enrollments.id,
-        topicId: enrollments.topicId,
+        topicNodeId: enrollments.topicNodeId,
         enrolledAt: enrollments.enrolledAt,
         status: enrollments.status,
       })
@@ -555,7 +534,7 @@ export const studentRouter = createRouter({
     const lastCompleted = await learningDb
       .select({
         id: enrollments.id,
-        topicId: enrollments.topicId,
+        topicNodeId: enrollments.topicNodeId,
         completedAt: enrollments.completedAt,
       })
       .from(enrollments)
@@ -571,7 +550,7 @@ export const studentRouter = createRouter({
     // Last completed subtopic
     const lastCompletedSubtopic = await learningDb
       .select({
-        subtopicId: studentProgress.subtopicId,
+        subtopicNodeId: studentProgress.subtopicNodeId,
         completedAt: studentProgress.completedAt,
       })
       .from(studentProgress)
@@ -607,6 +586,7 @@ export const studentRouter = createRouter({
       lastEnrollment: lastEnrollment[0] ?? null,
       lastCompletedTopic: lastCompleted[0] ?? null,
       lastCompletedSubtopic: lastCompletedSubtopic[0] ?? null,
+      // Field names preserved for API compatibility; values now reference topic_nodes.
       lastCompletedLab: lastCompletedLab[0] ?? null,
       lastLoginAt: user?.lastLoginAt ?? null,
     };
@@ -796,7 +776,7 @@ export const studentRouter = createRouter({
     .input(
       z.object({
         studentId: z.number().positive(),
-        subtopicId: z.number().positive(),
+        subtopicNodeId: z.number().positive(),
         status: z.enum(["not_started", "in_progress", "completed"]).optional(),
         theoryCompleted: z.boolean().optional(),
         practiceCompleted: z.boolean().optional(),
@@ -807,7 +787,7 @@ export const studentRouter = createRouter({
     .mutation(async ({ ctx, input }) => {
       const contentDb = getContentDb();
       const learningDb = getLearningDb();
-      const { studentId, subtopicId, ...data } = input;
+      const { studentId, subtopicNodeId, ...data } = input;
 
       // Check if student exists
       const student = await findLocalUserById(studentId);
@@ -818,11 +798,11 @@ export const studentRouter = createRouter({
         });
       }
 
-      // Check if subtopic exists
+      // Check if subtopic node exists
       const [subtopic] = await contentDb
         .select()
-        .from(subtopics)
-        .where(eq(subtopics.id, subtopicId))
+        .from(topicNodes)
+        .where(eq(topicNodes.id, subtopicNodeId))
         .limit(1);
       if (!subtopic) {
         throw new TRPCError({
@@ -838,7 +818,7 @@ export const studentRouter = createRouter({
         .where(
           and(
             eq(studentProgress.localUserId, studentId),
-            eq(studentProgress.subtopicId, subtopicId)
+            eq(studentProgress.subtopicNodeId, subtopicNodeId)
           )
         )
         .limit(1);
@@ -878,7 +858,7 @@ export const studentRouter = createRouter({
       } else {
         await learningDb.insert(studentProgress).values({
           localUserId: studentId,
-          subtopicId,
+          subtopicNodeId,
           status: data.status ?? "not_started",
           theoryCompleted: data.theoryCompleted ? "completed" : "pending",
           practiceCompleted: data.practiceCompleted ? "completed" : "pending",
@@ -894,7 +874,7 @@ export const studentRouter = createRouter({
         actorType: "user",
         action: "update",
         resource: "student_progress",
-        details: { studentId, subtopicId, ...data },
+        details: { studentId, subtopicNodeId, ...data },
       });
 
       return { success: true };
@@ -905,37 +885,37 @@ export const studentRouter = createRouter({
     .input(
       z.object({
         studentId: z.number().positive(),
-        topicId: z.number().positive(),
+        topicNodeId: z.number().positive(),
       })
     )
     .query(async ({ input }) => {
       const contentDb = getContentDb();
       const learningDb = getLearningDb();
-      const subtopicsList = await contentDb
+      const subtopicNodesList = await contentDb
         .select()
-        .from(subtopics)
-        .where(eq(subtopics.topicId, input.topicId))
-        .orderBy(subtopics.order);
+        .from(topicNodes)
+        .where(eq(topicNodes.parentId, input.topicNodeId))
+        .orderBy(topicNodes.order);
 
-      const subtopicIds = subtopicsList.map(s => s.id);
+      const subtopicNodeIds = subtopicNodesList.map(s => s.id);
 
       const progress =
-        subtopicIds.length > 0
+        subtopicNodeIds.length > 0
           ? await learningDb
               .select()
               .from(studentProgress)
               .where(
                 and(
                   eq(studentProgress.localUserId, input.studentId),
-                  inArray(studentProgress.subtopicId, subtopicIds)
+                  inArray(studentProgress.subtopicNodeId, subtopicNodeIds)
                 )
               )
           : [];
 
-      return subtopicsList.map(sub => {
-        const prog = progress.find(p => p.subtopicId === sub.id);
+      return subtopicNodesList.map(sub => {
+        const prog = progress.find(p => p.subtopicNodeId === sub.id);
         return {
-          subtopicId: sub.id,
+          subtopicNodeId: sub.id,
           title: sub.title,
           status: (prog?.status ?? "not_started") as
             | "not_started"
@@ -978,18 +958,18 @@ export const studentRouter = createRouter({
 
     const subtopicList = await contentDb
       .select()
-      .from(subtopics)
+      .from(topicNodes)
       .where(
         inArray(
-          subtopics.id,
-          notebooks.map(n => n.subtopicId)
+          topicNodes.id,
+          notebooks.map(n => n.subtopicNodeId)
         )
       );
     const subtopicMap = new Map(subtopicList.map(s => [s.id, s.title]));
 
     return notebooks.map(n => ({
       ...n,
-      subtopicTitle: subtopicMap.get(n.subtopicId) ?? "—",
+      subtopicTitle: subtopicMap.get(n.subtopicNodeId) ?? "—",
     }));
   }),
 

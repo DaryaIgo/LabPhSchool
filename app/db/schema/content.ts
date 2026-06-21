@@ -13,35 +13,10 @@ import {
 // ═══════════════════════════════════════════════════════════════
 // Course Content Catalog
 // ═══════════════════════════════════════════════════════════════
-
-export const topics = mysqlTable("topics", {
-  id: serial("id").primaryKey(),
-  order: int("order").notNull(),
-  title: varchar("title", { length: 255 }).notNull(),
-  slug: varchar("slug", { length: 255 }).notNull().unique(),
-  formula: varchar("formula", { length: 500 }),
-  description: text("description"),
-  shortDesc: varchar("short_desc", { length: 500 }),
-  color: varchar("color", { length: 20 }).default("#2eff8c"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export type Topic = typeof topics.$inferSelect;
-
-export const subtopics = mysqlTable("subtopics", {
-  id: serial("id").primaryKey(),
-  topicId: bigint("topic_id", { mode: "number", unsigned: true })
-    .notNull()
-    .references(() => topics.id),
-  order: int("order").notNull(),
-  title: varchar("title", { length: 255 }).notNull(),
-  description: text("description"),
-  content: text("content"),
-  jupyterUrl: varchar("jupyter_url", { length: 500 }),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export type Subtopic = typeof subtopics.$inferSelect;
+//
+// topic_nodes is the single source of truth for the course structure.
+// Root nodes are course topics; child nodes are subtopics/lessons.
+// Legacy tables topics, subtopics and labs have been removed.
 
 export const topicNodes = mysqlTable("topic_nodes", {
   id: serial("id").primaryKey(),
@@ -53,6 +28,8 @@ export const topicNodes = mysqlTable("topic_nodes", {
   slug: varchar("slug", { length: 255 }).notNull().unique(),
   content: text("content"),
   color: varchar("color", { length: 20 }),
+  // Optional external Jupyter notebook URL attached to this node.
+  jupyterUrl: varchar("jupyter_url", { length: 500 }),
   // Logical link to lab_categories.slug (labs domain). Kept as plain varchar
   // because the labs catalog lives in a separate bounded context.
   labCategorySlug: varchar("lab_category_slug", { length: 255 }),
@@ -65,23 +42,6 @@ export const topicNodes = mysqlTable("topic_nodes", {
 
 export type TopicNode = typeof topicNodes.$inferSelect;
 export type InsertTopicNode = typeof topicNodes.$inferInsert;
-
-export const labs = mysqlTable("labs", {
-  id: serial("id").primaryKey(),
-  order: int("order").notNull(),
-  title: varchar("title", { length: 255 }).notNull(),
-  slug: varchar("slug", { length: 255 }).notNull().unique(),
-  description: text("description"),
-  shortDesc: varchar("short_desc", { length: 500 }),
-  theory: text("theory"),
-  iconType: varchar("icon_type", { length: 50 }),
-  topicId: bigint("topic_id", { mode: "number", unsigned: true }).references(
-    () => topics.id
-  ),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export type Lab = typeof labs.$inferSelect;
 
 export const resources = mysqlTable("resources", {
   id: serial("id").primaryKey(),

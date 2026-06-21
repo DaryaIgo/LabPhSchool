@@ -90,7 +90,6 @@ app/
 │   ├── contexts/           # React-контексты
 │   │   └── ViewAsStudentContext.tsx
 │   ├── data/               # Статические данные
-│   │   ├── courseTopics.ts
 │   │   └── labs.ts
 │   └── lib/                # Утилиты фронтенда
 │       └── utils.ts        # cn() — merge clsx + tailwind-merge
@@ -101,7 +100,7 @@ app/
 ├── db/                     # Схема БД и миграции
 │   ├── schema/             # Доменные модули схемы Drizzle
 │   │   ├── auth.ts         # Роли, разрешения, пользователи
-│   │   ├── content.ts      # Темы, подтемы, topic_nodes, labs, resources
+│   │   ├── content.ts      # topic_nodes, resources (единственный источник структуры курса)
 │   │   ├── learning.ts     # enrollments, student_progress, lab_progress
 │   │   ├── labs.ts         # Виртуальные лаборатории + реестр симуляций
 │   │   ├── problems.ts     # Банк задач
@@ -114,7 +113,7 @@ app/
 │   ├── schema.ts           # Реэкспорт schema/ для обратной совместимости
 │   ├── relations/          # Доменные Drizzle-отношения
 │   ├── relations.ts        # Реэкспорт relations/
-│   ├── seed.ts             # Начальные данные (12 тем, 48 подтем, 6 лаб, ресурсы)
+│   ├── seed.ts             # Начальные данные (topic_nodes, resources)
 │   ├── migrations/         # SQL-миграции Drizzle Kit
 │   ├── problems-seed.ts    # Сид задач
 │   └── simulations-seed.ts # Реестр физических симуляций
@@ -259,7 +258,7 @@ npm run db:push       # Push схемы (для разработки)
 | Домен | Таблицы | Подключение |
 |---|---|---|
 | `auth` | `roles`, `permissions`, `role_permissions`, `users`, `local_users` | `getAuthDb()` |
-| `content` | `topics`, `subtopics`, `topic_nodes`, `labs`, `resources` | `getContentDb()` |
+| `content` | `topic_nodes`, `resources` | `getContentDb()` |
 | `learning` | `enrollments`, `student_progress`, `lab_progress` | `getLearningDb()` |
 | `labs` | `lab_categories`, `lab_subcategories`, `lab_works`, `lab_blocks`, `lab_analytics`, `simulations` | `getLabsDb()` |
 | `problems` | `problem_types`, `problems` | `getProblemsDb()` |

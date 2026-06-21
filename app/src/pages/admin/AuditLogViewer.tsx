@@ -113,7 +113,7 @@ export default function AuditLogViewer() {
             <SelectItem value="all">All Resources</SelectItem>
             <SelectItem value="auth">Auth</SelectItem>
             <SelectItem value="users">Users</SelectItem>
-            <SelectItem value="topics">Topics</SelectItem>
+            <SelectItem value="topic_nodes">Topic Nodes</SelectItem>
             <SelectItem value="virtual_labs">Virtual Labs</SelectItem>
             <SelectItem value="problems">Problems</SelectItem>
             <SelectItem value="enrollments">Enrollments</SelectItem>
