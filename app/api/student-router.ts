@@ -1042,7 +1042,7 @@ export const studentRouter = createRouter({
     .input(
       z.object({
         assignmentId: z.number().positive(),
-        studentColabUrl: z.string().min(1).max(500),
+        studentColabUrl: z.string().max(500).optional().nullable(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -1062,9 +1062,11 @@ export const studentRouter = createRouter({
         });
       }
 
+      const url = input.studentColabUrl?.trim() || null;
+
       await updateAssignedJupyterNotebook(input.assignmentId, {
         status: "submitted",
-        studentColabUrl: input.studentColabUrl,
+        studentColabUrl: url,
         submittedAt: new Date(),
       });
 

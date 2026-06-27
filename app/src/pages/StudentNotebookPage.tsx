@@ -5,6 +5,7 @@ import { trpc } from "@/providers/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
@@ -27,6 +28,7 @@ export default function StudentNotebookPage() {
   const { user, isAuthenticated } = useAuth();
 
   const [colabUrl, setColabUrl] = useState("");
+  const [noUrl, setNoUrl] = useState(false);
 
   const id = Number(assignmentId);
   const enabled = isAuthenticated && !Number.isNaN(id) && id > 0;
@@ -64,6 +66,13 @@ export default function StudentNotebookPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!data) return;
+
+    if (noUrl) {
+      submitMutation.mutate({ assignmentId: id });
+      return;
+    }
+
     const url = colabUrl.trim();
     if (!url) {
       toast.error("Введите ссылку на выполненный ноутбук");
@@ -146,7 +155,9 @@ export default function StudentNotebookPage() {
             <h2 className="text-lg font-semibold text-white">Файл ноутбука</h2>
             <p className="text-sm text-[#798389]">
               Скачайте ноутбук, затем откройте его в своём Google Colab, выполните
-              задание и вставьте ссылку на готовую работу ниже.
+              задание и вставьте ссылку на готовую работу ниже. Если ссылку
+              прикрепить невозможно, отправьте работу без неё — преподаватель
+              проверит выполнение отдельно.
             </p>
             <div className="flex flex-wrap items-center gap-3">
               <Button
@@ -177,7 +188,7 @@ export default function StudentNotebookPage() {
                 Отправленная работа
               </h2>
 
-              {data.studentColabUrl && (
+              {data.studentColabUrl ? (
                 <div>
                   <Label className="text-[#798389] mb-2 block flex items-center gap-2">
                     <Link2 size={14} />
@@ -192,6 +203,11 @@ export default function StudentNotebookPage() {
                     {data.studentColabUrl}
                     <ExternalLink size={14} />
                   </a>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-sm text-[#798389]">
+                  <Link2 size={14} />
+                  Ссылка на Colab не прикреплена
                 </div>
               )}
 
@@ -239,14 +255,31 @@ export default function StudentNotebookPage() {
                     onChange={e => setColabUrl(e.target.value)}
                     placeholder="https://colab.research.google.com/drive/..."
                     className="bg-[#1e2529] border-[#37474f] text-white"
+                    disabled={submitMutation.isPending || noUrl}
+                  />
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="no-url"
+                    checked={noUrl}
+                    onCheckedChange={checked => setNoUrl(checked === true)}
                     disabled={submitMutation.isPending}
                   />
+                  <Label
+                    htmlFor="no-url"
+                    className="text-sm text-[#c8cdd1] font-normal cursor-pointer"
+                  >
+                    Отправить без ссылки на Colab
+                  </Label>
                 </div>
 
                 <div className="pt-2">
                   <Button
                     type="submit"
-                    disabled={!colabUrl.trim() || submitMutation.isPending}
+                    disabled={
+                      (!noUrl && !colabUrl.trim()) || submitMutation.isPending
+                    }
                     className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70]"
                   >
                     <Send size={16} className="mr-2" />

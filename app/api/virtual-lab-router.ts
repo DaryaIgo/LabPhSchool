@@ -28,6 +28,10 @@ import { labProgress } from "@db/schema/learning";
 import { topicNodes } from "@db/schema/content";
 import { eq, asc, count, and, inArray } from "drizzle-orm";
 import { createAuditEntry } from "./queries/audit";
+import {
+  findAssignedLabWorkByProgress,
+  updateAssignedLabWork,
+} from "./queries/assignedLabWorks";
 
 export const virtualLabRouter = createRouter({
   // ═══════════════════════════════════════════════════════════
@@ -297,7 +301,10 @@ export const virtualLabRouter = createRouter({
         )
         .limit(1);
 
+      let progressId: number;
+
       if (existing[0]) {
+        progressId = existing[0].id;
         await db
           .update(labProgress)
           .set({
@@ -312,25 +319,45 @@ export const virtualLabRouter = createRouter({
                 : existing[0].completedAt,
           })
           .where(eq(labProgress.id, existing[0].id));
-        return { id: existing[0].id, updated: true };
+      } else {
+        const result = await db.insert(labProgress).values({
+          localUserId: userId,
+          labWorkId: input.labWorkId,
+          mode: input.mode,
+          status: input.status,
+          data: input.data ?? null,
+          measurements: input.measurements ?? null,
+          conclusion: input.conclusion ?? null,
+          startedAt: new Date(),
+          completedAt:
+            input.status === "completed" || input.status === "submitted"
+              ? new Date()
+              : null,
+        });
+        progressId = Number(result[0].insertId);
       }
 
-      const result = await db.insert(labProgress).values({
-        localUserId: userId,
-        labWorkId: input.labWorkId,
-        mode: input.mode,
-        status: input.status,
-        data: input.data ?? null,
-        measurements: input.measurements ?? null,
-        conclusion: input.conclusion ?? null,
-        startedAt: new Date(),
-        completedAt:
-          input.status === "completed" || input.status === "submitted"
-            ? new Date()
-            : null,
-      });
+      // Sync submitted/completed status into the teacher-assigned record
+      if (input.status === "submitted" || input.status === "completed") {
+        const assignedLab = await findAssignedLabWorkByProgress(
+          userId,
+          input.labWorkId
+        );
+        if (assignedLab && assignedLab.status !== "completed") {
+          await updateAssignedLabWork(assignedLab.id, {
+            status: input.status,
+            submittedAt:
+              input.status === "submitted" ? new Date() : assignedLab.submittedAt,
+            completedAt:
+              input.status === "completed" ? new Date() : assignedLab.completedAt,
+          });
+        }
+      }
 
-      return { id: Number(result[0].insertId), created: true };
+      return {
+        id: progressId,
+        updated: true,
+      };
     }),
 
   // ═══════════════════════════════════════════════════════════

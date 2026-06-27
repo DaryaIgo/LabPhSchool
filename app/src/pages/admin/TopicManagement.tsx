@@ -32,6 +32,12 @@ import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
 import type { TopicNode } from "@db/schema";
+import { CategoryIconPicker } from "@/components/admin/CategoryIconPicker";
+import { CategoryIcon } from "@/components/CategoryIcon";
+import { DEFAULT_CATEGORY_ICON_KEY } from "@/lib/lab-icons";
+import { LAB_CATEGORY_ICON_KEYS } from "@contracts/constants";
+
+type CategoryIconKey = (typeof LAB_CATEGORY_ICON_KEYS)[number];
 
 interface TreeNode extends TopicNode {
   children: TreeNode[];
@@ -96,7 +102,11 @@ function TreeItem({
         ) : (
           <span className="w-[14px] shrink-0" />
         )}
-        <FileText size={14} className="shrink-0" />
+        {node.parentId ? (
+          <FileText size={14} className="shrink-0" />
+        ) : (
+          <CategoryIcon iconKey={node.iconType} size={14} />
+        )}
         <span className="truncate">{node.title}</span>
       </button>
       {hasChildren && expanded && (
@@ -121,6 +131,7 @@ const initialForm = {
   slug: "",
   order: 1,
   color: "#2eff8c",
+  iconType: DEFAULT_CATEGORY_ICON_KEY,
   content: "",
   jupyterUrl: "",
 };
@@ -165,6 +176,8 @@ export default function TopicManagement() {
           slug: node.slug,
           order: node.order,
           color: node.color || "#2eff8c",
+          iconType:
+            (node.iconType as CategoryIconKey) ?? DEFAULT_CATEGORY_ICON_KEY,
           content: node.content || "",
           jupyterUrl: node.jupyterUrl || "",
         });
@@ -239,6 +252,7 @@ export default function TopicManagement() {
         slug: form.slug,
         order: form.order,
         color: form.color,
+        iconType: form.iconType,
         content: form.content,
         jupyterUrl: form.jupyterUrl || null,
       });
@@ -249,6 +263,7 @@ export default function TopicManagement() {
         slug: form.slug,
         order: form.order,
         color: form.color,
+        iconType: form.iconType,
         content: form.content,
         jupyterUrl: form.jupyterUrl || null,
       });
@@ -393,7 +408,17 @@ export default function TopicManagement() {
             }}
           >
             <Plus className="h-4 w-4 mr-1" />
-            Новая тема
+            Раздел
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-[#37474f] hover:bg-[#2eff8c]/10 text-black disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={handleAddChild}
+            disabled={!selectedId}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Тема
           </Button>
           <Button
             size="sm"
@@ -450,30 +475,19 @@ export default function TopicManagement() {
                     ? "Редактирование"
                     : creatingChildOf !== null
                       ? "Новый дочерний узел"
-                      : "Новая тема"}
+                      : "Новый раздел"}
                 </h2>
                 <div className="flex items-center gap-2">
                   {isEditing && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-[#37474f] text-black"
-                        onClick={handleAddChild}
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Добавить подтему
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-[#37474f] text-black"
-                        onClick={handleExport}
-                      >
-                        <Download className="h-4 w-4 mr-1" />
-                        Экспорт MD
-                      </Button>
-                    </>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-[#37474f] text-black"
+                      onClick={handleExport}
+                    >
+                      <Download className="h-4 w-4 mr-1" />
+                      Экспорт MD
+                    </Button>
                   )}
                   <Button
                     size="sm"
@@ -533,7 +547,7 @@ export default function TopicManagement() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-[120px_1fr] gap-4">
+              <div className="grid grid-cols-[120px_1fr_200px] gap-4">
                 <div>
                   <Label className="text-xs text-[#798389]">Порядок</Label>
                   <Input
@@ -569,6 +583,12 @@ export default function TopicManagement() {
                     />
                   </div>
                 </div>
+                <CategoryIconPicker
+                  value={form.iconType}
+                  onChange={v =>
+                    setForm(f => ({ ...f, iconType: v as CategoryIconKey }))
+                  }
+                />
               </div>
 
               <div>

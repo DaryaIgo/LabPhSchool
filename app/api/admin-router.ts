@@ -175,6 +175,7 @@ export const adminRouter = createRouter({
           .regex(/^[a-z0-9-]+$/),
         content: z.string().max(100000).optional(),
         color: z.string().max(20).optional(),
+        iconType: z.string().max(50).optional().nullable(),
         jupyterUrl: z.string().max(500).optional().nullable(),
         labCategorySlug: z.string().max(255).optional(),
       })
@@ -188,6 +189,7 @@ export const adminRouter = createRouter({
         slug: input.slug,
         content: input.content ?? null,
         color: input.color ?? null,
+        iconType: input.iconType ?? null,
         jupyterUrl: input.jupyterUrl ?? null,
         labCategorySlug: input.labCategorySlug ?? null,
       });
@@ -222,6 +224,7 @@ export const adminRouter = createRouter({
           .optional(),
         content: z.string().max(100000).optional(),
         color: z.string().max(20).optional(),
+        iconType: z.string().max(50).optional().nullable(),
         jupyterUrl: z.string().max(500).optional().nullable(),
         labCategorySlug: z.string().max(255).optional().nullable(),
       })
@@ -236,6 +239,7 @@ export const adminRouter = createRouter({
       if (data.slug !== undefined) updateData.slug = data.slug;
       if (data.content !== undefined) updateData.content = data.content;
       if (data.color !== undefined) updateData.color = data.color;
+      if (data.iconType !== undefined) updateData.iconType = data.iconType;
       if (data.jupyterUrl !== undefined)
         updateData.jupyterUrl = data.jupyterUrl;
       if (data.labCategorySlug !== undefined)
@@ -320,6 +324,7 @@ export const adminRouter = createRouter({
         slug,
         content: parsed.content || null,
         color: front.color ? String(front.color) : null,
+        iconType: front.iconType ? String(front.iconType) : null,
       });
       const id = Number(result[0].insertId);
 
@@ -352,6 +357,7 @@ export const adminRouter = createRouter({
         `slug: ${n.slug}`,
         `order: ${n.order}`,
         n.color ? `color: "${n.color}"` : null,
+        n.iconType ? `iconType: "${n.iconType}"` : null,
         "---",
         "",
         n.content ?? "",
@@ -914,16 +920,35 @@ export const adminRouter = createRouter({
         }
       }
 
+      if (input.type === "problem") {
+        await learningDb
+          .update(assignedProblems)
+          .set(updateData)
+          .where(eq(assignedProblems.id, input.id));
+
+        await createAuditEntry({
+          actorId: ctx.localUser!.id,
+          actorType: "user",
+          action: "grade",
+          resource: "assigned_problems",
+          resourceId: input.id,
+          details: { grade: input.grade, comment: input.teacherComment },
+        });
+
+        return { success: true };
+      }
+
+      // input.type === "jupyter_notebook"
       await learningDb
-        .update(assignedProblems)
+        .update(assignedJupyterNotebooks)
         .set(updateData)
-        .where(eq(assignedProblems.id, input.id));
+        .where(eq(assignedJupyterNotebooks.id, input.id));
 
       await createAuditEntry({
         actorId: ctx.localUser!.id,
         actorType: "user",
         action: "grade",
-        resource: "assigned_problems",
+        resource: "assigned_jupyter_notebooks",
         resourceId: input.id,
         details: { grade: input.grade, comment: input.teacherComment },
       });

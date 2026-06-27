@@ -1,6 +1,5 @@
 import { trpc } from "@/providers/trpc";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
@@ -72,6 +71,20 @@ export default function StudentNotebooksSection() {
 
   return (
     <div>
+      <style>{`
+        @keyframes labGlow {
+          0%, 100% {
+            box-shadow: 0 0 3px var(--glow-color), 0 0 6px var(--glow-color);
+          }
+          50% {
+            box-shadow: 0 0 8px var(--glow-color), 0 0 14px var(--glow-color);
+          }
+        }
+        .lab-glow {
+          animation: labGlow 2.2s ease-in-out infinite;
+        }
+      `}</style>
+
       {/* Assigned */}
       <div className="mb-6">
         <h3 className="text-sm font-medium text-[#798389] mb-3 flex items-center gap-2">
@@ -81,7 +94,7 @@ export default function StudentNotebooksSection() {
         {assigned.length > 0 ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {assigned.map(nb => (
-              <NotebookCard
+              <ActiveNotebookCard
                 key={nb.id}
                 notebook={nb}
                 status="assigned"
@@ -110,7 +123,7 @@ export default function StudentNotebooksSection() {
           </h3>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {submitted.map(nb => (
-              <NotebookCard
+              <ActiveNotebookCard
                 key={nb.id}
                 notebook={nb}
                 status="submitted"
@@ -135,15 +148,11 @@ export default function StudentNotebooksSection() {
           </h3>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {completed.map(nb => (
-              <NotebookCard
+              <ArchivedNotebookCard
                 key={nb.id}
                 notebook={nb}
-                status="completed"
                 onDownload={() =>
                   handleDownload(nb.notebookId, nb.notebookFilename)
-                }
-                onOpenColab={() =>
-                  handleOpenColab(nb.notebookId, nb.notebookFilename)
                 }
               />
             ))}
@@ -160,49 +169,23 @@ export default function StudentNotebooksSection() {
           </h3>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {available.map(nb => (
-              <Card
+              <ActiveNotebookCard
                 key={nb.id}
-                className="bg-[#2a3237] border-[#434e54] hover:border-[#2eff8c]/50 transition-colors"
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <NotebookPen
-                      size={20}
-                      className="text-[#2eff8c] shrink-0 mt-0.5"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-semibold text-[#c8cdd1] truncate">
-                        {nb.title}
-                      </h3>
-                      <p className="text-xs text-[#798389] mt-1">
-                        {nb.subtopicTitle}
-                      </p>
-                      <div className="flex items-center gap-2 mt-3">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleDownload(nb.notebookId, nb.filename)
-                          }
-                          className="inline-flex items-center gap-1 text-xs bg-[#2eff8c]/10 text-[#2eff8c] px-3 py-1.5 rounded-md hover:bg-[#2eff8c]/20 transition-colors"
-                        >
-                          <Download size={12} />
-                          Скачать
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleOpenColab(nb.notebookId, nb.filename)
-                          }
-                          className="inline-flex items-center gap-1 text-xs text-[#01acff] hover:underline"
-                        >
-                          <ExternalLink size={12} />
-                          Colab
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                notebook={{
+                  id: nb.id,
+                  notebookId: nb.notebookId,
+                  notebookTitle: nb.title,
+                  notebookFilename: nb.filename,
+                  subtopicTitle: nb.subtopicTitle,
+                  grade: null,
+                  studentColabUrl: null,
+                  submittedAt: null,
+                  completedAt: null,
+                }}
+                status="assigned"
+                onDownload={() => handleDownload(nb.notebookId, nb.filename)}
+                onOpenColab={() => handleOpenColab(nb.notebookId, nb.filename)}
+              />
             ))}
           </div>
         </div>
@@ -221,7 +204,7 @@ export default function StudentNotebooksSection() {
   );
 }
 
-function NotebookCard({
+function ActiveNotebookCard({
   notebook,
   status,
   onDownload,
@@ -238,108 +221,158 @@ function NotebookCard({
     submittedAt: Date | null;
     completedAt: Date | null;
   };
-  status: "assigned" | "submitted" | "completed";
+  status: "assigned" | "submitted";
   onDownload: () => void;
   onOpenColab: () => void;
 }) {
+  return (
+    <div className="flex items-center gap-3 px-3 py-2.5 bg-[#2a3237] border border-[#434e54] hover:border-[#2eff8c]/50 rounded-xl transition-colors">
+      <NotebookPen
+        size={18}
+        className="text-[#2eff8c] shrink-0 mt-0.5"
+      />
+      <div className="flex-1 min-w-0">
+        <h3 className="text-sm font-semibold text-[#c8cdd1] truncate">
+          {notebook.notebookTitle}
+        </h3>
+        <p className="text-[10px] text-[#798389] truncate">
+          {notebook.subtopicTitle}
+        </p>
+        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+          {status === "assigned" && (
+            <Badge className="bg-[#01acff]/20 text-[#01acff] text-[10px] px-1.5 py-0">
+              Назначен
+            </Badge>
+          )}
+          {status === "submitted" && (
+            <Badge className="bg-[#ffc832]/20 text-[#ffc832] text-[10px] px-1.5 py-0">
+              На проверке
+            </Badge>
+          )}
+        </div>
+      </div>
+      <div className="shrink-0 flex flex-col gap-1.5">
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={onDownload}
+            className="inline-flex items-center gap-1 text-[10px] bg-[#2eff8c]/10 text-[#2eff8c] px-2 py-1 rounded hover:bg-[#2eff8c]/20 transition-colors"
+          >
+            <Download size={10} />
+            Скачать
+          </button>
+          <button
+            type="button"
+            onClick={onOpenColab}
+            className="inline-flex items-center gap-1 text-[10px] text-[#01acff] hover:underline"
+          >
+            <ExternalLink size={10} />
+            Colab
+          </button>
+        </div>
+        {status === "assigned" && (
+          <Link to={`/student/notebook/${notebook.id}`}>
+            <Button
+              size="sm"
+              className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70] h-7 text-xs w-full"
+            >
+              Выполнить
+            </Button>
+          </Link>
+        )}
+        {status === "submitted" && (
+          <Link to={`/student/notebook/${notebook.id}`}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-[#37474f] text-[#c8cdd1] hover:bg-[#263238] h-7 text-xs w-full"
+            >
+              Смотреть
+            </Button>
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ArchivedNotebookCard({
+  notebook,
+  onDownload,
+}: {
+  notebook: {
+    id: number;
+    notebookId: number;
+    notebookTitle: string;
+    notebookFilename: string;
+    subtopicTitle: string;
+    grade: number | null;
+    studentColabUrl: string | null;
+    submittedAt: Date | null;
+    completedAt: Date | null;
+  };
+  onDownload: () => void;
+}) {
   const grade = notebook.grade ?? undefined;
   const gradeConfig = grade ? GRADE_CONFIG[grade] : null;
+  const glowColor = gradeConfig?.trophyColor ?? "#2eff8c";
 
   return (
-    <Card className="bg-[#2a3237] border-[#434e54] hover:border-[#2eff8c]/50 transition-colors">
-      <CardContent className="p-4">
-        <div className="flex items-start gap-3">
-          <NotebookPen
-            size={20}
-            className="text-[#2eff8c] shrink-0 mt-0.5"
-          />
-          <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-[#c8cdd1] truncate">
-              {notebook.notebookTitle}
-            </h3>
-            <p className="text-xs text-[#798389] mt-1">
-              {notebook.subtopicTitle}
-            </p>
-            <div className="flex items-center gap-2 mt-2 flex-wrap">
-              {status === "assigned" && (
-                <Badge className="bg-[#01acff]/20 text-[#01acff] text-[10px] px-1.5 py-0">
-                  Назначен
-                </Badge>
-              )}
-              {status === "submitted" && (
-                <Badge className="bg-[#ffc832]/20 text-[#ffc832] text-[10px] px-1.5 py-0">
-                  На проверке
-                </Badge>
-              )}
-              {status === "completed" && gradeConfig && (
-                <div className="flex items-center gap-1">
-                  <Trophy
-                    size={12}
-                    style={{ color: gradeConfig.trophyColor }}
-                    fill={gradeConfig.trophyColor}
-                    fillOpacity={0.15}
-                  />
-                  <span className={`text-[10px] font-bold ${gradeConfig.textColor}`}>
-                    {grade}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {status === "completed" && notebook.studentColabUrl && (
-              <a
-                href={notebook.studentColabUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-[#01acff] hover:underline mt-2 break-all"
-              >
-                <Link2 size={12} />
-                Ваша работа
-              </a>
-            )}
-
-            <div className="flex items-center gap-2 mt-3">
-              <button
-                type="button"
-                onClick={onDownload}
-                className="inline-flex items-center gap-1 text-xs bg-[#2eff8c]/10 text-[#2eff8c] px-3 py-1.5 rounded-md hover:bg-[#2eff8c]/20 transition-colors"
-              >
-                <Download size={12} />
-                Скачать
-              </button>
-              <button
-                type="button"
-                onClick={onOpenColab}
-                className="inline-flex items-center gap-1 text-xs text-[#01acff] hover:underline"
-              >
-                <ExternalLink size={12} />
-                Colab
-              </button>
-              {status === "assigned" && (
-                <Link to={`/student/notebook/${notebook.id}`}>
-                  <Button
-                    size="sm"
-                    className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70] h-7 text-xs"
-                  >
-                    Выполнить
-                  </Button>
-                </Link>
-              )}
-              {status === "submitted" && (
-                <Link to={`/student/notebook/${notebook.id}`}>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-[#37474f] text-[#c8cdd1] hover:bg-[#263238] h-7 text-xs"
-                  >
-                    Смотреть
-                  </Button>
-                </Link>
-              )}
-            </div>
+    <div
+      className="relative flex items-center gap-2 px-3 py-2 bg-[#232b2f] rounded-lg border border-[#37474f] lab-glow transition-colors"
+      style={{ "--glow-color": glowColor } as React.CSSProperties}
+    >
+      <NotebookPen
+        size={16}
+        className="text-[#2eff8c] shrink-0"
+      />
+      <div className="flex-1 min-w-0">
+        <Link
+          to={`/student/notebook/${notebook.id}`}
+          className="text-xs font-medium text-[#c8cdd1] hover:text-white truncate block"
+        >
+          {notebook.notebookTitle}
+        </Link>
+        {notebook.completedAt && (
+          <p className="text-[10px] text-[#798389]">
+            {new Date(notebook.completedAt).toLocaleDateString("ru-RU")}
+          </p>
+        )}
+      </div>
+      <div className="shrink-0 flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={onDownload}
+          className="inline-flex items-center gap-1 text-[10px] text-[#2eff8c] hover:underline"
+          title="Скачать .ipynb"
+        >
+          <Download size={12} />
+        </button>
+        {notebook.studentColabUrl && (
+          <a
+            href={notebook.studentColabUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-[10px] text-[#01acff] hover:underline"
+            title="Открыть работу"
+          >
+            <Link2 size={12} />
+          </a>
+        )}
+        {gradeConfig && (
+          <div className="flex flex-col items-center">
+            <Trophy
+              size={14}
+              style={{ color: gradeConfig.trophyColor }}
+              fill={gradeConfig.trophyColor}
+              fillOpacity={0.15}
+            />
+            <span className={`text-[10px] font-bold ${gradeConfig.textColor}`}>
+              {grade}
+            </span>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        )}
+      </div>
+    </div>
   );
 }

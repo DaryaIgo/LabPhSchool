@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { BookOpen, Play, TrendingUp, CheckCircle2 } from "lucide-react";
 
-const navItems = [
+const allNavItems = [
   { id: "theory", icon: BookOpen, label: "Теория", color: "#2eff8c" },
   { id: "experiment", icon: Play, label: "Эксперимент", color: "#01acff" },
   { id: "graphs", icon: TrendingUp, label: "Графики", color: "#ffc832" },
@@ -11,13 +11,18 @@ const navItems = [
 interface LabSidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  showConclusion?: boolean;
 }
 
 export default function LabSidebar({
   activeTab,
   onTabChange,
+  showConclusion = true,
 }: LabSidebarProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const navItems = showConclusion
+    ? allNavItems
+    : allNavItems.filter(item => item.id !== "conclusion");
 
   return (
     <aside className="w-[64px] flex-shrink-0 bg-[#1e2428] flex flex-col items-center sticky top-[80px] self-start h-fit rounded-2xl py-3 gap-2 mx-3 my-2 relative z-20 shadow-lg shadow-black/20">

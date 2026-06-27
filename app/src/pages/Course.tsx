@@ -3,6 +3,7 @@ import { trpc } from "@/providers/trpc";
 import { useAuth } from "@/hooks/useAuth";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import SnakeTimeline from "@/components/SnakeTimeline";
+import { CategoryIcon } from "@/components/CategoryIcon";
 import {
   FlaskConical,
   ArrowLeft,
@@ -371,7 +372,13 @@ export default function Course() {
       title: topic.title,
       order: topic.order,
       color: topic.color || "#2eff8c",
-      icon: <BookOpen size={22} />,
+      icon: (
+        <CategoryIcon
+          iconKey={topic.iconType}
+          size={22}
+          color={topic.color || "#2eff8c"}
+        />
+      ),
       description: topic.content
         ? topic.content.replace(/[#*_`[\]]/g, "").slice(0, 220) +
           (topic.content.length > 220 ? "..." : "")
@@ -414,7 +421,7 @@ export default function Course() {
           <div className="mb-10">
             <h2 className="text-2xl lg:text-3xl font-bold text-white mb-3 flex items-center gap-3">
               <span className="w-2 h-8 bg-[#2eff8c] rounded-full" />
-              Темы курса
+              Курс по физике
             </h2>
             <p className="text-[#c8cdd1] max-w-2xl">
               Пройдите путь от кинематики до квантовой физики.

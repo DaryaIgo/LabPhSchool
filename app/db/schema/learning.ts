@@ -158,13 +158,14 @@ export const assignedLabWorks = mysqlTable(
       unsigned: true,
     }).notNull(),
     order: int("order").notNull().default(1),
-    status: mysqlEnum("status", ["assigned", "completed"])
+    status: mysqlEnum("status", ["assigned", "submitted", "completed"])
       .default("assigned")
       .notNull(),
     grade: int("grade"),
     teacherComment: text("teacher_comment"),
     assignedBy: bigint("assigned_by", { mode: "number", unsigned: true }),
     assignedAt: timestamp("assigned_at").defaultNow().notNull(),
+    submittedAt: timestamp("submitted_at"),
     completedAt: timestamp("completed_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")

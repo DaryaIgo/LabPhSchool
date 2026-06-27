@@ -137,9 +137,10 @@ export async function createAssignedLabWork(data: {
 export async function updateAssignedLabWork(
   id: number,
   data: {
-    status?: "assigned" | "completed";
+    status?: "assigned" | "submitted" | "completed";
     grade?: number | null;
     teacherComment?: string | null;
+    submittedAt?: Date | null;
     completedAt?: Date | null;
   }
 ) {
@@ -148,6 +149,7 @@ export async function updateAssignedLabWork(
   if (data.grade !== undefined) setData.grade = data.grade;
   if (data.teacherComment !== undefined)
     setData.teacherComment = data.teacherComment;
+  if (data.submittedAt !== undefined) setData.submittedAt = data.submittedAt;
   if (data.completedAt !== undefined) setData.completedAt = data.completedAt;
 
   return getLearningDb()

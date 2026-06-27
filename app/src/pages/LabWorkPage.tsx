@@ -130,10 +130,13 @@ export default function LabWorkPage() {
     { slug: slug! },
     { enabled: !!slug }
   );
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const utils = trpc.useUtils();
+  const canAccessConclusion = isAuthenticated;
 
   const [activeTab, setActiveTab] = useState("theory");
+  const visibleTab =
+    activeTab === "conclusion" && !canAccessConclusion ? "theory" : activeTab;
   const [measurements, setMeasurements] = useState<
     Record<string, string | number>[]
   >([]);
@@ -698,7 +701,11 @@ export default function LabWorkPage() {
       fullWidth
     >
       <div className="flex">
-        <LabSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+        <LabSidebar
+          activeTab={visibleTab}
+          onTabChange={setActiveTab}
+          showConclusion={canAccessConclusion}
+        />
 
         {/* Content */}
         <main className="flex-1 p-6">
@@ -706,7 +713,7 @@ export default function LabWorkPage() {
             key={activeTab}
             className="max-w-5xl mx-auto space-y-6 animate-fadeIn"
           >
-            {activeTab === "theory" && (
+            {visibleTab === "theory" && (
               <div className="space-y-6">
                 <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
                   <div className="flex items-center gap-3 mb-4">
@@ -796,7 +803,7 @@ export default function LabWorkPage() {
               </div>
             )}
 
-            {activeTab === "experiment" && (
+            {visibleTab === "experiment" && (
               <div className="space-y-6">
                 {labWork.instruction && (
                   <div className="bg-[#1a1f22] border border-[#37474f] rounded-xl p-4 text-sm text-[#c8cdd1]">
@@ -930,11 +937,11 @@ export default function LabWorkPage() {
               </div>
             )}
 
-            {activeTab === "graphs" && (
+            {visibleTab === "graphs" && (
               <LabGraphs measurements={measurements} slug={slug || ""} />
             )}
 
-            {activeTab === "conclusion" && (
+            {visibleTab === "conclusion" && canAccessConclusion && (
               <div className="space-y-6">
                 <ConclusionPanel value={conclusion} onChange={setConclusion} />
 

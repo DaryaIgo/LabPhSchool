@@ -1,7 +1,8 @@
 import { trpc } from "@/providers/trpc";
 import { Link } from "react-router";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Beaker, Trophy, Clock, CheckCircle2, ArrowRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Beaker, Trophy, Clock, CheckCircle2, ArrowRight, Send } from "lucide-react";
 
 const GRADE_CONFIG: Record<
   number,
@@ -58,6 +59,8 @@ export default function StudentLabsSection() {
   }
 
   const active = data?.active ?? [];
+  const submitted = active.filter(lab => lab.status === "submitted");
+  const assigned = active.filter(lab => lab.status === "assigned");
   const archived = data?.archived ?? [];
 
   return (
@@ -87,9 +90,9 @@ export default function StudentLabsSection() {
           <Clock size={14} className="text-[#01acff]" />
           Назначенные
         </h3>
-        {active.length > 0 ? (
+        {assigned.length > 0 ? (
           <div className="space-y-3">
-            {active.map((lab, idx) => (
+            {assigned.map((lab, idx) => (
               <ActiveLabCard key={lab.id} lab={lab} number={idx + 1} />
             ))}
           </div>
@@ -99,6 +102,21 @@ export default function StudentLabsSection() {
           </p>
         )}
       </div>
+
+      {/* Submitted, awaiting review */}
+      {submitted.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-sm font-medium text-[#798389] mb-3 flex items-center gap-2">
+            <Send size={14} className="text-[#ffc832]" />
+            На проверке
+          </h3>
+          <div className="space-y-3">
+            {submitted.map((lab, idx) => (
+              <ActiveLabCard key={lab.id} lab={lab} number={idx + 1} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Archived completed labs */}
       <div>
@@ -132,9 +150,12 @@ function ActiveLabCard({
     labSlug: string;
     labGoal: string | null;
     assignedAt: Date;
+    status: string;
   };
   number: number;
 }) {
+  const isSubmitted = lab.status === "submitted";
+
   return (
     <div className="flex items-center gap-3 px-4 py-3 bg-[#2a3237] border border-[#37474f] hover:border-[#01acff]/50 rounded-xl transition-colors">
       <span className="text-xs font-medium text-[#798389] w-5 shrink-0">
@@ -147,15 +168,26 @@ function ActiveLabCard({
         {lab.labGoal && (
           <p className="text-xs text-[#798389] truncate">{lab.labGoal}</p>
         )}
-        <p className="text-[10px] text-[#798389] mt-0.5">
-          Назначена: {new Date(lab.assignedAt).toLocaleDateString("ru-RU")}
-        </p>
+        <div className="flex items-center gap-2 mt-1">
+          <p className="text-[10px] text-[#798389]">
+            Назначена: {new Date(lab.assignedAt).toLocaleDateString("ru-RU")}
+          </p>
+          {isSubmitted && (
+            <Badge className="bg-[#ffc832]/20 text-[#ffc832] text-[10px] px-1.5 py-0">
+              На проверке
+            </Badge>
+          )}
+        </div>
       </div>
       <Link
         to={`/labs/work/${lab.labSlug}`}
-        className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 bg-[#2eff8c]/10 text-[#2eff8c] rounded-lg border border-[#2eff8c]/30 text-xs hover:bg-[#2eff8c]/20 transition-colors"
+        className={`shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border text-xs transition-colors ${
+          isSubmitted
+            ? "bg-[#ffc832]/10 text-[#ffc832] border-[#ffc832]/30 hover:bg-[#ffc832]/20"
+            : "bg-[#2eff8c]/10 text-[#2eff8c] border-[#2eff8c]/30 hover:bg-[#2eff8c]/20"
+        }`}
       >
-        Выполнить
+        {isSubmitted ? "Смотреть" : "Выполнить"}
         <ArrowRight size={12} />
       </Link>
     </div>

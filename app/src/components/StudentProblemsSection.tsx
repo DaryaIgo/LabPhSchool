@@ -74,6 +74,20 @@ export default function StudentProblemsSection() {
 
   return (
     <div>
+      <style>{`
+        @keyframes labGlow {
+          0%, 100% {
+            box-shadow: 0 0 3px var(--glow-color), 0 0 6px var(--glow-color);
+          }
+          50% {
+            box-shadow: 0 0 8px var(--glow-color), 0 0 14px var(--glow-color);
+          }
+        }
+        .lab-glow {
+          animation: labGlow 2.2s ease-in-out infinite;
+        }
+      `}</style>
+
       {/* Assigned (not yet submitted) */}
       <div className="mb-6">
         <h3 className="text-sm font-medium text-[#798389] mb-3 flex items-center gap-2">
@@ -233,7 +247,7 @@ function ArchivedProblemCard({
 
   return (
     <div
-      className="relative flex items-center gap-2 px-3 py-2 bg-[#232b2f] rounded-lg border border-[#37474f] transition-colors"
+      className="relative flex items-center gap-2 px-3 py-2 bg-[#232b2f] rounded-lg border border-[#37474f] lab-glow transition-colors"
       style={{ "--glow-color": glowColor } as React.CSSProperties}
     >
       <span className="text-[10px] font-medium text-[#798389] w-4 shrink-0">
