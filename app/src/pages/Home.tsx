@@ -254,6 +254,9 @@ export default function Home() {
 
       </section>
 
+      {/* Transition dark → light */}
+      <div className="h-[100px] bg-gradient-to-b from-[#262e33] to-[#e8ebed]" />
+
       {/* ====== ABOUT TEACHER ====== */}
       <section className="relative overflow-hidden bg-[#e8ebed] py-24 lg:py-32">
         <div className="relative max-w-7xl mx-auto px-6 lg:px-8">
@@ -287,13 +290,9 @@ export default function Home() {
                 {[
                   "Jupyter-ноутбуки",
                   "Онлайн-доска",
-                  "Видеосвязь",
                   "Виртуальные лаборатории",
-                  "Разбор задач",
                   "Алгоритмический подход",
                   "Персональный трекинг",
-                  "Онлайн-занятия",
-                  "Интерактивные лабы",
                 ].map((tag, i) => (
                   <FloatingTag
                     key={tag}
@@ -347,6 +346,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Transition light → dark */}
+      <div className="h-[100px] bg-gradient-to-b from-[#e8ebed] to-[#262e33]" />
 
       {/* ====== SECTION TABS ====== */}
       <section className="section-dark py-24 lg:py-32">
