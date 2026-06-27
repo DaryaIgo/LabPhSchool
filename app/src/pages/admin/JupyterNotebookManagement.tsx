@@ -42,6 +42,15 @@ import {
   Loader2,
 } from "lucide-react";
 
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return "0 Б";
+  const k = 1024;
+  const sizes = ["Б", "КБ", "МБ", "ГБ"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const value = bytes / Math.pow(k, i);
+  return `${value.toFixed(i === 0 ? 0 : 1)} ${sizes[i]}`;
+}
+
 export default function JupyterNotebookManagement() {
   const { user } = useAuth({ redirectOnUnauthenticated: true });
   const utils = trpc.useUtils();
@@ -116,7 +125,7 @@ export default function JupyterNotebookManagement() {
     const sub = subtopicMap.get(n.subtopicNodeId);
     const topicTitle = sub ? topicMap.get(sub.parentId) ?? "" : "";
     return (
-      n.title.toLowerCase().includes(q) ||
+      n.filename.toLowerCase().includes(q) ||
       (sub?.title ?? "").toLowerCase().includes(q) ||
       topicTitle.toLowerCase().includes(q)
     );
@@ -208,7 +217,7 @@ export default function JupyterNotebookManagement() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
           <Input
-            placeholder="Поиск по названию или подразделу..."
+            placeholder="Поиск по файлу или подразделу..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="pl-10 bg-[#1e2529] border-[#37474f]"
@@ -237,10 +246,10 @@ export default function JupyterNotebookManagement() {
                       Подраздел
                     </th>
                     <th className="text-left p-4 text-gray-400 font-medium">
-                      Название
+                      Файл
                     </th>
                     <th className="text-left p-4 text-gray-400 font-medium">
-                      Файл
+                      Размер
                     </th>
                     <th className="text-right p-4 text-gray-400 font-medium">
                       Действия
@@ -250,7 +259,7 @@ export default function JupyterNotebookManagement() {
                 <tbody>
                   {filtered?.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="p-8 text-center text-gray-500">
+                      <td colSpan={4} className="p-8 text-center text-gray-500">
                         Ноутбуки не найдены
                       </td>
                     </tr>
@@ -277,7 +286,6 @@ export default function JupyterNotebookManagement() {
                           );
                         })()}
                       </td>
-                      <td className="p-4 font-medium">{n.title}</td>
                       <td className="p-4">
                         <a
                           href={`/api/jupyter/download/${n.id}`}
@@ -286,6 +294,9 @@ export default function JupyterNotebookManagement() {
                           <Download className="h-3 w-3" />
                           {n.filename}
                         </a>
+                      </td>
+                      <td className="p-4 text-gray-300 text-xs">
+                        {n.fileSize != null ? formatBytes(n.fileSize) : "—"}
                       </td>
                       <td className="p-4">
                         <div className="flex items-center justify-end gap-1">

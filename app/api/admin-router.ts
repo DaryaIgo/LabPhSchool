@@ -6,6 +6,8 @@
  */
 
 import { z } from "zod";
+import path from "node:path";
+import { stat } from "node:fs/promises";
 import { createRouter, adminQuery } from "./middleware";
 import {
   getAuthDb,
@@ -17,7 +19,7 @@ import {
   getMediaDb,
 } from "./queries/connection";
 import { topicNodes, resources } from "@db/schema/content";
-import { labWorks } from "@db/schema/labs";
+import { labWorks, simulations } from "@db/schema/labs";
 import {
   labProgress,
   assignedProblems,
@@ -27,7 +29,16 @@ import { problems } from "@db/schema/problems";
 import { localUsers, roles } from "@db/schema/auth";
 import { jupyterNotebooks, jupyterNotebookAccess } from "@db/schema/jupyter";
 import { images } from "@db/schema/media";
-import { eq, asc, desc, count, and, inArray, isNull } from "drizzle-orm";
+import {
+  eq,
+  asc,
+  desc,
+  count,
+  and,
+  inArray,
+  isNull,
+  isNotNull,
+} from "drizzle-orm";
 import { createAuditEntry } from "./queries/audit";
 import {
   findAssignedLabWorkByProgress,
@@ -66,9 +77,22 @@ export const adminRouter = createRouter({
       .select({ count: count() })
       .from(topicNodes)
       .where(isNull(topicNodes.parentId));
+    const [subtopicCount] = await contentDb
+      .select({ count: count() })
+      .from(topicNodes)
+      .where(isNotNull(topicNodes.parentId));
     const [labWorkCount] = await labsDb
       .select({ count: count() })
       .from(labWorks);
+    const [simulationCount] = await labsDb
+      .select({ count: count() })
+      .from(simulations);
+    const [problemCount] = await getProblemsDb()
+      .select({ count: count() })
+      .from(problems);
+    const [notebookCount] = await getJupyterDb()
+      .select({ count: count() })
+      .from(jupyterNotebooks);
     const [resourceCount] = await contentDb
       .select({ count: count() })
       .from(resources);
@@ -95,7 +119,11 @@ export const adminRouter = createRouter({
       },
       content: {
         topics: topicCount.count,
+        subtopics: subtopicCount.count,
         labWorks: labWorkCount.count,
+        simulations: simulationCount.count,
+        problems: problemCount.count,
+        notebooks: notebookCount.count,
         resources: resourceCount.count,
         submissions:
           labSubmissionCount.count +
@@ -927,10 +955,22 @@ export const adminRouter = createRouter({
       for (const s of subtopicList) subtopicMap.set(s.id, s.title);
     }
 
-    return notebooks.map(n => ({
-      ...n,
-      subtopicTitle: subtopicMap.get(n.subtopicNodeId) ?? "—",
-    }));
+    return await Promise.all(
+      notebooks.map(async n => {
+        let fileSize: number | null = null;
+        try {
+          const s = await stat(path.join(process.cwd(), n.filePath));
+          fileSize = s.size;
+        } catch {
+          fileSize = null;
+        }
+        return {
+          ...n,
+          subtopicTitle: subtopicMap.get(n.subtopicNodeId) ?? "—",
+          fileSize,
+        };
+      })
+    );
   }),
 
   createJupyterNotebook: adminQuery

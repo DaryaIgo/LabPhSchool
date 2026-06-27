@@ -61,6 +61,45 @@ function StatCard({
   );
 }
 
+function CompactCard({
+  title,
+  icon: Icon,
+  children,
+}: {
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card className="bg-[#1e2529] border-[#37474f] text-white">
+      <CardContent className="p-3 flex items-center gap-3">
+        <div className="shrink-0">
+          <Icon className="h-5 w-5 text-[#2eff8c]" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs text-gray-400 mb-1">{title}</p>
+          <div className="flex items-center gap-3">{children}</div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function CompactStat({
+  value,
+  label,
+}: {
+  value: number | string;
+  label: string;
+}) {
+  return (
+    <div className="flex items-baseline gap-1">
+      <span className="text-lg font-bold leading-none">{value}</span>
+      <span className="text-[10px] text-gray-500 leading-none">{label}</span>
+    </div>
+  );
+}
+
 function QuickAction({
   label,
   icon: Icon,
@@ -73,12 +112,33 @@ function QuickAction({
   return (
     <Button
       variant="outline"
-      className="h-auto py-4 px-4 flex flex-col items-center gap-2 bg-[#1e2529] border-[#37474f] hover:border-[#2eff8c] hover:bg-[#263238] text-white"
+      className="h-auto py-2 px-2 flex flex-col items-center justify-center gap-1 bg-[#1e2529] border-[#37474f] hover:border-[#2eff8c] hover:bg-[#263238] text-white min-h-[72px]"
       onClick={onClick}
     >
-      <Icon className="h-6 w-6 text-[#2eff8c]" />
-      <span className="text-xs">{label}</span>
+      <Icon className="h-5 w-5 text-[#2eff8c]" />
+      <span className="text-[11px] leading-tight text-center whitespace-normal">
+        {label}
+      </span>
     </Button>
+  );
+}
+
+function QuickActionsGroup({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="mb-5">
+      <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+        {title}
+      </h4>
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        {children}
+      </div>
+    </div>
   );
 }
 
@@ -166,86 +226,86 @@ export default function AdminDashboard() {
       {/* Learning Materials */}
       <h3 className="text-base font-semibold mb-3 text-gray-300 flex items-center gap-2">
         <BookOpen className="h-4 w-4 text-[#ffcb3d]" />
-        Учебные материалы
+        Статистика учебных материалов
       </h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard
-          title="Темы курса"
-          value={stats?.content.topics ?? "—"}
-          subtitle="Разделы курса"
-          icon={BookOpen}
-          onClick={() => navigate("/admin/topics")}
-        />
-        <StatCard
-          title="Лабораторные"
-          value={stats?.content.labWorks ?? "—"}
-          subtitle="Интерактивные симуляции"
-          icon={FlaskConical}
-          onClick={() => navigate("/admin/virtual-labs")}
-        />
-        <StatCard
-          title="Ресурсы"
-          value={stats?.content.resources ?? "—"}
-          subtitle="Дополнительные материалы"
-          icon={Library}
-          onClick={() => navigate("/admin/resources")}
-        />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+        <CompactCard title="Курс" icon={BookOpen}>
+          <CompactStat value={stats?.content.topics ?? "—"} label="тем" />
+          <CompactStat value={stats?.content.subtopics ?? "—"} label="разделов" />
+        </CompactCard>
+        <CompactCard title="Лаборатории" icon={FlaskConical}>
+          <CompactStat value={stats?.content.simulations ?? "—"} label="симуляций" />
+          <CompactStat value={stats?.content.labWorks ?? "—"} label="работ" />
+        </CompactCard>
+        <CompactCard title="Задачи" icon={ClipboardList}>
+          <CompactStat value={stats?.content.problems ?? "—"} label="задач" />
+        </CompactCard>
+        <CompactCard title="Jupyter" icon={NotebookPen}>
+          <CompactStat value={stats?.content.notebooks ?? "—"} label="ноутбуков" />
+        </CompactCard>
       </div>
 
       {/* Quick Actions */}
-      <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-8">
+      <h2 className="text-lg font-semibold mb-4">Быстрые действия</h2>
+
+      <QuickActionsGroup title="Ученики">
         <QuickAction
-          label="Students"
+          label="Ученики"
           icon={GraduationCap}
           onClick={() => navigate("/admin/students")}
         />
         <QuickAction
-          label="Enrollments"
+          label="Назначения"
           icon={ClipboardList}
           onClick={() => navigate("/admin/enrollments")}
         />
         <QuickAction
-          label="Topic Management"
+          label="Проверка"
+          icon={FileCheck}
+          onClick={() => navigate("/admin/submissions")}
+        />
+      </QuickActionsGroup>
+
+      <QuickActionsGroup title="Управление контентом">
+        <QuickAction
+          label="Темы"
           icon={BookOpen}
           onClick={() => navigate("/admin/topics")}
         />
         <QuickAction
-          label="Lab Management"
+          label="Лаборатории"
           icon={Beaker}
           onClick={() => navigate("/admin/lab-management")}
         />
         <QuickAction
-          label="Problem Management"
+          label="Задачи"
           icon={ShieldCheck}
           onClick={() => navigate("/admin/problems")}
         />
         <QuickAction
-          label="Notebook Management"
+          label="Ноутбуки"
           icon={NotebookPen}
           onClick={() => navigate("/admin/jupyter-notebooks")}
-        />
-        <QuickAction
-          label="Audit Log"
-          icon={Activity}
-          onClick={() => navigate("/admin/audit")}
         />
         <QuickAction
           label="Ресурсы"
           icon={Library}
           onClick={() => navigate("/admin/resources")}
         />
+      </QuickActionsGroup>
+
+      <QuickActionsGroup title="Система">
         <QuickAction
-          label="Проверка работ"
-          icon={FileCheck}
-          onClick={() => navigate("/admin/submissions")}
+          label="Аудит"
+          icon={Activity}
+          onClick={() => navigate("/admin/audit")}
         />
         <QuickAction
-          label="Стрела времени"
+          label="Timeline"
           icon={History}
           onClick={() => navigate("/admin/timeline")}
         />
-      </div>
+      </QuickActionsGroup>
 
       {/* Recent Activity Preview */}
       {/* Security section hidden per request */}
