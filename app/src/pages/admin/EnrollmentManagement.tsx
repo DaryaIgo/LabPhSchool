@@ -36,6 +36,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { toast } from "sonner";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../api/router";
@@ -234,6 +235,9 @@ function AssignedProblemsManager({
   const [selectedProblemId, setSelectedProblemId] = useState<number | null>(
     null
   );
+  const [statusFilter, setStatusFilter] = useState<"assigned" | "completed">(
+    "assigned"
+  );
 
   const { data: assignedProblems, isLoading } =
     trpc.enrollment.listAssignedProblems.useQuery(
@@ -275,6 +279,17 @@ function AssignedProblemsManager({
       p => !assignedProblems?.some(a => a.problemId === p.id)
     ) ?? [];
 
+  const assignedCount =
+    assignedProblems?.filter(p => p.status !== "completed").length ?? 0;
+  const completedCount =
+    assignedProblems?.filter(p => p.status === "completed").length ?? 0;
+
+  const filteredProblems =
+    assignedProblems?.filter(p => {
+      if (statusFilter === "completed") return p.status === "completed";
+      return p.status !== "completed";
+    }) ?? [];
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
@@ -282,56 +297,90 @@ function AssignedProblemsManager({
           <FileText className="h-3.5 w-3.5" />
           Назначенные задачи
         </h4>
-        <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-          <DialogTrigger asChild>
-            <button
-              type="button"
-              className="text-xs flex items-center gap-1 text-[#2eff8c] hover:text-[#26d97a] transition-colors"
+        <div className="flex items-center gap-2">
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            value={statusFilter}
+            onValueChange={val =>
+              setStatusFilter((val as "assigned") ?? "assigned")
+            }
+            className="bg-[#1a2024]"
+          >
+            <ToggleGroupItem
+              value="assigned"
+              className="group text-xs h-7 px-2.5 text-slate-300 border-[#37474f] data-[state=on]:bg-[#2eff8c] data-[state=on]:text-[#0d1117] data-[state=on]:border-[#2eff8c] gap-1.5"
             >
-              <Plus className="h-3.5 w-3.5" />
-              Добавить новую задачу
-            </button>
-          </DialogTrigger>
-          <DialogContent className="bg-[#1e2529] border-[#37474f] text-white sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Назначить задачу</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 mt-2">
-              <Select
-                value={selectedProblemId?.toString() ?? ""}
-                onValueChange={v => setSelectedProblemId(Number(v))}
+              Назначена
+              <span className="inline-flex items-center justify-center min-w-[1.25rem] h-4 px-1 rounded-full bg-[#37474f] text-[10px] text-white group-data-[state=on]:bg-[#0d1117]/30">
+                {assignedCount}
+              </span>
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="completed"
+              className="group text-xs h-7 px-2.5 text-slate-300 border-[#37474f] data-[state=on]:bg-[#2eff8c] data-[state=on]:text-[#0d1117] data-[state=on]:border-[#2eff8c] gap-1.5"
+            >
+              Выполнена
+              <span className="inline-flex items-center justify-center min-w-[1.25rem] h-4 px-1 rounded-full bg-[#37474f] text-[10px] text-white group-data-[state=on]:bg-[#0d1117]/30">
+                {completedCount}
+              </span>
+            </ToggleGroupItem>
+          </ToggleGroup>
+          <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+            <DialogTrigger asChild>
+              <button
+                type="button"
+                className="text-xs flex items-center gap-1 text-[#2eff8c] hover:text-[#26d97a] transition-colors"
               >
-                <SelectTrigger className="bg-[#263238] border-[#37474f]">
-                  <SelectValue placeholder="Выберите задачу..." />
-                </SelectTrigger>
-                <SelectContent className="bg-[#1e2529] border-[#37474f] max-h-80">
-                  {availableProblems.map(p => (
-                    <SelectItem key={p.id} value={p.id.toString()}>
-                      <span className="truncate">{p.title}</span>
-                      <span className="ml-2 text-xs text-slate-500">
-                        {p.categoryTitle ?? "Без категории"}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                className="w-full bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
-                disabled={!selectedProblemId || assignMutation.isPending}
-                onClick={() => {
-                  if (selectedProblemId) {
-                    assignMutation.mutate({
-                      enrollmentId,
-                      problemId: selectedProblemId,
-                    });
-                  }
-                }}
-              >
-                {assignMutation.isPending ? "Назначаем..." : "Назначить"}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+                <Plus className="h-3.5 w-3.5" />
+                Добавить новую задачу
+              </button>
+            </DialogTrigger>
+            <DialogContent className="bg-[#1e2529] border-[#37474f] text-white sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Назначить задачу</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-2">
+                <Select
+                  value={selectedProblemId?.toString() ?? ""}
+                  onValueChange={v => setSelectedProblemId(Number(v))}
+                >
+                  <SelectTrigger className="bg-[#263238] border-[#37474f]">
+                    <SelectValue placeholder="Выберите задачу..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1e2529] border-[#37474f] max-h-80">
+                    {availableProblems.map(p => (
+                      <SelectItem
+                        key={p.id}
+                        value={p.id.toString()}
+                        className="text-white"
+                      >
+                        <span className="truncate">{p.title}</span>
+                        <span className="ml-2 text-xs text-slate-500">
+                          {p.categoryTitle ?? "Без категории"}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  className="w-full bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
+                  disabled={!selectedProblemId || assignMutation.isPending}
+                  onClick={() => {
+                    if (selectedProblemId) {
+                      assignMutation.mutate({
+                        enrollmentId,
+                        problemId: selectedProblemId,
+                      });
+                    }
+                  }}
+                >
+                  {assignMutation.isPending ? "Назначаем..." : "Назначить"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {isLoading ? (
@@ -340,9 +389,9 @@ function AssignedProblemsManager({
             <Skeleton key={i} className="h-10 bg-[#37474f]" />
           ))}
         </div>
-      ) : assignedProblems && assignedProblems.length > 0 ? (
+      ) : filteredProblems.length > 0 ? (
         <div className="grid gap-1.5">
-          {assignedProblems.map((problem, idx) => (
+          {filteredProblems.map((problem, idx) => (
             <div
               key={problem.id}
               className="flex items-center gap-2 px-3 py-2 bg-[#1a2024] rounded-md border border-[#2a3338] hover:border-[#37474f] transition-colors"
@@ -367,8 +416,12 @@ function AssignedProblemsManager({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#1e2529] border-[#37474f]">
-                  <SelectItem value="assigned">Назначена</SelectItem>
-                  <SelectItem value="completed">Выполнена</SelectItem>
+                  <SelectItem value="assigned" className="text-white">
+                    Назначена
+                  </SelectItem>
+                  <SelectItem value="completed" className="text-white">
+                    Выполнена
+                  </SelectItem>
                 </SelectContent>
               </Select>
               <Select
@@ -385,9 +438,15 @@ function AssignedProblemsManager({
                   <SelectValue placeholder="Оценка" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#1e2529] border-[#37474f]">
-                  <SelectItem value="none">Без оценки</SelectItem>
+                  <SelectItem value="none" className="text-white">
+                    Без оценки
+                  </SelectItem>
                   {[1, 2, 3, 4, 5].map(g => (
-                    <SelectItem key={g} value={g.toString()}>
+                    <SelectItem
+                      key={g}
+                      value={g.toString()}
+                      className="text-white"
+                    >
                       {g}
                     </SelectItem>
                   ))}
@@ -410,7 +469,7 @@ function AssignedProblemsManager({
           ))}
         </div>
       ) : (
-        <p className="text-sm text-slate-500">Нет назначенных задач</p>
+        <p className="text-sm text-slate-500">Нет задач с выбранным статусом</p>
       )}
     </div>
   );
@@ -510,7 +569,11 @@ function EnrollDialog({
             </SelectTrigger>
             <SelectContent className="bg-[#1e2529] border-[#37474f]">
               {topics.map(t => (
-                <SelectItem key={t.id} value={t.id.toString()}>
+                <SelectItem
+                  key={t.id}
+                  value={t.id.toString()}
+                  className="text-white"
+                >
                   {t.title}
                 </SelectItem>
               ))}
@@ -886,13 +949,13 @@ function SubtopicRow({
           </SelectValue>
         </SelectTrigger>
         <SelectContent className="bg-[#1e2529] border-[#37474f]">
-          <SelectItem value="not_started">
+          <SelectItem value="not_started" className="text-white">
             <StatusLabel status="not_started" />
           </SelectItem>
-          <SelectItem value="in_progress">
+          <SelectItem value="in_progress" className="text-white">
             <StatusLabel status="in_progress" />
           </SelectItem>
-          <SelectItem value="completed">
+          <SelectItem value="completed" className="text-white">
             <StatusLabel status="completed" />
           </SelectItem>
         </SelectContent>
@@ -958,6 +1021,9 @@ function AssignedLabWorksManager({
   const [selectedLabWorkId, setSelectedLabWorkId] = useState<number | null>(
     null
   );
+  const [statusFilter, setStatusFilter] = useState<"assigned" | "completed">(
+    "assigned"
+  );
 
   const { data: assignedLabs, isLoading } =
     trpc.enrollment.listAssignedLabWorks.useQuery(
@@ -1002,6 +1068,14 @@ function AssignedLabWorksManager({
       lw => !assignedLabs?.some(a => a.labWorkId === lw.id)
     ) ?? [];
 
+  const assignedCount =
+    assignedLabs?.filter(l => l.status === "assigned").length ?? 0;
+  const completedCount =
+    assignedLabs?.filter(l => l.status === "completed").length ?? 0;
+
+  const filteredLabs =
+    assignedLabs?.filter(l => l.status === statusFilter) ?? [];
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
@@ -1009,56 +1083,90 @@ function AssignedLabWorksManager({
           <Beaker className="h-3.5 w-3.5" />
           Назначенные лабораторные работы
         </h4>
-        <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-          <DialogTrigger asChild>
-            <button
-              type="button"
-              className="text-xs flex items-center gap-1 text-[#2eff8c] hover:text-[#26d97a] transition-colors"
+        <div className="flex items-center gap-2">
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            value={statusFilter}
+            onValueChange={val =>
+              setStatusFilter((val as "assigned") ?? "assigned")
+            }
+            className="bg-[#1a2024]"
+          >
+            <ToggleGroupItem
+              value="assigned"
+              className="group text-xs h-7 px-2.5 text-slate-300 border-[#37474f] data-[state=on]:bg-[#2eff8c] data-[state=on]:text-[#0d1117] data-[state=on]:border-[#2eff8c] gap-1.5"
             >
-              <Plus className="h-3.5 w-3.5" />
-              Добавить новую лабораторную работу
-            </button>
-          </DialogTrigger>
-          <DialogContent className="bg-[#1e2529] border-[#37474f] text-white sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Назначить лабораторную работу</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 mt-2">
-              <Select
-                value={selectedLabWorkId?.toString() ?? ""}
-                onValueChange={v => setSelectedLabWorkId(Number(v))}
+              Назначена
+              <span className="inline-flex items-center justify-center min-w-[1.25rem] h-4 px-1 rounded-full bg-[#37474f] text-[10px] text-white group-data-[state=on]:bg-[#0d1117]/30">
+                {assignedCount}
+              </span>
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="completed"
+              className="group text-xs h-7 px-2.5 text-slate-300 border-[#37474f] data-[state=on]:bg-[#2eff8c] data-[state=on]:text-[#0d1117] data-[state=on]:border-[#2eff8c] gap-1.5"
+            >
+              Выполнена
+              <span className="inline-flex items-center justify-center min-w-[1.25rem] h-4 px-1 rounded-full bg-[#37474f] text-[10px] text-white group-data-[state=on]:bg-[#0d1117]/30">
+                {completedCount}
+              </span>
+            </ToggleGroupItem>
+          </ToggleGroup>
+          <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+            <DialogTrigger asChild>
+              <button
+                type="button"
+                className="text-xs flex items-center gap-1 text-[#2eff8c] hover:text-[#26d97a] transition-colors"
               >
-                <SelectTrigger className="bg-[#263238] border-[#37474f]">
-                  <SelectValue placeholder="Выберите лабораторную работу..." />
-                </SelectTrigger>
-                <SelectContent className="bg-[#1e2529] border-[#37474f] max-h-80">
-                  {availableLabWorks.map(lw => (
-                    <SelectItem key={lw.id} value={lw.id.toString()}>
-                      <span className="truncate">{lw.title}</span>
-                      <span className="ml-2 text-xs text-slate-500">
-                        {lw.categoryTitle ?? "Без категории"}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                className="w-full bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
-                disabled={!selectedLabWorkId || assignMutation.isPending}
-                onClick={() => {
-                  if (selectedLabWorkId) {
-                    assignMutation.mutate({
-                      enrollmentId,
-                      labWorkId: selectedLabWorkId,
-                    });
-                  }
-                }}
-              >
-                {assignMutation.isPending ? "Назначаем..." : "Назначить"}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+                <Plus className="h-3.5 w-3.5" />
+                Добавить новую лабораторную работу
+              </button>
+            </DialogTrigger>
+            <DialogContent className="bg-[#1e2529] border-[#37474f] text-white sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Назначить лабораторную работу</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-2">
+                <Select
+                  value={selectedLabWorkId?.toString() ?? ""}
+                  onValueChange={v => setSelectedLabWorkId(Number(v))}
+                >
+                  <SelectTrigger className="bg-[#263238] border-[#37474f]">
+                    <SelectValue placeholder="Выберите лабораторную работу..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1e2529] border-[#37474f] max-h-80">
+                    {availableLabWorks.map(lw => (
+                      <SelectItem
+                        key={lw.id}
+                        value={lw.id.toString()}
+                        className="text-white"
+                      >
+                        <span className="truncate">{lw.title}</span>
+                        <span className="ml-2 text-xs text-slate-500">
+                          {lw.categoryTitle ?? "Без категории"}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  className="w-full bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
+                  disabled={!selectedLabWorkId || assignMutation.isPending}
+                  onClick={() => {
+                    if (selectedLabWorkId) {
+                      assignMutation.mutate({
+                        enrollmentId,
+                        labWorkId: selectedLabWorkId,
+                      });
+                    }
+                  }}
+                >
+                  {assignMutation.isPending ? "Назначаем..." : "Назначить"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {isLoading ? (
@@ -1067,9 +1175,9 @@ function AssignedLabWorksManager({
             <Skeleton key={i} className="h-10 bg-[#37474f]" />
           ))}
         </div>
-      ) : assignedLabs && assignedLabs.length > 0 ? (
+      ) : filteredLabs.length > 0 ? (
         <div className="grid gap-1.5">
-          {assignedLabs.map((lab, idx) => (
+          {filteredLabs.map((lab, idx) => (
             <div
               key={lab.id}
               className="flex items-center gap-2 px-3 py-2 bg-[#1a2024] rounded-md border border-[#2a3338] hover:border-[#37474f] transition-colors"
@@ -1102,8 +1210,12 @@ function AssignedLabWorksManager({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#1e2529] border-[#37474f]">
-                  <SelectItem value="assigned">Назначена</SelectItem>
-                  <SelectItem value="completed">Выполнена</SelectItem>
+                  <SelectItem value="assigned" className="text-white">
+                    Назначена
+                  </SelectItem>
+                  <SelectItem value="completed" className="text-white">
+                    Выполнена
+                  </SelectItem>
                 </SelectContent>
               </Select>
               <Select
@@ -1120,9 +1232,15 @@ function AssignedLabWorksManager({
                   <SelectValue placeholder="Оценка" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#1e2529] border-[#37474f]">
-                  <SelectItem value="none">Без оценки</SelectItem>
+                  <SelectItem value="none" className="text-white">
+                    Без оценки
+                  </SelectItem>
                   {[1, 2, 3, 4, 5].map(g => (
-                    <SelectItem key={g} value={g.toString()}>
+                    <SelectItem
+                      key={g}
+                      value={g.toString()}
+                      className="text-white"
+                    >
                       {g}
                     </SelectItem>
                   ))}
@@ -1146,7 +1264,7 @@ function AssignedLabWorksManager({
         </div>
       ) : (
         <p className="text-sm text-slate-500">
-          Нет назначенных лабораторных работ
+          Нет лабораторных работ с выбранным статусом
         </p>
       )}
     </div>
