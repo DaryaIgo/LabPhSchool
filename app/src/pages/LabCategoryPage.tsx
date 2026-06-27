@@ -1,20 +1,21 @@
 import { trpc } from "@/providers/trpc";
 import { Link, Navigate, useParams } from "react-router";
-import { useAuth } from "@/hooks/useAuth";
 import { CategoryIcon } from "@/components/CategoryIcon";
-import {
-  ArrowLeft,
-  FlaskConical,
-  BookOpen,
-  ChevronRight,
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 const LEGACY_CATEGORY_SLUGS = new Set(["electricity", "magnetism"]);
 
+const LAB_THEMES = [
+  { bg: "bg-[#0ea5e9]/10", border: "border-[#0ea5e9]/30", text: "text-[#7dd3fc]" },
+  { bg: "bg-[#22c55e]/10", border: "border-[#22c55e]/30", text: "text-[#86efac]" },
+  { bg: "bg-[#f59e0b]/10", border: "border-[#f59e0b]/30", text: "text-[#fcd34d]" },
+  { bg: "bg-[#f43f5e]/10", border: "border-[#f43f5e]/30", text: "text-[#fda4af]" },
+  { bg: "bg-[#8b5cf6]/10", border: "border-[#8b5cf6]/30", text: "text-[#c4b5fd]" },
+  { bg: "bg-[#ec4899]/10", border: "border-[#ec4899]/30", text: "text-[#f9a8d4]" },
+];
+
 export default function LabCategoryPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
 
   if (slug && LEGACY_CATEGORY_SLUGS.has(slug)) {
     return <Navigate to="/labs/category/electrodynamics" replace />;
@@ -96,104 +97,74 @@ export default function LabCategoryPage() {
         {/* Subcategories */}
         {subcategories.length > 0 && (
           <section>
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
-              <BookOpen size={22} className="text-[#2eff8c]" />
-              Темы раздела
-            </h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {subcategories.map(sub => {
+            <div className="space-y-16">
+              {subcategories.map((sub, index) => {
                 const subLabs = labsBySubcategory.get(sub.id) ?? [];
                 return (
                   <div
                     key={sub.id}
-                    className="bg-[#2a3237] border border-[#434e54] rounded-xl p-5 hover:border-[#2eff8c]/30 transition-colors"
+                    className="flex flex-col md:flex-row gap-6 md:gap-10"
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-white">{sub.title}</h3>
-                      <span className="text-xs text-[#798389]">
-                        {subLabs.length} лаб.
-                      </span>
-                    </div>
-                    <p className="text-sm text-[#c8cdd1] mb-3">
-                      {sub.description}
-                    </p>
-                    {subLabs.length > 0 && (
-                      <div className="space-y-2">
-                        {subLabs.map(lab => (
-                          <Link
-                            key={lab.id}
-                            to={`/labs/work/${lab.slug}`}
-                            className="flex items-center justify-between p-2 bg-[#1a1f22] rounded-lg hover:bg-[#1e2529] transition-colors"
-                          >
-                            <span className="text-sm text-[#c8cdd1]">
-                              {lab.title}
-                            </span>
-                            <ChevronRight
-                              size={14}
-                              className="text-[#798389]"
-                            />
-                          </Link>
-                        ))}
+                    {/* Topic label */}
+                    <div className="md:w-72 shrink-0 md:pr-10">
+                      <div className="md:text-right">
+                        <span className="text-sm font-medium tracking-wider text-[#798389] uppercase">
+                          Тема {index + 1}
+                        </span>
+                        <h3 className="text-xl font-bold text-white mt-2">
+                          {sub.title}
+                        </h3>
+                        {sub.description && (
+                          <p className="text-base text-[#c8cdd1] mt-2 leading-relaxed">
+                            {sub.description}
+                          </p>
+                        )}
                       </div>
-                    )}
+                    </div>
+
+                    {/* Labs */}
+                    <div className="flex-1 min-w-0">
+                      {subLabs.length > 0 ? (
+                        <div className="flex flex-wrap gap-5">
+                          {subLabs.map((lab, labIndex) => {
+                            const theme =
+                              LAB_THEMES[labIndex % LAB_THEMES.length];
+                            return (
+                              <span
+                                key={lab.id}
+                                className="inline-block animate-float"
+                                style={{
+                                  animationDelay: `${(labIndex * 0.35) % 3}s`,
+                                }}
+                              >
+                                <Link
+                                  to={`/labs/work/${lab.slug}`}
+                                  className={`
+                                    group inline-flex items-center
+                                    px-5 py-3 rounded-xl border text-base font-medium
+                                    transition-all duration-300 ease-out
+                                    hover:-translate-y-1 hover:shadow-lg
+                                    ${theme.bg} ${theme.border} ${theme.text}
+                                  `}
+                                >
+                                  {lab.title}
+                                </Link>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-base text-[#798389] italic">
+                          Лабораторные работы появятся позже
+                        </p>
+                      )}
+                    </div>
                   </div>
                 );
               })}
             </div>
           </section>
         )}
-
-        {/* All Labs in Category */}
-        {labs && labs.length > 0 && (
-          <section>
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
-              <FlaskConical size={22} className="text-[#2eff8c]" />
-              Лабораторные работы раздела
-            </h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {labs.map(lab => (
-                <Link
-                  key={lab.id}
-                  to={`/labs/work/${lab.slug}`}
-                  className="group bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 transition-all duration-300 hover:border-[#2eff8c]/50 hover:-translate-y-1 hover:shadow-xl flex flex-col"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    {isAdmin && (
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                          lab.status === "published"
-                            ? "bg-green-500/10 text-green-400"
-                            : "bg-yellow-500/10 text-yellow-400"
-                        }`}
-                      >
-                        {lab.status === "published"
-                          ? "Опубликовано"
-                          : "Черновик"}
-                      </span>
-                    )}
-                  </div>
-
-                  <h3 className="text-lg font-bold text-white mb-2 group-hover:text-[#2eff8c] transition-colors">
-                    {lab.title}
-                  </h3>
-                  {lab.subcategoryTitle && (
-                    <p className="text-xs text-[#798389] mb-3">
-                      {lab.subcategoryTitle}
-                    </p>
-                  )}
-
-                  <div className="pt-4 border-t border-white/5">
-                    <span className="inline-flex items-center gap-1 text-[#2eff8c] text-sm font-medium group-hover:gap-2 transition-all">
-                      Начать работу
-                      <ArrowLeft size={14} className="rotate-180" />
-                    </span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
       </div>
     </div>
   );
