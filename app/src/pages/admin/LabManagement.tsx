@@ -107,10 +107,6 @@ const initialLabWorkForm = {
   order: 1,
   title: "",
   slug: "",
-  law: "",
-  skills: "",
-  difficulty: "medium" as "easy" | "medium" | "hard",
-  duration: 30,
   goal: "",
   theory: "",
   equipment: "",
@@ -236,10 +232,6 @@ export default function LabManagement() {
       order: lab.order,
       title: lab.title,
       slug: lab.slug,
-      law: lab.law ?? "",
-      skills: lab.skills ?? "",
-      difficulty: (lab.difficulty as "easy" | "medium" | "hard") ?? "medium",
-      duration: lab.duration ?? 30,
       goal: lab.goal ?? "",
       theory: lab.theory ?? "",
       equipment: lab.equipment ?? "",
@@ -1217,64 +1209,6 @@ function LabWorkEditor({
                 className="bg-[#1e2529] border-[#37474f] mt-1 text-white"
               />
             </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label className="text-xs text-[#798389]">Изучаемый закон</Label>
-              <Input
-                value={form.law}
-                onChange={e => onChange({ ...form, law: e.target.value })}
-                className="bg-[#1e2529] border-[#37474f] mt-1 text-white"
-              />
-            </div>
-            <div>
-              <Label className="text-xs text-[#798389]">Сложность</Label>
-              <Select
-                value={form.difficulty}
-                onValueChange={v =>
-                  onChange({ ...form, difficulty: v as typeof form.difficulty })
-                }
-              >
-                <SelectTrigger className="bg-[#1e2529] border-[#37474f] mt-1 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-[#1a1f22] border-[#37474f]">
-                  <SelectItem value="easy" className="text-white">
-                    Лёгкая
-                  </SelectItem>
-                  <SelectItem value="medium" className="text-white">
-                    Средняя
-                  </SelectItem>
-                  <SelectItem value="hard" className="text-white">
-                    Сложная
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs text-[#798389]">Время (мин)</Label>
-              <Input
-                type="number"
-                value={form.duration}
-                onChange={e =>
-                  onChange({ ...form, duration: Number(e.target.value) })
-                }
-                className="bg-[#1e2529] border-[#37474f] mt-1 text-white"
-                min={1}
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label className="text-xs text-[#798389]">
-              Приобретаемые навыки
-            </Label>
-            <Input
-              value={form.skills}
-              onChange={e => onChange({ ...form, skills: e.target.value })}
-              className="bg-[#1e2529] border-[#37474f] mt-1 text-white"
-            />
           </div>
 
           <div>

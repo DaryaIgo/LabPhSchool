@@ -5,23 +5,10 @@ import { CategoryIcon } from "@/components/CategoryIcon";
 import {
   ArrowLeft,
   FlaskConical,
-  Clock,
   BookOpen,
   Search,
   ChevronRight,
 } from "lucide-react";
-
-const difficultyLabel: Record<string, string> = {
-  easy: "Лёгкая",
-  medium: "Средняя",
-  hard: "Сложная",
-};
-
-const difficultyColor: Record<string, string> = {
-  easy: "bg-green-500/10 text-green-400",
-  medium: "bg-yellow-500/10 text-yellow-400",
-  hard: "bg-red-500/10 text-red-400",
-};
 
 const LEGACY_CATEGORY_SLUGS = new Set(["electricity", "magnetism"]);
 
@@ -172,44 +159,24 @@ export default function LabCategoryPage() {
                   className="group bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 transition-all duration-300 hover:border-[#2eff8c]/50 hover:-translate-y-1 hover:shadow-xl flex flex-col"
                 >
                   <div className="flex items-center justify-between mb-4">
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                        difficultyColor[lab.difficulty || "medium"]
-                      }`}
-                    >
-                      {difficultyLabel[lab.difficulty || "medium"]}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      {isAdmin && (
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                            lab.status === "published"
-                              ? "bg-green-500/10 text-green-400"
-                              : "bg-yellow-500/10 text-yellow-400"
-                          }`}
-                        >
-                          {lab.status === "published"
-                            ? "Опубликовано"
-                            : "Черновик"}
-                        </span>
-                      )}
-                      <span className="flex items-center gap-1 text-xs text-[#798389]">
-                        <Clock size={12} />
-                        {lab.duration || 30} мин
+                    {isAdmin && (
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                          lab.status === "published"
+                            ? "bg-green-500/10 text-green-400"
+                            : "bg-yellow-500/10 text-yellow-400"
+                        }`}
+                      >
+                        {lab.status === "published"
+                          ? "Опубликовано"
+                          : "Черновик"}
                       </span>
-                    </div>
+                    )}
                   </div>
 
                   <h3 className="text-lg font-bold text-white mb-2 group-hover:text-[#2eff8c] transition-colors">
                     {lab.title}
                   </h3>
-                  <p className="text-sm text-[#798389] mb-3">
-                    Изучаемый закон:{" "}
-                    <span className="text-[#c8cdd1]">{lab.law}</span>
-                  </p>
-                  <p className="text-sm text-[#c8cdd1] line-clamp-2 mb-4 flex-1">
-                    {lab.skills}
-                  </p>
                   {lab.subcategoryTitle && (
                     <p className="text-xs text-[#798389] mb-3">
                       {lab.subcategoryTitle}

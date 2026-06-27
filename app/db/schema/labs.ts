@@ -60,12 +60,6 @@ export const labWorks = mysqlTable("lab_works", {
   order: int("order").notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   slug: varchar("slug", { length: 255 }).notNull().unique(),
-  law: varchar("law", { length: 255 }),
-  skills: text("skills"),
-  difficulty: mysqlEnum("difficulty", ["easy", "medium", "hard"]).default(
-    "medium"
-  ),
-  duration: int("duration"),
   goal: text("goal"),
   theory: text("theory"),
   equipment: text("equipment"),

@@ -112,10 +112,6 @@ export const virtualLabRouter = createRouter({
           order: labWorks.order,
           title: labWorks.title,
           slug: labWorks.slug,
-          law: labWorks.law,
-          skills: labWorks.skills,
-          difficulty: labWorks.difficulty,
-          duration: labWorks.duration,
           goal: labWorks.goal,
           theory: labWorks.theory,
           equipment: labWorks.equipment,
@@ -159,10 +155,6 @@ export const virtualLabRouter = createRouter({
           order: labWorks.order,
           title: labWorks.title,
           slug: labWorks.slug,
-          law: labWorks.law,
-          skills: labWorks.skills,
-          difficulty: labWorks.difficulty,
-          duration: labWorks.duration,
           goal: labWorks.goal,
           theory: labWorks.theory,
           equipment: labWorks.equipment,
@@ -567,10 +559,6 @@ export const virtualLabRouter = createRouter({
         order: labWorks.order,
         title: labWorks.title,
         slug: labWorks.slug,
-        law: labWorks.law,
-        skills: labWorks.skills,
-        difficulty: labWorks.difficulty,
-        duration: labWorks.duration,
         goal: labWorks.goal,
         theory: labWorks.theory,
         equipment: labWorks.equipment,
@@ -602,10 +590,6 @@ export const virtualLabRouter = createRouter({
           .min(1)
           .max(255)
           .regex(/^[a-z0-9-]+$/),
-        law: z.string().max(255).optional(),
-        skills: z.string().max(2000).optional(),
-        difficulty: z.enum(["easy", "medium", "hard"]).optional(),
-        duration: z.number().int().min(1).optional(),
         goal: z.string().max(5000).optional(),
         theory: z.string().max(50000).optional(),
         equipment: z.string().max(5000).optional(),
@@ -623,10 +607,6 @@ export const virtualLabRouter = createRouter({
         order: input.order,
         title: input.title,
         slug: input.slug,
-        law: input.law ?? null,
-        skills: input.skills ?? null,
-        difficulty: input.difficulty ?? "medium",
-        duration: input.duration ?? null,
         goal: input.goal ?? null,
         theory: input.theory ?? null,
         equipment: input.equipment ?? null,
@@ -655,10 +635,6 @@ export const virtualLabRouter = createRouter({
         subcategoryId: z.number().positive().optional().nullable(),
         order: z.number().int().min(1).optional(),
         title: z.string().min(1).max(255).optional(),
-        law: z.string().max(255).optional(),
-        skills: z.string().max(2000).optional(),
-        difficulty: z.enum(["easy", "medium", "hard"]).optional(),
-        duration: z.number().int().min(1).optional(),
         goal: z.string().max(5000).optional(),
         theory: z.string().max(50000).optional(),
         equipment: z.string().max(5000).optional(),
@@ -678,11 +654,6 @@ export const virtualLabRouter = createRouter({
         updateData.subcategoryId = data.subcategoryId;
       if (data.order !== undefined) updateData.order = data.order;
       if (data.title !== undefined) updateData.title = data.title;
-      if (data.law !== undefined) updateData.law = data.law;
-      if (data.skills !== undefined) updateData.skills = data.skills;
-      if (data.difficulty !== undefined)
-        updateData.difficulty = data.difficulty;
-      if (data.duration !== undefined) updateData.duration = data.duration;
       if (data.goal !== undefined) updateData.goal = data.goal;
       if (data.theory !== undefined) updateData.theory = data.theory;
       if (data.equipment !== undefined) updateData.equipment = data.equipment;
