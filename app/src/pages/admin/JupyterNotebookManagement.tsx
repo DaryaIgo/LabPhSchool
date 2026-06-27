@@ -223,7 +223,7 @@ export default function JupyterNotebookManagement() {
         <div className="flex items-center gap-3">
           <NotebookPen className="h-7 w-7 text-[#2eff8c]" />
           <div>
-            <h1 className="text-2xl font-bold">Jupyter-ноутбуки</h1>
+            <h1 className="text-2xl font-bold">Notebook Management</h1>
             <p className="text-sm text-gray-400">
               Управление ноутбуками, доступом студентов и просмотр
             </p>

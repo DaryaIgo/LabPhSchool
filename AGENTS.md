@@ -104,7 +104,7 @@ app/
 │   │   ├── learning.ts     # enrollments, student_progress, lab_progress
 │   │   ├── labs.ts         # Виртуальные лаборатории + реестр симуляций
 │   │   ├── problems.ts     # Банк задач
-│   │   ├── jupyter.ts      # Jupyter-ноутбуки
+│   │   ├── jupyter.ts      # Notebook Management
 │   │   ├── notifications.ts
 │   │   ├── timeline.ts
 │   │   ├── audit.ts

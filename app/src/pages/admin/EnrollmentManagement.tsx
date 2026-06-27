@@ -298,34 +298,6 @@ function AssignedProblemsManager({
           Назначенные задачи
         </h4>
         <div className="flex items-center gap-2">
-          <ToggleGroup
-            type="single"
-            variant="outline"
-            value={statusFilter}
-            onValueChange={val =>
-              setStatusFilter((val as "assigned") ?? "assigned")
-            }
-            className="bg-[#1a2024]"
-          >
-            <ToggleGroupItem
-              value="assigned"
-              className="group text-xs h-7 px-2.5 text-slate-300 border-[#37474f] data-[state=on]:bg-[#2eff8c] data-[state=on]:text-[#0d1117] data-[state=on]:border-[#2eff8c] gap-1.5"
-            >
-              Назначена
-              <span className="inline-flex items-center justify-center min-w-[1.25rem] h-4 px-1 rounded-full bg-[#37474f] text-[10px] text-white group-data-[state=on]:bg-[#0d1117]/30">
-                {assignedCount}
-              </span>
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              value="completed"
-              className="group text-xs h-7 px-2.5 text-slate-300 border-[#37474f] data-[state=on]:bg-[#2eff8c] data-[state=on]:text-[#0d1117] data-[state=on]:border-[#2eff8c] gap-1.5"
-            >
-              Выполнена
-              <span className="inline-flex items-center justify-center min-w-[1.25rem] h-4 px-1 rounded-full bg-[#37474f] text-[10px] text-white group-data-[state=on]:bg-[#0d1117]/30">
-                {completedCount}
-              </span>
-            </ToggleGroupItem>
-          </ToggleGroup>
           <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
             <DialogTrigger asChild>
               <button
@@ -333,7 +305,7 @@ function AssignedProblemsManager({
                 className="text-xs flex items-center gap-1 text-[#2eff8c] hover:text-[#26d97a] transition-colors"
               >
                 <Plus className="h-3.5 w-3.5" />
-                Добавить новую задачу
+                Добавить задачу
               </button>
             </DialogTrigger>
             <DialogContent className="bg-[#1e2529] border-[#37474f] text-white sm:max-w-md">
@@ -380,6 +352,35 @@ function AssignedProblemsManager({
               </div>
             </DialogContent>
           </Dialog>
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            value={statusFilter}
+            onValueChange={val =>
+              setStatusFilter((val as "assigned") ?? "assigned")
+            }
+            className="bg-[#1a2024]"
+          >
+            <ToggleGroupItem
+              value="assigned"
+              className="group text-xs h-7 px-2.5 text-slate-300 border-[#37474f] data-[state=on]:bg-[#2eff8c] data-[state=on]:text-[#0d1117] data-[state=on]:border-[#2eff8c] gap-1.5"
+            >
+              Назначена
+              <span className="inline-flex items-center justify-center min-w-[1.25rem] h-4 px-1 rounded-full bg-[#37474f] text-[10px] text-white group-data-[state=on]:bg-[#0d1117]/30">
+                {assignedCount}
+              </span>
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="completed"
+              className="group text-xs h-7 px-2.5 text-slate-300 border-[#37474f] data-[state=on]:bg-[#2eff8c] data-[state=on]:text-[#0d1117] data-[state=on]:border-[#2eff8c] gap-1.5"
+            >
+              Выполнена
+              <span className="inline-flex items-center justify-center min-w-[1.25rem] h-4 px-1 rounded-full bg-[#37474f] text-[10px] text-white group-data-[state=on]:bg-[#0d1117]/30">
+                {completedCount}
+              </span>
+            </ToggleGroupItem>
+          </ToggleGroup>
+          
         </div>
       </div>
 
@@ -1084,34 +1085,6 @@ function AssignedLabWorksManager({
           Назначенные лабораторные работы
         </h4>
         <div className="flex items-center gap-2">
-          <ToggleGroup
-            type="single"
-            variant="outline"
-            value={statusFilter}
-            onValueChange={val =>
-              setStatusFilter((val as "assigned") ?? "assigned")
-            }
-            className="bg-[#1a2024]"
-          >
-            <ToggleGroupItem
-              value="assigned"
-              className="group text-xs h-7 px-2.5 text-slate-300 border-[#37474f] data-[state=on]:bg-[#2eff8c] data-[state=on]:text-[#0d1117] data-[state=on]:border-[#2eff8c] gap-1.5"
-            >
-              Назначена
-              <span className="inline-flex items-center justify-center min-w-[1.25rem] h-4 px-1 rounded-full bg-[#37474f] text-[10px] text-white group-data-[state=on]:bg-[#0d1117]/30">
-                {assignedCount}
-              </span>
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              value="completed"
-              className="group text-xs h-7 px-2.5 text-slate-300 border-[#37474f] data-[state=on]:bg-[#2eff8c] data-[state=on]:text-[#0d1117] data-[state=on]:border-[#2eff8c] gap-1.5"
-            >
-              Выполнена
-              <span className="inline-flex items-center justify-center min-w-[1.25rem] h-4 px-1 rounded-full bg-[#37474f] text-[10px] text-white group-data-[state=on]:bg-[#0d1117]/30">
-                {completedCount}
-              </span>
-            </ToggleGroupItem>
-          </ToggleGroup>
           <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
             <DialogTrigger asChild>
               <button
@@ -1119,7 +1092,7 @@ function AssignedLabWorksManager({
                 className="text-xs flex items-center gap-1 text-[#2eff8c] hover:text-[#26d97a] transition-colors"
               >
                 <Plus className="h-3.5 w-3.5" />
-                Добавить новую лабораторную работу
+                Добавить лабораторную
               </button>
             </DialogTrigger>
             <DialogContent className="bg-[#1e2529] border-[#37474f] text-white sm:max-w-md">
@@ -1166,6 +1139,35 @@ function AssignedLabWorksManager({
               </div>
             </DialogContent>
           </Dialog>
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            value={statusFilter}
+            onValueChange={val =>
+              setStatusFilter((val as "assigned") ?? "assigned")
+            }
+            className="bg-[#1a2024]"
+          >
+            <ToggleGroupItem
+              value="assigned"
+              className="group text-xs h-7 px-2.5 text-slate-300 border-[#37474f] data-[state=on]:bg-[#2eff8c] data-[state=on]:text-[#0d1117] data-[state=on]:border-[#2eff8c] gap-1.5"
+            >
+              Назначена
+              <span className="inline-flex items-center justify-center min-w-[1.25rem] h-4 px-1 rounded-full bg-[#37474f] text-[10px] text-white group-data-[state=on]:bg-[#0d1117]/30">
+                {assignedCount}
+              </span>
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="completed"
+              className="group text-xs h-7 px-2.5 text-slate-300 border-[#37474f] data-[state=on]:bg-[#2eff8c] data-[state=on]:text-[#0d1117] data-[state=on]:border-[#2eff8c] gap-1.5"
+            >
+              Выполнена
+              <span className="inline-flex items-center justify-center min-w-[1.25rem] h-4 px-1 rounded-full bg-[#37474f] text-[10px] text-white group-data-[state=on]:bg-[#0d1117]/30">
+                {completedCount}
+              </span>
+            </ToggleGroupItem>
+          </ToggleGroup>
+          
         </div>
       </div>
 

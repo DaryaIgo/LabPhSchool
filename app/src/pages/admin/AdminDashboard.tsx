@@ -221,7 +221,7 @@ export default function AdminDashboard() {
           onClick={() => navigate("/admin/problems")}
         />
         <QuickAction
-          label="Jupyter-ноутбуки"
+          label="Notebook Management"
           icon={NotebookPen}
           onClick={() => navigate("/admin/jupyter-notebooks")}
         />
