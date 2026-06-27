@@ -8,11 +8,14 @@ import {
   MapPin,
   ExternalLink,
   ArrowRight,
-  Brain,
-  Target,
-  TrendingUp,
+  Sparkles,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  type ReactNode,
+} from "react";
 
 /* ---------- Hero Globe Canvas ---------- */
 function GlobeCanvas() {
@@ -173,6 +176,64 @@ function TypewriterText({
   );
 }
 
+/* ---------- Spotlight Card ---------- */
+function SpotlightCard({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [opacity, setOpacity] = useState(0);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    setPosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    setOpacity(1);
+  };
+
+  return (
+    <div
+      ref={ref}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => setOpacity(0)}
+      className={`relative overflow-hidden ${className}`}
+    >
+      <div
+        className="pointer-events-none absolute -inset-px transition-opacity duration-500"
+        style={{
+          opacity,
+          background: `radial-gradient(600px circle at ${position.x}px ${position.y}px, rgba(46, 255, 140, 0.12), transparent 40%)`,
+        }}
+      />
+      {children}
+    </div>
+  );
+}
+
+/* ---------- Floating Tag ---------- */
+function FloatingTag({
+  children,
+  delay = 0,
+  className,
+}: {
+  children: ReactNode;
+  delay?: number;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`inline-block px-4 py-2 rounded-full bg-white/90 border border-emerald-200/60 text-sm font-medium text-emerald-800 shadow-lg backdrop-blur-sm animate-tag-float ${className}`}
+      style={{ animationDelay: `${delay}s` }}
+    >
+      {children}
+    </span>
+  );
+}
+
 /* ---------- Main Page ---------- */
 export default function Home() {
   return (
@@ -190,58 +251,115 @@ export default function Home() {
             </h1>
           </div>
         </div>
+
       </section>
 
-      {/* ====== ABOUT TEACHER PREVIEW ====== */}
-      <section className="section-light py-24 lg:py-32">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-center">
+      {/* ====== ABOUT TEACHER ====== */}
+      <section className="relative overflow-hidden bg-[#e8ebed] py-24 lg:py-32">
+        <div className="relative max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+            {/* Photo composition */}
             <div className="relative">
-              <div className="w-64 h-64 lg:w-80 lg:h-80 mx-auto rounded-full overflow-hidden border-2 border-[#2eff8c] shadow-2xl">
-                <img
-                  src="/images/teacher.png"
-                  alt="Преподаватель физики"
-                  className="w-full h-full object-cover"
+              <div className="relative mx-auto w-full max-w-md lg:max-w-lg">
+                {/* Gradient shadow frame */}
+                <div
+                  className="absolute inset-0 rounded-[2.5rem] rotate-3 opacity-40 blur-sm"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #2eff8c 0%, #01acff 100%)",
+                  }}
                 />
+
+                {/* Main photo */}
+                <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl border-2 border-white/60 bg-white">
+                  <img
+                    src="/images/teacher.png"
+                    alt="Дарья Дмитриевна — преподаватель физики"
+                    className="w-full h-auto object-cover"
+                  />
+                </div>
+
+                {/* Floating badges */}
+              </div>
+
+              {/* Floating tags cloud under/over the photo */}
+              <div className="relative -mt-10 z-10 flex flex-wrap justify-center gap-3 max-w-md lg:max-w-lg mx-auto px-4">
+                {[
+                  "Jupyter-ноутбуки",
+                  "Онлайн-доска",
+                  "Видеосвязь",
+                  "Виртуальные лаборатории",
+                  "Разбор задач",
+                  "Алгоритмический подход",
+                  "Персональный трекинг",
+                  "Онлайн-занятия",
+                  "Интерактивные лабы",
+                ].map((tag, i) => (
+                  <FloatingTag
+                    key={tag}
+                    delay={i * 0.5}
+                    className={i % 3 === 1 ? "mt-2" : i % 3 === 2 ? "-mt-1" : ""}
+                  >
+                    {tag}
+                  </FloatingTag>
+                ))}
               </div>
             </div>
-            <div>
-              <h2 className="text-3xl lg:text-4xl font-bold text-[#1a1a1a] mb-6 leading-tight">
-                Превращаю сложную физику в понятные шаги
+
+            {/* Text content */}
+            <div className="lg:pl-8">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#262e33]/10 shadow-sm mb-6">
+                <Sparkles size={16} className="text-[#2eff8c]" />
+                <span className="text-sm font-semibold text-[#262e33]">
+                  Обо мне
+                </span>
+              </div>
+
+              <h2 className="text-3xl lg:text-5xl font-black text-[#1a1a1a] mb-6 leading-[1.1]">
+                Превращаю сложную физику
+                <span className="text-gradient-emerald"> в понятные шаги</span>
               </h2>
-              <p className="text-[#434e54] mb-2 leading-relaxed">
-                Рада вас приветствовать 👋
-              </p>
-              <p className="text-[#434e54] mb-4 leading-relaxed">
-                Меня зовут Дарья Дмитриевна.
-              </p>
-              <p className="text-[#434e54] mb-4 leading-relaxed">
-                Я окончила СПбПУ (Политех Петра Великого) с отличием. Я не
-                просто знаю теорию из учебников — я каждый день вижу, как физика
-                работает на практике и в технологиях.
-              </p>
-              <p className="text-[#434e54] mb-8 leading-relaxed">
-                С помощью интерактивных симуляций PhET ученики могут сами
-                «потрогать» физические процессы — от движения молекул до
-                оптических лучей и электрических цепей. На занятиях мы
-                используем видеосвязь в Яндекс Телемост, удобную онлайн-доску
-                Chattern и ноутбуки Jupyter для наглядного разбора сложных
-                задач.
-              </p>
+
+              <div className="space-y-4 text-lg text-[#434e54] leading-relaxed mb-8">
+                <p>
+                  Рада вас приветствовать 👋 Меня зовут{" "}
+                  <span className="font-bold text-[#1a1a1a]">
+                    Дарья Дмитриевна
+                  </span>
+                  .
+                </p>
+                <p>
+                  Я окончила СПбПУ (Политех Петра Великого) с отличием. Знаю
+                  теорию не только из учебников, но и из инженерной практики —
+                  и именно поэтому умею объяснять физику языком, близким
+                  реальному миру.
+                </p>
+                <p>
+                  На занятиях мы используем интерактивные симуляции PhET,
+                  онлайн-доску, видеосвязь и Jupyter-ноутбуки — всё, чтобы вы
+                  могли не заучивать формулы, а действительно понимать, как
+                  устроена природа.
+                </p>
+              </div>
+
+
             </div>
           </div>
         </div>
       </section>
 
       {/* ====== SECTION TABS ====== */}
-      <section className="section-dark py-16 lg:py-24">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="mb-10 text-center">
-            <h2 className="text-2xl lg:text-3xl font-bold text-white mb-3">
-              Разделы платформы
+      <section className="section-dark py-24 lg:py-32">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="mb-16 text-center max-w-2xl mx-auto">
+            <span className="inline-block text-sm font-semibold text-[#2eff8c] uppercase tracking-wider mb-3">
+              Платформа
+            </span>
+            <h2 className="text-3xl lg:text-4xl font-black text-white mb-4">
+              Всё для изучения физики
             </h2>
-            <p className="text-[#c8cdd1] max-w-2xl mx-auto">
-              Курс, лабораторные и дополнительные материалы
+            <p className="text-[#c8cdd1] text-lg">
+              Курс, лабораторные и дополнительные материалы в одном месте
             </p>
           </div>
 
@@ -249,7 +367,7 @@ export default function Home() {
             {[
               {
                 to: "/course",
-                formula: "понятнее всего то, чего не будет на экзамене",
+                label: "12 тем",
                 title: "Курс физики",
                 titleAccent: "школьная программа",
                 description:
@@ -259,17 +377,17 @@ export default function Home() {
               },
               {
                 to: "/labs",
-                formula: "под давлением всё ухудшается",
+                label: "Интерактивно",
                 title: "Виртуальные лабораторные работы",
                 titleAccent: null,
                 description:
-                  "Интерактивные симуляции физических экспериментов для учащихся 7–11 классов. Меняйте параметры, наблюдайте результаты, фиксируйте данные и формируйте научные выводы.",
+                  "Симуляции физических экспериментов для учащихся 7–11 классов. Меняйте параметры, наблюдайте результаты и формируйте выводы.",
                 icon: FlaskConical,
                 color: "#01acff",
               },
               {
                 to: "/resources",
-                formula: "усталость - это иллюзия",
+                label: "Дополнительно",
                 title: "Дополнительные ресурсы",
                 titleAccent: null,
                 description:
@@ -280,123 +398,59 @@ export default function Home() {
             ].map(card => {
               const Icon = card.icon;
               return (
-                <Link
+                <SpotlightCard
                   key={card.to}
-                  to={card.to}
-                  className="group bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 transition-all duration-300 hover:border-[#2eff8c]/50 hover:-translate-y-1 hover:shadow-xl flex flex-col"
+                  className="group bg-[#2a3237] border border-[#434e54] rounded-3xl transition-all duration-300 hover:border-[#2eff8c]/50 hover:-translate-y-2 hover:shadow-2xl"
                 >
-                  <div className="flex items-start justify-between mb-4">
+                  <Link
+                    to={card.to}
+                    className="block p-8 h-full flex flex-col"
+                  >
                     <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center"
-                      style={{
-                        backgroundColor: `${card.color}15`,
-                      }}
-                    >
-                      <Icon size={24} style={{ color: card.color }} />
-                    </div>
-                    <span className="inline-flex items-center text-[#2eff8c] text-sm font-medium group-hover:gap-2 transition-all">
-                      Перейти
-                      <ArrowRight size={14} className="ml-1" />
-                    </span>
-                  </div>
-                  <p className="formula-text text-xs mb-3">{card.formula}</p>
-                  <h3 className="text-xl font-black uppercase tracking-tight mb-3 leading-tight">
-                    {card.title}
-                    {card.titleAccent && (
-                      <span className="text-[#2eff8c]">
-                        {" "}
-                        {card.titleAccent}
+                      className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500"
+                      style={{ backgroundColor: card.color }}
+                    />
+
+                    <div className="flex items-start justify-between mb-6 relative">
+                      <div
+                        className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                        style={{
+                          backgroundColor: `${card.color}15`,
+                        }}
+                      >
+                        <Icon size={28} style={{ color: card.color }} />
+                      </div>
+                      <span
+                        className="text-xs font-bold px-3 py-1 rounded-full"
+                        style={{
+                          backgroundColor: `${card.color}15`,
+                          color: card.color,
+                        }}
+                      >
+                        {card.label}
                       </span>
-                    )}
-                  </h3>
-                  <p className="text-sm text-[#c8cdd1] leading-relaxed flex-1">
-                    {card.description}
-                  </p>
-                </Link>
-              );
-            })}
-          </div>
-
-          <div className="mt-16 lg:mt-20 border-t border-[#434e54]" />
-        </div>
-      </section>
-
-      {/* ====== TEACHING METHODOLOGY ====== */}
-      <section className="section-dark py-16 lg:py-24">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="mb-10 text-center">
-            <div className="inline-flex items-center justify-center gap-3 mb-3">
-              <span className="w-2 h-8 bg-[#2eff8c] rounded-full" />
-              <h2 className="text-2xl lg:text-3xl font-bold text-white">
-                Методика преподавания
-              </h2>
-            </div>
-            <p className="text-[#c8cdd1] max-w-2xl mx-auto">
-              Как устроен процесс обучения
-            </p>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              {
-                num: "01",
-                title: "Алгоритмический подход",
-                desc: "Каждая задача решается по чёткому алгоритму: от анализа условия до проверки ответа. Это исключает хаотичные попытки и вырабатывает системное мышление.",
-                icon: Brain,
-                color: "#2eff8c",
-              },
-              {
-                num: "02",
-                title: "Интерактивные лабораторные",
-                desc: "Вместо статичных описаний — живые симуляции. Ученик может менять параметры эксперимента и наблюдать результат в реальном времени.",
-                icon: FlaskConical,
-                color: "#01acff",
-              },
-              {
-                num: "03",
-                title: "Персональный трекинг",
-                desc: "Каждый ученик видит свой прогресс по всем темам. Система автоматически подсвечивает слабые места и рекомендует материалы для изучения.",
-                icon: Target,
-                color: "#ffcb3d",
-              },
-              {
-                num: "04",
-                title: "От простого к сложному",
-                desc: "Курс построен по принципу нарастающей сложности. Каждая новая тема опирается на предыдущие, создавая цельную картину мира.",
-                icon: TrendingUp,
-                color: "#ff6b6b",
-              },
-            ].map(item => {
-              const Icon = item.icon;
-              return (
-                <div
-                  key={item.num}
-                  className="group bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 transition-all duration-300 hover:border-[#2eff8c]/50 hover:-translate-y-1 hover:shadow-xl flex flex-col"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center"
-                      style={{
-                        backgroundColor: `${item.color}15`,
-                      }}
-                    >
-                      <Icon size={24} style={{ color: item.color }} />
                     </div>
-                    <span
-                      className="font-mono-phys text-xs font-bold px-2 py-1 rounded-md"
-                      style={{
-                        backgroundColor: `${item.color}15`,
-                        color: item.color,
-                      }}
-                    >
-                      {item.num}
+
+                    <h3 className="text-2xl font-black uppercase tracking-tight mb-4 leading-tight relative">
+                      {card.title}
+                      {card.titleAccent && (
+                        <span className="text-[#2eff8c]">
+                          {" "}
+                          {card.titleAccent}
+                        </span>
+                      )}
+                    </h3>
+
+                    <p className="text-[#c8cdd1] leading-relaxed flex-1 mb-6 relative">
+                      {card.description}
+                    </p>
+
+                    <span className="inline-flex items-center text-[#2eff8c] font-semibold group-hover:gap-2 transition-all relative">
+                      Перейти
+                      <ArrowRight size={16} className="ml-2" />
                     </span>
-                  </div>
-                  <h3 className="text-lg font-bold mb-2">{item.title}</h3>
-                  <p className="text-sm text-[#c8cdd1] leading-relaxed flex-1">
-                    {item.desc}
-                  </p>
-                </div>
+                  </Link>
+                </SpotlightCard>
               );
             })}
           </div>
@@ -404,52 +458,122 @@ export default function Home() {
       </section>
 
       {/* ====== CONTACT CTA ====== */}
-      <section className="section-light py-16">
-        <div className="max-w-3xl mx-auto px-6 text-center">
-          <h2 className="text-2xl lg:text-3xl font-bold text-[#1a1a1a] mb-4">
-            Свяжитесь со мной
-          </h2>
-          <p className="text-[#434e54] mb-8">
-            Если у вас есть вопросы о курсе или вы хотите записаться на занятия
-          </p>
+      <section className="relative overflow-hidden bg-[#262e33] py-24 lg:py-32">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-[32rem] h-[32rem] rounded-full bg-[#2eff8c]/5 blur-[120px]" />
+          <div className="absolute bottom-0 right-1/4 w-[28rem] h-[28rem] rounded-full bg-[#01acff]/5 blur-[120px]" />
+        </div>
 
-          <div className="grid sm:grid-cols-3 gap-4 max-w-xl mx-auto">
-            <a
-              href="https://t.me/igoshinadarya"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 bg-[#01acff] text-white px-6 py-3 rounded-full font-medium hover:scale-105 transition-transform"
-            >
-              <Send size={18} />
-              Telegram
-            </a>
-            <a
-              href="https://profi.ru/profile/IgoshinaDD3"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 bg-[#ff6b6b] text-white px-6 py-3 rounded-full font-medium hover:scale-105 transition-transform"
-            >
-              <ExternalLink size={18} />
-              Profi.ru
-            </a>
-            <a
-              href="mailto:igoshina.physics@yandex.com"
-              className="flex items-center justify-center gap-2 bg-[#262e33] text-white px-6 py-3 rounded-full font-medium hover:scale-105 transition-transform"
-            >
-              <Mail size={18} />
-              Написать письмо
-            </a>
-          </div>
+        <div className="relative max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            {/* Left column: text */}
+            <div>
+              <span className="inline-block text-sm font-semibold text-[#2eff8c] uppercase tracking-wider mb-4">
+                Контакты
+              </span>
+              <h2 className="text-3xl lg:text-5xl font-black text-white mb-6 leading-[1.1]">
+                Договоримся о занятии
+              </h2>
+              <p className="text-lg text-[#c8cdd1] mb-10 max-w-lg">
+                Если у вас есть вопросы о курсе или хотите записаться на пробное
+                занятие — напишите удобным способом. Отвечаю в течение дня.
+              </p>
 
-          <div className="mt-8 flex items-center justify-center gap-6 text-sm text-[#798389]">
-            <span className="flex items-center gap-1">
-              <MapPin size={14} />
-              Шанхай
-            </span>
-            <span className="flex items-center gap-1">
-              <Calendar size={14} />
-              Занятия онлайн
-            </span>
+              <div className="flex flex-col sm:flex-row gap-6 text-[#c8cdd1]">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-[#2a3237] border border-[#434e54] flex items-center justify-center">
+                    <MapPin size={20} className="text-[#2eff8c]" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-white">Шанхай</p>
+                    <p className="text-sm">Работаю онлайн</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-[#2a3237] border border-[#434e54] flex items-center justify-center">
+                    <Calendar size={20} className="text-[#01acff]" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-white">Гибкий график</p>
+                    <p className="text-sm">Подберём время</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right column: contact cards */}
+            <div className="grid gap-4">
+              <SpotlightCard className="group rounded-2xl bg-[#2a3237] border border-[#434e54] hover:border-[#01acff]/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                <a
+                  href="https://t.me/igoshinadarya"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-5 p-6"
+                >
+                  <div className="w-14 h-14 rounded-xl bg-[#01acff]/15 flex items-center justify-center shrink-0">
+                    <Send size={28} className="text-[#01acff]" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-white group-hover:text-[#01acff] transition-colors">
+                      Telegram
+                    </h3>
+                    <p className="text-sm text-[#c8cdd1]">@igoshinadarya</p>
+                  </div>
+                  <ArrowRight
+                    size={20}
+                    className="text-[#434e54] group-hover:text-[#01acff] transition-colors"
+                  />
+                </a>
+              </SpotlightCard>
+
+              <SpotlightCard className="group rounded-2xl bg-[#2a3237] border border-[#434e54] hover:border-[#ff6b6b]/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                <a
+                  href="https://profi.ru/profile/IgoshinaDD3"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-5 p-6"
+                >
+                  <div className="w-14 h-14 rounded-xl bg-[#ff6b6b]/15 flex items-center justify-center shrink-0">
+                    <ExternalLink size={28} className="text-[#ff6b6b]" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-white group-hover:text-[#ff6b6b] transition-colors">
+                      Profi.ru
+                    </h3>
+                    <p className="text-sm text-[#c8cdd1]">
+                      Профиль преподавателя
+                    </p>
+                  </div>
+                  <ArrowRight
+                    size={20}
+                    className="text-[#434e54] group-hover:text-[#ff6b6b] transition-colors"
+                  />
+                </a>
+              </SpotlightCard>
+
+              <SpotlightCard className="group rounded-2xl bg-[#2a3237] border border-[#434e54] hover:border-[#2eff8c]/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                <a
+                  href="mailto:igoshina.physics@yandex.com"
+                  className="flex items-center gap-5 p-6"
+                >
+                  <div className="w-14 h-14 rounded-xl bg-[#2eff8c]/15 flex items-center justify-center shrink-0">
+                    <Mail size={28} className="text-[#2eff8c]" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-white group-hover:text-[#2eff8c] transition-colors">
+                      Email
+                    </h3>
+                    <p className="text-sm text-[#c8cdd1]">
+                      igoshina.physics@yandex.com
+                    </p>
+                  </div>
+                  <ArrowRight
+                    size={20}
+                    className="text-[#434e54] group-hover:text-[#2eff8c] transition-colors"
+                  />
+                </a>
+              </SpotlightCard>
+            </div>
           </div>
         </div>
       </section>

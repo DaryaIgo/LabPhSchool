@@ -126,6 +126,24 @@
   .formula-text {
     @apply font-mono-phys text-[#2eff8c] text-sm tracking-wide;
   }
+
+  .mesh-gradient-light {
+    background:
+      radial-gradient(circle at 15% 15%, rgba(5, 150, 105, 0.10) 0%, transparent 55%),
+      radial-gradient(circle at 85% 85%, rgba(2, 132, 199, 0.10) 0%, transparent 55%),
+      radial-gradient(circle at 50% 50%, rgba(202, 138, 4, 0.05) 0%, transparent 50%),
+      linear-gradient(165deg, #eef1f3 0%, #e4e9ec 100%);
+  }
+
+  .text-gradient-emerald {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #047857 0%, #0d9488 50%, #0891b2 100%);
+  }
+
+  .text-gradient-lime {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #2eff8c 0%, #01acff 100%);
+  }
 }
 
 @keyframes fadeInUp {
@@ -137,6 +155,28 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+@keyframes tagFloat {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(3px, -5px);
+  }
+  40% {
+    transform: translate(-2px, -8px);
+  }
+  60% {
+    transform: translate(-4px, -4px);
+  }
+  80% {
+    transform: translate(2px, -7px);
+  }
+}
+
+.animate-tag-float {
+  animation: tagFloat 6s ease-in-out infinite;
 }
 
 .animate-fade-in-up {
