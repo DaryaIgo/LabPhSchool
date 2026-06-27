@@ -23,6 +23,7 @@ import {
   getEnrollmentsWithDetails,
 } from "./queries/enrollments";
 import { getAssignedLabWorksByStudent } from "./queries/assignedLabWorks";
+import { getAssignedProblemsByStudent } from "./queries/assignedProblems";
 import { createAuditEntry } from "./queries/audit";
 import {
   eq,
@@ -1035,5 +1036,100 @@ export const studentRouter = createRouter({
     const active = rows.filter(r => r.status === "assigned");
     const archived = rows.filter(r => r.status === "completed");
     return { active, archived };
+  }),
+
+  // ── Get my assigned problems (active + archived) ──
+  getMyAssignedProblems: studentQuery.query(async ({ ctx }) => {
+    const rows = await getAssignedProblemsByStudent(ctx.localUser!.id);
+    const active = rows.filter(r => r.status === "assigned");
+    const archived = rows.filter(r => r.status === "completed");
+    return { active, archived };
+  }),
+
+  // ── Get unread notification counts per tab type ──
+  getUnreadNotificationCounts: studentQuery.query(async ({ ctx }) => {
+    const notificationsDb = getNotificationsDb();
+    const studentId = ctx.localUser!.id;
+
+    const types = ["lab", "problem", "jupyter_notebook"] as const;
+    const counts = await Promise.all(
+      types.map(async type => {
+        const result = await notificationsDb
+          .select({ count: count() })
+          .from(notifications)
+          .where(
+            and(
+              eq(notifications.localUserId, studentId),
+              eq(notifications.type, type),
+              eq(notifications.read, false)
+            )
+          );
+        return { type, count: result[0]?.count ?? 0 };
+      })
+    );
+
+    return {
+      lab: counts.find(c => c.type === "lab")?.count ?? 0,
+      problem: counts.find(c => c.type === "problem")?.count ?? 0,
+      notebook: counts.find(c => c.type === "jupyter_notebook")?.count ?? 0,
+    };
+  }),
+
+  // ── Mark all notifications of a specific type as read ──
+  markNotificationsReadByType: studentQuery
+    .input(
+      z.object({
+        type: z.enum(["lab", "problem", "jupyter_notebook"]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const notificationsDb = getNotificationsDb();
+      await notificationsDb
+        .update(notifications)
+        .set({ read: true })
+        .where(
+          and(
+            eq(notifications.localUserId, ctx.localUser!.id),
+            eq(notifications.type, input.type)
+          )
+        );
+      return { success: true };
+    }),
+
+  // ── Get last 6 completed labs and problems mixed ──
+  getRecentCompletedAssignments: studentQuery.query(async ({ ctx }) => {
+    const [labRows, problemRows] = await Promise.all([
+      getAssignedLabWorksByStudent(ctx.localUser!.id),
+      getAssignedProblemsByStudent(ctx.localUser!.id),
+    ]);
+
+    const completedLabs = labRows
+      .filter(r => r.status === "completed" && r.completedAt)
+      .map(r => ({
+        id: r.id,
+        type: "lab" as const,
+        title: r.labTitle,
+        slug: r.labSlug,
+        completedAt: r.completedAt!,
+        grade: r.grade,
+      }));
+
+    const completedProblems = problemRows
+      .filter(r => r.status === "completed" && r.completedAt)
+      .map(r => ({
+        id: r.id,
+        type: "problem" as const,
+        title: r.problemTitle,
+        slug: r.problemSlug,
+        completedAt: r.completedAt!,
+        grade: r.grade,
+      }));
+
+    const combined = [...completedLabs, ...completedProblems].sort(
+      (a, b) =>
+        new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
+    );
+
+    return combined.slice(0, 6);
   }),
 });

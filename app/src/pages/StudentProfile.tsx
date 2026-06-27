@@ -8,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import StudentLabsSection from "@/components/StudentLabsSection";
+import StudentProblemsSection from "@/components/StudentProblemsSection";
+import StudentNotebooksSection from "@/components/StudentNotebooksSection";
 import {
   Dialog,
   DialogContent,
@@ -17,23 +19,21 @@ import {
 } from "@/components/ui/dialog";
 import {
   User,
+  Beaker,
+  FileText,
+  NotebookPen,
+  Home,
   BookOpen,
-  FlaskConical,
+  Award,
   CheckCircle2,
   Circle,
   Clock,
-  Calendar,
-  Award,
-  Activity,
-  Loader2,
   ChevronDown,
   ChevronUp,
   GraduationCap,
-  Beaker,
-  FileText,
   ExternalLink,
-  NotebookPen,
-  Download,
+  Trophy,
+  Loader2,
   MessageSquare,
 } from "lucide-react";
 
@@ -66,6 +66,55 @@ const STATUS_CONFIG: Record<
   },
 };
 
+type TabDef = {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  badgeType: "lab" | "problem" | "jupyter_notebook" | null;
+};
+
+const TABS: TabDef[] = [
+  { id: "main", label: "Главная", icon: Home, badgeType: null },
+  { id: "tasks", label: "Мои Задачи", icon: FileText, badgeType: "problem" },
+  { id: "labs", label: "Мои Лабораторные", icon: Beaker, badgeType: "lab" },
+  { id: "notebooks", label: "Мои Тетради", icon: NotebookPen, badgeType: "jupyter_notebook" },
+];
+
+const GRADE_CONFIG: Record<
+  number,
+  {
+    label: string;
+    textColor: string;
+    trophyColor: string;
+  }
+> = {
+  5: {
+    label: "Отлично",
+    textColor: "text-emerald-400",
+    trophyColor: "#ffd700",
+  },
+  4: {
+    label: "Хорошо",
+    textColor: "text-sky-400",
+    trophyColor: "#c0c0c0",
+  },
+  3: {
+    label: "Удовлетворительно",
+    textColor: "text-amber-400",
+    trophyColor: "#cd7f32",
+  },
+  2: {
+    label: "Неудовлетворительно",
+    textColor: "text-rose-400",
+    trophyColor: "#94a3b8",
+  },
+  1: {
+    label: "Плохо",
+    textColor: "text-red-400",
+    trophyColor: "#64748b",
+  },
+};
+
 export default function StudentProfile() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -85,13 +134,13 @@ export default function StudentProfile() {
       enabled: isAuthenticated && user?.role === "student",
     });
 
-  const { data: activity, isLoading: activityLoading } =
-    trpc.student.getActivity.useQuery(undefined, {
+  const { data: recentCompleted, isLoading: recentLoading } =
+    trpc.student.getRecentCompletedAssignments.useQuery(undefined, {
       enabled: isAuthenticated && user?.role === "student",
     });
 
-  const { data: myNotebooks, isLoading: notebooksLoading } =
-    trpc.student.getMyJupyterNotebooks.useQuery(undefined, {
+  const { data: badgeCounts, isLoading: badgesLoading } =
+    trpc.student.getUnreadNotificationCounts.useQuery(undefined, {
       enabled: isAuthenticated && user?.role === "student",
     });
 
@@ -104,14 +153,40 @@ export default function StudentProfile() {
     },
   });
 
+  const markReadByType = trpc.student.markNotificationsReadByType.useMutation({
+    onSuccess: () => {
+      utils.student.getUnreadNotificationCounts.invalidate();
+      utils.student.getNotifications.invalidate();
+      utils.student.getUnreadNotificationCount.invalidate();
+    },
+  });
+
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
   const [expandedTopic, setExpandedTopic] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState("main");
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       navigate("/", { replace: true });
     }
   }, [authLoading, isAuthenticated, navigate]);
+
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    const tab = TABS.find(t => t.id === tabId);
+    if (tab?.badgeType) {
+      markReadByType.mutate({ type: tab.badgeType });
+    }
+  };
+
+  const getBadgeCount = (badgeType: (typeof TABS)[number]["badgeType"]) => {
+    if (!badgeType) return 0;
+    if (badgesLoading || !badgeCounts) return 0;
+    if (badgeType === "lab") return badgeCounts.lab;
+    if (badgeType === "problem") return badgeCounts.problem;
+    if (badgeType === "jupyter_notebook") return badgeCounts.notebook;
+    return 0;
+  };
 
   if (authLoading) {
     return (
@@ -128,9 +203,6 @@ export default function StudentProfile() {
       </div>
     );
   }
-
-  const isLoading =
-    profileLoading || pathLoading || currentLoading || activityLoading;
 
   return (
     <div className="pt-16 min-h-screen bg-[#262e33]">
@@ -210,7 +282,7 @@ export default function StudentProfile() {
                   </div>
                 </div>
 
-                {isLoading ? (
+                {profileLoading ? (
                   <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {Array.from({ length: 4 }).map((_, i) => (
                       <Skeleton key={i} className="h-16 bg-[#37474f]" />
@@ -261,456 +333,474 @@ export default function StudentProfile() {
           </div>
         </section>
 
-        {/* Current Topics */}
-        <section className="mb-8">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <BookOpen size={18} className="text-[#01acff]" />
-            Сейчас изучаем
-          </h2>
-          {currentLoading ? (
-            <Skeleton className="h-48 bg-[#37474f]" />
-          ) : currentTopics && currentTopics.length > 0 ? (
-            <div className="space-y-4">
-              {currentTopics.map((currentTopic, index) => (
-                <Card
-                  key={currentTopic.subtopic?.id ?? `current-topic-${index}`}
-                  className="bg-[#2a3237] border-[#434e54] overflow-hidden"
-                >
-                  <CardContent className="p-0">
-                    <div className="p-6">
-                      <div className="flex flex-col md:flex-row md:items-start gap-4">
-                        <div
-                          className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-                          style={{
-                            backgroundColor: `${currentTopic.topic?.color ?? "#2eff8c"}20`,
-                          }}
-                        >
-                          <GraduationCap
-                            size={24}
-                            style={{
-                              color: currentTopic.topic?.color ?? "#2eff8c",
-                            }}
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <Badge className="bg-[#01acff]/20 text-[#01acff]">
-                              {currentTopic.topic?.title}
-                            </Badge>
-                            {currentTopic.enrollmentComment && (
-                              <span className="text-xs text-[#798389]">
-                                {currentTopic.enrollmentComment}
-                              </span>
-                            )}
-                          </div>
-                          <h3 className="text-xl font-bold mt-2 text-white">
-                            {currentTopic.subtopic?.title}
-                          </h3>
-                          <p className="text-sm text-[#798389] mt-1">
-                            {currentTopic.subtopic?.content ?? "Нет описания"}
-                          </p>
+        {/* Tabs Layout */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left sidebar tabs */}
+          <aside className="lg:w-64 shrink-0">
+            <nav className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-2">
+              <div className="flex lg:flex-col gap-1">
+                {TABS.map(tab => {
+                  const Icon = tab.icon;
+                  const count = getBadgeCount(tab.badgeType);
+                  const isActive = activeTab === tab.id;
 
-                          <div className="mt-4 flex flex-wrap gap-2">
-                            {currentTopic.labs &&
-                              currentTopic.labs.length > 0 && (
-                                <div className="flex items-center gap-2 px-3 py-1.5 bg-[#1e2529] rounded-lg border border-[#37474f]">
-                                  <Beaker
-                                    size={14}
-                                    className="text-[#2eff8c]"
-                                  />
-                                  <span className="text-xs text-[#c8cdd1]">
-                                    {currentTopic.labs.length} лаб.
-                                  </span>
-                                </div>
-                              )}
-                            <Link
-                              to={`/course?topic=${encodeURIComponent(currentTopic.topic?.title ?? "")}&node=${encodeURIComponent(currentTopic.subtopic?.title ?? "")}`}
-                              className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#2eff8c]/10 text-[#2eff8c] rounded-lg border border-[#2eff8c]/30 text-xs hover:bg-[#2eff8c]/20 transition-colors"
-                            >
-                              <BookOpen size={14} />
-                              Перейти к теории
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-8 text-center">
-              <BookOpen size={32} className="text-[#798389] mx-auto mb-3" />
-              <p className="text-[#c8cdd1]">
-                У вас пока нет активной темы. Обратитесь к преподавателю.
-              </p>
-            </div>
-          )}
-        </section>
-
-        {/* Learning Path */}
-        <section className="mb-8">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Award size={18} className="text-[#ffcb3d]" />
-            Мой учебный путь
-          </h2>
-          {pathLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 bg-[#37474f]" />
-              ))}
-            </div>
-          ) : learningPath?.topics && learningPath.topics.length > 0 ? (
-            <div className="space-y-3">
-              {learningPath.topics.map(topic => (
-                <Card
-                  key={topic.topicNodeId}
-                  className="bg-[#2a3237] border-[#434e54] overflow-hidden"
-                >
-                  <CardContent className="p-0">
+                  return (
                     <button
-                      className="w-full p-4 flex items-center justify-between text-left"
-                      onClick={() =>
-                        setExpandedTopic(
-                          expandedTopic === topic.topicNodeId
-                            ? null
-                            : topic.topicNodeId
-                        )
-                      }
+                      key={tab.id}
+                      onClick={() => handleTabChange(tab.id)}
+                      className={`relative flex items-center justify-between gap-3 w-full px-4 py-3 rounded-xl text-left transition-all ${
+                        isActive
+                          ? "bg-[#1e2529] text-[#2eff8c] border border-[#37474f]"
+                          : "text-[#c8cdd1] hover:bg-[#1e2529]/50 hover:text-white"
+                      }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div
-                          className="w-3 h-3 rounded-full shrink-0"
-                          style={{
-                            backgroundColor: topic.topicColor ?? "#2eff8c",
-                          }}
-                        />
-                        <div>
-                          <h3 className="font-semibold text-sm sm:text-base text-white">
-                            {topic.topicTitle}
-                          </h3>
-                          <div className="flex items-center gap-3 mt-1 text-xs text-[#798389]">
-                            <span>
-                              {
-                                topic.subtopics.filter(
-                                  s => s.status === "completed"
-                                ).length
-                              }{" "}
-                              / {topic.subtopics.length} завершено
-                            </span>
-                            {topic.comment && (
-                              <span className="truncate max-w-[200px]">
-                                {topic.comment}
-                              </span>
-                            )}
-                          </div>
-                        </div>
+                        <Icon size={18} />
+                        <span className="text-sm font-medium">{tab.label}</span>
                       </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        <div className="hidden sm:block w-24">
-                          <div className="h-2 bg-[#37474f] rounded-full overflow-hidden">
-                            <div
-                              className="h-full rounded-full transition-all"
-                              style={{
-                                width: `${
-                                  topic.subtopics.length > 0
-                                    ? Math.round(
-                                        (topic.subtopics.filter(
-                                          s => s.status === "completed"
-                                        ).length /
-                                          topic.subtopics.length) *
-                                          100
-                                      )
-                                    : 0
-                                }%`,
-                                backgroundColor: topic.topicColor ?? "#2eff8c",
-                              }}
-                            />
-                          </div>
-                        </div>
-                        <Badge
-                          className={
-                            STATUS_CONFIG[topic.enrollmentStatus]?.color
-                          }
-                        >
-                          {STATUS_CONFIG[topic.enrollmentStatus]?.label ??
-                            topic.enrollmentStatus}
-                        </Badge>
-                        {expandedTopic === topic.topicNodeId ? (
-                          <ChevronUp size={16} className="text-[#798389]" />
-                        ) : (
-                          <ChevronDown size={16} className="text-[#798389]" />
-                        )}
-                      </div>
+                      {count > 0 && (
+                        <span className="shrink-0 h-5 min-w-[1.25rem] px-1.5 bg-[#ff6b6b] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                          {count > 99 ? "99+" : count}
+                        </span>
+                      )}
                     </button>
+                  );
+                })}
+              </div>
+            </nav>
+          </aside>
 
-                    {expandedTopic === topic.topicNodeId && (
-                      <div className="px-4 pb-4">
-                        <div className="border-t border-[#37474f] pt-3 space-y-2">
-                          {topic.subtopics.map((sub, idx) => {
-                            const status = STATUS_CONFIG[sub.status];
-                            return (
-                              <div
-                                key={sub.id}
-                                className="flex items-center gap-3 py-2 px-3 bg-[#1e2529] rounded-lg"
-                              >
-                                <div className="text-xs text-[#798389] w-6 shrink-0">
-                                  {idx + 1}
+          {/* Tab content */}
+          <main className="flex-1 min-w-0">
+            {activeTab === "main" && (
+              <div className="space-y-8">
+                {/* Current Topics */}
+                <section>
+                  <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <BookOpen size={18} className="text-[#01acff]" />
+                    Сейчас изучаем
+                  </h2>
+                  {currentLoading ? (
+                    <Skeleton className="h-48 bg-[#37474f]" />
+                  ) : currentTopics && currentTopics.length > 0 ? (
+                    <div className="space-y-4">
+                      {currentTopics.map((currentTopic, index) => (
+                        <Card
+                          key={currentTopic.subtopic?.id ?? `current-topic-${index}`}
+                          className="bg-[#2a3237] border-[#434e54] overflow-hidden"
+                        >
+                          <CardContent className="p-0">
+                            <div className="p-6">
+                              <div className="flex flex-col md:flex-row md:items-start gap-4">
+                                <div
+                                  className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                                  style={{
+                                    backgroundColor: `${currentTopic.topic?.color ?? "#2eff8c"}20`,
+                                  }}
+                                >
+                                  <GraduationCap
+                                    size={24}
+                                    style={{
+                                      color: currentTopic.topic?.color ?? "#2eff8c",
+                                    }}
+                                  />
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-medium truncate text-[#c8cdd1]">
-                                      {sub.title}
-                                    </span>
-                                    {sub.isCurrent && (
-                                      <Badge className="bg-[#01acff]/20 text-[#01acff] text-[10px] px-1.5 py-0">
-                                        Текущая
-                                      </Badge>
-                                    )}
-                                    <Badge
-                                      className={`${status.color} text-[10px] px-1.5 py-0`}
-                                    >
-                                      {status.icon}
-                                      <span className="ml-1">
-                                        {status.label}
-                                      </span>
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <Badge className="bg-[#01acff]/20 text-[#01acff]">
+                                      {currentTopic.topic?.title}
                                     </Badge>
+                                    {currentTopic.enrollmentComment && (
+                                      <span className="text-xs text-[#798389]">
+                                        {currentTopic.enrollmentComment}
+                                      </span>
+                                    )}
                                   </div>
-                                  {sub.comment && (
-                                    <SubtopicComment text={sub.comment} />
-                                  )}
-                                  {sub.jupyterUrl && (
-                                    <a
-                                      href={sub.jupyterUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="inline-flex items-center gap-1 mt-1.5 text-xs bg-[#2eff8c]/10 text-[#2eff8c] px-2 py-1 rounded-md hover:bg-[#2eff8c]/20 transition-colors"
+                                  <h3 className="text-xl font-bold mt-2 text-white">
+                                    {currentTopic.subtopic?.title}
+                                  </h3>
+                                  <p className="text-sm text-[#798389] mt-1">
+                                    {currentTopic.subtopic?.content ?? "Нет описания"}
+                                  </p>
+
+                                  <div className="mt-4 flex flex-wrap gap-2">
+                                    {currentTopic.labs &&
+                                      currentTopic.labs.length > 0 && (
+                                        <div className="flex items-center gap-2 px-3 py-1.5 bg-[#1e2529] rounded-lg border border-[#37474f]">
+                                          <Beaker
+                                            size={14}
+                                            className="text-[#2eff8c]"
+                                          />
+                                          <span className="text-xs text-[#c8cdd1]">
+                                            {currentTopic.labs.length} лаб.
+                                          </span>
+                                        </div>
+                                      )}
+                                    <Link
+                                      to={`/course?topic=${encodeURIComponent(currentTopic.topic?.title ?? "")}&node=${encodeURIComponent(currentTopic.subtopic?.title ?? "")}`}
+                                      className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#2eff8c]/10 text-[#2eff8c] rounded-lg border border-[#2eff8c]/30 text-xs hover:bg-[#2eff8c]/20 transition-colors"
                                     >
-                                      <ExternalLink size={12} />
-                                      Jupyter- {sub.title}
-                                    </a>
-                                  )}
+                                      <BookOpen size={14} />
+                                      Перейти к теории
+                                    </Link>
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-1 shrink-0">
-                                  {sub.theoryCompleted && (
-                                    <BookOpen
-                                      size={12}
-                                      className="text-[#2eff8c]"
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-8 text-center">
+                      <BookOpen size={32} className="text-[#798389] mx-auto mb-3" />
+                      <p className="text-[#c8cdd1]">
+                        У вас пока нет активной темы. Обратитесь к преподавателю.
+                      </p>
+                    </div>
+                  )}
+                </section>
+
+                {/* Learning Path */}
+                <section>
+                  <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Award size={18} className="text-[#ffcb3d]" />
+                    Мой учебный путь
+                  </h2>
+                  {pathLoading ? (
+                    <div className="space-y-3">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <Skeleton key={i} className="h-16 bg-[#37474f]" />
+                      ))}
+                    </div>
+                  ) : learningPath?.topics && learningPath.topics.length > 0 ? (
+                    <div className="space-y-3">
+                      {learningPath.topics.map(topic => (
+                        <Card
+                          key={topic.topicNodeId}
+                          className="bg-[#2a3237] border-[#434e54] overflow-hidden"
+                        >
+                          <CardContent className="p-0">
+                            <button
+                              className="w-full p-4 flex items-center justify-between text-left"
+                              onClick={() =>
+                                setExpandedTopic(
+                                  expandedTopic === topic.topicNodeId
+                                    ? null
+                                    : topic.topicNodeId
+                                )
+                              }
+                            >
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className="w-3 h-3 rounded-full shrink-0"
+                                  style={{
+                                    backgroundColor: topic.topicColor ?? "#2eff8c",
+                                  }}
+                                />
+                                <div>
+                                  <h3 className="font-semibold text-sm sm:text-base text-white">
+                                    {topic.topicTitle}
+                                  </h3>
+                                  <div className="flex items-center gap-3 mt-1 text-xs text-[#798389]">
+                                    <span>
+                                      {
+                                        topic.subtopics.filter(
+                                          s => s.status === "completed"
+                                        ).length
+                                      }{" "}
+                                      / {topic.subtopics.length} завершено
+                                    </span>
+                                    {topic.comment && (
+                                      <span className="truncate max-w-[200px]">
+                                        {topic.comment}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3 shrink-0">
+                                <div className="hidden sm:block w-24">
+                                  <div className="h-2 bg-[#37474f] rounded-full overflow-hidden">
+                                    <div
+                                      className="h-full rounded-full transition-all"
+                                      style={{
+                                        width: `${
+                                          topic.subtopics.length > 0
+                                            ? Math.round(
+                                                (topic.subtopics.filter(
+                                                  s => s.status === "completed"
+                                                ).length /
+                                                  topic.subtopics.length) *
+                                                  100
+                                              )
+                                            : 0
+                                        }%`,
+                                        backgroundColor: topic.topicColor ?? "#2eff8c",
+                                      }}
                                     />
-                                  )}
-                                  {sub.practiceCompleted && (
-                                    <FileText
-                                      size={12}
-                                      className="text-[#01acff]"
-                                    />
-                                  )}
-                                  {sub.labCompleted && (
-                                    <Beaker
-                                      size={12}
-                                      className="text-[#ffcb3d]"
-                                    />
+                                  </div>
+                                </div>
+                                <Badge
+                                  className={
+                                    STATUS_CONFIG[topic.enrollmentStatus]?.color
+                                  }
+                                >
+                                  {STATUS_CONFIG[topic.enrollmentStatus]?.label ??
+                                    topic.enrollmentStatus}
+                                </Badge>
+                                {expandedTopic === topic.topicNodeId ? (
+                                  <ChevronUp size={16} className="text-[#798389]" />
+                                ) : (
+                                  <ChevronDown size={16} className="text-[#798389]" />
+                                )}
+                              </div>
+                            </button>
+
+                            {expandedTopic === topic.topicNodeId && (
+                              <div className="px-4 pb-4">
+                                <div className="border-t border-[#37474f] pt-3 space-y-2">
+                                  {topic.subtopics.map((sub, idx) => {
+                                    const status = STATUS_CONFIG[sub.status];
+                                    return (
+                                      <div
+                                        key={sub.id}
+                                        className="flex items-center gap-3 py-2 px-3 bg-[#1e2529] rounded-lg"
+                                      >
+                                        <div className="text-xs text-[#798389] w-6 shrink-0">
+                                          {idx + 1}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-sm font-medium truncate text-[#c8cdd1]">
+                                              {sub.title}
+                                            </span>
+                                            {sub.isCurrent && (
+                                              <Badge className="bg-[#01acff]/20 text-[#01acff] text-[10px] px-1.5 py-0">
+                                                Текущая
+                                              </Badge>
+                                            )}
+                                            <Badge
+                                              className={`${status.color} text-[10px] px-1.5 py-0`}
+                                            >
+                                              {status.icon}
+                                              <span className="ml-1">
+                                                {status.label}
+                                              </span>
+                                            </Badge>
+                                          </div>
+                                          {sub.comment && (
+                                            <SubtopicComment text={sub.comment} />
+                                          )}
+                                          {sub.jupyterUrl && (
+                                            <a
+                                              href={sub.jupyterUrl}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="inline-flex items-center gap-1 mt-1.5 text-xs bg-[#2eff8c]/10 text-[#2eff8c] px-2 py-1 rounded-md hover:bg-[#2eff8c]/20 transition-colors"
+                                            >
+                                              <ExternalLink size={12} />
+                                              Jupyter- {sub.title}
+                                            </a>
+                                          )}
+                                        </div>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                          {sub.theoryCompleted && (
+                                            <BookOpen
+                                              size={12}
+                                              className="text-[#2eff8c]"
+                                            />
+                                          )}
+                                          {sub.practiceCompleted && (
+                                            <FileText
+                                              size={12}
+                                              className="text-[#01acff]"
+                                            />
+                                          )}
+                                          {sub.labCompleted && (
+                                            <Beaker
+                                              size={12}
+                                              className="text-[#ffcb3d]"
+                                            />
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+
+                                  {/* Labs for this topic */}
+                                  {topic.labs && topic.labs.length > 0 && (
+                                    <div className="mt-2 space-y-1">
+                                      <p className="text-xs text-[#798389] px-1 mb-1">
+                                        Лабораторные работы
+                                      </p>
+                                      {topic.labs.map(lab => (
+                                        <div
+                                          key={lab.id}
+                                          className="flex items-center gap-3 py-2 px-3 bg-[#1e2529] rounded-lg border border-[#37474f]/50"
+                                        >
+                                          <Beaker
+                                            size={14}
+                                            className="text-[#2eff8c] shrink-0"
+                                          />
+                                          <div className="flex-1 min-w-0">
+                                            <span className="text-sm truncate text-[#c8cdd1]">
+                                              {lab.title}
+                                            </span>
+                                            <p className="text-xs text-[#798389]">
+                                              {lab.shortDesc}
+                                            </p>
+                                          </div>
+                                          <Link
+                                            to={`/labs/${lab.slug}`}
+                                            className="text-xs text-[#01acff] hover:underline shrink-0"
+                                          >
+                                            Перейти
+                                          </Link>
+                                        </div>
+                                      ))}
+                                    </div>
                                   )}
                                 </div>
                               </div>
-                            );
-                          })}
-
-                          {/* Labs for this topic */}
-                          {topic.labs && topic.labs.length > 0 && (
-                            <div className="mt-2 space-y-1">
-                              <p className="text-xs text-[#798389] px-1 mb-1">
-                                Лабораторные работы
-                              </p>
-                              {topic.labs.map(lab => (
-                                <div
-                                  key={lab.id}
-                                  className="flex items-center gap-3 py-2 px-3 bg-[#1e2529] rounded-lg border border-[#37474f]/50"
-                                >
-                                  <Beaker
-                                    size={14}
-                                    className="text-[#2eff8c] shrink-0"
-                                  />
-                                  <div className="flex-1 min-w-0">
-                                    <span className="text-sm truncate text-[#c8cdd1]">
-                                      {lab.title}
-                                    </span>
-                                    <p className="text-xs text-[#798389]">
-                                      {lab.shortDesc}
-                                    </p>
-                                  </div>
-                                  <Link
-                                    to={`/labs/${lab.slug}`}
-                                    className="text-xs text-[#01acff] hover:underline shrink-0"
-                                  >
-                                    Перейти
-                                  </Link>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-8 text-center">
-              <Award size={32} className="text-[#798389] mx-auto mb-3" />
-              <p className="text-[#c8cdd1]">
-                У вас пока нет открытых тем. Обратитесь к преподавателю.
-              </p>
-            </div>
-          )}
-        </section>
-
-        {/* My Labs */}
-        <StudentLabsSection />
-
-        {/* Jupyter Notebooks */}
-        <section className="mb-8">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <NotebookPen size={18} className="text-[#2eff8c]" />
-            Мои Jupyter-ноутбуки
-          </h2>
-          {notebooksLoading ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-24 bg-[#37474f]" />
-              ))}
-            </div>
-          ) : myNotebooks && myNotebooks.length > 0 ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {myNotebooks.map(nb => (
-                <Card
-                  key={nb.id}
-                  className="bg-[#2a3237] border-[#434e54] hover:border-[#2eff8c]/50 transition-colors"
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <NotebookPen
-                        size={20}
-                        className="text-[#2eff8c] shrink-0 mt-0.5"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-[#c8cdd1] truncate">
-                          {nb.title}
-                        </h3>
-                        <p className="text-xs text-[#798389] mt-1">
-                          {nb.subtopicTitle}
-                        </p>
-                        <div className="flex items-center gap-2 mt-3">
-                          <a
-                            href={`/api/jupyter/download/${nb.id}`}
-                            className="inline-flex items-center gap-1 text-xs bg-[#2eff8c]/10 text-[#2eff8c] px-3 py-1.5 rounded-md hover:bg-[#2eff8c]/20 transition-colors"
-                          >
-                            <Download size={12} />
-                            Скачать
-                          </a>
-                        </div>
-                      </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 text-center">
-              <NotebookPen size={28} className="text-[#798389] mx-auto mb-2" />
-              <p className="text-sm text-[#c8cdd1]">
-                У вас пока нет доступных Jupyter-ноутбуков.
-              </p>
-              <p className="text-xs text-[#798389] mt-1">
-                Преподаватель откроет доступ к новым материалам.
-              </p>
-            </div>
-          )}
-        </section>
+                  ) : (
+                    <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-8 text-center">
+                      <Award size={32} className="text-[#798389] mx-auto mb-3" />
+                      <p className="text-[#c8cdd1]">
+                        У вас пока нет открытых тем. Обратитесь к преподавателю.
+                      </p>
+                    </div>
+                  )}
+                </section>
 
-        {/* Recent Activity */}
-        <section className="mb-8">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Activity size={18} className="text-[#ff6b6b]" />
-            Последняя активность
-          </h2>
-          {activityLoading ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-24 bg-[#37474f]" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              <ActivityCard
-                icon={<BookOpen size={18} className="text-[#2eff8c]" />}
-                label="Последняя открытая тема"
-                value={
-                  activity?.lastEnrollment
-                    ? `Тема #${activity.lastEnrollment.topicNodeId}`
-                    : "Нет данных"
-                }
-                date={activity?.lastEnrollment?.enrolledAt}
-              />
-              <ActivityCard
-                icon={<CheckCircle2 size={18} className="text-[#01acff]" />}
-                label="Последняя завершённая тема"
-                value={
-                  activity?.lastCompletedTopic
-                    ? `Тема #${activity.lastCompletedTopic.topicNodeId}`
-                    : "Нет данных"
-                }
-                date={activity?.lastCompletedTopic?.completedAt}
-              />
-              <ActivityCard
-                icon={<FlaskConical size={18} className="text-[#ffcb3d]" />}
-                label="Последняя лабораторная"
-                value={
-                  activity?.lastCompletedLab
-                    ? `Лаб. #${activity.lastCompletedLab.labWorkId}`
-                    : "Нет данных"
-                }
-                date={activity?.lastCompletedLab?.completedAt}
-              />
-              <ActivityCard
-                icon={<Calendar size={18} className="text-[#ff6b6b]" />}
-                label="Последний визит"
-                value={
-                  activity?.lastLoginAt
-                    ? new Date(activity.lastLoginAt).toLocaleDateString("ru-RU")
-                    : "Нет данных"
-                }
-                date={activity?.lastLoginAt}
-              />
-            </div>
-          )}
-        </section>
+                {/* Recent Completed Assignments */}
+                <section>
+                  <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-white">
+                    <CheckCircle2 size={18} className="text-[#2eff8c]" />
+                    Последние выполненные задания
+                  </h2>
+                  {recentLoading ? (
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <Skeleton key={i} className="h-28 bg-[#37474f]" />
+                      ))}
+                    </div>
+                  ) : recentCompleted && recentCompleted.length > 0 ? (
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {recentCompleted.map((item, idx) => (
+                        <RecentAssignmentCard
+                          key={`${item.type}-${item.id}`}
+                          item={item}
+                          number={idx + 1}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-8 text-center">
+                      <Clock size={32} className="text-[#798389] mx-auto mb-3" />
+                      <p className="text-[#c8cdd1]">
+                        Пока нет выполненных заданий. Выполните назначенные лабораторные
+                        или задачи, чтобы они появились здесь.
+                      </p>
+                    </div>
+                  )}
+                </section>
+              </div>
+            )}
+
+            {activeTab === "labs" && <StudentLabsSection />}
+
+            {activeTab === "tasks" && (
+              <section>
+                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-white">
+                  <FileText size={18} className="text-[#01acff]" />
+                  Мои задачи
+                </h2>
+                <StudentProblemsSection />
+              </section>
+            )}
+
+            {activeTab === "notebooks" && (
+              <section>
+                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-white">
+                  <NotebookPen size={18} className="text-[#2eff8c]" />
+                  Мои тетради
+                </h2>
+                <StudentNotebooksSection />
+              </section>
+            )}
+          </main>
+        </div>
       </div>
     </div>
   );
 }
 
-function ActivityCard({
-  icon,
-  label,
-  value,
-  date,
+function RecentAssignmentCard({
+  item,
+  number,
 }: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  date?: Date | string | null;
+  item: {
+    id: number;
+    type: "lab" | "problem";
+    title: string;
+    slug: string;
+    completedAt: Date;
+    grade: number | null;
+  };
+  number: number;
 }) {
+  const grade = item.grade ?? undefined;
+  const gradeConfig = grade ? GRADE_CONFIG[grade] : null;
+  const glowColor = gradeConfig?.trophyColor ?? "#2eff8c";
+
   return (
-    <div className="bg-[#2a3237] border border-[#434e54] rounded-xl p-4">
-      <div className="flex items-center gap-2 mb-3">
-        {icon}
-        <span className="text-xs text-[#798389]">{label}</span>
+    <div
+      className="relative flex items-center gap-2 px-3 py-2 bg-[#232b2f] rounded-lg border border-[#37474f] lab-glow transition-colors"
+      style={{ "--glow-color": glowColor } as React.CSSProperties}
+    >
+      <style>{`
+        @keyframes labGlow {
+          0%, 100% {
+            box-shadow: 0 0 3px var(--glow-color), 0 0 6px var(--glow-color);
+          }
+          50% {
+            box-shadow: 0 0 8px var(--glow-color), 0 0 14px var(--glow-color);
+          }
+        }
+        .lab-glow {
+          animation: labGlow 2.2s ease-in-out infinite;
+        }
+      `}</style>
+      <span className="text-[10px] font-medium text-[#798389] w-4 shrink-0">
+        {number}.
+      </span>
+      <div className="flex-1 min-w-0">
+        <span className="text-xs font-medium text-[#c8cdd1] hover:text-white truncate block">
+          {item.title}
+        </span>
+        {item.completedAt && (
+          <p className="text-[10px] text-[#798389]">
+            {new Date(item.completedAt).toLocaleDateString("ru-RU")}
+          </p>
+        )}
       </div>
-      <div className="text-sm font-semibold text-[#c8cdd1]">{value}</div>
-      {date && (
-        <div className="text-xs text-[#798389] mt-1">
-          {new Date(date).toLocaleDateString("ru-RU")}
+      {gradeConfig && (
+        <div className="shrink-0 flex flex-col items-center">
+          <Trophy
+            size={16}
+            style={{ color: gradeConfig.trophyColor }}
+            fill={gradeConfig.trophyColor}
+            fillOpacity={0.15}
+          />
+          <span className={`text-[10px] font-bold ${gradeConfig.textColor}`}>
+            {grade}
+          </span>
         </div>
       )}
     </div>

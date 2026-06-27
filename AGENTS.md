@@ -73,7 +73,7 @@ app/
 │   │   ├── Labs.tsx
 │   │   ├── Login.tsx
 │   │   ├── StudentLogin.tsx
-│   │   ├── StudentDashboard.tsx
+│   │   ├── StudentProfile.tsx      # Личный кабинет ученика с вкладками
 │   │   ├── LabPendulum.tsx, OhmsLawLab.tsx, ProjectileLab.tsx ...
 │   │   └── admin/ProblemManagement.tsx   # Редактор базы задач (категории/темы/задачи)
 │   │   └── admin/LabManagement.tsx   # Редактор лабораторий (категории/темы/работы/симуляции)
@@ -395,8 +395,7 @@ npm run db:push       # Push схемы (для разработки)
 | `/profile` | Профиль преподавателя | Требуется OAuth |
 | `/admin/problems` | Problem Management | Требуется admin |
 | `/student/login` | Вход для ученика | Публичный |
-| `/student/dashboard` | Дашборд ученика | Требуется ученик |
-| `/student/profile` | Профиль ученика | Требуется ученик |
+| `/student/profile` | Личный кабинет ученика (дашборд) | Требуется ученик |
 | `/student/labs` | Протоколы лабораторных | Требуется ученик |
 
 ---

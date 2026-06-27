@@ -201,6 +201,11 @@ export default function AdminDashboard() {
           onClick={() => navigate("/admin/students")}
         />
         <QuickAction
+          label="Enrollments"
+          icon={ClipboardList}
+          onClick={() => navigate("/admin/enrollments")}
+        />
+        <QuickAction
           label="Topic Management"
           icon={BookOpen}
           onClick={() => navigate("/admin/topics")}
@@ -211,14 +216,14 @@ export default function AdminDashboard() {
           onClick={() => navigate("/admin/lab-management")}
         />
         <QuickAction
-          label="Enrollments"
-          icon={ClipboardList}
-          onClick={() => navigate("/admin/enrollments")}
-        />
-        <QuickAction
           label="Problem Management"
           icon={ShieldCheck}
           onClick={() => navigate("/admin/problems")}
+        />
+        <QuickAction
+          label="Jupyter-ноутбуки"
+          icon={NotebookPen}
+          onClick={() => navigate("/admin/jupyter-notebooks")}
         />
         <QuickAction
           label="Audit Log"
@@ -234,11 +239,6 @@ export default function AdminDashboard() {
           label="Проверка работ"
           icon={FileCheck}
           onClick={() => navigate("/admin/lab-submissions")}
-        />
-        <QuickAction
-          label="Jupyter-ноутбуки"
-          icon={NotebookPen}
-          onClick={() => navigate("/admin/jupyter-notebooks")}
         />
         <QuickAction
           label="Стрела времени"

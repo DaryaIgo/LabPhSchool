@@ -20,7 +20,7 @@ export const notifications = mysqlTable("notifications", {
     mode: "number",
     unsigned: true,
   }).notNull(),
-  type: mysqlEnum("type", ["jupyter_notebook", "lab", "general"])
+  type: mysqlEnum("type", ["jupyter_notebook", "lab", "problem", "general"])
     .default("general")
     .notNull(),
   title: varchar("title", { length: 255 }).notNull(),

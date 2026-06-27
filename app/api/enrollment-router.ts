@@ -23,6 +23,8 @@ import { createAuditEntry } from "./queries/audit";
 import { getContentDb } from "./queries/connection";
 import { topicNodes } from "@db/schema/content";
 import { eq, and, isNull, isNotNull } from "drizzle-orm";
+import { getNotificationsDb } from "./queries/connection";
+import { notifications } from "@db/schema/notifications";
 import {
   getAssignedLabWorksByEnrollment,
   findAssignedLabWork,
@@ -259,6 +261,15 @@ export const enrollmentRouter = createRouter({
 
       const assignmentId = Number(result[0].insertId);
 
+      const notificationsDb = getNotificationsDb();
+      await notificationsDb.insert(notifications).values({
+        localUserId: enrollment.localUserId,
+        type: "lab",
+        title: "Назначена новая лабораторная работа",
+        message: "Вам назначена новая лабораторная работа. Перейдите во вкладку «Мои Лабораторные».",
+        resourceId: assignmentId,
+      });
+
       await createAuditEntry({
         actorId: ctx.localUser!.id,
         actorType: "user",
@@ -373,6 +384,15 @@ export const enrollmentRouter = createRouter({
       });
 
       const assignmentId = Number(result[0].insertId);
+
+      const notificationsDb = getNotificationsDb();
+      await notificationsDb.insert(notifications).values({
+        localUserId: enrollment.localUserId,
+        type: "problem",
+        title: "Назначена новая задача",
+        message: "Вам назначена новая задача. Перейдите во вкладку «Мои Задачи».",
+        resourceId: assignmentId,
+      });
 
       await createAuditEntry({
         actorId: ctx.localUser!.id,
