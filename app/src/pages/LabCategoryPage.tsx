@@ -1,6 +1,7 @@
 import { trpc } from "@/providers/trpc";
 import { Link, Navigate, useParams } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
+import { CategoryIcon } from "@/components/CategoryIcon";
 import {
   ArrowLeft,
   FlaskConical,
@@ -92,7 +93,7 @@ export default function LabCategoryPage() {
                 color: category.color ?? "#2eff8c",
               }}
             >
-              <FlaskConical size={14} />
+              <CategoryIcon iconKey={category.iconType} size={14} />
               {category.grade}
             </span>
           </div>

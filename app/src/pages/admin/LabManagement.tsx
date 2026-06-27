@@ -1,6 +1,9 @@
 import { useState, useMemo, useRef, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { trpc } from "@/providers/trpc";
+import { CategoryIconPicker } from "@/components/admin/CategoryIconPicker";
+import { CategoryIcon } from "@/components/CategoryIcon";
+import { DEFAULT_CATEGORY_ICON_KEY } from "@/lib/lab-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,8 +31,6 @@ import {
   Images,
   ChevronRight,
   ChevronDown,
-  Folder,
-  FolderOpen,
   FileText,
   Loader2,
   Beaker,
@@ -46,6 +47,9 @@ import type {
   Simulation,
   SimulationParamConfig,
 } from "@db/schema";
+import { LAB_CATEGORY_ICON_KEYS } from "@contracts/constants";
+
+type CategoryIconKey = (typeof LAB_CATEGORY_ICON_KEYS)[number];
 
 type TreeNodeType = "category" | "subcategory" | "labWork";
 
@@ -67,7 +71,18 @@ interface TreeNode {
   data: LabCategory | LabSubcategory | LabWorkListItem;
 }
 
-const initialCategoryForm = {
+type CategoryForm = {
+  order: number;
+  title: string;
+  slug: string;
+  grade: string;
+  description: string;
+  shortDesc: string;
+  color: string;
+  iconType: CategoryIconKey;
+};
+
+const initialCategoryForm: CategoryForm = {
   order: 1,
   title: "",
   slug: "",
@@ -75,7 +90,7 @@ const initialCategoryForm = {
   description: "",
   shortDesc: "",
   color: "#2eff8c",
-  iconType: "",
+  iconType: DEFAULT_CATEGORY_ICON_KEY,
 };
 
 const initialSubcategoryForm = {
@@ -200,7 +215,7 @@ export default function LabManagement() {
       description: cat.description ?? "",
       shortDesc: cat.shortDesc ?? "",
       color: cat.color ?? "#2eff8c",
-      iconType: cat.iconType ?? "",
+      iconType: (cat.iconType as CategoryIconKey) ?? DEFAULT_CATEGORY_ICON_KEY,
     });
   }, []);
 
@@ -667,11 +682,7 @@ function TreeItem({
 
   const icon =
     node.type === "category" ? (
-      expanded ? (
-        <FolderOpen size={14} className="shrink-0 text-[#2eff8c]" />
-      ) : (
-        <Folder size={14} className="shrink-0 text-[#2eff8c]" />
-      )
+      <CategoryIcon iconKey={(node.data as LabCategory).iconType} size={14} />
     ) : node.type === "subcategory" ? (
       <FileText size={14} className="shrink-0 text-[#01acff]" />
     ) : (
@@ -731,8 +742,8 @@ function CategoryEditor({
   isSaving,
   isDeleting,
 }: {
-  form: typeof initialCategoryForm;
-  onChange: (f: typeof initialCategoryForm) => void;
+  form: CategoryForm;
+  onChange: (f: CategoryForm) => void;
   isNew: boolean;
   onSave: () => void;
   onDelete: () => void;
@@ -816,15 +827,10 @@ function CategoryEditor({
             placeholder="7 класс"
           />
         </div>
-        <div>
-          <Label className="text-xs text-[#798389]">Иконка</Label>
-          <Input
-            value={form.iconType}
-            onChange={e => onChange({ ...form, iconType: e.target.value })}
-            className="bg-[#1e2529] border-[#37474f] mt-1 text-white"
-            placeholder="mechanics"
-          />
-        </div>
+        <CategoryIconPicker
+          value={form.iconType}
+          onChange={v => onChange({ ...form, iconType: v as CategoryIconKey })}
+        />
       </div>
 
       <div>

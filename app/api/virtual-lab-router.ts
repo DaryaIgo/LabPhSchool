@@ -13,6 +13,7 @@ import {
   adminQuery,
   studentQuery,
 } from "./middleware";
+import { LAB_CATEGORY_ICON_KEYS } from "@contracts/constants";
 import { getLabsDb, getLearningDb, getContentDb } from "./queries/connection";
 import {
   labCategories,
@@ -365,7 +366,7 @@ export const virtualLabRouter = createRouter({
         description: z.string().max(5000).optional(),
         shortDesc: z.string().max(500).optional(),
         color: z.string().max(20).optional(),
-        iconType: z.string().max(50).optional(),
+        iconType: z.enum([...LAB_CATEGORY_ICON_KEYS]).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -402,7 +403,7 @@ export const virtualLabRouter = createRouter({
         description: z.string().max(5000).optional(),
         shortDesc: z.string().max(500).optional(),
         color: z.string().max(20).optional(),
-        iconType: z.string().max(50).optional(),
+        iconType: z.enum([...LAB_CATEGORY_ICON_KEYS]).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

@@ -54,7 +54,7 @@ export default function ConclusionPanel({
       const cursor = start + symbol.length;
       textarea.setSelectionRange(cursor, cursor);
     });
-  };ы
+  };
 
   return (
     <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 space-y-4">

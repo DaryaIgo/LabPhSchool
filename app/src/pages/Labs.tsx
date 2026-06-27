@@ -1,30 +1,9 @@
 import { trpc } from "@/providers/trpc";
 import { Link } from "react-router";
-import {
-  FlaskConical,
-  ArrowRight,
-  Atom,
-  Zap,
-  Thermometer,
-  Wrench,
-  Eye,
-  Beaker,
-} from "lucide-react";
+import { FlaskConical, ArrowRight } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/useAuth";
-
-const categoryIconMap: Record<string, React.ReactNode> = {
-  mechanics: <Wrench size={40} className="text-[#2eff8c]" />,
-  "fluid-mechanics": <Beaker size={40} className="text-[#01acff]" />,
-  "molecular-thermodynamics": (
-    <Thermometer size={40} className="text-[#ff7043]" />
-  ),
-  electrodynamics: <Zap size={40} className="text-[#ffd600]" />,
-  circuit: <Zap size={40} className="text-[#ffd600]" />,
-  optics: <Eye size={40} className="text-[#66bb6a]" />,
-  "nuclear-physics": <Atom size={40} className="text-[#ef5350]" />,
-  atomic: <Atom size={40} className="text-[#ef5350]" />,
-};
+import { CategoryIcon } from "@/components/CategoryIcon";
 
 export default function Labs() {
   const { user } = useAuth();
@@ -80,9 +59,6 @@ export default function Labs() {
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {categories?.map(cat => {
-                const icon =
-                  categoryIconMap[cat.iconType || "mechanics"] ||
-                  categoryIconMap["mechanics"];
                 const progress = getCategoryProgress(cat.id, cat.labCount || 0);
 
                 return (
@@ -93,7 +69,7 @@ export default function Labs() {
                   >
                     <div className="flex items-center justify-between mb-4">
                       <div className="w-14 h-14 rounded-xl bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
-                        {icon}
+                        <CategoryIcon iconKey={cat.iconType} size={40} />
                       </div>
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#2eff8c]/10 text-[#2eff8c] text-xs font-medium">
                         <FlaskConical size={12} />
