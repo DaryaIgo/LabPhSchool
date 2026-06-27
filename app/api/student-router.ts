@@ -28,6 +28,11 @@ import {
   getAssignedProblemById,
   updateAssignedProblem,
 } from "./queries/assignedProblems";
+import {
+  getAssignedJupyterNotebooksByStudent,
+  getAssignedJupyterNotebookById,
+  updateAssignedJupyterNotebook,
+} from "./queries/assignedJupyterNotebooks";
 import { createAuditEntry } from "./queries/audit";
 import {
   eq,
@@ -948,38 +953,123 @@ export const studentRouter = createRouter({
     const contentDb = getContentDb();
     const studentId = ctx.localUser!.id;
 
+    const assignedRows = await getAssignedJupyterNotebooksByStudent(studentId);
+    const assignedNotebookIds = new Set(assignedRows.map(r => r.notebookId));
+
     const accesses = await jupyterDb
-      .select({
-        notebookId: jupyterNotebookAccess.notebookId,
-        grantedAt: jupyterNotebookAccess.grantedAt,
-      })
+      .select({ notebookId: jupyterNotebookAccess.notebookId })
       .from(jupyterNotebookAccess)
       .where(eq(jupyterNotebookAccess.localUserId, studentId));
 
-    const notebookIds = accesses.map(a => a.notebookId);
-    if (notebookIds.length === 0) return [];
+    const availableNotebookIds = accesses
+      .map(a => a.notebookId)
+      .filter(id => !assignedNotebookIds.has(id));
 
-    const notebooks = await jupyterDb
-      .select()
-      .from(jupyterNotebooks)
-      .where(inArray(jupyterNotebooks.id, notebookIds));
+    let available: Array<{
+      id: number;
+      notebookId: number;
+      title: string;
+      filename: string;
+      filePath: string;
+      subtopicTitle: string;
+      status: "available";
+    }> = [];
 
-    const subtopicList = await contentDb
-      .select()
-      .from(topicNodes)
-      .where(
-        inArray(
-          topicNodes.id,
-          notebooks.map(n => n.subtopicNodeId)
-        )
-      );
-    const subtopicMap = new Map(subtopicList.map(s => [s.id, s.title]));
+    if (availableNotebookIds.length > 0) {
+      const notebooks = await jupyterDb
+        .select()
+        .from(jupyterNotebooks)
+        .where(inArray(jupyterNotebooks.id, availableNotebookIds));
 
-    return notebooks.map(n => ({
-      ...n,
-      subtopicTitle: subtopicMap.get(n.subtopicNodeId) ?? "—",
-    }));
+      const subtopicList = await contentDb
+        .select({ id: topicNodes.id, title: topicNodes.title })
+        .from(topicNodes)
+        .where(
+          inArray(
+            topicNodes.id,
+            notebooks.map(n => n.subtopicNodeId)
+          )
+        );
+      const subtopicMap = new Map(subtopicList.map(s => [s.id, s.title]));
+
+      available = notebooks.map(n => ({
+        id: n.id,
+        notebookId: n.id,
+        title: n.title,
+        filename: n.filename,
+        filePath: n.filePath,
+        subtopicTitle: subtopicMap.get(n.subtopicNodeId) ?? "—",
+        status: "available" as const,
+      }));
+    }
+
+    return {
+      assigned: assignedRows.filter(r => r.status === "assigned"),
+      submitted: assignedRows.filter(r => r.status === "submitted"),
+      completed: assignedRows.filter(r => r.status === "completed"),
+      available,
+    };
   }),
+
+  getAssignedJupyterNotebookById: studentQuery
+    .input(z.object({ id: z.number().positive() }))
+    .query(async ({ ctx, input }) => {
+      const assignment = await getAssignedJupyterNotebookById(input.id);
+      if (!assignment || assignment.localUserId !== ctx.localUser!.id) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Ноутбук не найден",
+        });
+      }
+      return {
+        id: assignment.id,
+        status: assignment.status,
+        grade: assignment.grade,
+        studentColabUrl: assignment.studentColabUrl,
+        teacherComment: assignment.teacherComment,
+        assignedAt: assignment.assignedAt,
+        submittedAt: assignment.submittedAt,
+        completedAt: assignment.completedAt,
+        notebookId: assignment.notebookId,
+        notebookTitle: assignment.notebookTitle,
+        notebookFilename: assignment.notebookFilename,
+        notebookFilePath: assignment.notebookFilePath,
+        subtopicTitle: assignment.subtopicTitle,
+      };
+    }),
+
+  submitJupyterNotebookSolution: studentQuery
+    .input(
+      z.object({
+        assignmentId: z.number().positive(),
+        studentColabUrl: z.string().min(1).max(500),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const assignment = await getAssignedJupyterNotebookById(
+        input.assignmentId
+      );
+      if (!assignment || assignment.localUserId !== ctx.localUser!.id) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Ноутбук не найден",
+        });
+      }
+      if (assignment.status === "completed") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Ноутбук уже проверен",
+        });
+      }
+
+      await updateAssignedJupyterNotebook(input.assignmentId, {
+        status: "submitted",
+        studentColabUrl: input.studentColabUrl,
+        submittedAt: new Date(),
+      });
+
+      return { success: true };
+    }),
 
   // ═══════════════════════════════════════════════════════════
   // Student Notifications

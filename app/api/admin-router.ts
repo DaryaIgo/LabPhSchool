@@ -14,16 +14,18 @@ import {
   getLabsDb,
   getProblemsDb,
   getJupyterDb,
-  getNotificationsDb,
   getMediaDb,
 } from "./queries/connection";
 import { topicNodes, resources } from "@db/schema/content";
 import { labWorks } from "@db/schema/labs";
-import { labProgress, assignedProblems } from "@db/schema/learning";
+import {
+  labProgress,
+  assignedProblems,
+  assignedJupyterNotebooks,
+} from "@db/schema/learning";
 import { problems } from "@db/schema/problems";
 import { localUsers, roles } from "@db/schema/auth";
 import { jupyterNotebooks, jupyterNotebookAccess } from "@db/schema/jupyter";
-import { notifications } from "@db/schema/notifications";
 import { images } from "@db/schema/media";
 import { eq, asc, desc, count, and, inArray, isNull } from "drizzle-orm";
 import { createAuditEntry } from "./queries/audit";
@@ -80,6 +82,11 @@ export const adminRouter = createRouter({
       .from(assignedProblems)
       .where(eq(assignedProblems.status, "submitted"));
 
+    const [notebookSubmissionCount] = await learningDb
+      .select({ count: count() })
+      .from(assignedJupyterNotebooks)
+      .where(eq(assignedJupyterNotebooks.status, "submitted"));
+
     return {
       students: {
         total: studentCount.count,
@@ -91,7 +98,9 @@ export const adminRouter = createRouter({
         labWorks: labWorkCount.count,
         resources: resourceCount.count,
         submissions:
-          labSubmissionCount.count + problemSubmissionCount.count,
+          labSubmissionCount.count +
+          problemSubmissionCount.count +
+          notebookSubmissionCount.count,
       },
     };
   }),
@@ -419,7 +428,7 @@ export const adminRouter = createRouter({
     }),
 
   // ═══════════════════════════════════════════════════════════
-  // Submissions Review (labs + problems)
+  // Submissions Review (labs + problems + notebooks)
   // ═══════════════════════════════════════════════════════════
 
   getSubmissions: adminQuery
@@ -427,7 +436,9 @@ export const adminRouter = createRouter({
       z
         .object({
           status: z.enum(["submitted", "completed"]).optional(),
-          type: z.enum(["lab", "problem", "all"]).default("all"),
+          type: z
+            .enum(["lab", "problem", "jupyter_notebook", "all"])
+            .default("all"),
           studentId: z.number().positive().optional(),
           search: z.string().optional(),
           page: z.number().min(1).default(1),
@@ -440,6 +451,7 @@ export const adminRouter = createRouter({
       const authDb = getAuthDb();
       const labsDb = getLabsDb();
       const problemsDb = getProblemsDb();
+      const jupyterDb = getJupyterDb();
 
       const page = input?.page ?? 1;
       const pageSize = input?.pageSize ?? 20;
@@ -457,7 +469,7 @@ export const adminRouter = createRouter({
       }
 
       const labRows =
-        type === "problem"
+        type === "problem" || type === "jupyter_notebook"
           ? []
           : await learningDb
               .select()
@@ -474,7 +486,7 @@ export const adminRouter = createRouter({
       }
 
       const problemRows =
-        type === "lab"
+        type === "lab" || type === "jupyter_notebook"
           ? []
           : await learningDb
               .select()
@@ -482,10 +494,33 @@ export const adminRouter = createRouter({
               .where(and(...problemConditions))
               .orderBy(desc(assignedProblems.updatedAt));
 
+      // Fetch notebook submissions
+      const notebookConditions = [
+        eq(
+          assignedJupyterNotebooks.status,
+          status as "submitted" | "completed"
+        ),
+      ];
+      if (studentId) {
+        notebookConditions.push(
+          eq(assignedJupyterNotebooks.localUserId, studentId)
+        );
+      }
+
+      const notebookRows =
+        type === "lab" || type === "problem"
+          ? []
+          : await learningDb
+              .select()
+              .from(assignedJupyterNotebooks)
+              .where(and(...notebookConditions))
+              .orderBy(desc(assignedJupyterNotebooks.updatedAt));
+
       // Load related data
       const studentIds = new Set<number>();
       for (const r of labRows) studentIds.add(r.localUserId);
       for (const r of problemRows) studentIds.add(r.localUserId);
+      for (const r of notebookRows) studentIds.add(r.localUserId);
 
       const studentMap = new Map<number, typeof localUsers.$inferSelect>();
       if (studentIds.size > 0) {
@@ -514,6 +549,16 @@ export const adminRouter = createRouter({
           .from(problems)
           .where(inArray(problems.id, problemIds));
         for (const p of problemRowsDb) problemMap.set(p.id, p);
+      }
+
+      const notebookIds = notebookRows.map(r => r.notebookId);
+      const notebookMap = new Map<number, typeof jupyterNotebooks.$inferSelect>();
+      if (notebookIds.length > 0) {
+        const notebookRowsDb = await jupyterDb
+          .select()
+          .from(jupyterNotebooks)
+          .where(inArray(jupyterNotebooks.id, notebookIds));
+        for (const n of notebookRowsDb) notebookMap.set(n.id, n);
       }
 
       // Build combined items
@@ -559,7 +604,28 @@ export const adminRouter = createRouter({
         };
       });
 
-      let combined = [...labItems, ...problemItems].sort(
+      const notebookItems = notebookRows.map(p => {
+        const student = studentMap.get(p.localUserId);
+        const notebook = notebookMap.get(p.notebookId);
+        return {
+          type: "jupyter_notebook" as const,
+          id: p.id,
+          status: p.status,
+          grade: p.grade,
+          teacherComment: p.teacherComment,
+          submittedAt: p.submittedAt,
+          completedAt: p.completedAt,
+          updatedAt: p.updatedAt,
+          studentId: p.localUserId,
+          studentName: student?.name ?? "—",
+          studentLogin: student?.login ?? "—",
+          notebookId: p.notebookId,
+          notebookTitle: notebook?.title ?? "—",
+          studentColabUrl: p.studentColabUrl,
+        };
+      });
+
+      let combined = [...labItems, ...problemItems, ...notebookItems].sort(
         (a, b) =>
           new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
       );
@@ -567,7 +633,11 @@ export const adminRouter = createRouter({
       if (search) {
         combined = combined.filter(item => {
           const title =
-            item.type === "lab" ? item.labWorkTitle : item.problemTitle;
+            item.type === "lab"
+              ? item.labWorkTitle
+              : item.type === "problem"
+                ? item.problemTitle
+                : item.notebookTitle;
           return (
             title.toLowerCase().includes(search) ||
             item.studentName.toLowerCase().includes(search) ||
@@ -592,7 +662,7 @@ export const adminRouter = createRouter({
   getSubmissionById: adminQuery
     .input(
       z.object({
-        type: z.enum(["lab", "problem"]),
+        type: z.enum(["lab", "problem", "jupyter_notebook"]),
         id: z.number().positive(),
       })
     )
@@ -601,6 +671,7 @@ export const adminRouter = createRouter({
       const authDb = getAuthDb();
       const labsDb = getLabsDb();
       const problemsDb = getProblemsDb();
+      const jupyterDb = getJupyterDb();
 
       if (input.type === "lab") {
         const [progressRow] = await learningDb
@@ -645,6 +716,47 @@ export const adminRouter = createRouter({
           labWorkSlug: work?.slug ?? "—",
           labWorkGoal: work?.goal ?? null,
           labWorkTheory: work?.theory ?? null,
+        };
+      }
+
+      if (input.type === "jupyter_notebook") {
+        const [assignment] = await learningDb
+          .select()
+          .from(assignedJupyterNotebooks)
+          .where(eq(assignedJupyterNotebooks.id, input.id));
+
+        if (!assignment) {
+          throw new Error("Submission not found");
+        }
+
+        const [student] = await authDb
+          .select()
+          .from(localUsers)
+          .where(eq(localUsers.id, assignment.localUserId))
+          .limit(1);
+
+        const [notebook] = await jupyterDb
+          .select()
+          .from(jupyterNotebooks)
+          .where(eq(jupyterNotebooks.id, assignment.notebookId))
+          .limit(1);
+
+        return {
+          type: "jupyter_notebook" as const,
+          id: assignment.id,
+          status: assignment.status,
+          grade: assignment.grade,
+          studentColabUrl: assignment.studentColabUrl,
+          teacherComment: assignment.teacherComment,
+          submittedAt: assignment.submittedAt,
+          completedAt: assignment.completedAt,
+          updatedAt: assignment.updatedAt,
+          studentId: assignment.localUserId,
+          studentName: student?.name ?? "—",
+          studentLogin: student?.login ?? "—",
+          notebookId: assignment.notebookId,
+          notebookTitle: notebook?.title ?? "—",
+          notebookFilename: notebook?.filename ?? "",
         };
       }
 
@@ -695,7 +807,7 @@ export const adminRouter = createRouter({
   gradeSubmission: adminQuery
     .input(
       z.object({
-        type: z.enum(["lab", "problem"]),
+        type: z.enum(["lab", "problem", "jupyter_notebook"]),
         id: z.number().positive(),
         grade: z.number().min(1).max(5).optional(),
         teacherComment: z.string().max(2000).optional(),
@@ -815,22 +927,9 @@ export const adminRouter = createRouter({
       for (const s of subtopicList) subtopicMap.set(s.id, s.title);
     }
 
-    // Get access counts
-    const accessList = await jupyterDb
-      .select({
-        notebookId: jupyterNotebookAccess.notebookId,
-        count: count(),
-      })
-      .from(jupyterNotebookAccess)
-      .groupBy(jupyterNotebookAccess.notebookId);
-    const accessCountMap = new Map(
-      accessList.map(a => [a.notebookId, a.count])
-    );
-
     return notebooks.map(n => ({
       ...n,
       subtopicTitle: subtopicMap.get(n.subtopicNodeId) ?? "—",
-      accessCount: accessCountMap.get(n.id) ?? 0,
     }));
   }),
 
@@ -886,119 +985,6 @@ export const adminRouter = createRouter({
         action: "delete",
         resource: "jupyter_notebooks",
         resourceId: input.id,
-      });
-
-      return { success: true };
-    }),
-
-  // ── Jupyter Notebook Access Management ──
-
-  listJupyterAccess: adminQuery
-    .input(z.object({ notebookId: z.number().positive() }))
-    .query(async ({ input }) => {
-      const jupyterDb = getJupyterDb();
-      const authDb = getAuthDb();
-
-      const accesses = await jupyterDb
-        .select()
-        .from(jupyterNotebookAccess)
-        .where(eq(jupyterNotebookAccess.notebookId, input.notebookId));
-
-      const studentIds = accesses.map(a => a.localUserId);
-      const studentMap = new Map<number, typeof localUsers.$inferSelect>();
-      if (studentIds.length > 0) {
-        const students = await authDb
-          .select()
-          .from(localUsers)
-          .where(inArray(localUsers.id, studentIds));
-        for (const s of students) studentMap.set(s.id, s);
-      }
-
-      return accesses.map(a => ({
-        id: a.id,
-        notebookId: a.notebookId,
-        localUserId: a.localUserId,
-        grantedAt: a.grantedAt,
-        studentName: studentMap.get(a.localUserId)?.name ?? "—",
-        studentLogin: studentMap.get(a.localUserId)?.login ?? "—",
-      }));
-    }),
-
-  grantJupyterAccess: adminQuery
-    .input(
-      z.object({
-        notebookId: z.number().positive(),
-        localUserId: z.number().positive(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const jupyterDb = getJupyterDb();
-      const notificationsDb = getNotificationsDb();
-
-      // Check if already granted
-      const existing = await jupyterDb
-        .select()
-        .from(jupyterNotebookAccess)
-        .where(
-          and(
-            eq(jupyterNotebookAccess.notebookId, input.notebookId),
-            eq(jupyterNotebookAccess.localUserId, input.localUserId)
-          )
-        )
-        .limit(1);
-
-      if (existing.length > 0) {
-        return { success: true, alreadyGranted: true };
-      }
-
-      await jupyterDb.insert(jupyterNotebookAccess).values({
-        notebookId: input.notebookId,
-        localUserId: input.localUserId,
-        grantedBy: ctx.localUser!.id,
-      });
-
-      // Get notebook info for notification
-      const notebook = await jupyterDb
-        .select()
-        .from(jupyterNotebooks)
-        .where(eq(jupyterNotebooks.id, input.notebookId))
-        .limit(1);
-
-      // Create notification for student
-      await notificationsDb.insert(notifications).values({
-        localUserId: input.localUserId,
-        type: "jupyter_notebook",
-        title: "Доступен новый Jupyter-ноутбук",
-        message: `Вам открыт доступ к ноутбуку "${notebook[0]?.title ?? "—"}". Скачайте его в своём профиле.`,
-        resourceId: input.notebookId,
-      });
-
-      await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
-        action: "grant_access",
-        resource: "jupyter_notebook_access",
-        resourceId: input.notebookId,
-        details: { localUserId: input.localUserId },
-      });
-
-      return { success: true, alreadyGranted: false };
-    }),
-
-  revokeJupyterAccess: adminQuery
-    .input(z.object({ accessId: z.number().positive() }))
-    .mutation(async ({ ctx, input }) => {
-      const db = getJupyterDb();
-      await db
-        .delete(jupyterNotebookAccess)
-        .where(eq(jupyterNotebookAccess.id, input.accessId));
-
-      await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
-        action: "revoke_access",
-        resource: "jupyter_notebook_access",
-        resourceId: input.accessId,
       });
 
       return { success: true };

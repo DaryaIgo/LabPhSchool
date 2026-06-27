@@ -9,6 +9,7 @@ import LabWorkPage from "./pages/LabWorkPage";
 import ProblemManagement from "./pages/admin/ProblemManagement";
 import Profile from "./pages/Profile";
 import StudentProblemPage from "./pages/StudentProblemPage";
+import StudentNotebookPage from "./pages/StudentNotebookPage";
 import Resources from "./pages/Resources";
 import Timeline from "./pages/Timeline";
 import Login from "./pages/Login";
@@ -54,6 +55,10 @@ export default function App() {
         <Route
           path="/student/problem/:assignmentId"
           element={<StudentProblemPage />}
+        />
+        <Route
+          path="/student/notebook/:assignmentId"
+          element={<StudentNotebookPage />}
         />
 
         {/* Admin Routes */}

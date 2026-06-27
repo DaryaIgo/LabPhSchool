@@ -28,6 +28,7 @@ import MarkdownRenderer from "@/components/MarkdownRenderer";
 import {
   FlaskConical,
   FileText,
+  NotebookPen,
   Search,
   ChevronLeft,
   ChevronRight,
@@ -38,9 +39,11 @@ import {
   User,
   Calendar,
   ImageIcon,
+  Link2,
+  ExternalLink,
 } from "lucide-react";
 
-type SubmissionType = "lab" | "problem";
+type SubmissionType = "lab" | "problem" | "jupyter_notebook";
 
 interface LabSubmissionItem {
   type: "lab";
@@ -76,7 +79,27 @@ interface ProblemSubmissionItem {
   problemSlug: string;
 }
 
-type SubmissionItem = LabSubmissionItem | ProblemSubmissionItem;
+interface NotebookSubmissionItem {
+  type: "jupyter_notebook";
+  id: number;
+  status: string;
+  grade: number | null;
+  teacherComment: string | null;
+  submittedAt: Date | null;
+  completedAt: Date | null;
+  updatedAt: Date;
+  studentId: number;
+  studentName: string | null;
+  studentLogin: string;
+  notebookId: number;
+  notebookTitle: string;
+  studentColabUrl: string | null;
+}
+
+type SubmissionItem =
+  | LabSubmissionItem
+  | ProblemSubmissionItem
+  | NotebookSubmissionItem;
 
 const STATUS_LABELS: Record<string, string> = {
   submitted: "На проверке",
@@ -92,6 +115,7 @@ const TYPE_LABELS: Record<SubmissionType | "all", string> = {
   all: "Все",
   lab: "Лабораторная",
   problem: "Задача",
+  jupyter_notebook: "Jupyter-ноутбук",
 };
 
 export default function SubmissionsReview() {
@@ -136,8 +160,10 @@ export default function SubmissionsReview() {
       utils.admin.getSubmissionById.invalidate();
       utils.enrollment.listAssignedLabWorks.invalidate();
       utils.enrollment.listAssignedProblems.invalidate();
+      utils.enrollment.listAssignedJupyterNotebooks.invalidate();
       utils.student.getMyAssignedLabWorks.invalidate();
       utils.student.getMyAssignedProblems.invalidate();
+      utils.student.getMyJupyterNotebooks.invalidate();
       setDetailOpen(false);
       setSelectedSubmission(null);
     },
@@ -205,6 +231,7 @@ export default function SubmissionsReview() {
             <SelectItem value="all">Все работы</SelectItem>
             <SelectItem value="lab">Лабораторные</SelectItem>
             <SelectItem value="problem">Задачи</SelectItem>
+            <SelectItem value="jupyter_notebook">Jupyter-ноутбуки</SelectItem>
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -283,8 +310,10 @@ export default function SubmissionsReview() {
                         <div className="flex items-center gap-1.5 text-sm text-gray-300">
                           {item.type === "lab" ? (
                             <FlaskConical className="h-4 w-4 text-[#2eff8c]" />
-                          ) : (
+                          ) : item.type === "problem" ? (
                             <FileText className="h-4 w-4 text-[#01acff]" />
+                          ) : (
+                            <NotebookPen className="h-4 w-4 text-[#2eff8c]" />
                           )}
                           {TYPE_LABELS[item.type]}
                         </div>
@@ -293,12 +322,16 @@ export default function SubmissionsReview() {
                         <div className="text-sm text-white">
                           {item.type === "lab"
                             ? item.labWorkTitle
-                            : item.problemTitle}
+                            : item.type === "problem"
+                            ? item.problemTitle
+                            : item.notebookTitle}
                         </div>
                         <div className="text-xs text-gray-500">
                           {item.type === "lab"
                             ? item.labWorkSlug
-                            : item.problemSlug}
+                            : item.type === "problem"
+                            ? item.problemSlug
+                            : "Jupyter-ноутбук"}
                         </div>
                       </td>
                       <td className="px-4 py-3">
@@ -382,13 +415,18 @@ export default function SubmissionsReview() {
             <DialogTitle className="text-xl flex items-center gap-2">
               {selectedSubmission?.type === "lab" ? (
                 <FlaskConical className="h-6 w-6 text-[#2eff8c]" />
-              ) : (
+              ) : selectedSubmission?.type === "problem" ? (
                 <FileText className="h-6 w-6 text-[#01acff]" />
+              ) : (
+                <NotebookPen className="h-6 w-6 text-[#2eff8c]" />
               )}
               {selectedSubmission?.type === "lab"
                 ? detailData?.labWorkTitle ?? selectedSubmission?.labWorkTitle
-                : detailData?.problemTitle ??
-                  selectedSubmission?.problemTitle}
+                : selectedSubmission?.type === "problem"
+                  ? detailData?.problemTitle ??
+                    selectedSubmission?.problemTitle
+                  : detailData?.notebookTitle ??
+                    selectedSubmission?.notebookTitle}
             </DialogTitle>
             <DialogDescription className="text-gray-400">
               {detailData?.studentName || detailData?.studentLogin} (
@@ -529,6 +567,41 @@ export default function SubmissionsReview() {
                       </a>
                     </div>
                   )}
+                </>
+              )}
+
+              {/* Notebook content */}
+              {detailData.type === "jupyter_notebook" && (
+                <>
+                  {detailData.studentColabUrl && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-[#01acff] mb-2 flex items-center gap-2">
+                        <Link2 className="h-4 w-4" />
+                        Работа студента в Google Colab
+                      </h4>
+                      <div className="bg-[#0d1117] border border-[#37474f] rounded-lg p-4">
+                        <a
+                          href={detailData.studentColabUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-[#2eff8c] hover:underline break-all"
+                        >
+                          {detailData.studentColabUrl}
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <h4 className="text-sm font-semibold text-[#2eff8c] mb-2 flex items-center gap-2">
+                      <NotebookPen className="h-4 w-4" />
+                      Исходный ноутбук
+                    </h4>
+                    <div className="bg-[#0d1117] border border-[#37474f] rounded-lg p-4 text-sm text-[#c8cdd1]">
+                      {detailData.notebookFilename}
+                    </div>
+                  </div>
                 </>
               )}
 

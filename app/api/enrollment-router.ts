@@ -20,10 +20,14 @@ import {
 } from "./queries/enrollments";
 import { findLocalUserById } from "./queries/localUsers";
 import { createAuditEntry } from "./queries/audit";
-import { getContentDb } from "./queries/connection";
+import {
+  getContentDb,
+  getLearningDb,
+  getNotificationsDb,
+  getJupyterDb,
+} from "./queries/connection";
 import { topicNodes } from "@db/schema/content";
 import { eq, and, isNull, isNotNull } from "drizzle-orm";
-import { getNotificationsDb } from "./queries/connection";
 import { notifications } from "@db/schema/notifications";
 import {
   getAssignedLabWorksByEnrollment,
@@ -41,6 +45,19 @@ import {
   deleteAssignedProblem,
   getMaxOrderForProblems,
 } from "./queries/assignedProblems";
+import {
+  getAssignedJupyterNotebooksByEnrollment,
+  findAssignedJupyterNotebook,
+  createAssignedJupyterNotebook,
+  updateAssignedJupyterNotebook,
+  deleteAssignedJupyterNotebook,
+  getMaxOrderForJupyterNotebooks,
+} from "./queries/assignedJupyterNotebooks";
+import {
+  jupyterNotebooks,
+  jupyterNotebookAccess,
+} from "@db/schema/jupyter";
+import { assignedJupyterNotebooks } from "@db/schema/learning";
 
 export const enrollmentRouter = createRouter({
   // ── Admin: List enrollments for a student ──
@@ -457,6 +474,196 @@ export const enrollmentRouter = createRouter({
         actorType: "user",
         action: "update",
         resource: "assigned_problems",
+        resourceId: assignmentId,
+        details: { status, grade },
+      });
+
+      return { success: true };
+    }),
+
+  // ═══════════════════════════════════════════════════════════════
+  // ADMIN: Assigned Jupyter Notebooks
+  // ═══════════════════════════════════════════════════════════════
+
+  listAssignedJupyterNotebooks: adminQuery
+    .input(z.object({ enrollmentId: z.number().positive() }))
+    .query(async ({ input }) => {
+      return getAssignedJupyterNotebooksByEnrollment(input.enrollmentId);
+    }),
+
+  assignJupyterNotebook: adminQuery
+    .input(
+      z.object({
+        enrollmentId: z.number().positive(),
+        notebookId: z.number().positive(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const enrollment = await getEnrollmentById(input.enrollmentId);
+      if (!enrollment) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Enrollment not found",
+        });
+      }
+
+      const existing = await findAssignedJupyterNotebook(
+        input.enrollmentId,
+        input.notebookId
+      );
+      if (existing) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "Notebook already assigned for this enrollment",
+        });
+      }
+
+      const maxOrder = await getMaxOrderForJupyterNotebooks(input.enrollmentId);
+
+      const result = await createAssignedJupyterNotebook({
+        enrollmentId: input.enrollmentId,
+        localUserId: enrollment.localUserId,
+        notebookId: input.notebookId,
+        order: maxOrder + 1,
+        assignedBy: ctx.localUser!.id,
+      });
+
+      const assignmentId = Number(result[0].insertId);
+
+      const jupyterDb = getJupyterDb();
+
+      // Ensure the student has download access to the notebook
+      const existingAccess = await jupyterDb
+        .select()
+        .from(jupyterNotebookAccess)
+        .where(
+          and(
+            eq(jupyterNotebookAccess.notebookId, input.notebookId),
+            eq(jupyterNotebookAccess.localUserId, enrollment.localUserId)
+          )
+        )
+        .limit(1);
+
+      if (existingAccess.length === 0) {
+        await jupyterDb.insert(jupyterNotebookAccess).values({
+          notebookId: input.notebookId,
+          localUserId: enrollment.localUserId,
+          grantedBy: ctx.localUser!.id,
+        });
+      }
+
+      const notebook = await jupyterDb
+        .select()
+        .from(jupyterNotebooks)
+        .where(eq(jupyterNotebooks.id, input.notebookId))
+        .limit(1);
+
+      const notificationsDb = getNotificationsDb();
+      await notificationsDb.insert(notifications).values({
+        localUserId: enrollment.localUserId,
+        type: "jupyter_notebook",
+        title: "Назначен новый Jupyter-ноутбук",
+        message: `Вам назначен ноутбук "${notebook[0]?.title ?? "—"}". Перейдите во вкладку «Мои Тетради».`,
+        resourceId: assignmentId,
+      });
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "create",
+        resource: "assigned_jupyter_notebooks",
+        resourceId: assignmentId,
+        details: {
+          enrollmentId: input.enrollmentId,
+          notebookId: input.notebookId,
+          localUserId: enrollment.localUserId,
+        },
+      });
+
+      return { id: assignmentId, success: true };
+    }),
+
+  unassignJupyterNotebook: adminQuery
+    .input(z.object({ assignmentId: z.number().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const learningDb = getLearningDb();
+      const jupyterDb = getJupyterDb();
+
+      const [assignment] = await learningDb
+        .select()
+        .from(assignedJupyterNotebooks)
+        .where(eq(assignedJupyterNotebooks.id, input.assignmentId))
+        .limit(1);
+
+      await deleteAssignedJupyterNotebook(input.assignmentId);
+
+      if (assignment) {
+        const remaining = await learningDb
+          .select()
+          .from(assignedJupyterNotebooks)
+          .where(
+            and(
+              eq(assignedJupyterNotebooks.localUserId, assignment.localUserId),
+              eq(assignedJupyterNotebooks.notebookId, assignment.notebookId)
+            )
+          )
+          .limit(1);
+
+        if (remaining.length === 0) {
+          await jupyterDb
+            .delete(jupyterNotebookAccess)
+            .where(
+              and(
+                eq(jupyterNotebookAccess.notebookId, assignment.notebookId),
+                eq(
+                  jupyterNotebookAccess.localUserId,
+                  assignment.localUserId
+                )
+              )
+            );
+        }
+      }
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "delete",
+        resource: "assigned_jupyter_notebooks",
+        resourceId: input.assignmentId,
+      });
+
+      return { success: true };
+    }),
+
+  updateAssignedJupyterNotebook: adminQuery
+    .input(
+      z.object({
+        assignmentId: z.number().positive(),
+        status: z.enum(["assigned", "submitted", "completed"]).optional(),
+        grade: z.number().int().min(1).max(5).nullable().optional(),
+        teacherComment: z.string().max(2000).nullable().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { assignmentId, status, grade, teacherComment } = input;
+
+      await updateAssignedJupyterNotebook(assignmentId, {
+        status,
+        grade: grade === null ? null : grade,
+        teacherComment: teacherComment === null ? null : teacherComment,
+        completedAt:
+          status === "completed"
+            ? new Date()
+            : status === "assigned"
+              ? null
+              : undefined,
+      });
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "update",
+        resource: "assigned_jupyter_notebooks",
         resourceId: assignmentId,
         details: { status, grade },
       });

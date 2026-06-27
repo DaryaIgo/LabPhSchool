@@ -44,6 +44,7 @@ import {
   BookOpen,
   Beaker,
   FileText,
+  NotebookPen,
   CheckCircle2,
   Circle,
   Clock,
@@ -751,6 +752,10 @@ function TopicRow({
         />
         <AssignedLabWorksManager enrollmentId={enrollment.id} isOpen={isOpen} />
         <AssignedProblemsManager enrollmentId={enrollment.id} isOpen={isOpen} />
+        <AssignedJupyterNotebooksManager
+          enrollmentId={enrollment.id}
+          isOpen={isOpen}
+        />
       </CollapsibleContent>
     </Collapsible>
   );
@@ -1007,6 +1012,266 @@ function StatusLabel({ status }: { status: SubtopicStatus }) {
       {status === "completed" && <CheckCircle2 className="h-3 w-3" />}
       {SUBTOPIC_STATUS_LABELS[status]}
     </span>
+  );
+}
+
+function AssignedJupyterNotebooksManager({
+  enrollmentId,
+  isOpen,
+}: {
+  enrollmentId: number;
+  isOpen: boolean;
+}) {
+  const utils = trpc.useUtils();
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [selectedNotebookId, setSelectedNotebookId] = useState<number | null>(
+    null
+  );
+  const [statusFilter, setStatusFilter] = useState<"assigned" | "completed">(
+    "assigned"
+  );
+
+  const { data: assignedNotebooks, isLoading } =
+    trpc.enrollment.listAssignedJupyterNotebooks.useQuery(
+      { enrollmentId },
+      { enabled: isOpen }
+    );
+  const { data: allNotebooks } = trpc.admin.listJupyterNotebooks.useQuery(
+    undefined,
+    { enabled: isOpen }
+  );
+
+  const assignMutation = trpc.enrollment.assignJupyterNotebook.useMutation({
+    onSuccess: () => {
+      toast("Jupyter-ноутбук назначен");
+      utils.enrollment.listAssignedJupyterNotebooks.invalidate({ enrollmentId });
+      utils.student.getMyJupyterNotebooks.invalidate();
+      setAddDialogOpen(false);
+      setSelectedNotebookId(null);
+    },
+    onError: err => toast(err.message),
+  });
+
+  const unassignMutation = trpc.enrollment.unassignJupyterNotebook.useMutation({
+    onSuccess: () => {
+      toast("Назначение удалено");
+      utils.enrollment.listAssignedJupyterNotebooks.invalidate({ enrollmentId });
+      utils.student.getMyJupyterNotebooks.invalidate();
+    },
+    onError: err => toast(err.message),
+  });
+
+  const updateMutation = trpc.enrollment.updateAssignedJupyterNotebook.useMutation({
+    onSuccess: () => {
+      utils.enrollment.listAssignedJupyterNotebooks.invalidate({ enrollmentId });
+      utils.student.getMyJupyterNotebooks.invalidate();
+    },
+    onError: err => toast(err.message),
+  });
+
+  const availableNotebooks =
+    allNotebooks?.filter(
+      n => !assignedNotebooks?.some(a => a.notebookId === n.id)
+    ) ?? [];
+
+  const assignedCount =
+    assignedNotebooks?.filter(n => n.status !== "completed").length ?? 0;
+  const completedCount =
+    assignedNotebooks?.filter(n => n.status === "completed").length ?? 0;
+
+  const filteredNotebooks =
+    assignedNotebooks?.filter(n => {
+      if (statusFilter === "completed") return n.status === "completed";
+      return n.status !== "completed";
+    }) ?? [];
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <h4 className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
+          <NotebookPen className="h-3.5 w-3.5" />
+          Назначенные Jupyter-ноутбуки
+        </h4>
+        <div className="flex items-center gap-2">
+          <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+            <DialogTrigger asChild>
+              <button
+                type="button"
+                className="text-xs flex items-center gap-1 text-[#2eff8c] hover:text-[#26d97a] transition-colors"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Добавить ноутбук
+              </button>
+            </DialogTrigger>
+            <DialogContent className="bg-[#1e2529] border-[#37474f] text-white sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Назначить Jupyter-ноутбук</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-2">
+                <Select
+                  value={selectedNotebookId?.toString() ?? ""}
+                  onValueChange={v => setSelectedNotebookId(Number(v))}
+                >
+                  <SelectTrigger className="bg-[#263238] border-[#37474f]">
+                    <SelectValue placeholder="Выберите ноутбук..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1e2529] border-[#37474f] max-h-80">
+                    {availableNotebooks.map(n => (
+                      <SelectItem
+                        key={n.id}
+                        value={n.id.toString()}
+                        className="text-white"
+                      >
+                        <span className="truncate">{n.title}</span>
+                        <span className="ml-2 text-xs text-slate-500">
+                          {n.subtopicTitle ?? "Без подтемы"}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  className="w-full bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
+                  disabled={!selectedNotebookId || assignMutation.isPending}
+                  onClick={() => {
+                    if (selectedNotebookId) {
+                      assignMutation.mutate({
+                        enrollmentId,
+                        notebookId: selectedNotebookId,
+                      });
+                    }
+                  }}
+                >
+                  {assignMutation.isPending ? "Назначаем..." : "Назначить"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            value={statusFilter}
+            onValueChange={val =>
+              setStatusFilter((val as "assigned") ?? "assigned")
+            }
+            className="bg-[#1a2024]"
+          >
+            <ToggleGroupItem
+              value="assigned"
+              className="group text-xs h-7 px-2.5 text-slate-300 border-[#37474f] data-[state=on]:bg-[#2eff8c] data-[state=on]:text-[#0d1117] data-[state=on]:border-[#2eff8c] gap-1.5"
+            >
+              Назначен
+              <span className="inline-flex items-center justify-center min-w-[1.25rem] h-4 px-1 rounded-full bg-[#37474f] text-[10px] text-white group-data-[state=on]:bg-[#0d1117]/30">
+                {assignedCount}
+              </span>
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="completed"
+              className="group text-xs h-7 px-2.5 text-slate-300 border-[#37474f] data-[state=on]:bg-[#2eff8c] data-[state=on]:text-[#0d1117] data-[state=on]:border-[#2eff8c] gap-1.5"
+            >
+              Выполнен
+              <span className="inline-flex items-center justify-center min-w-[1.25rem] h-4 px-1 rounded-full bg-[#37474f] text-[10px] text-white group-data-[state=on]:bg-[#0d1117]/30">
+                {completedCount}
+              </span>
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-1.5">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 bg-[#37474f]" />
+          ))}
+        </div>
+      ) : filteredNotebooks.length > 0 ? (
+        <div className="grid gap-1.5">
+          {filteredNotebooks.map((notebook, idx) => (
+            <div
+              key={notebook.id}
+              className="flex items-center gap-2 px-3 py-2 bg-[#1a2024] rounded-md border border-[#2a3338] hover:border-[#37474f] transition-colors"
+            >
+              <span className="text-xs font-medium text-slate-500 w-5 shrink-0">
+                {idx + 1}.
+              </span>
+              <span className="flex-1 min-w-0 text-sm text-white truncate">
+                {notebook.notebookTitle}
+              </span>
+              <Select
+                value={notebook.status}
+                onValueChange={val =>
+                  updateMutation.mutate({
+                    assignmentId: notebook.id,
+                    status: val as "assigned" | "submitted" | "completed",
+                  })
+                }
+                disabled={updateMutation.isPending}
+              >
+                <SelectTrigger className="h-7 text-xs bg-[#232b2f] border-[#37474f] text-white w-32 shrink-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1e2529] border-[#37474f]">
+                  <SelectItem value="assigned" className="text-white">
+                    Назначен
+                  </SelectItem>
+                  <SelectItem value="submitted" className="text-white">
+                    На проверке
+                  </SelectItem>
+                  <SelectItem value="completed" className="text-white">
+                    Выполнен
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={notebook.grade?.toString() ?? "none"}
+                onValueChange={val =>
+                  updateMutation.mutate({
+                    assignmentId: notebook.id,
+                    grade: val === "none" ? null : Number(val),
+                  })
+                }
+                disabled={updateMutation.isPending}
+              >
+                <SelectTrigger className="h-7 text-xs bg-[#232b2f] border-[#37474f] text-white w-24 shrink-0">
+                  <SelectValue placeholder="Оценка" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1e2529] border-[#37474f]">
+                  <SelectItem value="none" className="text-white">
+                    Без оценки
+                  </SelectItem>
+                  {[1, 2, 3, 4, 5].map(g => (
+                    <SelectItem
+                      key={g}
+                      value={g.toString()}
+                      className="text-white"
+                    >
+                      {g}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm("Удалить назначенный Jupyter-ноутбук?")) {
+                    unassignMutation.mutate({ assignmentId: notebook.id });
+                  }
+                }}
+                disabled={unassignMutation.isPending}
+                className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-md transition-colors shrink-0"
+                title="Удалить"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-slate-500">
+          Нет ноутбуков с выбранным статусом
+        </p>
+      )}
+    </div>
   );
 }
 

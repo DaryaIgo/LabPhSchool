@@ -396,7 +396,20 @@ npm run db:push       # Push схемы (для разработки)
 | `/admin/problems` | Problem Management | Требуется admin |
 | `/student/login` | Вход для ученика | Публичный |
 | `/student/profile` | Личный кабинет ученика (дашборд) | Требуется ученик |
+| `/student/notebook/:assignmentId` | Сдача Jupyter-ноутбука | Требуется ученик |
 | `/student/labs` | Протоколы лабораторных | Требуется ученик |
+
+---
+
+## Архитектура назначенных Jupyter-ноутбуков
+
+Повторяет схему задач и лабораторных работ:
+
+- **Хранилище ноутбуков** — таблица `jupyter_notebooks` (домен `jupyter`). Файлы `.ipynb` хранятся на диске в `uploads/jupyter/`. Notebook Management (`JupyterNotebookManagement.tsx`) используется только для загрузки/удаления файлов и выбора подраздела.
+- **Назначение** — единственный способ дать ученику доступ к ноутбуку. Таблица `assigned_jupyter_notebooks` (домен `learning`), связана с `enrollments`. При назначении ученику автоматически добавляется запись в `jupyter_notebook_access`, чтобы работал существующий endpoint `/api/jupyter/download/:id`.
+- **Назначение в админке** — `EnrollmentManagement.tsx` → `AssignedJupyterNotebooksManager`, роутеры `enrollment.assignJupyterNotebook` / `unassignJupyterNotebook` / `updateAssignedJupyterNotebook`.
+- **Ученик** видит назначенные ноутбуки во вкладке «Мои Тетради» (`StudentNotebooksSection.tsx`) и на странице `/student/notebook/:assignmentId` (`StudentNotebookPage.tsx`). Может скачать ноутбук или открыть его в Google Colab (скачивание + ссылка на colab.research.google.com), а затем отправить ссылку на выполненную работу (`student.submitJupyterNotebookSolution`).
+- **Проверка** — отправленные ноутбуки попадают в `SubmissionsReview.tsx` с типом `jupyter_notebook`. Преподаватель открывает ссылку на Colab и выставляет оценку через `admin.gradeSubmission`.
 
 ---
 

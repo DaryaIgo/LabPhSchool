@@ -4,7 +4,6 @@
  *
  * Features:
  * - Upload .ipynb files linked to subtopics
- * - Grant/revoke per-student access
  * - Open notebooks in JupyterLite
  * - Download notebooks
  */
@@ -17,7 +16,6 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -39,11 +37,8 @@ import {
   Search,
   Upload,
   Trash2,
-  Users,
   ExternalLink,
   Download,
-  X,
-  Plus,
   Loader2,
 } from "lucide-react";
 
@@ -54,33 +49,26 @@ export default function JupyterNotebookManagement() {
 
   const [search, setSearch] = useState("");
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [accessDialogNotebook, setAccessDialogNotebook] = useState<{
-    id: number;
-    title: string;
-  } | null>(null);
 
   // Upload form
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadTopicNodeId, setUploadTopicNodeId] = useState<string>("");
   const [uploadSubtopicNodeId, setUploadSubtopicNodeId] = useState<string>("");
   const [uploadTitle, setUploadTitle] = useState("");
   const [isUploading, setIsUploading] = useState(false);
-
-  // Access grant
-  const [grantStudentId, setGrantStudentId] = useState<string>("");
 
   const { data: notebooks, isLoading } =
     trpc.admin.listJupyterNotebooks.useQuery(undefined, {
       enabled: !!user && user.role === "admin",
     });
 
-  const { data: topicNodes } = trpc.admin.listTopicNodes.useQuery(undefined, {
+  const { data: topics } = trpc.course.topics.useQuery(undefined, {
     enabled: !!user && user.role === "admin",
   });
 
-  const { data: students } = trpc.student.list.useQuery(
-    { status: "active", pageSize: 100 },
-    { enabled: !!user && user.role === "admin" }
-  );
+  const { data: subtopics } = trpc.course.listSubtopics.useQuery(undefined, {
+    enabled: !!user && user.role === "admin",
+  });
 
   const createMutation = trpc.admin.createJupyterNotebook.useMutation({
     onSuccess: () => {
@@ -100,58 +88,43 @@ export default function JupyterNotebookManagement() {
     onError: err => toast(err.message),
   });
 
-  const { data: accessList, isLoading: accessLoading } =
-    trpc.admin.listJupyterAccess.useQuery(
-      { notebookId: accessDialogNotebook?.id ?? 0 },
-      { enabled: !!accessDialogNotebook }
-    );
-
-  const grantMutation = trpc.admin.grantJupyterAccess.useMutation({
-    onSuccess: data => {
-      if (data.alreadyGranted) {
-        toast("Доступ уже был предоставлен");
-      } else {
-        toast("Доступ предоставлен");
-      }
-      utils.admin.listJupyterAccess.invalidate({
-        notebookId: accessDialogNotebook?.id ?? 0,
-      });
-      utils.admin.listJupyterNotebooks.invalidate();
-      setGrantStudentId("");
-    },
-    onError: err => toast(err.message),
-  });
-
-  const revokeMutation = trpc.admin.revokeJupyterAccess.useMutation({
-    onSuccess: () => {
-      toast("Доступ отозван");
-      utils.admin.listJupyterAccess.invalidate({
-        notebookId: accessDialogNotebook?.id ?? 0,
-      });
-      utils.admin.listJupyterNotebooks.invalidate();
-    },
-    onError: err => toast(err.message),
-  });
+  const topicMap = useMemo(() => {
+    const map = new Map<number, string>();
+    topics?.forEach(t => map.set(t.id, t.title));
+    return map;
+  }, [topics]);
 
   const subtopicMap = useMemo(() => {
-    const map = new Map<number, string>();
-    topicNodes?.forEach(n => {
-      if (n.parentId !== null) map.set(n.id, n.title);
+    const map = new Map<number, { title: string; parentId: number }>();
+    subtopics?.forEach(s => {
+      if (s.parentId !== null) {
+        map.set(s.id, { title: s.title, parentId: s.parentId });
+      }
     });
     return map;
-  }, [topicNodes]);
+  }, [subtopics]);
+
+  const subtopicOptions = useMemo(() => {
+    if (!uploadTopicNodeId || !subtopics) return [];
+    const topicId = Number(uploadTopicNodeId);
+    return subtopics.filter(s => s.parentId === topicId);
+  }, [uploadTopicNodeId, subtopics]);
 
   const filtered = notebooks?.filter(n => {
     if (!search) return true;
     const q = search.toLowerCase();
+    const sub = subtopicMap.get(n.subtopicNodeId);
+    const topicTitle = sub ? topicMap.get(sub.parentId) ?? "" : "";
     return (
       n.title.toLowerCase().includes(q) ||
-      (subtopicMap.get(n.subtopicNodeId) ?? "").toLowerCase().includes(q)
+      (sub?.title ?? "").toLowerCase().includes(q) ||
+      topicTitle.toLowerCase().includes(q)
     );
   });
 
   function resetUploadForm() {
     setUploadFile(null);
+    setUploadTopicNodeId("");
     setUploadSubtopicNodeId("");
     setUploadTitle("");
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -201,14 +174,6 @@ export default function JupyterNotebookManagement() {
     }
   }
 
-  function handleGrantAccess() {
-    if (!accessDialogNotebook || !grantStudentId) return;
-    grantMutation.mutate({
-      notebookId: accessDialogNotebook.id,
-      localUserId: Number(grantStudentId),
-    });
-  }
-
   function openJupyterLite() {
     const url = `https://jupyterlite.github.io/demo/lab/index.html`;
     window.open(url, "_blank", "noopener,noreferrer");
@@ -225,7 +190,7 @@ export default function JupyterNotebookManagement() {
           <div>
             <h1 className="text-2xl font-bold">Notebook Management</h1>
             <p className="text-sm text-gray-400">
-              Управление ноутбуками, доступом студентов и просмотр
+              Управление ноутбуками для назначения через Enrollments
             </p>
           </div>
         </div>
@@ -277,9 +242,6 @@ export default function JupyterNotebookManagement() {
                     <th className="text-left p-4 text-gray-400 font-medium">
                       Файл
                     </th>
-                    <th className="text-left p-4 text-gray-400 font-medium">
-                      Доступы
-                    </th>
                     <th className="text-right p-4 text-gray-400 font-medium">
                       Действия
                     </th>
@@ -288,7 +250,7 @@ export default function JupyterNotebookManagement() {
                 <tbody>
                   {filtered?.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="p-8 text-center text-gray-500">
+                      <td colSpan={5} className="p-8 text-center text-gray-500">
                         Ноутбуки не найдены
                       </td>
                     </tr>
@@ -302,7 +264,18 @@ export default function JupyterNotebookManagement() {
                         {n.id}
                       </td>
                       <td className="p-4 text-gray-300">
-                        {subtopicMap.get(n.subtopicNodeId) ?? "—"}
+                        {(() => {
+                          const sub = subtopicMap.get(n.subtopicNodeId);
+                          if (!sub) return "—";
+                          const topicTitle = topicMap.get(sub.parentId) ?? "—";
+                          return (
+                            <span className="text-xs">
+                              <span className="text-gray-400">{topicTitle}</span>
+                              <span className="mx-1 text-gray-500">→</span>
+                              <span>{sub.title}</span>
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="p-4 font-medium">{n.title}</td>
                       <td className="p-4">
@@ -315,12 +288,6 @@ export default function JupyterNotebookManagement() {
                         </a>
                       </td>
                       <td className="p-4">
-                        <Badge className="bg-[#37474f] text-white">
-                          <Users className="h-3 w-3 mr-1" />
-                          {n.accessCount}
-                        </Badge>
-                      </td>
-                      <td className="p-4">
                         <div className="flex items-center justify-end gap-1">
                           <Button
                             variant="ghost"
@@ -329,19 +296,6 @@ export default function JupyterNotebookManagement() {
                             title="Открыть в JupyterLite"
                           >
                             <ExternalLink className="h-4 w-4 text-[#2eff8c]" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              setAccessDialogNotebook({
-                                id: n.id,
-                                title: n.title,
-                              })
-                            }
-                            title="Управление доступом"
-                          >
-                            <Users className="h-4 w-4 text-[#01acff]" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -389,22 +343,48 @@ export default function JupyterNotebookManagement() {
               />
             </div>
             <div>
-              <Label htmlFor="subtopic">Подраздел</Label>
+              <Label htmlFor="topic">Тема</Label>
+              <Select
+                value={uploadTopicNodeId}
+                onValueChange={v => {
+                  setUploadTopicNodeId(v);
+                  setUploadSubtopicNodeId("");
+                }}
+              >
+                <SelectTrigger className="bg-[#263238] border-[#37474f] mt-1">
+                  <SelectValue placeholder="Выберите тему..." />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1e2529] border-[#37474f]">
+                  {topics?.map(t => (
+                    <SelectItem key={t.id} value={String(t.id)}>
+                      {t.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="subtopic">Раздел</Label>
               <Select
                 value={uploadSubtopicNodeId}
                 onValueChange={setUploadSubtopicNodeId}
+                disabled={!uploadTopicNodeId}
               >
                 <SelectTrigger className="bg-[#263238] border-[#37474f] mt-1">
-                  <SelectValue placeholder="Выберите подраздел..." />
+                  <SelectValue
+                    placeholder={
+                      uploadTopicNodeId
+                        ? "Выберите раздел..."
+                        : "Сначала выберите тему"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent className="bg-[#1e2529] border-[#37474f]">
-                  {topicNodes
-                    ?.filter(n => n.parentId !== null)
-                    .map(s => (
-                      <SelectItem key={s.id} value={String(s.id)}>
-                        {s.title}
-                      </SelectItem>
-                    ))}
+                  {subtopicOptions.map(s => (
+                    <SelectItem key={s.id} value={String(s.id)}>
+                      {s.title}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -446,83 +426,6 @@ export default function JupyterNotebookManagement() {
               </Button>
             </div>
           </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Access Management Dialog */}
-      <Dialog
-        open={!!accessDialogNotebook}
-        onOpenChange={open => !open && setAccessDialogNotebook(null)}
-      >
-        <DialogContent className="bg-[#1e2529] border-[#37474f] text-white max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Доступ к ноутбуку</DialogTitle>
-            <DialogDescription className="text-gray-400">
-              {accessDialogNotebook?.title}
-            </DialogDescription>
-          </DialogHeader>
-
-          {/* Grant access */}
-          <div className="flex gap-2 mt-4">
-            <Select value={grantStudentId} onValueChange={setGrantStudentId}>
-              <SelectTrigger className="bg-[#263238] border-[#37474f] flex-1">
-                <SelectValue placeholder="Выберите студента..." />
-              </SelectTrigger>
-              <SelectContent className="bg-[#1e2529] border-[#37474f]">
-                {students?.users.map(
-                  (s: { id: number; name: string; login: string }) => (
-                    <SelectItem key={s.id} value={String(s.id)}>
-                      {s.name} ({s.login})
-                    </SelectItem>
-                  )
-                )}
-              </SelectContent>
-            </Select>
-            <Button
-              onClick={handleGrantAccess}
-              disabled={!grantStudentId || grantMutation.isPending}
-              className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Дать доступ
-            </Button>
-          </div>
-
-          {/* Access list */}
-          <div className="mt-4 max-h-64 overflow-y-auto">
-            {accessLoading ? (
-              <div className="space-y-2">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-10 bg-[#37474f]" />
-                ))}
-              </div>
-            ) : accessList && accessList.length > 0 ? (
-              <div className="space-y-2">
-                {accessList.map(a => (
-                  <div
-                    key={a.id}
-                    className="flex items-center justify-between p-3 bg-[#263238] rounded-lg border border-[#37474f]"
-                  >
-                    <div>
-                      <p className="text-sm font-medium">{a.studentName}</p>
-                      <p className="text-xs text-gray-400">{a.studentLogin}</p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => revokeMutation.mutate({ accessId: a.id })}
-                    >
-                      <X className="h-4 w-4 text-[#ff6b6b]" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-gray-500 text-center py-4">
-                Нет выданных доступов
-              </p>
-            )}
-          </div>
         </DialogContent>
       </Dialog>
     </div>

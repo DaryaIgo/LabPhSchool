@@ -247,3 +247,62 @@ export const assignedProblems = mysqlTable(
 );
 
 export type AssignedProblem = typeof assignedProblems.$inferSelect;
+
+// ═══════════════════════════════════════════════════════════════
+// Teacher-assigned Jupyter notebooks per enrollment
+// ═══════════════════════════════════════════════════════════════
+
+// Soft references:
+// - enrollmentId -> learning.enrollments.id
+// - localUserId  -> auth.local_users.id
+// - notebookId   -> jupyter.jupyter_notebooks.id
+// - assignedBy   -> auth.users.id
+
+export const assignedJupyterNotebooks = mysqlTable(
+  "assigned_jupyter_notebooks",
+  {
+    id: serial("id").primaryKey(),
+    enrollmentId: bigint("enrollment_id", {
+      mode: "number",
+      unsigned: true,
+    }).notNull(),
+    localUserId: bigint("local_user_id", {
+      mode: "number",
+      unsigned: true,
+    }).notNull(),
+    notebookId: bigint("notebook_id", {
+      mode: "number",
+      unsigned: true,
+    }).notNull(),
+    order: int("order").notNull().default(1),
+    status: mysqlEnum("status", ["assigned", "submitted", "completed"])
+      .default("assigned")
+      .notNull(),
+    grade: int("grade"),
+    studentColabUrl: varchar("student_colab_url", { length: 500 }),
+    teacherComment: text("teacher_comment"),
+    assignedBy: bigint("assigned_by", { mode: "number", unsigned: true }),
+    assignedAt: timestamp("assigned_at").defaultNow().notNull(),
+    submittedAt: timestamp("submitted_at"),
+    completedAt: timestamp("completed_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
+  },
+  table => ({
+    uniqueAssignment: uniqueIndex("unique_jupyter_notebook_assignment").on(
+      table.enrollmentId,
+      table.notebookId
+    ),
+    enrollmentIdx: index("assigned_jupyter_notebook_enrollment_idx").on(
+      table.enrollmentId
+    ),
+    localUserIdx: index("assigned_jupyter_notebook_local_user_idx").on(
+      table.localUserId
+    ),
+  })
+);
+
+export type AssignedJupyterNotebook = typeof assignedJupyterNotebooks.$inferSelect;
