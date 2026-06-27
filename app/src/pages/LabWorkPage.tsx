@@ -1,13 +1,13 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useRef } from "react";
 import { trpc } from "@/providers/trpc";
 import { useParams } from "react-router";
 import {
-  FlaskConical,
   Target,
   Wrench,
   RotateCcw,
   BookOpen,
   Play,
+  Ruler,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -17,6 +17,7 @@ import LabLayout from "@/components/lab/LabLayout";
 import LabControls from "@/components/lab/LabControls";
 import ResultsTable from "@/components/lab/ResultsTable";
 import ConclusionPanel from "@/components/lab/ConclusionPanel";
+import { Textarea } from "@/components/ui/textarea";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import LabSidebar from "@/components/lab/LabSidebar";
 import type { ControlItem } from "@/components/lab/LabControls";
@@ -138,6 +139,7 @@ export default function LabWorkPage() {
     {}
   );
   const [conclusion, setConclusion] = useState("");
+  const [notes, setNotes] = useState("");
   const [isSimRunning, setIsSimRunning] = useState(false);
   const simStateRef = useRef<Record<string, number>>({});
 
@@ -626,22 +628,6 @@ export default function LabWorkPage() {
     setMeasurements([]);
   };
 
-  const averages = useMemo(() => {
-    if (measurements.length === 0) return undefined;
-    const result: Record<string, string | number> = { "№": "Среднее" };
-    const keys = Object.keys(measurements[0]).filter(k => k !== "№");
-    keys.forEach(key => {
-      const values = measurements
-        .map(m => Number(m[key]))
-        .filter(v => !isNaN(v));
-      if (values.length > 0) {
-        const avg = values.reduce((a, b) => a + b, 0) / values.length;
-        result[key] = avg.toFixed(3);
-      }
-    });
-    return result;
-  }, [measurements]);
-
   const handleSaveProgress = () => {
     if (!labWork || !user) {
       toast.error("Необходимо авторизоваться");
@@ -674,6 +660,8 @@ export default function LabWorkPage() {
 
   const simSlug = labWork?.simulationSlug ?? slug;
   const SimComponent = simSlug ? simComponents[simSlug] : null;
+  const isExternalSimulation = labWork?.simulation?.kind === "external";
+  const needsStartButton = labWork?.simulation?.isDynamic === true;
 
   if (isLoading) {
     return (
@@ -846,14 +834,26 @@ export default function LabWorkPage() {
                   </div>
                 )}
 
-                <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
-                  <LabControls controls={controls} />
-                </div>
+                {!isExternalSimulation && controls.length > 0 && (
+                  <div className="flex flex-col md:flex-row gap-4 items-center">
+                    <div className="flex-1 bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 w-full">
+                      <LabControls controls={controls} />
+                    </div>
+                    <Button
+                      onClick={handleAddMeasurement}
+                      className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70] shrink-0"
+                    >
+                      <Ruler size={16} className="mr-2" />
+                      Измерить
+                    </Button>
+                  </div>
+                )}
 
                 <div className="space-y-4">
-                  <div className="flex flex-wrap gap-3">
-                    <Button
-                      onClick={() => setIsSimRunning(prev => !prev)}
+                  {!isExternalSimulation && needsStartButton && (
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        onClick={() => setIsSimRunning(prev => !prev)}
                       className={
                         isSimRunning
                           ? "bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 border border-yellow-500/30"
@@ -872,17 +872,10 @@ export default function LabWorkPage() {
                         </>
                       )}
                     </Button>
-                    <Button
-                      onClick={handleAddMeasurement}
-                      variant="outline"
-                      className="border-[#37474f] text-[#c8cdd1] hover:text-white"
-                    >
-                      <FlaskConical size={16} className="mr-2" />
-                      Зафиксировать измерение
-                    </Button>
                   </div>
+                )}
 
-                  {SimComponent && (
+                {SimComponent && (
                     <div className="bg-[#1a1f22] border border-[#37474f] rounded-2xl overflow-hidden flex justify-center">
                       <SimComponent
                         params={effectiveSimParams}
@@ -903,33 +896,31 @@ export default function LabWorkPage() {
                   )}
                 </div>
 
-                <ResultsTable
-                  headers={headers}
-                  data={measurements}
-                  onAdd={handleAddMeasurement}
-                  onDelete={handleDeleteMeasurement}
-                  onClear={handleClearMeasurements}
-                  averages={averages}
-                />
-
-                {measurements.length > 0 && (
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {Object.entries(averages || {})
-                      .filter(([k]) => k !== "№")
-                      .map(([key, value]) => (
-                        <div
-                          key={key}
-                          className="bg-[#2a3237] border border-[#434e54] rounded-xl p-4"
-                        >
-                          <p className="text-xs text-[#798389] mb-1">
-                            Среднее {key}
-                          </p>
-                          <p className="text-xl font-bold text-[#2eff8c]">
-                            {String(value)}
-                          </p>
-                        </div>
-                      ))}
+                {isExternalSimulation ? (
+                  <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 space-y-3">
+                    <h3 className="text-sm font-semibold text-white">
+                      Заметки
+                    </h3>
+                    <Textarea
+                      value={notes}
+                      onChange={e => setNotes(e.target.value)}
+                      placeholder="Ваши наблюдения и заметки по эксперименту..."
+                      className="min-h-[160px] bg-[#1a1f22] border-[#37474f] text-white resize-y"
+                    />
+                    <p className="text-xs text-[#798389]">
+                      Заметки не сохраняются и предназначены только для
+                      личного пользования.
+                    </p>
                   </div>
+                ) : (
+                  <>
+                    <ResultsTable
+                      headers={headers}
+                      data={measurements}
+                      onDelete={handleDeleteMeasurement}
+                      onClear={handleClearMeasurements}
+                    />
+                  </>
                 )}
               </div>
             )}

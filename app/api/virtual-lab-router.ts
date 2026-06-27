@@ -839,6 +839,8 @@ export const virtualLabRouter = createRouter({
         category: z.string().max(50).optional(),
         thumbnail: z.string().max(500).optional(),
         componentRef: z.string().min(1).max(100),
+        kind: z.enum(["own", "external"]).optional(),
+        isDynamic: z.boolean().optional(),
         config: z
           .array(
             z.object({
@@ -866,6 +868,8 @@ export const virtualLabRouter = createRouter({
         category: input.category ?? null,
         thumbnail: input.thumbnail ?? null,
         componentRef: input.componentRef,
+        kind: input.kind ?? "own",
+        isDynamic: input.isDynamic ?? false,
         config: input.config ?? null,
         isActive: input.isActive ?? true,
       });
@@ -890,6 +894,8 @@ export const virtualLabRouter = createRouter({
         category: z.string().max(50).optional(),
         thumbnail: z.string().max(500).optional(),
         componentRef: z.string().min(1).max(100).optional(),
+        kind: z.enum(["own", "external"]).optional(),
+        isDynamic: z.boolean().optional(),
         config: z
           .array(
             z.object({
@@ -919,6 +925,8 @@ export const virtualLabRouter = createRouter({
       if (data.thumbnail !== undefined) updateData.thumbnail = data.thumbnail;
       if (data.componentRef !== undefined)
         updateData.componentRef = data.componentRef;
+      if (data.kind !== undefined) updateData.kind = data.kind;
+      if (data.isDynamic !== undefined) updateData.isDynamic = data.isDynamic;
       if (data.config !== undefined) updateData.config = data.config;
       if (data.isActive !== undefined) updateData.isActive = data.isActive;
 

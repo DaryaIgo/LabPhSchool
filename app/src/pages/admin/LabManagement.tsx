@@ -17,7 +17,9 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -45,9 +47,15 @@ import type {
   LabSubcategory,
   LabWork,
   Simulation,
+  SimulationKind,
   SimulationParamConfig,
 } from "@db/schema";
 import { LAB_CATEGORY_ICON_KEYS } from "@contracts/constants";
+
+const SIMULATION_KIND_LABELS: Record<SimulationKind, string> = {
+  own: "Наши симуляции",
+  external: "Сторонние симуляции",
+};
 
 type CategoryIconKey = (typeof LAB_CATEGORY_ICON_KEYS)[number];
 
@@ -111,7 +119,6 @@ const initialLabWorkForm = {
   theory: "",
   equipment: "",
   instruction: "",
-  conclusionTemplate: "",
   simulationSlug: null as string | null,
   status: "draft" as "draft" | "published",
 };
@@ -236,7 +243,6 @@ export default function LabManagement() {
       theory: lab.theory ?? "",
       equipment: lab.equipment ?? "",
       instruction: lab.instruction ?? "",
-      conclusionTemplate: lab.conclusionTemplate ?? "",
       simulationSlug: lab.simulationSlug ?? null,
       status: (lab.status as "draft" | "published") ?? "draft",
     });
@@ -289,12 +295,7 @@ export default function LabManagement() {
   const handleImageUpload = useCallback(
     async (
       e: React.ChangeEvent<HTMLInputElement>,
-      field:
-        | "theory"
-        | "instruction"
-        | "goal"
-        | "equipment"
-        | "conclusionTemplate"
+      field: "theory" | "instruction" | "goal" | "equipment"
     ) => {
       const file = e.target.files?.[0];
       if (!file) return;
@@ -1014,19 +1015,14 @@ function LabWorkEditor({
   isDeleting: boolean;
   onImageUpload: (
     e: React.ChangeEvent<HTMLInputElement>,
-    field:
-      | "theory"
-      | "instruction"
-      | "goal"
-      | "equipment"
-      | "conclusionTemplate"
+    field: "theory" | "instruction" | "goal" | "equipment"
   ) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   setGalleryOpen: (v: boolean) => void;
 }) {
   const [activeTab, setActiveTab] = useState("general");
   const [activeTheoryField, setActiveTheoryField] = useState<
-    "goal" | "theory" | "equipment" | "instruction" | "conclusionTemplate"
+    "goal" | "theory" | "equipment" | "instruction"
   >("theory");
 
   const selectedSimulation = useMemo(
@@ -1243,7 +1239,6 @@ function LabWorkEditor({
                 { key: "theory", label: "Теория" },
                 { key: "equipment", label: "Оборудование" },
                 { key: "instruction", label: "Инструкция" },
-                { key: "conclusionTemplate", label: "Вывод" },
               ].map(f => (
                 <button
                   key={f.key}
@@ -1320,15 +1315,33 @@ function LabWorkEditor({
                 <SelectItem value="none" className="text-white">
                   Без симуляции
                 </SelectItem>
-                {simulations.map(sim => (
-                  <SelectItem
-                    key={sim.id}
-                    value={sim.slug}
-                    className="text-white"
-                  >
-                    {sim.title} ({sim.category})
-                  </SelectItem>
-                ))}
+                {(
+                  ["own", "external"] as SimulationKind[]
+                ).map(kind => {
+                  const groupSims = simulations
+                    .filter(s => s.kind === kind)
+                    .sort((a, b) => a.title.localeCompare(b.title));
+                  if (groupSims.length === 0) return null;
+                  return (
+                    <SelectGroup key={kind}>
+                      <SelectLabel className="text-[#798389]">
+                        {SIMULATION_KIND_LABELS[kind]}
+                      </SelectLabel>
+                      {groupSims.map(sim => (
+                        <SelectItem
+                          key={sim.id}
+                          value={sim.slug}
+                          className="text-white"
+                        >
+                          {sim.title}{" "}
+                          <span className="text-[#798389]">
+                            ({sim.category})
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>

@@ -121,6 +121,9 @@ export interface SimulationParamConfig {
   unit?: string;
 }
 
+export const SIMULATION_KINDS = ["own", "external"] as const;
+export type SimulationKind = (typeof SIMULATION_KINDS)[number];
+
 export const simulations = mysqlTable("simulations", {
   id: serial("id").primaryKey(),
   slug: varchar("slug", { length: 255 }).notNull().unique(),
@@ -129,6 +132,10 @@ export const simulations = mysqlTable("simulations", {
   category: varchar("category", { length: 50 }),
   thumbnail: varchar("thumbnail", { length: 500 }),
   componentRef: varchar("component_ref", { length: 100 }).notNull(),
+  kind: mysqlEnum("kind", ["own", "external"])
+    .default("own")
+    .notNull(),
+  isDynamic: boolean("is_dynamic").default(false).notNull(),
   config: json("config").$type<SimulationParamConfig[] | null>(),
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

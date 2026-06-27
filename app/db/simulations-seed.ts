@@ -1,11 +1,17 @@
 import { getLabsDb } from "../api/queries/connection";
-import { simulations, type SimulationParamConfig } from "./schema/labs";
+import {
+  simulations,
+  type SimulationKind,
+  type SimulationParamConfig,
+} from "./schema/labs";
 
 type SimulationSeed = {
   slug: string;
   title: string;
   description: string;
   category: string;
+  kind?: SimulationKind;
+  isDynamic?: boolean;
   componentRef: string;
   params: SimulationParamConfig[];
 };
@@ -18,6 +24,7 @@ const simulationData: SimulationSeed[] = [
     description:
       "Анимированное движение тележки по линейке с измерением времени и пути.",
     category: "mechanics",
+    isDynamic: true,
     componentRef: "uniform-linear-motion",
     params: [
       {
@@ -58,6 +65,7 @@ const simulationData: SimulationSeed[] = [
     description:
       "Модель равноускоренного движения с изменением начальной скорости и ускорения.",
     category: "mechanics",
+    isDynamic: true,
     componentRef: "uniformly-accelerated-motion",
     params: [
       {
@@ -98,6 +106,7 @@ const simulationData: SimulationSeed[] = [
     description:
       "Два метода измерения g: свободное падение и математический маятник.",
     category: "mechanics",
+    isDynamic: true,
     componentRef: "free-fall-g",
     params: [
       {
@@ -176,6 +185,7 @@ const simulationData: SimulationSeed[] = [
     description:
       "Исследование центростремительного ускорения и силы при движении по окружности.",
     category: "mechanics",
+    isDynamic: true,
     componentRef: "circular-motion",
     params: [
       {
@@ -215,6 +225,7 @@ const simulationData: SimulationSeed[] = [
     title: "Движение тела, брошенного под углом",
     description: "Интерактивная PhET-симуляция баллистического движения.",
     category: "mechanics",
+    kind: "external",
     componentRef: "projectile-motion",
     params: [],
   },
@@ -540,6 +551,7 @@ const simulationData: SimulationSeed[] = [
     title: "Давление в жидкости (PhET)",
     description: "Интерактивная симуляция давления в жидкости и на тело.",
     category: "fluid-mechanics",
+    kind: "external",
     componentRef: "under-pressure-phet",
     params: [],
   },
@@ -548,6 +560,7 @@ const simulationData: SimulationSeed[] = [
     title: "Плавучесть (PhET)",
     description: "PhET-симуляция плавучести и силы Архимеда.",
     category: "fluid-mechanics",
+    kind: "external",
     componentRef: "buoyancy-phet",
     params: [],
   },
@@ -556,6 +569,7 @@ const simulationData: SimulationSeed[] = [
     title: "Основы плавучести (PhET)",
     description: "Упрощённая PhET-симуляция для изучения условий плавания.",
     category: "fluid-mechanics",
+    kind: "external",
     componentRef: "buoyancy-basics-phet",
     params: [],
   },
@@ -1133,6 +1147,8 @@ async function seedSimulations() {
         title: sim.title,
         description: sim.description,
         category: sim.category,
+        kind: sim.kind ?? "own",
+        isDynamic: sim.isDynamic ?? false,
         componentRef: sim.componentRef,
         config: sim.params,
         isActive: true,
@@ -1142,6 +1158,8 @@ async function seedSimulations() {
           title: sim.title,
           description: sim.description,
           category: sim.category,
+          kind: sim.kind ?? "own",
+          isDynamic: sim.isDynamic ?? false,
           componentRef: sim.componentRef,
           config: sim.params,
         },

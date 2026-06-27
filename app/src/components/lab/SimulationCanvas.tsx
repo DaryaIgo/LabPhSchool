@@ -75,7 +75,7 @@ export default function SimulationCanvas({
       ref={canvasRef}
       width={width}
       height={height}
-      className={`bg-[#1a1f22] rounded-xl border border-[#37474f] ${className}`}
+      className={`bg-[#1a1f22] rounded-xl ${className}`}
     />
   );
 }

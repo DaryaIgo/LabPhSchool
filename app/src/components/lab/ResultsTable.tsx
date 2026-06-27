@@ -1,4 +1,4 @@
-import { Trash2, Plus, Eraser } from "lucide-react";
+import { Trash2, Eraser } from "lucide-react";
 
 interface HeaderDef {
   key: string;
@@ -8,30 +8,19 @@ interface HeaderDef {
 interface ResultsTableProps {
   headers: HeaderDef[];
   data: Record<string, string | number>[];
-  onAdd: () => void;
   onDelete: (index: number) => void;
   onClear: () => void;
-  averages?: Record<string, string | number>;
 }
 
 export default function ResultsTable({
   headers,
   data,
-  onAdd,
   onDelete,
   onClear,
-  averages,
 }: ResultsTableProps) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-3">
-        <button
-          onClick={onAdd}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#2eff8c] text-[#0d1117] text-sm font-medium hover:bg-[#25cc70] transition-colors"
-        >
-          <Plus size={16} />
-          Добавить измерение
-        </button>
         {data.length > 0 && (
           <button
             onClick={onClear}
@@ -65,7 +54,7 @@ export default function ResultsTable({
                   colSpan={headers.length + 1}
                   className="px-4 py-8 text-center text-[#c8cdd1]"
                 >
-                  Нет данных. Нажмите «Зафиксировать измерение».
+                  Нет данных. Нажмите «Добавить измерение».
                 </td>
               </tr>
             ) : (
@@ -93,19 +82,6 @@ export default function ResultsTable({
                   </td>
                 </tr>
               ))
-            )}
-            {averages && data.length > 0 && (
-              <tr className="bg-[#2a3237]">
-                {headers.map(h => (
-                  <td
-                    key={h.key}
-                    className="px-4 py-2.5 text-[#2eff8c] font-medium whitespace-nowrap"
-                  >
-                    {averages[h.key] ?? ""}
-                  </td>
-                ))}
-                <td />
-              </tr>
             )}
           </tbody>
         </table>
