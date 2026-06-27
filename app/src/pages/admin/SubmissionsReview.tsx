@@ -23,9 +23,11 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import MarkdownRenderer from "@/components/MarkdownRenderer";
 
 import {
   FlaskConical,
+  FileText,
   Search,
   ChevronLeft,
   ChevronRight,
@@ -35,25 +37,15 @@ import {
   CheckCircle2,
   User,
   Calendar,
+  ImageIcon,
 } from "lucide-react";
 
-const STATUS_LABELS: Record<string, string> = {
-  submitted: "На проверке",
-  completed: "Принято",
-};
+type SubmissionType = "lab" | "problem";
 
-const STATUS_COLORS: Record<string, string> = {
-  submitted: "bg-[#ffc832] text-[#0d1117]",
-  completed: "bg-[#2eff8c] text-[#0d1117]",
-};
-
-interface Submission {
+interface LabSubmissionItem {
+  type: "lab";
   id: number;
   status: string;
-  mode: string;
-  data: unknown;
-  measurements: unknown;
-  conclusion: string | null;
   grade: number | null;
   teacherComment: string | null;
   startedAt: Date | null;
@@ -67,40 +59,85 @@ interface Submission {
   labWorkSlug: string;
 }
 
-export default function LabSubmissions() {
+interface ProblemSubmissionItem {
+  type: "problem";
+  id: number;
+  status: string;
+  grade: number | null;
+  teacherComment: string | null;
+  submittedAt: Date | null;
+  completedAt: Date | null;
+  updatedAt: Date;
+  studentId: number;
+  studentName: string | null;
+  studentLogin: string;
+  problemId: number;
+  problemTitle: string;
+  problemSlug: string;
+}
+
+type SubmissionItem = LabSubmissionItem | ProblemSubmissionItem;
+
+const STATUS_LABELS: Record<string, string> = {
+  submitted: "На проверке",
+  completed: "Принято",
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  submitted: "bg-[#ffc832] text-[#0d1117]",
+  completed: "bg-[#2eff8c] text-[#0d1117]",
+};
+
+const TYPE_LABELS: Record<SubmissionType | "all", string> = {
+  all: "Все",
+  lab: "Лабораторная",
+  problem: "Задача",
+};
+
+export default function SubmissionsReview() {
   const { user } = useAuth({ redirectOnUnauthenticated: true });
   const utils = trpc.useUtils();
 
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>("submitted");
+  const [typeFilter, setTypeFilter] = useState<"all" | SubmissionType>("all");
   const [search, setSearch] = useState("");
   const [selectedSubmission, setSelectedSubmission] =
-    useState<Submission | null>(null);
+    useState<SubmissionItem | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [grade, setGrade] = useState<string>("");
   const [comment, setComment] = useState("");
 
   const pageSize = 15;
 
-  const { data, isLoading } = trpc.admin.getLabSubmissions.useQuery(
+  const { data, isLoading } = trpc.admin.getSubmissions.useQuery(
     {
       status: statusFilter as "submitted" | "completed",
+      type: typeFilter,
+      search: search || undefined,
       page,
       pageSize,
     },
     { enabled: !!user && user.role === "admin" }
   );
 
-  const { data: detailData } = trpc.admin.getLabSubmissionById.useQuery(
-    { id: selectedSubmission?.id ?? 0 },
+  const { data: detailData } = trpc.admin.getSubmissionById.useQuery(
+    {
+      type: selectedSubmission?.type ?? "lab",
+      id: selectedSubmission?.id ?? 0,
+    },
     { enabled: !!selectedSubmission && detailOpen }
   );
 
-  const gradeMutation = trpc.admin.gradeLabSubmission.useMutation({
+  const gradeMutation = trpc.admin.gradeSubmission.useMutation({
     onSuccess: () => {
       toast.success("Оценка сохранена");
-      utils.admin.getLabSubmissions.invalidate();
-      utils.admin.getLabSubmissionById.invalidate();
+      utils.admin.getSubmissions.invalidate();
+      utils.admin.getSubmissionById.invalidate();
+      utils.enrollment.listAssignedLabWorks.invalidate();
+      utils.enrollment.listAssignedProblems.invalidate();
+      utils.student.getMyAssignedLabWorks.invalidate();
+      utils.student.getMyAssignedProblems.invalidate();
       setDetailOpen(false);
       setSelectedSubmission(null);
     },
@@ -110,6 +147,7 @@ export default function LabSubmissions() {
   const handleGrade = () => {
     if (!selectedSubmission) return;
     gradeMutation.mutate({
+      type: selectedSubmission.type,
       id: selectedSubmission.id,
       grade: grade ? Number(grade) : undefined,
       teacherComment: comment || undefined,
@@ -117,23 +155,12 @@ export default function LabSubmissions() {
     });
   };
 
-  const handleOpenDetail = (submission: Submission) => {
+  const handleOpenDetail = (submission: SubmissionItem) => {
     setSelectedSubmission(submission);
     setGrade(submission.grade?.toString() ?? "");
     setComment(submission.teacherComment ?? "");
     setDetailOpen(true);
   };
-
-  const filteredItems =
-    data?.items.filter(item => {
-      if (!search) return true;
-      const q = search.toLowerCase();
-      return (
-        item.studentName?.toLowerCase().includes(q) ||
-        item.studentLogin.toLowerCase().includes(q) ||
-        item.labWorkTitle.toLowerCase().includes(q)
-      );
-    }) ?? [];
 
   if (!user || user.role !== "admin") return null;
 
@@ -141,11 +168,11 @@ export default function LabSubmissions() {
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
-        <FlaskConical className="h-8 w-8 text-[#2eff8c]" />
+        <CheckCircle2 className="h-8 w-8 text-[#2eff8c]" />
         <div>
-          <h1 className="text-2xl font-bold">Проверка лабораторных работ</h1>
+          <h1 className="text-2xl font-bold">Проверка работ</h1>
           <p className="text-sm text-gray-400">
-            Просмотр, оценка и комментирование работ студентов
+            Просмотр, оценка и комментирование лабораторных работ и задач
           </p>
         </div>
       </div>
@@ -157,10 +184,29 @@ export default function LabSubmissions() {
           <Input
             placeholder="Поиск по студенту или работе..."
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             className="pl-10 bg-[#1e2529] border-[#37474f] text-white"
           />
         </div>
+        <Select
+          value={typeFilter}
+          onValueChange={val => {
+            setTypeFilter(val as "all" | SubmissionType);
+            setPage(1);
+          }}
+        >
+          <SelectTrigger className="w-[180px] bg-[#1e2529] border-[#37474f] text-white">
+            <SelectValue placeholder="Тип" />
+          </SelectTrigger>
+          <SelectContent className="bg-[#1e2529] border-[#37474f]">
+            <SelectItem value="all">Все работы</SelectItem>
+            <SelectItem value="lab">Лабораторные</SelectItem>
+            <SelectItem value="problem">Задачи</SelectItem>
+          </SelectContent>
+        </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[180px] bg-[#1e2529] border-[#37474f] text-white">
             <SelectValue placeholder="Статус" />
@@ -181,9 +227,9 @@ export default function LabSubmissions() {
                 <Skeleton key={i} className="h-12 bg-[#37474f]" />
               ))}
             </div>
-          ) : filteredItems.length === 0 ? (
+          ) : data?.items.length === 0 ? (
             <div className="p-12 text-center text-gray-400">
-              <FlaskConical className="h-12 w-12 mx-auto mb-4 text-[#37474f]" />
+              <FileText className="h-12 w-12 mx-auto mb-4 text-[#37474f]" />
               <p>Работы не найдены</p>
             </div>
           ) : (
@@ -195,7 +241,10 @@ export default function LabSubmissions() {
                       Студент
                     </th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-gray-400 uppercase">
-                      Лабораторная работа
+                      Тип
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-400 uppercase">
+                      Работа
                     </th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-gray-400 uppercase">
                       Статус
@@ -212,9 +261,9 @@ export default function LabSubmissions() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredItems.map(item => (
+                  {data?.items.map(item => (
                     <tr
-                      key={item.id}
+                      key={`${item.type}-${item.id}`}
                       className="border-b border-[#2a3237] hover:bg-[#263238] transition-colors"
                     >
                       <td className="px-4 py-3">
@@ -231,11 +280,25 @@ export default function LabSubmissions() {
                         </div>
                       </td>
                       <td className="px-4 py-3">
+                        <div className="flex items-center gap-1.5 text-sm text-gray-300">
+                          {item.type === "lab" ? (
+                            <FlaskConical className="h-4 w-4 text-[#2eff8c]" />
+                          ) : (
+                            <FileText className="h-4 w-4 text-[#01acff]" />
+                          )}
+                          {TYPE_LABELS[item.type]}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
                         <div className="text-sm text-white">
-                          {item.labWorkTitle}
+                          {item.type === "lab"
+                            ? item.labWorkTitle
+                            : item.problemTitle}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {item.labWorkSlug}
+                          {item.type === "lab"
+                            ? item.labWorkSlug
+                            : item.problemSlug}
                         </div>
                       </td>
                       <td className="px-4 py-3">
@@ -267,7 +330,7 @@ export default function LabSubmissions() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleOpenDetail(item as Submission)}
+                          onClick={() => handleOpenDetail(item as SubmissionItem)}
                           className="text-[#2eff8c] hover:text-[#25cc70] hover:bg-[#2eff8c]/10"
                         >
                           <Eye className="h-4 w-4 mr-1" />
@@ -317,8 +380,15 @@ export default function LabSubmissions() {
         <DialogContent className="max-w-3xl bg-[#1e2529] border-[#37474f] text-white max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl flex items-center gap-2">
-              <FlaskConical className="h-6 w-6 text-[#2eff8c]" />
-              {detailData?.labWorkTitle ?? selectedSubmission?.labWorkTitle}
+              {selectedSubmission?.type === "lab" ? (
+                <FlaskConical className="h-6 w-6 text-[#2eff8c]" />
+              ) : (
+                <FileText className="h-6 w-6 text-[#01acff]" />
+              )}
+              {selectedSubmission?.type === "lab"
+                ? detailData?.labWorkTitle ?? selectedSubmission?.labWorkTitle
+                : detailData?.problemTitle ??
+                  selectedSubmission?.problemTitle}
             </DialogTitle>
             <DialogDescription className="text-gray-400">
               {detailData?.studentName || detailData?.studentLogin} (
@@ -342,70 +412,127 @@ export default function LabSubmissions() {
                     Оценка: {detailData.grade}
                   </Badge>
                 )}
+                <Badge className="bg-[#1e2529] border border-[#37474f] text-gray-300">
+                  {TYPE_LABELS[detailData.type]}
+                </Badge>
               </div>
 
-              {/* Measurements */}
-              {Array.isArray(detailData.measurements) &&
-                detailData.measurements.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-[#2eff8c] mb-2 flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4" />
-                      Измерения
-                    </h4>
-                    <div className="bg-[#0d1117] border border-[#37474f] rounded-lg overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b border-[#37474f]">
-                            {Object.keys(
-                              detailData.measurements[0] as Record<
-                                string,
-                                unknown
-                              >
-                            ).map(key => (
-                              <th
-                                key={key}
-                                className="px-3 py-2 text-left text-xs text-gray-400 uppercase"
-                              >
-                                {key}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(
-                            detailData.measurements as Record<string, unknown>[]
-                          ).map((row, i) => (
-                            <tr key={i} className="border-b border-[#2a3237]">
-                              {Object.values(row).map((val, j) => (
-                                <td
-                                  key={j}
-                                  className="px-3 py-2 text-[#c8cdd1]"
-                                >
-                                  {String(val)}
-                                </td>
+              {/* Lab content */}
+              {detailData.type === "lab" && (
+                <>
+                  {Array.isArray(detailData.measurements) &&
+                    detailData.measurements.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-semibold text-[#2eff8c] mb-2 flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4" />
+                          Измерения
+                        </h4>
+                        <div className="bg-[#0d1117] border border-[#37474f] rounded-lg overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b border-[#37474f]">
+                                {Object.keys(
+                                  detailData.measurements[0] as Record<
+                                    string,
+                                    unknown
+                                  >
+                                ).map(key => (
+                                  <th
+                                    key={key}
+                                    className="px-3 py-2 text-left text-xs text-gray-400 uppercase"
+                                  >
+                                    {key}
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {(
+                                detailData.measurements as Record<
+                                  string,
+                                  unknown
+                                >[]
+                              ).map((row, i) => (
+                                <tr key={i} className="border-b border-[#2a3237]">
+                                  {Object.values(row).map((val, j) => (
+                                    <td
+                                      key={j}
+                                      className="px-3 py-2 text-[#c8cdd1]"
+                                    >
+                                      {String(val)}
+                                    </td>
+                                  ))}
+                                </tr>
                               ))}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
 
-              {/* Conclusion */}
-              {detailData.conclusion && (
-                <div>
-                  <h4 className="text-sm font-semibold text-[#2eff8c] mb-2 flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4" />
-                    Вывод студента
-                  </h4>
-                  <div className="bg-[#0d1117] border border-[#37474f] rounded-lg p-4 text-sm text-[#c8cdd1] whitespace-pre-wrap">
-                    {detailData.conclusion}
-                  </div>
-                </div>
+                  {detailData.conclusion && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-[#2eff8c] mb-2 flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4" />
+                        Вывод студента
+                      </h4>
+                      <div className="bg-[#0d1117] border border-[#37474f] rounded-lg p-4 text-sm text-[#c8cdd1] whitespace-pre-wrap">
+                        {detailData.conclusion}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
-              {/* Teacher Comment (existing) */}
+              {/* Problem content */}
+              {detailData.type === "problem" && (
+                <>
+                  <div>
+                    <h4 className="text-sm font-semibold text-[#01acff] mb-2 flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Условие задачи
+                    </h4>
+                    <div className="bg-[#0d1117] border border-[#37474f] rounded-lg p-4">
+                      <MarkdownRenderer content={detailData.problemCondition} />
+                    </div>
+                  </div>
+
+                  {detailData.studentAnswer && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-[#2eff8c] mb-2 flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4" />
+                        Ответ студента
+                      </h4>
+                      <div className="bg-[#0d1117] border border-[#37474f] rounded-lg p-4 text-sm text-[#c8cdd1] whitespace-pre-wrap">
+                        {detailData.studentAnswer}
+                      </div>
+                    </div>
+                  )}
+
+                  {detailData.solutionImageUrl && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-[#2eff8c] mb-2 flex items-center gap-2">
+                        <ImageIcon className="h-4 w-4" />
+                        Фото решения
+                      </h4>
+                      <a
+                        href={detailData.solutionImageUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block"
+                      >
+                        <img
+                          src={detailData.solutionImageUrl}
+                          alt="Решение студента"
+                          className="max-h-96 rounded-lg border border-[#37474f] hover:border-[#2eff8c] transition-colors"
+                        />
+                      </a>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Existing teacher comment */}
               {detailData.teacherComment && (
                 <div>
                   <h4 className="text-sm font-semibold text-[#01acff] mb-2 flex items-center gap-2">

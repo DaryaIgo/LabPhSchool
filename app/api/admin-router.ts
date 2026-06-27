@@ -12,19 +12,25 @@ import {
   getContentDb,
   getLearningDb,
   getLabsDb,
+  getProblemsDb,
   getJupyterDb,
   getNotificationsDb,
   getMediaDb,
 } from "./queries/connection";
 import { topicNodes, resources } from "@db/schema/content";
 import { labWorks } from "@db/schema/labs";
-import { labProgress } from "@db/schema/learning";
+import { labProgress, assignedProblems } from "@db/schema/learning";
+import { problems } from "@db/schema/problems";
 import { localUsers, roles } from "@db/schema/auth";
 import { jupyterNotebooks, jupyterNotebookAccess } from "@db/schema/jupyter";
 import { notifications } from "@db/schema/notifications";
 import { images } from "@db/schema/media";
 import { eq, asc, desc, count, and, inArray, isNull } from "drizzle-orm";
 import { createAuditEntry } from "./queries/audit";
+import {
+  findAssignedLabWorkByProgress,
+  updateAssignedLabWork,
+} from "./queries/assignedLabWorks";
 
 export const adminRouter = createRouter({
   // ═══════════════════════════════════════════════════════════
@@ -64,10 +70,15 @@ export const adminRouter = createRouter({
     const [resourceCount] = await contentDb
       .select({ count: count() })
       .from(resources);
-    const [submissionCount] = await learningDb
+    const [labSubmissionCount] = await learningDb
       .select({ count: count() })
       .from(labProgress)
       .where(eq(labProgress.status, "submitted"));
+
+    const [problemSubmissionCount] = await learningDb
+      .select({ count: count() })
+      .from(assignedProblems)
+      .where(eq(assignedProblems.status, "submitted"));
 
     return {
       students: {
@@ -79,7 +90,8 @@ export const adminRouter = createRouter({
         topics: topicCount.count,
         labWorks: labWorkCount.count,
         resources: resourceCount.count,
-        labSubmissions: submissionCount.count,
+        submissions:
+          labSubmissionCount.count + problemSubmissionCount.count,
       },
     };
   }),
@@ -407,15 +419,15 @@ export const adminRouter = createRouter({
     }),
 
   // ═══════════════════════════════════════════════════════════
-  // Lab Submissions Review
+  // Submissions Review (labs + problems)
   // ═══════════════════════════════════════════════════════════
 
-  getLabSubmissions: adminQuery
+  getSubmissions: adminQuery
     .input(
       z
         .object({
           status: z.enum(["submitted", "completed"]).optional(),
-          labWorkId: z.number().positive().optional(),
+          type: z.enum(["lab", "problem", "all"]).default("all"),
           studentId: z.number().positive().optional(),
           search: z.string().optional(),
           page: z.number().min(1).default(1),
@@ -427,52 +439,64 @@ export const adminRouter = createRouter({
       const learningDb = getLearningDb();
       const authDb = getAuthDb();
       const labsDb = getLabsDb();
+      const problemsDb = getProblemsDb();
 
       const page = input?.page ?? 1;
       const pageSize = input?.pageSize ?? 20;
-      const offset = (page - 1) * pageSize;
+      const status = input?.status ?? "submitted";
+      const type = input?.type ?? "all";
+      const studentId = input?.studentId;
+      const search = input?.search?.toLowerCase();
 
-      const conditions = [];
-      if (input?.status) {
-        conditions.push(eq(labProgress.status, input.status));
-      } else {
-        conditions.push(eq(labProgress.status, "submitted"));
-      }
-      if (input?.labWorkId) {
-        conditions.push(eq(labProgress.labWorkId, input.labWorkId));
-      }
-      if (input?.studentId) {
-        conditions.push(eq(labProgress.localUserId, input.studentId));
+      // Fetch lab submissions
+      const labConditions = [
+        eq(labProgress.status, status as "submitted" | "completed"),
+      ];
+      if (studentId) {
+        labConditions.push(eq(labProgress.localUserId, studentId));
       }
 
-      const whereClause =
-        conditions.length > 0 ? and(...conditions) : undefined;
+      const labRows =
+        type === "problem"
+          ? []
+          : await learningDb
+              .select()
+              .from(labProgress)
+              .where(and(...labConditions))
+              .orderBy(desc(labProgress.updatedAt));
 
-      const progressRows = await learningDb
-        .select()
-        .from(labProgress)
-        .where(whereClause)
-        .orderBy(desc(labProgress.updatedAt))
-        .limit(pageSize)
-        .offset(offset);
+      // Fetch problem submissions
+      const problemConditions = [
+        eq(assignedProblems.status, status as "submitted" | "completed"),
+      ];
+      if (studentId) {
+        problemConditions.push(eq(assignedProblems.localUserId, studentId));
+      }
 
-      const [countResult] = await learningDb
-        .select({ count: count() })
-        .from(labProgress)
-        .where(whereClause);
+      const problemRows =
+        type === "lab"
+          ? []
+          : await learningDb
+              .select()
+              .from(assignedProblems)
+              .where(and(...problemConditions))
+              .orderBy(desc(assignedProblems.updatedAt));
 
-      const studentIds = progressRows.map(p => p.localUserId);
-      const labWorkIds = progressRows.map(p => p.labWorkId);
+      // Load related data
+      const studentIds = new Set<number>();
+      for (const r of labRows) studentIds.add(r.localUserId);
+      for (const r of problemRows) studentIds.add(r.localUserId);
 
       const studentMap = new Map<number, typeof localUsers.$inferSelect>();
-      if (studentIds.length > 0) {
+      if (studentIds.size > 0) {
         const students = await authDb
           .select()
           .from(localUsers)
-          .where(inArray(localUsers.id, studentIds));
+          .where(inArray(localUsers.id, Array.from(studentIds)));
         for (const s of students) studentMap.set(s.id, s);
       }
 
+      const labWorkIds = labRows.map(r => r.labWorkId);
       const labWorkMap = new Map<number, typeof labWorks.$inferSelect>();
       if (labWorkIds.length > 0) {
         const works = await labsDb
@@ -482,16 +506,24 @@ export const adminRouter = createRouter({
         for (const w of works) labWorkMap.set(w.id, w);
       }
 
-      const items = progressRows.map(p => {
+      const problemIds = problemRows.map(r => r.problemId);
+      const problemMap = new Map<number, typeof problems.$inferSelect>();
+      if (problemIds.length > 0) {
+        const problemRowsDb = await problemsDb
+          .select()
+          .from(problems)
+          .where(inArray(problems.id, problemIds));
+        for (const p of problemRowsDb) problemMap.set(p.id, p);
+      }
+
+      // Build combined items
+      const labItems = labRows.map(p => {
         const student = studentMap.get(p.localUserId);
         const work = labWorkMap.get(p.labWorkId);
         return {
+          type: "lab" as const,
           id: p.id,
           status: p.status,
-          mode: p.mode,
-          data: p.data,
-          measurements: p.measurements,
-          conclusion: p.conclusion,
           grade: p.grade,
           teacherComment: p.teacherComment,
           startedAt: p.startedAt,
@@ -506,69 +538,164 @@ export const adminRouter = createRouter({
         };
       });
 
+      const problemItems = problemRows.map(p => {
+        const student = studentMap.get(p.localUserId);
+        const problem = problemMap.get(p.problemId);
+        return {
+          type: "problem" as const,
+          id: p.id,
+          status: p.status,
+          grade: p.grade,
+          teacherComment: p.teacherComment,
+          submittedAt: p.submittedAt,
+          completedAt: p.completedAt,
+          updatedAt: p.updatedAt,
+          studentId: p.localUserId,
+          studentName: student?.name ?? "—",
+          studentLogin: student?.login ?? "—",
+          problemId: p.problemId,
+          problemTitle: problem?.title ?? "—",
+          problemSlug: problem?.slug ?? "—",
+        };
+      });
+
+      let combined = [...labItems, ...problemItems].sort(
+        (a, b) =>
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      );
+
+      if (search) {
+        combined = combined.filter(item => {
+          const title =
+            item.type === "lab" ? item.labWorkTitle : item.problemTitle;
+          return (
+            title.toLowerCase().includes(search) ||
+            item.studentName.toLowerCase().includes(search) ||
+            item.studentLogin.toLowerCase().includes(search)
+          );
+        });
+      }
+
+      const total = combined.length;
+      const offset = (page - 1) * pageSize;
+      const items = combined.slice(offset, offset + pageSize);
+
       return {
         items,
-        total: countResult.count,
+        total,
         page,
         pageSize,
-        totalPages: Math.ceil(countResult.count / pageSize),
+        totalPages: Math.ceil(total / pageSize),
       };
     }),
 
-  getLabSubmissionById: adminQuery
-    .input(z.object({ id: z.number().positive() }))
+  getSubmissionById: adminQuery
+    .input(
+      z.object({
+        type: z.enum(["lab", "problem"]),
+        id: z.number().positive(),
+      })
+    )
     .query(async ({ input }) => {
       const learningDb = getLearningDb();
       const authDb = getAuthDb();
       const labsDb = getLabsDb();
+      const problemsDb = getProblemsDb();
 
-      const [progressRow] = await learningDb
+      if (input.type === "lab") {
+        const [progressRow] = await learningDb
+          .select()
+          .from(labProgress)
+          .where(eq(labProgress.id, input.id));
+
+        if (!progressRow) {
+          throw new Error("Submission not found");
+        }
+
+        const [student] = await authDb
+          .select()
+          .from(localUsers)
+          .where(eq(localUsers.id, progressRow.localUserId))
+          .limit(1);
+
+        const [work] = await labsDb
+          .select()
+          .from(labWorks)
+          .where(eq(labWorks.id, progressRow.labWorkId))
+          .limit(1);
+
+        return {
+          type: "lab" as const,
+          id: progressRow.id,
+          status: progressRow.status,
+          mode: progressRow.mode,
+          data: progressRow.data,
+          measurements: progressRow.measurements,
+          conclusion: progressRow.conclusion,
+          grade: progressRow.grade,
+          teacherComment: progressRow.teacherComment,
+          startedAt: progressRow.startedAt,
+          completedAt: progressRow.completedAt,
+          updatedAt: progressRow.updatedAt,
+          studentId: progressRow.localUserId,
+          studentName: student?.name ?? "—",
+          studentLogin: student?.login ?? "—",
+          labWorkId: progressRow.labWorkId,
+          labWorkTitle: work?.title ?? "—",
+          labWorkSlug: work?.slug ?? "—",
+          labWorkGoal: work?.goal ?? null,
+          labWorkTheory: work?.theory ?? null,
+        };
+      }
+
+      const [assignment] = await learningDb
         .select()
-        .from(labProgress)
-        .where(eq(labProgress.id, input.id));
+        .from(assignedProblems)
+        .where(eq(assignedProblems.id, input.id));
 
-      if (!progressRow) {
+      if (!assignment) {
         throw new Error("Submission not found");
       }
 
       const [student] = await authDb
         .select()
         .from(localUsers)
-        .where(eq(localUsers.id, progressRow.localUserId))
+        .where(eq(localUsers.id, assignment.localUserId))
         .limit(1);
 
-      const [work] = await labsDb
+      const [problem] = await problemsDb
         .select()
-        .from(labWorks)
-        .where(eq(labWorks.id, progressRow.labWorkId))
+        .from(problems)
+        .where(eq(problems.id, assignment.problemId))
         .limit(1);
 
       return {
-        id: progressRow.id,
-        status: progressRow.status,
-        mode: progressRow.mode,
-        data: progressRow.data,
-        measurements: progressRow.measurements,
-        conclusion: progressRow.conclusion,
-        grade: progressRow.grade,
-        teacherComment: progressRow.teacherComment,
-        startedAt: progressRow.startedAt,
-        completedAt: progressRow.completedAt,
-        updatedAt: progressRow.updatedAt,
-        studentId: progressRow.localUserId,
+        type: "problem" as const,
+        id: assignment.id,
+        status: assignment.status,
+        grade: assignment.grade,
+        studentAnswer: assignment.studentAnswer,
+        solutionImageUrl: assignment.solutionImageUrl,
+        submittedAt: assignment.submittedAt,
+        teacherComment: assignment.teacherComment,
+        completedAt: assignment.completedAt,
+        updatedAt: assignment.updatedAt,
+        studentId: assignment.localUserId,
         studentName: student?.name ?? "—",
         studentLogin: student?.login ?? "—",
-        labWorkId: progressRow.labWorkId,
-        labWorkTitle: work?.title ?? "—",
-        labWorkSlug: work?.slug ?? "—",
-        labWorkGoal: work?.goal ?? null,
-        labWorkTheory: work?.theory ?? null,
+        problemId: assignment.problemId,
+        problemTitle: problem?.title ?? "—",
+        problemSlug: problem?.slug ?? "—",
+        problemCondition: problem?.condition ?? "",
+        problemAnswer: problem?.answer ?? "",
+        problemSolution: problem?.solution ?? "",
       };
     }),
 
-  gradeLabSubmission: adminQuery
+  gradeSubmission: adminQuery
     .input(
       z.object({
+        type: z.enum(["lab", "problem"]),
         id: z.number().positive(),
         grade: z.number().min(1).max(5).optional(),
         teacherComment: z.string().max(2000).optional(),
@@ -576,25 +703,87 @@ export const adminRouter = createRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getLearningDb();
+      const learningDb = getLearningDb();
+      const now = new Date();
+
+      if (input.type === "lab") {
+        const updateData: Record<string, unknown> = {
+          updatedAt: now,
+        };
+        if (input.grade !== undefined) updateData.grade = input.grade;
+        if (input.teacherComment !== undefined)
+          updateData.teacherComment = input.teacherComment;
+        if (input.status !== undefined) {
+          updateData.status = input.status;
+          if (input.status === "completed") {
+            updateData.completedAt = now;
+          }
+        }
+
+        await learningDb
+          .update(labProgress)
+          .set(updateData)
+          .where(eq(labProgress.id, input.id));
+
+        // Sync grade/status into assigned_lab_works
+        const [progressRow] = await learningDb
+          .select()
+          .from(labProgress)
+          .where(eq(labProgress.id, input.id))
+          .limit(1);
+
+        if (progressRow) {
+          const assignedLab = await findAssignedLabWorkByProgress(
+            progressRow.localUserId,
+            progressRow.labWorkId
+          );
+          if (assignedLab) {
+            await updateAssignedLabWork(assignedLab.id, {
+              grade: input.grade,
+              teacherComment: input.teacherComment,
+              status:
+                input.status === "completed" ? "completed" : undefined,
+              completedAt:
+                input.status === "completed" ? now : undefined,
+            });
+          }
+        }
+
+        await createAuditEntry({
+          actorId: ctx.localUser!.id,
+          actorType: "user",
+          action: "grade",
+          resource: "lab_progress",
+          resourceId: input.id,
+          details: { grade: input.grade, comment: input.teacherComment },
+        });
+
+        return { success: true };
+      }
+
       const updateData: Record<string, unknown> = {
-        updatedAt: new Date(),
+        updatedAt: now,
       };
       if (input.grade !== undefined) updateData.grade = input.grade;
       if (input.teacherComment !== undefined)
         updateData.teacherComment = input.teacherComment;
-      if (input.status !== undefined) updateData.status = input.status;
+      if (input.status !== undefined) {
+        updateData.status = input.status;
+        if (input.status === "completed") {
+          updateData.completedAt = now;
+        }
+      }
 
-      await db
-        .update(labProgress)
+      await learningDb
+        .update(assignedProblems)
         .set(updateData)
-        .where(eq(labProgress.id, input.id));
+        .where(eq(assignedProblems.id, input.id));
 
       await createAuditEntry({
         actorId: ctx.localUser!.id,
         actorType: "user",
         action: "grade",
-        resource: "lab_progress",
+        resource: "assigned_problems",
         resourceId: input.id,
         details: { grade: input.grade, comment: input.teacherComment },
       });

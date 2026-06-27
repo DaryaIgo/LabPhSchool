@@ -44,6 +44,7 @@ export async function getAssignedLabWorksByEnrollment(enrollmentId: number) {
       order: row.order,
       status: row.status,
       grade: row.grade,
+      teacherComment: row.teacherComment,
       assignedBy: row.assignedBy,
       assignedAt: row.assignedAt,
       completedAt: row.completedAt,
@@ -87,6 +88,7 @@ export async function getAssignedLabWorksByStudent(localUserId: number) {
       order: row.order,
       status: row.status,
       grade: row.grade,
+      teacherComment: row.teacherComment,
       assignedBy: row.assignedBy,
       assignedAt: row.assignedAt,
       completedAt: row.completedAt,
@@ -137,12 +139,15 @@ export async function updateAssignedLabWork(
   data: {
     status?: "assigned" | "completed";
     grade?: number | null;
+    teacherComment?: string | null;
     completedAt?: Date | null;
   }
 ) {
   const setData: Record<string, unknown> = {};
   if (data.status !== undefined) setData.status = data.status;
   if (data.grade !== undefined) setData.grade = data.grade;
+  if (data.teacherComment !== undefined)
+    setData.teacherComment = data.teacherComment;
   if (data.completedAt !== undefined) setData.completedAt = data.completedAt;
 
   return getLearningDb()
@@ -155,6 +160,23 @@ export async function deleteAssignedLabWork(id: number) {
   return getLearningDb()
     .delete(assignedLabWorks)
     .where(eq(assignedLabWorks.id, id));
+}
+
+export async function findAssignedLabWorkByProgress(
+  localUserId: number,
+  labWorkId: number
+) {
+  const rows = await getLearningDb()
+    .select()
+    .from(assignedLabWorks)
+    .where(
+      and(
+        eq(assignedLabWorks.localUserId, localUserId),
+        eq(assignedLabWorks.labWorkId, labWorkId)
+      )
+    )
+    .limit(1);
+  return rows.at(0);
 }
 
 export async function getMaxOrderForEnrollment(enrollmentId: number) {

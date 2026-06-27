@@ -308,14 +308,16 @@ export const enrollmentRouter = createRouter({
         assignmentId: z.number().positive(),
         status: z.enum(["assigned", "completed"]).optional(),
         grade: z.number().int().min(1).max(5).nullable().optional(),
+        teacherComment: z.string().max(2000).nullable().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { assignmentId, status, grade } = input;
+      const { assignmentId, status, grade, teacherComment } = input;
 
       await updateAssignedLabWork(assignmentId, {
         status,
         grade: grade === null ? null : grade,
+        teacherComment: teacherComment === null ? null : teacherComment,
         completedAt:
           status === "completed"
             ? new Date()
@@ -430,16 +432,18 @@ export const enrollmentRouter = createRouter({
     .input(
       z.object({
         assignmentId: z.number().positive(),
-        status: z.enum(["assigned", "completed"]).optional(),
+        status: z.enum(["assigned", "submitted", "completed"]).optional(),
         grade: z.number().int().min(1).max(5).nullable().optional(),
+        teacherComment: z.string().max(2000).nullable().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { assignmentId, status, grade } = input;
+      const { assignmentId, status, grade, teacherComment } = input;
 
       await updateAssignedProblem(assignmentId, {
         status,
         grade: grade === null ? null : grade,
+        teacherComment: teacherComment === null ? null : teacherComment,
         completedAt:
           status === "completed"
             ? new Date()

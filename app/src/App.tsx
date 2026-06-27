@@ -8,6 +8,7 @@ import LabCategoryPage from "./pages/LabCategoryPage";
 import LabWorkPage from "./pages/LabWorkPage";
 import ProblemManagement from "./pages/admin/ProblemManagement";
 import Profile from "./pages/Profile";
+import StudentProblemPage from "./pages/StudentProblemPage";
 import Resources from "./pages/Resources";
 import Timeline from "./pages/Timeline";
 import Login from "./pages/Login";
@@ -21,7 +22,7 @@ import LabManagement from "./pages/admin/LabManagement";
 import EnrollmentManagement from "./pages/admin/EnrollmentManagement";
 import AuditLogViewer from "./pages/admin/AuditLogViewer";
 import ResourceManagement from "./pages/admin/ResourceManagement";
-import LabSubmissions from "./pages/admin/LabSubmissions";
+import SubmissionsReview from "./pages/admin/SubmissionsReview";
 import JupyterNotebookManagement from "./pages/admin/JupyterNotebookManagement";
 import AdminTimeline from "./pages/admin/AdminTimeline";
 
@@ -50,6 +51,10 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/student/profile" element={<Profile />} />
+        <Route
+          path="/student/problem/:assignmentId"
+          element={<StudentProblemPage />}
+        />
 
         {/* Admin Routes */}
         <Route path="/admin/problems" element={<ProblemManagement />} />
@@ -60,7 +65,7 @@ export default function App() {
         <Route path="/admin/enrollments" element={<EnrollmentManagement />} />
         <Route path="/admin/audit" element={<AuditLogViewer />} />
         <Route path="/admin/resources" element={<ResourceManagement />} />
-        <Route path="/admin/lab-submissions" element={<LabSubmissions />} />
+        <Route path="/admin/submissions" element={<SubmissionsReview />} />
         <Route
           path="/admin/jupyter-notebooks"
           element={<JupyterNotebookManagement />}

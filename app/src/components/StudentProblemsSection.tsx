@@ -1,11 +1,14 @@
 import { trpc } from "@/providers/trpc";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router";
 import {
   Clock,
   CheckCircle2,
   Trophy,
-  AlertCircle,
+  FileText,
+  Send,
 } from "lucide-react";
 
 const DIFFICULTY_CONFIG: Record<
@@ -65,20 +68,21 @@ export default function StudentProblemsSection() {
     );
   }
 
-  const active = data?.active ?? [];
+  const assigned = data?.active?.filter(p => p.status === "assigned") ?? [];
+  const submitted = data?.active?.filter(p => p.status === "submitted") ?? [];
   const archived = data?.archived ?? [];
 
   return (
     <div>
-      {/* Active assignments */}
+      {/* Assigned (not yet submitted) */}
       <div className="mb-6">
         <h3 className="text-sm font-medium text-[#798389] mb-3 flex items-center gap-2">
           <Clock size={14} className="text-[#01acff]" />
           Назначенные
         </h3>
-        {active.length > 0 ? (
+        {assigned.length > 0 ? (
           <div className="space-y-3">
-            {active.map((problem, idx) => (
+            {assigned.map((problem, idx) => (
               <ActiveProblemCard
                 key={problem.id}
                 problem={problem}
@@ -92,6 +96,25 @@ export default function StudentProblemsSection() {
           </p>
         )}
       </div>
+
+      {/* Submitted, awaiting review */}
+      {submitted.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-sm font-medium text-[#798389] mb-3 flex items-center gap-2">
+            <Send size={14} className="text-[#ffc832]" />
+            На проверке
+          </h3>
+          <div className="space-y-3">
+            {submitted.map((problem, idx) => (
+              <ActiveProblemCard
+                key={problem.id}
+                problem={problem}
+                number={idx + 1}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Archived completed problems */}
       <div>
@@ -128,6 +151,7 @@ function ActiveProblemCard({
     problemTitle: string;
     problemDifficulty: string | null;
     assignedAt: Date;
+    status: string;
   };
   number: number;
 }) {
@@ -136,6 +160,8 @@ function ActiveProblemCard({
     label: "—",
     color: "bg-[#37474f] text-[#c8cdd1]",
   };
+
+  const isSubmitted = problem.status === "submitted";
 
   return (
     <div className="flex items-center gap-3 px-4 py-3 bg-[#2a3237] border border-[#37474f] rounded-xl transition-colors">
@@ -154,10 +180,36 @@ function ActiveProblemCard({
             Назначена:{" "}
             {new Date(problem.assignedAt).toLocaleDateString("ru-RU")}
           </p>
+          {isSubmitted && (
+            <Badge className="bg-[#ffc832]/20 text-[#ffc832] text-[10px] px-1.5 py-0">
+              На проверке
+            </Badge>
+          )}
         </div>
       </div>
-      <div className="shrink-0 text-[#798389]">
-        <AlertCircle size={16} />
+      <div className="shrink-0">
+        {isSubmitted ? (
+          <Link to={`/student/problem/${problem.id}`}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-[#ffc832] hover:text-[#ffc832] hover:bg-[#ffc832]/10"
+            >
+              <FileText size={16} className="mr-1" />
+              Смотреть
+            </Button>
+          </Link>
+        ) : (
+          <Link to={`/student/problem/${problem.id}`}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-[#2eff8c] hover:text-[#2eff8c] hover:bg-[#2eff8c]/10"
+            >
+              Решать
+            </Button>
+          </Link>
+        )}
       </div>
     </div>
   );

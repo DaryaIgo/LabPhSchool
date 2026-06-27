@@ -7,6 +7,7 @@ import {
   int,
   bigint,
   json,
+  varchar,
   index,
   uniqueIndex,
 } from "drizzle-orm/mysql-core";
@@ -161,6 +162,7 @@ export const assignedLabWorks = mysqlTable(
       .default("assigned")
       .notNull(),
     grade: int("grade"),
+    teacherComment: text("teacher_comment"),
     assignedBy: bigint("assigned_by", { mode: "number", unsigned: true }),
     assignedAt: timestamp("assigned_at").defaultNow().notNull(),
     completedAt: timestamp("completed_at"),
@@ -213,10 +215,14 @@ export const assignedProblems = mysqlTable(
       unsigned: true,
     }).notNull(),
     order: int("order").notNull().default(1),
-    status: mysqlEnum("status", ["assigned", "completed"])
+    status: mysqlEnum("status", ["assigned", "submitted", "completed"])
       .default("assigned")
       .notNull(),
     grade: int("grade"),
+    studentAnswer: text("student_answer"),
+    solutionImageUrl: varchar("solution_image_url", { length: 500 }),
+    submittedAt: timestamp("submitted_at"),
+    teacherComment: text("teacher_comment"),
     assignedBy: bigint("assigned_by", { mode: "number", unsigned: true }),
     assignedAt: timestamp("assigned_at").defaultNow().notNull(),
     completedAt: timestamp("completed_at"),

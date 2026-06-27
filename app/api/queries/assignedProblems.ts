@@ -44,6 +44,10 @@ export async function getAssignedProblemsByEnrollment(enrollmentId: number) {
       order: row.order,
       status: row.status,
       grade: row.grade,
+      studentAnswer: row.studentAnswer,
+      solutionImageUrl: row.solutionImageUrl,
+      submittedAt: row.submittedAt,
+      teacherComment: row.teacherComment,
       assignedBy: row.assignedBy,
       assignedAt: row.assignedAt,
       completedAt: row.completedAt,
@@ -54,6 +58,35 @@ export async function getAssignedProblemsByEnrollment(enrollmentId: number) {
       problemDifficulty: problem?.difficulty ?? null,
     };
   });
+}
+
+export async function getAssignedProblemById(id: number) {
+  const learningDb = getLearningDb();
+  const problemsDb = getProblemsDb();
+
+  const rows = await learningDb
+    .select()
+    .from(assignedProblems)
+    .where(eq(assignedProblems.id, id))
+    .limit(1);
+
+  const row = rows.at(0);
+  if (!row) return null;
+
+  const problemRows = await problemsDb
+    .select()
+    .from(problems)
+    .where(eq(problems.id, row.problemId))
+    .limit(1);
+  const problem = problemRows.at(0);
+
+  return {
+    ...row,
+    problemTitle: problem?.title ?? "—",
+    problemSlug: problem?.slug ?? "",
+    problemDifficulty: problem?.difficulty ?? null,
+    problemCondition: problem?.condition ?? "",
+  };
 }
 
 export async function getAssignedProblemsByStudent(localUserId: number) {
@@ -87,6 +120,10 @@ export async function getAssignedProblemsByStudent(localUserId: number) {
       order: row.order,
       status: row.status,
       grade: row.grade,
+      studentAnswer: row.studentAnswer,
+      solutionImageUrl: row.solutionImageUrl,
+      submittedAt: row.submittedAt,
+      teacherComment: row.teacherComment,
       assignedBy: row.assignedBy,
       assignedAt: row.assignedAt,
       completedAt: row.completedAt,
@@ -135,14 +172,25 @@ export async function createAssignedProblem(data: {
 export async function updateAssignedProblem(
   id: number,
   data: {
-    status?: "assigned" | "completed";
+    status?: "assigned" | "submitted" | "completed";
     grade?: number | null;
+    studentAnswer?: string | null;
+    solutionImageUrl?: string | null;
+    submittedAt?: Date | null;
+    teacherComment?: string | null;
     completedAt?: Date | null;
   }
 ) {
   const setData: Record<string, unknown> = {};
   if (data.status !== undefined) setData.status = data.status;
   if (data.grade !== undefined) setData.grade = data.grade;
+  if (data.studentAnswer !== undefined)
+    setData.studentAnswer = data.studentAnswer;
+  if (data.solutionImageUrl !== undefined)
+    setData.solutionImageUrl = data.solutionImageUrl;
+  if (data.submittedAt !== undefined) setData.submittedAt = data.submittedAt;
+  if (data.teacherComment !== undefined)
+    setData.teacherComment = data.teacherComment;
   if (data.completedAt !== undefined) setData.completedAt = data.completedAt;
 
   return getLearningDb()

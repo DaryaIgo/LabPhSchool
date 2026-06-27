@@ -23,7 +23,11 @@ import {
   getEnrollmentsWithDetails,
 } from "./queries/enrollments";
 import { getAssignedLabWorksByStudent } from "./queries/assignedLabWorks";
-import { getAssignedProblemsByStudent } from "./queries/assignedProblems";
+import {
+  getAssignedProblemsByStudent,
+  getAssignedProblemById,
+  updateAssignedProblem,
+} from "./queries/assignedProblems";
 import { createAuditEntry } from "./queries/audit";
 import {
   eq,
@@ -1041,10 +1045,73 @@ export const studentRouter = createRouter({
   // ── Get my assigned problems (active + archived) ──
   getMyAssignedProblems: studentQuery.query(async ({ ctx }) => {
     const rows = await getAssignedProblemsByStudent(ctx.localUser!.id);
-    const active = rows.filter(r => r.status === "assigned");
+    const active = rows.filter(r => r.status !== "completed");
     const archived = rows.filter(r => r.status === "completed");
     return { active, archived };
   }),
+
+  // ── Get a single assigned problem for solving ──
+  getAssignedProblemById: studentQuery
+    .input(z.object({ id: z.number().positive() }))
+    .query(async ({ ctx, input }) => {
+      const assignment = await getAssignedProblemById(input.id);
+      if (!assignment || assignment.localUserId !== ctx.localUser!.id) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Задача не найдена",
+        });
+      }
+      return {
+        id: assignment.id,
+        status: assignment.status,
+        grade: assignment.grade,
+        studentAnswer: assignment.studentAnswer,
+        solutionImageUrl: assignment.solutionImageUrl,
+        submittedAt: assignment.submittedAt,
+        teacherComment: assignment.teacherComment,
+        assignedAt: assignment.assignedAt,
+        completedAt: assignment.completedAt,
+        problemId: assignment.problemId,
+        problemTitle: assignment.problemTitle,
+        problemSlug: assignment.problemSlug,
+        problemDifficulty: assignment.problemDifficulty,
+        problemCondition: assignment.problemCondition,
+      };
+    }),
+
+  // ── Submit a problem solution (photo + answer) ──
+  submitProblemSolution: studentQuery
+    .input(
+      z.object({
+        assignmentId: z.number().positive(),
+        answer: z.string().min(1).max(5000),
+        solutionImageUrl: z.string().max(500).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const assignment = await getAssignedProblemById(input.assignmentId);
+      if (!assignment || assignment.localUserId !== ctx.localUser!.id) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Задача не найдена",
+        });
+      }
+      if (assignment.status === "completed") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Задача уже проверена",
+        });
+      }
+
+      await updateAssignedProblem(input.assignmentId, {
+        status: "submitted",
+        studentAnswer: input.answer,
+        solutionImageUrl: input.solutionImageUrl ?? null,
+        submittedAt: new Date(),
+      });
+
+      return { success: true };
+    }),
 
   // ── Get unread notification counts per tab type ──
   getUnreadNotificationCounts: studentQuery.query(async ({ ctx }) => {

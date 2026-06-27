@@ -142,10 +142,10 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <StatCard
           title="Работы"
-          value={stats?.content.labSubmissions ?? "—"}
+          value={stats?.content.submissions ?? "—"}
           subtitle="На проверке"
           icon={FileCheck}
-          onClick={() => navigate("/admin/lab-submissions")}
+          onClick={() => navigate("/admin/submissions")}
         />
         <StatCard
           title="Всего учеников"
@@ -238,7 +238,7 @@ export default function AdminDashboard() {
         <QuickAction
           label="Проверка работ"
           icon={FileCheck}
-          onClick={() => navigate("/admin/lab-submissions")}
+          onClick={() => navigate("/admin/submissions")}
         />
         <QuickAction
           label="Стрела времени"
