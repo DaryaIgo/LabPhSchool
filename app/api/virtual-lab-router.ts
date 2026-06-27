@@ -846,7 +846,7 @@ export const virtualLabRouter = createRouter({
             z.object({
               key: z.string(),
               label: z.string(),
-              paramType: z.enum(["slider", "select", "number"]),
+              paramType: z.enum(["slider", "select", "number", "url"]),
               min: z.string().optional(),
               max: z.string().optional(),
               step: z.string().optional(),
@@ -901,7 +901,7 @@ export const virtualLabRouter = createRouter({
             z.object({
               key: z.string(),
               label: z.string(),
-              paramType: z.enum(["slider", "select", "number"]),
+              paramType: z.enum(["slider", "select", "number", "url"]),
               min: z.string().optional(),
               max: z.string().optional(),
               step: z.string().optional(),

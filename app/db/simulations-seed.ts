@@ -1134,6 +1134,257 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
+
+  // Исследовательские задания — переведены в сторонние симуляции (внешние iframe)
+  {
+    slug: "masses-and-springs",
+    title: "Массы и пружины",
+    description:
+      "Интерактивная симуляция для изучения колебаний пружинного маятника.",
+    category: "mechanics",
+    kind: "external",
+    componentRef: "external-iframe",
+    params: [
+      {
+        key: "url",
+        label: "URL",
+        paramType: "url",
+        defaultValue:
+          "https://phet.colorado.edu/sims/html/masses-and-springs/latest/masses-and-springs_all.html",
+      },
+    ],
+  },
+  {
+    slug: "wave-interference",
+    title: "Интерференция волн",
+    description: "Интерактивная симуляция для изучения интерференции волн.",
+    category: "mechanics",
+    kind: "external",
+    componentRef: "external-iframe",
+    params: [
+      {
+        key: "url",
+        label: "URL",
+        paramType: "url",
+        defaultValue:
+          "https://phet.colorado.edu/sims/html/wave-interference/latest/wave-interference_ru.html",
+      },
+    ],
+  },
+  {
+    slug: "sound-waves",
+    title: "Звуковые волны",
+    description: "Интерактивная симуляция для изучения звуковых волн.",
+    category: "mechanics",
+    kind: "external",
+    componentRef: "external-iframe",
+    params: [
+      {
+        key: "url",
+        label: "URL",
+        paramType: "url",
+        defaultValue:
+          "https://phet.colorado.edu/sims/html/sound-waves/latest/sound-waves_all.html",
+      },
+    ],
+  },
+  {
+    slug: "states-of-matter-basics",
+    title: "Состояния веществ: Основы",
+    description:
+      "Интерактивная симуляция для изучения агрегатных состояний вещества.",
+    category: "molecular-thermodynamics",
+    kind: "external",
+    componentRef: "external-iframe",
+    params: [
+      {
+        key: "url",
+        label: "URL",
+        paramType: "url",
+        defaultValue:
+          "https://phet.colorado.edu/sims/html/states-of-matter-basics/latest/states-of-matter-basics_en.html",
+      },
+    ],
+  },
+  {
+    slug: "gases-intro",
+    title: "Газы: Введение",
+    description:
+      "Интерактивная симуляция для изучения поведения газов на молекулярном уровне.",
+    category: "molecular-thermodynamics",
+    kind: "external",
+    componentRef: "external-iframe",
+    params: [
+      {
+        key: "url",
+        label: "URL",
+        paramType: "url",
+        defaultValue:
+          "https://phet.colorado.edu/sims/html/gases-intro/latest/gases-intro_ru.html",
+      },
+    ],
+  },
+  {
+    slug: "charges-and-fields",
+    title: "Заряды и поля",
+    description:
+      "Интерактивная симуляция для изучения электрических зарядов и напряжённости электрического поля.",
+    category: "electrodynamics",
+    kind: "external",
+    componentRef: "external-iframe",
+    params: [
+      {
+        key: "url",
+        label: "URL",
+        paramType: "url",
+        defaultValue:
+          "https://phet.colorado.edu/sims/html/charges-and-fields/latest/charges-and-fields_ru.html",
+      },
+    ],
+  },
+  {
+    slug: "electricity-maps",
+    title: "Интерактивная карта потребления и генерации электроэнергии",
+    description:
+      "Изучите в реальном времени, как различные страны производят и потребляют электроэнергию.",
+    category: "electrodynamics",
+    kind: "external",
+    componentRef: "external-iframe",
+    params: [
+      {
+        key: "url",
+        label: "URL",
+        paramType: "url",
+        defaultValue: "https://app.electricitymaps.com/map/live/fifteen_minutes",
+      },
+    ],
+  },
+  {
+    slug: "circuit-construction-kit-dc",
+    title: "Электрическая цепь постоянного тока",
+    description:
+      "Виртуальная лаборатория для сборки и исследования электрических цепей постоянного тока.",
+    category: "electrodynamics",
+    kind: "external",
+    componentRef: "external-iframe",
+    params: [
+      {
+        key: "url",
+        label: "URL",
+        paramType: "url",
+        defaultValue:
+          "https://phet.colorado.edu/sims/html/circuit-construction-kit-dc-virtual-lab/latest/circuit-construction-kit-dc-virtual-lab_ru.html",
+      },
+    ],
+  },
+  {
+    slug: "magnet-and-compass",
+    title: "Магнит и компас",
+    description:
+      "Исследуйте магнитное поле постоянного магнита и его влияние на компас.",
+    category: "electrodynamics",
+    kind: "external",
+    componentRef: "external-iframe",
+    params: [
+      {
+        key: "url",
+        label: "URL",
+        paramType: "url",
+        defaultValue:
+          "https://phet.colorado.edu/sims/html/magnet-and-compass/latest/magnet-and-compass_all.html",
+      },
+    ],
+  },
+  {
+    slug: "faradays-law",
+    title: "Закон электромагнитной индукции Фарадея",
+    description:
+      "Изучите явление электромагнитной индукции при движении магнита в катушке.",
+    category: "electrodynamics",
+    kind: "external",
+    componentRef: "external-iframe",
+    params: [
+      {
+        key: "url",
+        label: "URL",
+        paramType: "url",
+        defaultValue:
+          "https://phet.colorado.edu/sims/html/faradays-law/latest/faradays-law_all.html",
+      },
+    ],
+  },
+  {
+    slug: "faradays-electromagnetic-lab",
+    title: "Электромагнитная лаборатория Фарадея",
+    description:
+      "Соберите электромагнит и исследуйте магнитное поле соленоида и катушки.",
+    category: "electrodynamics",
+    kind: "external",
+    componentRef: "external-iframe",
+    params: [
+      {
+        key: "url",
+        label: "URL",
+        paramType: "url",
+        defaultValue:
+          "https://phet.colorado.edu/sims/html/faradays-electromagnetic-lab/latest/faradays-electromagnetic-lab_all.html",
+      },
+    ],
+  },
+  {
+    slug: "geometric-optics",
+    title: "Геометрическая оптика",
+    description:
+      "Интерактивная симуляция для изучения поведения света при прохождении через линзы.",
+    category: "optics",
+    kind: "external",
+    componentRef: "external-iframe",
+    params: [
+      {
+        key: "url",
+        label: "URL",
+        paramType: "url",
+        defaultValue:
+          "https://phet.colorado.edu/sims/html/geometric-optics/latest/geometric-optics_ru.html",
+      },
+    ],
+  },
+  {
+    slug: "build-an-atom",
+    title: "Построй атом",
+    description:
+      "Интерактивная симуляция для изучения строения атома.",
+    category: "nuclear-physics",
+    kind: "external",
+    componentRef: "external-iframe",
+    params: [
+      {
+        key: "url",
+        label: "URL",
+        paramType: "url",
+        defaultValue:
+          "https://phet.colorado.edu/sims/html/build-an-atom/latest/build-an-atom_ru.html",
+      },
+    ],
+  },
+  {
+    slug: "models-of-hydrogen-atom",
+    title: "Модели атома водорода",
+    description:
+      "Интерактивная симуляция для изучения моделей атома водорода.",
+    category: "nuclear-physics",
+    kind: "external",
+    componentRef: "external-iframe",
+    params: [
+      {
+        key: "url",
+        label: "URL",
+        paramType: "url",
+        defaultValue:
+          "https://phet.colorado.edu/sims/html/models-of-the-hydrogen-atom/latest/models-of-the-hydrogen-atom_all.html",
+      },
+    ],
+  },
 ];
 
 async function seedSimulations() {

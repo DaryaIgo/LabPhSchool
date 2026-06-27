@@ -52,6 +52,7 @@ import SpecificHeatCapacitySimulation from "@/components/lab/simulations/Specifi
 import RelativeHumiditySimulation from "@/components/lab/simulations/RelativeHumiditySimulation";
 import SurfaceTensionSimulation from "@/components/lab/simulations/SurfaceTensionSimulation";
 import BalancingActSimulation from "@/components/lab/simulations/BalancingActSimulation";
+import ExternalIframeSimulation from "@/components/lab/simulations/ExternalIframeSimulation";
 import { LabGraphs } from "@/components/lab/LabGraphs";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -93,6 +94,7 @@ const simComponents: Record<string, React.FC<SimComponentProps>> = {
   "relative-humidity": RelativeHumiditySimulation,
   "surface-tension": SurfaceTensionSimulation,
   "balancing-act": BalancingActSimulation,
+  "external-iframe": ExternalIframeSimulation,
 };
 
 interface TheoryTab {
@@ -658,8 +660,11 @@ export default function LabWorkPage() {
     });
   };
 
-  const simSlug = labWork?.simulationSlug ?? slug;
-  const SimComponent = simSlug ? simComponents[simSlug] : null;
+  const simComponentRef =
+    labWork?.simulation?.componentRef ?? labWork?.simulationSlug ?? slug;
+  const SimComponent = simComponentRef
+    ? simComponents[simComponentRef]
+    : null;
   const isExternalSimulation = labWork?.simulation?.kind === "external";
   const needsStartButton = labWork?.simulation?.isDynamic === true;
 

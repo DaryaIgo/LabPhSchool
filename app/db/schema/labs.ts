@@ -112,7 +112,7 @@ export type InsertLabBlock = typeof labBlocks.$inferInsert;
 export interface SimulationParamConfig {
   key: string;
   label: string;
-  paramType: "slider" | "select" | "number";
+  paramType: "slider" | "select" | "number" | "url";
   min?: string;
   max?: string;
   step?: string;
