@@ -32,9 +32,12 @@ export const auditLog = mysqlTable(
     errorMessage: varchar("error_message", { length: 500 }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
-  (table) => ({
+  table => ({
     actorIdx: index("audit_actor_idx").on(table.actorId, table.actorType),
-    resourceIdx: index("audit_resource_idx").on(table.resource, table.resourceId),
+    resourceIdx: index("audit_resource_idx").on(
+      table.resource,
+      table.resourceId
+    ),
     createdAtIdx: index("audit_created_at_idx").on(table.createdAt),
   })
 );

@@ -82,9 +82,9 @@ export const courseRouter = createRouter({
 
       if (nodes.length === 0) return [];
 
-      const nodeIds = nodes.map((n) => n.id);
+      const nodeIds = nodes.map(n => n.id);
       const categorySlugs = nodes
-        .map((n) => n.labCategorySlug)
+        .map(n => n.labCategorySlug)
         .filter((s): s is string => !!s);
 
       let categoryIds: number[] = [];
@@ -93,7 +93,7 @@ export const courseRouter = createRouter({
           .select({ id: labCategories.id })
           .from(labCategories)
           .where(inArray(labCategories.slug, categorySlugs));
-        categoryIds = cats.map((c) => c.id);
+        categoryIds = cats.map(c => c.id);
       }
 
       const conditions = [];
@@ -118,4 +118,3 @@ export const courseRouter = createRouter({
         .orderBy(asc(labWorks.order));
     }),
 });
-

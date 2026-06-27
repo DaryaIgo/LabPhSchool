@@ -20,18 +20,20 @@ export async function createAuditEntry(data: {
   success?: boolean;
   errorMessage?: string;
 }) {
-  return getAuditDb().insert(auditLog).values({
-    actorId: data.actorId,
-    actorType: data.actorType,
-    action: data.action,
-    resource: data.resource,
-    resourceId: data.resourceId ?? null,
-    details: data.details ?? null,
-    ipAddress: data.ipAddress ?? null,
-    userAgent: data.userAgent ?? null,
-    success: data.success ?? true,
-    errorMessage: data.errorMessage ?? null,
-  });
+  return getAuditDb()
+    .insert(auditLog)
+    .values({
+      actorId: data.actorId,
+      actorType: data.actorType,
+      action: data.action,
+      resource: data.resource,
+      resourceId: data.resourceId ?? null,
+      details: data.details ?? null,
+      ipAddress: data.ipAddress ?? null,
+      userAgent: data.userAgent ?? null,
+      success: data.success ?? true,
+      errorMessage: data.errorMessage ?? null,
+    });
 }
 
 export async function listAuditEntries(options?: {

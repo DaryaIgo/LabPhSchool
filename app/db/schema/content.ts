@@ -47,7 +47,12 @@ export const resources = mysqlTable("resources", {
   id: serial("id").primaryKey(),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
-  type: mysqlEnum("type", ["video", "reference", "workbook", "model"]).notNull(),
+  type: mysqlEnum("type", [
+    "video",
+    "reference",
+    "workbook",
+    "model",
+  ]).notNull(),
   url: varchar("url", { length: 500 }),
   tags: varchar("tags", { length: 500 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),

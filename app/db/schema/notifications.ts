@@ -16,8 +16,10 @@ import {
 export const notifications = mysqlTable("notifications", {
   id: serial("id").primaryKey(),
   // Soft reference to auth.local_users.id (auth domain).
-  localUserId: bigint("local_user_id", { mode: "number", unsigned: true })
-    .notNull(),
+  localUserId: bigint("local_user_id", {
+    mode: "number",
+    unsigned: true,
+  }).notNull(),
   type: mysqlEnum("type", ["jupyter_notebook", "lab", "general"])
     .default("general")
     .notNull(),

@@ -51,8 +51,10 @@ export const labWorks = mysqlTable("lab_works", {
   categoryId: bigint("category_id", { mode: "number", unsigned: true })
     .notNull()
     .references(() => labCategories.id),
-  subcategoryId: bigint("subcategory_id", { mode: "number", unsigned: true })
-    .references(() => labSubcategories.id),
+  subcategoryId: bigint("subcategory_id", {
+    mode: "number",
+    unsigned: true,
+  }).references(() => labSubcategories.id),
   // Soft reference to content.topic_nodes.id (content domain).
   topicNodeId: bigint("topic_node_id", { mode: "number", unsigned: true }),
   order: int("order").notNull(),
@@ -60,7 +62,9 @@ export const labWorks = mysqlTable("lab_works", {
   slug: varchar("slug", { length: 255 }).notNull().unique(),
   law: varchar("law", { length: 255 }),
   skills: text("skills"),
-  difficulty: mysqlEnum("difficulty", ["easy", "medium", "hard"]).default("medium"),
+  difficulty: mysqlEnum("difficulty", ["easy", "medium", "hard"]).default(
+    "medium"
+  ),
   duration: int("duration"),
   goal: text("goal"),
   theory: text("theory"),
@@ -68,7 +72,9 @@ export const labWorks = mysqlTable("lab_works", {
   instruction: text("instruction"),
   conclusionTemplate: text("conclusion_template"),
   simulationSlug: varchar("simulation_slug", { length: 255 }),
-  status: mysqlEnum("status", ["draft", "published"]).default("draft").notNull(),
+  status: mysqlEnum("status", ["draft", "published"])
+    .default("draft")
+    .notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

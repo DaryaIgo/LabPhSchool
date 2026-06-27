@@ -20,8 +20,10 @@ export function generateProtocolPDF(lab: LabWork, data: ProtocolData): void {
   // Title
   doc.setTextColor(46, 239, 140); // #2eff8c
   doc.setFontSize(20);
- doc.setFont("helvetica", "bold");
-  doc.text("ПРОТОКОЛ ЛАБОРАТОРНОЙ РАБОТЫ", pageWidth / 2, 25, { align: "center" });
+  doc.setFont("helvetica", "bold");
+  doc.text("ПРОТОКОЛ ЛАБОРАТОРНОЙ РАБОТЫ", pageWidth / 2, 25, {
+    align: "center",
+  });
 
   // Subtitle
   doc.setTextColor(200, 205, 209);
@@ -122,10 +124,12 @@ export function generateProtocolPDF(lab: LabWork, data: ProtocolData): void {
   y += 10;
 
   // Build table data
-  const headers = lab.tableHeaders.map((h) => h.label);
+  const headers = lab.tableHeaders.map(h => h.label);
   const bodyData =
     data.measurements.length > 0
-      ? data.measurements.map((row) => lab.tableHeaders.map((h) => row[h.key] || ""))
+      ? data.measurements.map(row =>
+          lab.tableHeaders.map(h => row[h.key] || "")
+        )
       : [lab.tableHeaders.map(() => "")];
 
   autoTable(doc, {
@@ -153,7 +157,9 @@ export function generateProtocolPDF(lab: LabWork, data: ProtocolData): void {
   });
 
   // Conclusion
-  const tableEndY = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY || y + 40;
+  const tableEndY =
+    (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable
+      ?.finalY || y + 40;
   let conclusionY = tableEndY + 15;
 
   if (conclusionY > 250) {
@@ -179,9 +185,14 @@ export function generateProtocolPDF(lab: LabWork, data: ProtocolData): void {
   }
   doc.setTextColor(100, 100, 100);
   doc.setFontSize(10);
-  doc.text("Подпись ученика: _______________    Подпись преподавателя: _______________", pageWidth / 2, conclusionY, {
-    align: "center",
-  });
+  doc.text(
+    "Подпись ученика: _______________    Подпись преподавателя: _______________",
+    pageWidth / 2,
+    conclusionY,
+    {
+      align: "center",
+    }
+  );
 
   // Footer on every page
   const totalPages = doc.getNumberOfPages();
@@ -189,12 +200,21 @@ export function generateProtocolPDF(lab: LabWork, data: ProtocolData): void {
     doc.setPage(i);
     doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
-    doc.text(`Страница ${i} из ${totalPages} | Лабораторная работа: ${lab.title}`, pageWidth / 2, 285, {
+    doc.text(
+      `Страница ${i} из ${totalPages} | Лабораторная работа: ${lab.title}`,
+      pageWidth / 2,
+      285,
+      {
+        align: "center",
+      }
+    );
+    doc.text("Академия Квант | Физика", pageWidth / 2, 290, {
       align: "center",
     });
-    doc.text("Академия Квант | Физика", pageWidth / 2, 290, { align: "center" });
   }
 
   // Save
-  doc.save(`protocol_${lab.slug}_${data.date || new Date().toISOString().slice(0, 10)}.pdf`);
+  doc.save(
+    `protocol_${lab.slug}_${data.date || new Date().toISOString().slice(0, 10)}.pdf`
+  );
 }

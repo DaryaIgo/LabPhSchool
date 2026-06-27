@@ -92,7 +92,7 @@ export function hasPermission(
 ): boolean {
   if (!role) return false;
   return role.permissions.some(
-    (p) => p.resource === resource && p.action === action
+    p => p.resource === resource && p.action === action
   );
 }
 

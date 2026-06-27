@@ -7,7 +7,10 @@ interface Props {
   onStateChange?: (state: Record<string, number>) => void;
 }
 
-const SUBSTANCE_LINES: Record<string, { wavelength: number; color: string; intensity: number }[]> = {
+const SUBSTANCE_LINES: Record<
+  string,
+  { wavelength: number; color: string; intensity: number }[]
+> = {
   hydrogen: [
     { wavelength: 656, color: "#ff0000", intensity: 1.0 },
     { wavelength: 486, color: "#00aaff", intensity: 0.9 },
@@ -59,7 +62,8 @@ export default function EmissionSpectraSimulation({
 
   const draw = useMemo(() => {
     const lines = SUBSTANCE_LINES[substance] || [];
-    const isContinuous = spectrumType === "continuous" || substance === "tungsten";
+    const isContinuous =
+      spectrumType === "continuous" || substance === "tungsten";
 
     return (ctx: CanvasRenderingContext2D, w: number, h: number) => {
       ctx.fillStyle = "#1a1f22";
@@ -81,7 +85,9 @@ export default function EmissionSpectraSimulation({
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
       for (let lambda = 400; lambda <= 700; lambda += 50) {
-        const x = startX + ((lambda - minLambda) / (maxLambda - minLambda)) * (endX - startX);
+        const x =
+          startX +
+          ((lambda - minLambda) / (maxLambda - minLambda)) * (endX - startX);
         ctx.beginPath();
         ctx.moveTo(x, spectrumY + spectrumH + 10);
         ctx.lineTo(x, spectrumY + spectrumH + 16);
@@ -116,7 +122,10 @@ export default function EmissionSpectraSimulation({
 
         // Draw spectral lines
         for (const line of lines) {
-          const x = startX + ((line.wavelength - minLambda) / (maxLambda - minLambda)) * (endX - startX);
+          const x =
+            startX +
+            ((line.wavelength - minLambda) / (maxLambda - minLambda)) *
+              (endX - startX);
           ctx.strokeStyle = line.color;
           ctx.lineWidth = 2 + line.intensity * 2;
           ctx.globalAlpha = 0.6 + line.intensity * 0.4;
@@ -155,8 +164,16 @@ export default function EmissionSpectraSimulation({
 
       ctx.fillStyle = "#96a3ab";
       ctx.font = "12px sans-serif";
-      ctx.fillText(`Вещество: ${SUBSTANCE_NAMES[substance] || substance}`, 55, 75);
-      ctx.fillText(`Тип спектра: ${isContinuous ? "сплошной" : "линейчатый"}`, 55, 95);
+      ctx.fillText(
+        `Вещество: ${SUBSTANCE_NAMES[substance] || substance}`,
+        55,
+        75
+      );
+      ctx.fillText(
+        `Тип спектра: ${isContinuous ? "сплошной" : "линейчатый"}`,
+        55,
+        95
+      );
 
       // Title
       ctx.fillStyle = "#ffffff";
@@ -180,11 +197,6 @@ export default function EmissionSpectraSimulation({
   }, [substance, spectrumType, onStateChange]);
 
   return (
-    <SimulationCanvas
-      draw={draw}
-      width={700}
-      height={400}
-      isRunning={false}
-    />
+    <SimulationCanvas draw={draw} width={700} height={400} isRunning={false} />
   );
 }

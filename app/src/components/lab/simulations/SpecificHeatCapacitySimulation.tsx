@@ -135,29 +135,13 @@ export default function SpecificHeatCapacitySimulation({
       ctx.font = "12px sans-serif";
       ctx.fillText(`Масса тела: ${bodyMass.toFixed(0)} г`, 340, 140);
       ctx.fillText(`Масса воды: ${waterMass.toFixed(0)} г`, 340, 162);
-      ctx.fillText(
-        `Начальная T тела: ${bodyTemp.toFixed(0)} °C`,
-        340,
-        184
-      );
-      ctx.fillText(
-        `Начальная T воды: ${waterTemp.toFixed(0)} °C`,
-        340,
-        206
-      );
+      ctx.fillText(`Начальная T тела: ${bodyTemp.toFixed(0)} °C`, 340, 184);
+      ctx.fillText(`Начальная T воды: ${waterTemp.toFixed(0)} °C`, 340, 206);
 
       ctx.fillStyle = "#2eff8c";
       ctx.font = "bold 13px sans-serif";
-      ctx.fillText(
-        `T_равн = ${equilibriumTemp.toFixed(1)} °C`,
-        340,
-        238
-      );
-      ctx.fillText(
-        `c_изм = ${measuredC.toFixed(0)} Дж/(кг·°C)`,
-        340,
-        262
-      );
+      ctx.fillText(`T_равн = ${equilibriumTemp.toFixed(1)} °C`, 340, 238);
+      ctx.fillText(`c_изм = ${measuredC.toFixed(0)} Дж/(кг·°C)`, 340, 262);
       ctx.fillStyle = "#96a3ab";
       ctx.font = "12px sans-serif";
       ctx.fillText(
@@ -191,11 +175,6 @@ export default function SpecificHeatCapacitySimulation({
   ]);
 
   return (
-    <SimulationCanvas
-      draw={draw}
-      width={700}
-      height={400}
-      isRunning={false}
-    />
+    <SimulationCanvas draw={draw} width={700} height={400} isRunning={false} />
   );
 }

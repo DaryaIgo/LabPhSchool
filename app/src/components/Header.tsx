@@ -29,7 +29,8 @@ function StudentNotifications() {
     undefined,
     { enabled: open }
   );
-  const { data: unreadCount } = trpc.student.getUnreadNotificationCount.useQuery();
+  const { data: unreadCount } =
+    trpc.student.getUnreadNotificationCount.useQuery();
 
   const markRead = trpc.student.markNotificationRead.useMutation({
     onSuccess: () => {
@@ -45,7 +46,7 @@ function StudentNotifications() {
     },
   });
 
-  const unread = notifications?.filter((n) => !n.read) ?? [];
+  const unread = notifications?.filter(n => !n.read) ?? [];
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -76,7 +77,7 @@ function StudentNotifications() {
         </div>
         <div className="max-h-64 overflow-y-auto">
           {notifications && notifications.length > 0 ? (
-            notifications.map((n) => (
+            notifications.map(n => (
               <div
                 key={n.id}
                 className={`p-3 border-b border-[#37474f]/50 flex items-start gap-2 ${
@@ -143,21 +144,28 @@ export default function Header() {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
               <div className="flex flex-col items-center leading-none">
-                <span className="font-mono-phys text-2xl font-bold neon-ph">Ph</span>
+                <span className="font-mono-phys text-2xl font-bold neon-ph">
+                  Ph
+                </span>
               </div>
             </Link>
 
             {/* Desktop Nav */}
             <nav className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <Link key={link.to} to={link.to}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                  isActive(link.to) ? "text-[#2eff8c] bg-[#2eff8c]/10" : "text-[#c8cdd1] hover:text-white hover:bg-white/5"
-                }`}>
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+              {navLinks.map(link => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                    isActive(link.to)
+                      ? "text-[#2eff8c] bg-[#2eff8c]/10"
+                      : "text-[#c8cdd1] hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
           </div>
 
           {/* Auth Buttons */}
@@ -165,29 +173,49 @@ export default function Header() {
             {isAuthenticated && user ? (
               <div className="flex items-center gap-3">
                 {user.role === "student" && <StudentNotifications />}
-                <Link to={user.role === "admin" ? "/admin" : "/profile"}
+                <Link
+                  to={user.role === "admin" ? "/admin" : "/profile"}
                   className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    isActive("/profile") || isActive("/student/profile") || isActive("/admin") ? "text-[#2eff8c] bg-[#2eff8c]/10" : "text-[#c8cdd1] hover:text-white"
-                  }`}>
+                    isActive("/profile") ||
+                    isActive("/student/profile") ||
+                    isActive("/admin")
+                      ? "text-[#2eff8c] bg-[#2eff8c]/10"
+                      : "text-[#c8cdd1] hover:text-white"
+                  }`}
+                >
                   {user.avatar ? (
-                    <img src={`/avatars/${user.avatar}.svg`} alt="" className="w-5 h-5 rounded-full" />
+                    <img
+                      src={`/avatars/${user.avatar}.svg`}
+                      alt=""
+                      className="w-5 h-5 rounded-full"
+                    />
                   ) : (
                     <User size={16} />
                   )}
-                  <span className="max-w-[100px] truncate">{user.name || "Кабинет"}</span>
+                  <span className="max-w-[100px] truncate">
+                    {user.name || "Кабинет"}
+                  </span>
                 </Link>
-                <button onClick={logout} className="text-xs text-[#798389] hover:text-white transition-colors flex items-center gap-1">
+                <button
+                  onClick={logout}
+                  className="text-xs text-[#798389] hover:text-white transition-colors flex items-center gap-1"
+                >
                   <LogOut size={14} />
                   Выйти
                 </button>
               </div>
             ) : (
-              <Link to="/login" className="btn-lime text-sm">Войти</Link>
+              <Link to="/login" className="btn-lime text-sm">
+                Войти
+              </Link>
             )}
           </div>
 
           {/* Mobile Menu Button */}
-          <button className="md:hidden text-white p-2" onClick={() => setMobileOpen(!mobileOpen)}>
+          <button
+            className="md:hidden text-white p-2"
+            onClick={() => setMobileOpen(!mobileOpen)}
+          >
             {mobileOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
@@ -197,33 +225,59 @@ export default function Header() {
       {mobileOpen && (
         <div className="md:hidden bg-[#1a1f22] border-t border-white/5">
           <div className="px-6 py-4 space-y-1">
-            {navLinks.map((link) => (
-              <Link key={link.to} to={link.to} onClick={() => setMobileOpen(false)}
+            {navLinks.map(link => (
+              <Link
+                key={link.to}
+                to={link.to}
+                onClick={() => setMobileOpen(false)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                  isActive(link.to) ? "text-[#2eff8c] bg-[#2eff8c]/10" : "text-[#c8cdd1] hover:text-white hover:bg-white/5"
-                }`}>
-                <link.icon size={18} />{link.label}
+                  isActive(link.to)
+                    ? "text-[#2eff8c] bg-[#2eff8c]/10"
+                    : "text-[#c8cdd1] hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <link.icon size={18} />
+                {link.label}
               </Link>
             ))}
             <div className="pt-3 border-t border-white/5">
               {isAuthenticated && user ? (
                 <div className="space-y-2">
-                  <Link to={user.role === "admin" ? "/admin" : "/profile"} onClick={() => setMobileOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#2eff8c] bg-[#2eff8c]/10">
+                  <Link
+                    to={user.role === "admin" ? "/admin" : "/profile"}
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#2eff8c] bg-[#2eff8c]/10"
+                  >
                     {user.avatar ? (
-                      <img src={`/avatars/${user.avatar}.svg`} alt="" className="w-5 h-5 rounded-full" />
+                      <img
+                        src={`/avatars/${user.avatar}.svg`}
+                        alt=""
+                        className="w-5 h-5 rounded-full"
+                      />
                     ) : (
                       <User size={18} />
                     )}
                     {user.name || "Кабинет"}
                   </Link>
-                  <button onClick={() => { logout(); setMobileOpen(false); }}
-                    className="w-full text-left px-4 py-3 rounded-xl text-sm text-[#798389] hover:text-white transition-colors flex items-center gap-3">
-                    <LogOut size={18} />Выйти
+                  <button
+                    onClick={() => {
+                      logout();
+                      setMobileOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-3 rounded-xl text-sm text-[#798389] hover:text-white transition-colors flex items-center gap-3"
+                  >
+                    <LogOut size={18} />
+                    Выйти
                   </button>
                 </div>
               ) : (
-                <Link to="/login" onClick={() => setMobileOpen(false)} className="btn-lime block text-center">Войти</Link>
+                <Link
+                  to="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="btn-lime block text-center"
+                >
+                  Войти
+                </Link>
               )}
             </div>
           </div>

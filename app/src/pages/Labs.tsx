@@ -16,7 +16,9 @@ import { useAuth } from "@/hooks/useAuth";
 const categoryIconMap: Record<string, React.ReactNode> = {
   mechanics: <Wrench size={40} className="text-[#2eff8c]" />,
   "fluid-mechanics": <Beaker size={40} className="text-[#01acff]" />,
-  "molecular-thermodynamics": <Thermometer size={40} className="text-[#ff7043]" />,
+  "molecular-thermodynamics": (
+    <Thermometer size={40} className="text-[#ff7043]" />
+  ),
   electrodynamics: <Zap size={40} className="text-[#ffd600]" />,
   circuit: <Zap size={40} className="text-[#ffd600]" />,
   optics: <Eye size={40} className="text-[#66bb6a]" />,
@@ -28,16 +30,20 @@ export default function Labs() {
   const { user } = useAuth();
   const isStudent = user?.type === "student" && user?.role === "student";
 
-  const { data: categories, isLoading } = trpc.virtualLab.listCategories.useQuery();
-  const { data: myProgress } = trpc.virtualLab.getMyLabProgress.useQuery(undefined, {
-    retry: false,
-    enabled: isStudent,
-  });
+  const { data: categories, isLoading } =
+    trpc.virtualLab.listCategories.useQuery();
+  const { data: myProgress } = trpc.virtualLab.getMyLabProgress.useQuery(
+    undefined,
+    {
+      retry: false,
+      enabled: isStudent,
+    }
+  );
 
   function getCategoryProgress(categoryId: number, labCount: number) {
     if (!myProgress || !Array.isArray(myProgress) || labCount === 0) return 0;
     let score = 0;
-    myProgress.forEach((p) => {
+    myProgress.forEach(p => {
       if (p.categoryId !== categoryId) return;
       if (p.status === "completed" || p.status === "submitted") {
         score += 100;
@@ -64,7 +70,7 @@ export default function Labs() {
 
           {isLoading ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
                 <div
                   key={i}
                   className="h-72 bg-[#2a3237] rounded-2xl animate-pulse"
@@ -73,7 +79,7 @@ export default function Labs() {
             </div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {categories?.map((cat) => {
+              {categories?.map(cat => {
                 const icon =
                   categoryIconMap[cat.iconType || "mechanics"] ||
                   categoryIconMap["mechanics"];
@@ -107,9 +113,14 @@ export default function Labs() {
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-[#798389]">Прогресс</span>
-                          <span className="text-white font-medium">{progress}%</span>
+                          <span className="text-white font-medium">
+                            {progress}%
+                          </span>
                         </div>
-                        <Progress value={progress} className="h-1.5 bg-[#1a1f22]" />
+                        <Progress
+                          value={progress}
+                          className="h-1.5 bg-[#1a1f22]"
+                        />
                       </div>
                     )}
 

@@ -69,12 +69,24 @@ export default function LightReflectionSimulation({
       ctx.strokeStyle = "rgba(255,112,67,0.6)";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(centerX, centerY, arcRadius, -Math.PI / 2 - alphaRad, -Math.PI / 2);
+      ctx.arc(
+        centerX,
+        centerY,
+        arcRadius,
+        -Math.PI / 2 - alphaRad,
+        -Math.PI / 2
+      );
       ctx.stroke();
 
       ctx.strokeStyle = "rgba(46,255,140,0.6)";
       ctx.beginPath();
-      ctx.arc(centerX, centerY, arcRadius, -Math.PI / 2, -Math.PI / 2 + alphaRad);
+      ctx.arc(
+        centerX,
+        centerY,
+        arcRadius,
+        -Math.PI / 2,
+        -Math.PI / 2 + alphaRad
+      );
       ctx.stroke();
 
       // Labels
@@ -148,12 +160,7 @@ export default function LightReflectionSimulation({
   }, [incidentAngle, onStateChange]);
 
   return (
-    <SimulationCanvas
-      draw={draw}
-      width={700}
-      height={400}
-      isRunning={false}
-    />
+    <SimulationCanvas draw={draw} width={700} height={400} isRunning={false} />
   );
 }
 

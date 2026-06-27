@@ -63,7 +63,11 @@ export const timelineRouter = createRouter({
         action: "create",
         resource: "timeline_entries",
         resourceId: id,
-        details: { name: input.name, type: input.type, yearStart: input.yearStart },
+        details: {
+          name: input.name,
+          type: input.type,
+          yearStart: input.yearStart,
+        },
       });
 
       return { id, success: true };
@@ -91,12 +95,17 @@ export const timelineRouter = createRouter({
       if (data.name !== undefined) updateData.name = data.name;
       if (data.yearStart !== undefined) updateData.yearStart = data.yearStart;
       if (data.yearEnd !== undefined) updateData.yearEnd = data.yearEnd;
-      if (data.description !== undefined) updateData.description = data.description;
-      if (data.portraitUrl !== undefined) updateData.portraitUrl = data.portraitUrl;
+      if (data.description !== undefined)
+        updateData.description = data.description;
+      if (data.portraitUrl !== undefined)
+        updateData.portraitUrl = data.portraitUrl;
       if (data.color !== undefined) updateData.color = data.color;
       if (data.sortOrder !== undefined) updateData.sortOrder = data.sortOrder;
 
-      await db.update(timelineEntries).set(updateData).where(eq(timelineEntries.id, id));
+      await db
+        .update(timelineEntries)
+        .set(updateData)
+        .where(eq(timelineEntries.id, id));
 
       await createAuditEntry({
         actorId: ctx.localUser!.id,
@@ -113,7 +122,9 @@ export const timelineRouter = createRouter({
   delete: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
-      await getTimelineDb().delete(timelineEntries).where(eq(timelineEntries.id, input.id));
+      await getTimelineDb()
+        .delete(timelineEntries)
+        .where(eq(timelineEntries.id, input.id));
 
       await createAuditEntry({
         actorId: ctx.localUser!.id,

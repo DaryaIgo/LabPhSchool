@@ -7,10 +7,7 @@ interface Props {
   onStateChange?: (state: Record<string, number>) => void;
 }
 
-export default function LensFocalSimulation({
-  params,
-  onStateChange,
-}: Props) {
+export default function LensFocalSimulation({ params, onStateChange }: Props) {
   const objectDistance = Number(params["objectDistance"] || 30);
   const focalLength = Number(params["focalLength"] || 10);
 
@@ -139,7 +136,11 @@ export default function LensFocalSimulation({
 
       if (imageReal) {
         ctx.fillStyle = "#2eff8c";
-        ctx.fillText("изображение", lensX + imagePx, axisY + Math.abs(-40 * (f / d)) + 16);
+        ctx.fillText(
+          "изображение",
+          lensX + imagePx,
+          axisY + Math.abs(-40 * (f / d)) + 16
+        );
       }
 
       // Info panel
@@ -187,12 +188,7 @@ export default function LensFocalSimulation({
   }, [objectDistance, focalLength, onStateChange]);
 
   return (
-    <SimulationCanvas
-      draw={draw}
-      width={700}
-      height={400}
-      isRunning={false}
-    />
+    <SimulationCanvas draw={draw} width={700} height={400} isRunning={false} />
   );
 }
 

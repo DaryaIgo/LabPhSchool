@@ -7,7 +7,11 @@ interface Props {
   onStateChange?: (state: Record<string, number>) => void;
 }
 
-export default function UniformlyAcceleratedMotion({ params, isRunning, onStateChange }: Props) {
+export default function UniformlyAcceleratedMotion({
+  params,
+  isRunning,
+  onStateChange,
+}: Props) {
   const v0 = Number(params["v0"] || 0);
   const angleDeg = Number(params["angle"] || 10);
   const time = Number(params["time"] || 5);
@@ -65,19 +69,17 @@ export default function UniformlyAcceleratedMotion({ params, isRunning, onStateC
         ctx.strokeStyle = "#2eff8c";
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.arc(
-          rampEndX,
-          rampEndY,
-          25,
-          -Math.PI,
-          -Math.PI + angleRad
-        );
+        ctx.arc(rampEndX, rampEndY, 25, -Math.PI, -Math.PI + angleRad);
         ctx.stroke();
         ctx.fillStyle = "#2eff8c";
         ctx.font = "11px sans-serif";
         ctx.textAlign = "left";
         ctx.textBaseline = "bottom";
-        ctx.fillText(`α ≈ ${angleDeg.toFixed(1)}°`, rampEndX + 30, rampEndY - 8);
+        ctx.fillText(
+          `α ≈ ${angleDeg.toFixed(1)}°`,
+          rampEndX + 30,
+          rampEndY - 8
+        );
       }
 
       // Animation progress
@@ -93,13 +95,9 @@ export default function UniformlyAcceleratedMotion({ params, isRunning, onStateC
       const s = v0 * currentTime + 0.5 * a * currentTime * currentTime;
       const maxS = 100;
       const ballProgress = Math.min(s / maxS, 1);
-      const ballX =
-        rampStartX +
-        ballProgress * rampLen * Math.cos(angleRad);
+      const ballX = rampStartX + ballProgress * rampLen * Math.cos(angleRad);
       const ballY =
-        rampStartY +
-        ballProgress * rampLen * Math.sin(angleRad) -
-        12;
+        rampStartY + ballProgress * rampLen * Math.sin(angleRad) - 12;
 
       ctx.fillStyle = "#ff6464";
       ctx.beginPath();
@@ -124,7 +122,10 @@ export default function UniformlyAcceleratedMotion({ params, isRunning, onStateC
         ctx.stroke();
 
         // Arrowhead
-        const headAngle = Math.atan2(arrowEndY - arrowStartY, arrowEndX - arrowStartX);
+        const headAngle = Math.atan2(
+          arrowEndY - arrowStartY,
+          arrowEndX - arrowStartX
+        );
         ctx.beginPath();
         ctx.moveTo(
           arrowEndX - 6 * Math.cos(headAngle - 0.4),

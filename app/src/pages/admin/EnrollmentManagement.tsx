@@ -97,8 +97,12 @@ export default function EnrollmentManagement() {
 
   const [expandedStudent, setExpandedStudent] = useState<number | null>(null);
   const [enrollDialogOpen, setEnrollDialogOpen] = useState(false);
-  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
-  const [selectedTopicNodeId, setSelectedTopicNodeId] = useState<number | null>(null);
+  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(
+    null
+  );
+  const [selectedTopicNodeId, setSelectedTopicNodeId] = useState<number | null>(
+    null
+  );
 
   const { data: students, isLoading: studentsLoading } =
     trpc.student.list.useQuery(
@@ -117,7 +121,7 @@ export default function EnrollmentManagement() {
       setEnrollDialogOpen(false);
       setSelectedTopicNodeId(null);
     },
-    onError: (err) => toast(err.message),
+    onError: err => toast(err.message),
   });
 
   const unenrollMutation = trpc.enrollment.unenroll.useMutation({
@@ -125,7 +129,7 @@ export default function EnrollmentManagement() {
       toast("Запись удалена");
       utils.enrollment.listForStudent.invalidate();
     },
-    onError: (err) => toast(err.message),
+    onError: err => toast(err.message),
   });
 
   const updateStatusMutation = trpc.enrollment.updateStatus.useMutation({
@@ -133,7 +137,7 @@ export default function EnrollmentManagement() {
       toast("Статус обновлён");
       utils.enrollment.listForStudent.invalidate();
     },
-    onError: (err) => toast(err.message),
+    onError: err => toast(err.message),
   });
 
   if (!user || user.role !== "admin") return null;
@@ -161,8 +165,8 @@ export default function EnrollmentManagement() {
       ) : (
         <div className="space-y-3">
           {students?.users
-            .filter((s) => s.roleName !== "admin")
-            .map((student) => (
+            .filter(s => s.roleName !== "admin")
+            .map(student => (
               <StudentCard
                 key={student.id}
                 student={student}
@@ -176,10 +180,8 @@ export default function EnrollmentManagement() {
                   <EnrollDialog
                     student={student}
                     topics={topics ?? []}
-                    open={
-                      enrollDialogOpen && selectedStudentId === student.id
-                    }
-                    onOpenChange={(open) => {
+                    open={enrollDialogOpen && selectedStudentId === student.id}
+                    onOpenChange={open => {
                       setEnrollDialogOpen(open);
                       if (open) setSelectedStudentId(student.id);
                     }}
@@ -200,7 +202,7 @@ export default function EnrollmentManagement() {
                 {expandedStudent === student.id && (
                   <StudentEnrollments
                     studentId={student.id}
-                    onUnenroll={(id) =>
+                    onUnenroll={id =>
                       unenrollMutation.mutate({ enrollmentId: id })
                     }
                     onUpdateStatus={(id, status) =>
@@ -215,6 +217,200 @@ export default function EnrollmentManagement() {
               </StudentCard>
             ))}
         </div>
+      )}
+    </div>
+  );
+}
+
+function AssignedProblemsManager({
+  enrollmentId,
+  isOpen,
+}: {
+  enrollmentId: number;
+  isOpen: boolean;
+}) {
+  const utils = trpc.useUtils();
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [selectedProblemId, setSelectedProblemId] = useState<number | null>(
+    null
+  );
+
+  const { data: assignedProblems, isLoading } =
+    trpc.enrollment.listAssignedProblems.useQuery(
+      { enrollmentId },
+      { enabled: isOpen }
+    );
+  const { data: allProblems } =
+    trpc.problems.adminListProblemsForAssignment.useQuery(undefined, {
+      enabled: isOpen,
+    });
+
+  const assignMutation = trpc.enrollment.assignProblem.useMutation({
+    onSuccess: () => {
+      toast("Задача назначена");
+      utils.enrollment.listAssignedProblems.invalidate({ enrollmentId });
+      setAddDialogOpen(false);
+      setSelectedProblemId(null);
+    },
+    onError: err => toast(err.message),
+  });
+
+  const unassignMutation = trpc.enrollment.unassignProblem.useMutation({
+    onSuccess: () => {
+      toast("Назначение удалено");
+      utils.enrollment.listAssignedProblems.invalidate({ enrollmentId });
+    },
+    onError: err => toast(err.message),
+  });
+
+  const updateMutation = trpc.enrollment.updateAssignedProblem.useMutation({
+    onSuccess: () => {
+      utils.enrollment.listAssignedProblems.invalidate({ enrollmentId });
+    },
+    onError: err => toast(err.message),
+  });
+
+  const availableProblems =
+    allProblems?.filter(
+      p => !assignedProblems?.some(a => a.problemId === p.id)
+    ) ?? [];
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <h4 className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
+          <FileText className="h-3.5 w-3.5" />
+          Назначенные задачи
+        </h4>
+        <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+          <DialogTrigger asChild>
+            <button
+              type="button"
+              className="text-xs flex items-center gap-1 text-[#2eff8c] hover:text-[#26d97a] transition-colors"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Добавить новую задачу
+            </button>
+          </DialogTrigger>
+          <DialogContent className="bg-[#1e2529] border-[#37474f] text-white sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Назначить задачу</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 mt-2">
+              <Select
+                value={selectedProblemId?.toString() ?? ""}
+                onValueChange={v => setSelectedProblemId(Number(v))}
+              >
+                <SelectTrigger className="bg-[#263238] border-[#37474f]">
+                  <SelectValue placeholder="Выберите задачу..." />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1e2529] border-[#37474f] max-h-80">
+                  {availableProblems.map(p => (
+                    <SelectItem key={p.id} value={p.id.toString()}>
+                      <span className="truncate">{p.title}</span>
+                      <span className="ml-2 text-xs text-slate-500">
+                        {p.categoryTitle ?? "Без категории"}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                className="w-full bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
+                disabled={!selectedProblemId || assignMutation.isPending}
+                onClick={() => {
+                  if (selectedProblemId) {
+                    assignMutation.mutate({
+                      enrollmentId,
+                      problemId: selectedProblemId,
+                    });
+                  }
+                }}
+              >
+                {assignMutation.isPending ? "Назначаем..." : "Назначить"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-1.5">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 bg-[#37474f]" />
+          ))}
+        </div>
+      ) : assignedProblems && assignedProblems.length > 0 ? (
+        <div className="grid gap-1.5">
+          {assignedProblems.map((problem, idx) => (
+            <div
+              key={problem.id}
+              className="flex items-center gap-2 px-3 py-2 bg-[#1a2024] rounded-md border border-[#2a3338] hover:border-[#37474f] transition-colors"
+            >
+              <span className="text-xs font-medium text-slate-500 w-5 shrink-0">
+                {idx + 1}.
+              </span>
+              <span className="flex-1 min-w-0 text-sm text-white truncate">
+                {problem.problemTitle}
+              </span>
+              <Select
+                value={problem.status}
+                onValueChange={val =>
+                  updateMutation.mutate({
+                    assignmentId: problem.id,
+                    status: val as "assigned" | "completed",
+                  })
+                }
+                disabled={updateMutation.isPending}
+              >
+                <SelectTrigger className="h-7 text-xs bg-[#232b2f] border-[#37474f] text-white w-32 shrink-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1e2529] border-[#37474f]">
+                  <SelectItem value="assigned">Назначена</SelectItem>
+                  <SelectItem value="completed">Выполнена</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={problem.grade?.toString() ?? "none"}
+                onValueChange={val =>
+                  updateMutation.mutate({
+                    assignmentId: problem.id,
+                    grade: val === "none" ? null : Number(val),
+                  })
+                }
+                disabled={updateMutation.isPending}
+              >
+                <SelectTrigger className="h-7 text-xs bg-[#232b2f] border-[#37474f] text-white w-24 shrink-0">
+                  <SelectValue placeholder="Оценка" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1e2529] border-[#37474f]">
+                  <SelectItem value="none">Без оценки</SelectItem>
+                  {[1, 2, 3, 4, 5].map(g => (
+                    <SelectItem key={g} value={g.toString()}>
+                      {g}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm("Удалить назначенную задачу?")) {
+                    unassignMutation.mutate({ assignmentId: problem.id });
+                  }
+                }}
+                disabled={unassignMutation.isPending}
+                className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-md transition-colors shrink-0"
+                title="Удалить"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-slate-500">Нет назначенных задач</p>
       )}
     </div>
   );
@@ -258,7 +454,7 @@ function StudentCard({
               </p>
             </div>
           </div>
-          <div onClick={(e) => e.stopPropagation()}>{enrollDialog}</div>
+          <div onClick={e => e.stopPropagation()}>{enrollDialog}</div>
         </div>
 
         {isExpanded && (
@@ -294,7 +490,7 @@ function EnrollDialog({
         <Button
           size="sm"
           className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a] font-medium"
-          onClick={(e) => e.stopPropagation()}
+          onClick={e => e.stopPropagation()}
         >
           <Plus className="h-4 w-4 mr-1" />
           Открыть тему
@@ -307,13 +503,13 @@ function EnrollDialog({
         <div className="space-y-4 mt-2">
           <Select
             value={selectedTopicNodeId?.toString() ?? ""}
-            onValueChange={(v) => onSelectTopic(Number(v))}
+            onValueChange={v => onSelectTopic(Number(v))}
           >
             <SelectTrigger className="bg-[#263238] border-[#37474f]">
               <SelectValue placeholder="Выберите тему..." />
             </SelectTrigger>
             <SelectContent className="bg-[#1e2529] border-[#37474f]">
-              {topics.map((t) => (
+              {topics.map(t => (
                 <SelectItem key={t.id} value={t.id.toString()}>
                   {t.title}
                 </SelectItem>
@@ -360,15 +556,13 @@ function StudentEnrollments({
 
   if (!enrollments?.length) {
     return (
-      <p className="text-sm text-slate-500">
-        У ученика пока нет открытых тем
-      </p>
+      <p className="text-sm text-slate-500">У ученика пока нет открытых тем</p>
     );
   }
 
   return (
     <div className="space-y-2">
-      {enrollments.map((enrollment) => (
+      {enrollments.map(enrollment => (
         <TopicRow
           key={enrollment.id}
           studentId={studentId}
@@ -406,14 +600,17 @@ function TopicRow({
   });
 
   const completedCount =
-    progress?.filter((p) => p.status === "completed").length ?? 0;
+    progress?.filter(p => p.status === "completed").length ?? 0;
   const totalCount = progress?.length ?? 0;
   const progressPercent =
     totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
-  const currentSubtopicNodeId = progress?.find((p) => p.status === "in_progress")
-    ?.subtopicNodeId;
-  const currentSubtopic = allSubtopics.find((s) => s.id === currentSubtopicNodeId);
+  const currentSubtopicNodeId = progress?.find(
+    p => p.status === "in_progress"
+  )?.subtopicNodeId;
+  const currentSubtopic = allSubtopics.find(
+    s => s.id === currentSubtopicNodeId
+  );
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -463,7 +660,7 @@ function TopicRow({
         </CollapsibleTrigger>
         <div
           className="absolute right-2 top-1/2 -translate-y-1/2"
-          onClick={(e) => e.stopPropagation()}
+          onClick={e => e.stopPropagation()}
         >
           <TopicActions
             status={enrollment.status}
@@ -488,10 +685,8 @@ function TopicRow({
           studentId={studentId}
           topicNodeId={enrollment.topicNodeId}
         />
-        <AssignedLabWorksManager
-          enrollmentId={enrollment.id}
-          isOpen={isOpen}
-        />
+        <AssignedLabWorksManager enrollmentId={enrollment.id} isOpen={isOpen} />
+        <AssignedProblemsManager enrollmentId={enrollment.id} isOpen={isOpen} />
       </CollapsibleContent>
     </Collapsible>
   );
@@ -569,7 +764,7 @@ function SubtopicProgressManager({
       utils.student.getProfile.invalidate();
       utils.student.getLearningPath.invalidate();
     },
-    onError: (err) => toast(err.message),
+    onError: err => toast(err.message),
   });
 
   if (isLoading) {
@@ -603,11 +798,11 @@ function SubtopicProgressManager({
             <span>Статус</span>
           </div>
           <div className="divide-y divide-[#2a3338]">
-            {progress.map((sub) => (
+            {progress.map(sub => (
               <SubtopicRow
                 key={sub.subtopicNodeId}
                 sub={sub}
-                onUpdate={(data) =>
+                onUpdate={data =>
                   updateProgress.mutate({
                     studentId,
                     subtopicNodeId: sub.subtopicNodeId,
@@ -646,7 +841,7 @@ function SubtopicRow({
       </span>
       <Input
         defaultValue={sub.comment ?? ""}
-        onBlur={(ev) => {
+        onBlur={ev => {
           const value = ev.target.value;
           if (value !== (sub.comment ?? "")) {
             onUpdate({ comment: value });
@@ -682,7 +877,7 @@ function SubtopicRow({
       />
       <Select
         value={sub.status}
-        onValueChange={(val) => onUpdate({ status: val as SubtopicStatus })}
+        onValueChange={val => onUpdate({ status: val as SubtopicStatus })}
         disabled={isPending}
       >
         <SelectTrigger className="h-7 text-xs bg-[#232b2f] border-[#37474f] text-white">
@@ -782,7 +977,7 @@ function AssignedLabWorksManager({
       setAddDialogOpen(false);
       setSelectedLabWorkId(null);
     },
-    onError: (err) => toast(err.message),
+    onError: err => toast(err.message),
   });
 
   const unassignMutation = trpc.enrollment.unassignLabWork.useMutation({
@@ -791,7 +986,7 @@ function AssignedLabWorksManager({
       utils.enrollment.listAssignedLabWorks.invalidate({ enrollmentId });
       utils.student.getMyAssignedLabWorks.invalidate();
     },
-    onError: (err) => toast(err.message),
+    onError: err => toast(err.message),
   });
 
   const updateMutation = trpc.enrollment.updateAssignedLabWork.useMutation({
@@ -799,12 +994,12 @@ function AssignedLabWorksManager({
       utils.enrollment.listAssignedLabWorks.invalidate({ enrollmentId });
       utils.student.getMyAssignedLabWorks.invalidate();
     },
-    onError: (err) => toast(err.message),
+    onError: err => toast(err.message),
   });
 
   const availableLabWorks =
     allLabWorks?.filter(
-      (lw) => !assignedLabs?.some((a) => a.labWorkId === lw.id)
+      lw => !assignedLabs?.some(a => a.labWorkId === lw.id)
     ) ?? [];
 
   return (
@@ -831,13 +1026,13 @@ function AssignedLabWorksManager({
             <div className="space-y-4 mt-2">
               <Select
                 value={selectedLabWorkId?.toString() ?? ""}
-                onValueChange={(v) => setSelectedLabWorkId(Number(v))}
+                onValueChange={v => setSelectedLabWorkId(Number(v))}
               >
                 <SelectTrigger className="bg-[#263238] border-[#37474f]">
                   <SelectValue placeholder="Выберите лабораторную работу..." />
                 </SelectTrigger>
                 <SelectContent className="bg-[#1e2529] border-[#37474f] max-h-80">
-                  {availableLabWorks.map((lw) => (
+                  {availableLabWorks.map(lw => (
                     <SelectItem key={lw.id} value={lw.id.toString()}>
                       <span className="truncate">{lw.title}</span>
                       <span className="ml-2 text-xs text-slate-500">
@@ -895,7 +1090,7 @@ function AssignedLabWorksManager({
               </a>
               <Select
                 value={lab.status}
-                onValueChange={(val) =>
+                onValueChange={val =>
                   updateMutation.mutate({
                     assignmentId: lab.id,
                     status: val as "assigned" | "completed",
@@ -913,7 +1108,7 @@ function AssignedLabWorksManager({
               </Select>
               <Select
                 value={lab.grade?.toString() ?? "none"}
-                onValueChange={(val) =>
+                onValueChange={val =>
                   updateMutation.mutate({
                     assignmentId: lab.id,
                     grade: val === "none" ? null : Number(val),
@@ -926,7 +1121,7 @@ function AssignedLabWorksManager({
                 </SelectTrigger>
                 <SelectContent className="bg-[#1e2529] border-[#37474f]">
                   <SelectItem value="none">Без оценки</SelectItem>
-                  {[1, 2, 3, 4, 5].map((g) => (
+                  {[1, 2, 3, 4, 5].map(g => (
                     <SelectItem key={g} value={g.toString()}>
                       {g}
                     </SelectItem>
@@ -957,4 +1152,3 @@ function AssignedLabWorksManager({
     </div>
   );
 }
-

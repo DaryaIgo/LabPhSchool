@@ -76,7 +76,13 @@ export default function RefractionIndexSimulation({
       ctx.strokeStyle = "rgba(255,112,67,0.6)";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(centerX, centerY, arcRadius, -Math.PI / 2 - alphaRad, -Math.PI / 2);
+      ctx.arc(
+        centerX,
+        centerY,
+        arcRadius,
+        -Math.PI / 2 - alphaRad,
+        -Math.PI / 2
+      );
       ctx.stroke();
 
       ctx.strokeStyle = "rgba(1,172,255,0.6)";
@@ -89,11 +95,19 @@ export default function RefractionIndexSimulation({
       ctx.font = "12px sans-serif";
       ctx.textAlign = "right";
       ctx.textBaseline = "middle";
-      ctx.fillText(`α = ${incidentAngle}°`, centerX - arcRadius - 8, centerY - arcRadius / 2);
+      ctx.fillText(
+        `α = ${incidentAngle}°`,
+        centerX - arcRadius - 8,
+        centerY - arcRadius / 2
+      );
 
       ctx.fillStyle = "#01acff";
       ctx.textAlign = "left";
-      ctx.fillText(`β = ${betaDeg.toFixed(1)}°`, centerX + arcRadius + 8, centerY + arcRadius / 2);
+      ctx.fillText(
+        `β = ${betaDeg.toFixed(1)}°`,
+        centerX + arcRadius + 8,
+        centerY + arcRadius / 2
+      );
 
       // Info panel
       ctx.fillStyle = "#2a3237";
@@ -110,7 +124,11 @@ export default function RefractionIndexSimulation({
       ctx.fillStyle = "#96a3ab";
       ctx.font = "12px sans-serif";
       ctx.fillText(`Формула: n = sinα / sinβ`, 55, 75);
-      ctx.fillText(`sin(${incidentAngle}°) / sin(${betaDeg.toFixed(1)}°) = ${nMeasured.toFixed(3)}`, 55, 95);
+      ctx.fillText(
+        `sin(${incidentAngle}°) / sin(${betaDeg.toFixed(1)}°) = ${nMeasured.toFixed(3)}`,
+        55,
+        95
+      );
       ctx.fillText(`Заданное значение n = ${nGlass.toFixed(2)}`, 55, 115);
 
       ctx.fillStyle = "#2eff8c";
@@ -136,12 +154,7 @@ export default function RefractionIndexSimulation({
   }, [incidentAngle, nGlass, onStateChange]);
 
   return (
-    <SimulationCanvas
-      draw={draw}
-      width={700}
-      height={400}
-      isRunning={false}
-    />
+    <SimulationCanvas draw={draw} width={700} height={400} isRunning={false} />
   );
 }
 

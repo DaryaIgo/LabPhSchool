@@ -28,10 +28,14 @@ export default function ArchimedesForceVsDensitySimulation({ params }: Props) {
 
       const tanks = [
         { x: 80, rho: 1000, label: "Вода" },
-        { x: 280, rho, label: rho > 1200 ? "Раствор соли" : rho > 900 ? "Вода" : "Спирт" },
+        {
+          x: 280,
+          rho,
+          label: rho > 1200 ? "Раствор соли" : rho > 900 ? "Вода" : "Спирт",
+        },
       ];
 
-      tanks.forEach((t) => {
+      tanks.forEach(t => {
         const tRho = t.rho;
         const tFa = tRho * g * (v * 1e-6);
         const liquidColor =
@@ -53,7 +57,12 @@ export default function ArchimedesForceVsDensitySimulation({ params }: Props) {
         const bodyY = tankY + tankH - liquidH + bodySize / 2 - 10;
 
         ctx.fillStyle = "#c86464";
-        ctx.fillRect(bodyX - bodySize / 2, bodyY - bodySize / 2, bodySize, bodySize);
+        ctx.fillRect(
+          bodyX - bodySize / 2,
+          bodyY - bodySize / 2,
+          bodySize,
+          bodySize
+        );
 
         ctx.fillStyle = "rgba(100,180,255,0.3)";
         ctx.fillRect(bodyX - bodySize / 2, bodyY, bodySize, bodySize / 2);
@@ -74,7 +83,11 @@ export default function ArchimedesForceVsDensitySimulation({ params }: Props) {
         ctx.fillStyle = "#64c896";
         ctx.font = "11px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText(`Fₐ = ${tFa.toFixed(4)} Н`, bodyX, bodyY + bodySize / 2 + 50);
+        ctx.fillText(
+          `Fₐ = ${tFa.toFixed(4)} Н`,
+          bodyX,
+          bodyY + bodySize / 2 + 50
+        );
 
         ctx.fillStyle = "#ffffff";
         ctx.font = "12px sans-serif";
@@ -156,7 +169,11 @@ export default function ArchimedesForceVsDensitySimulation({ params }: Props) {
       ctx.font = "16px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
-      ctx.fillText("Зависимость силы Архимеда от плотности жидкости", w / 2, 20);
+      ctx.fillText(
+        "Зависимость силы Архимеда от плотности жидкости",
+        w / 2,
+        20
+      );
     };
   }, [bodyVolume, liquidDensity]);
 

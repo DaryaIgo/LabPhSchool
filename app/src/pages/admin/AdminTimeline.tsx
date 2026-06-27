@@ -79,7 +79,9 @@ function emptyForm(): FormState {
 
 export default function AdminTimeline() {
   const navigate = useNavigate();
-  const { user, isLoading: authLoading } = useAuth({ redirectOnUnauthenticated: true });
+  const { user, isLoading: authLoading } = useAuth({
+    redirectOnUnauthenticated: true,
+  });
 
   const utils = trpc.useUtils();
   const { data: entries, isLoading } = trpc.timeline.list.useQuery(undefined, {
@@ -93,7 +95,7 @@ export default function AdminTimeline() {
       setFormOpen(false);
       setForm(emptyForm());
     },
-    onError: (err) => toast.error(err.message),
+    onError: err => toast.error(err.message),
   });
 
   const updateMutation = trpc.timeline.update.useMutation({
@@ -102,7 +104,7 @@ export default function AdminTimeline() {
       toast.success("Запись обновлена");
       setEditingId(null);
     },
-    onError: (err) => toast.error(err.message),
+    onError: err => toast.error(err.message),
   });
 
   const deleteMutation = trpc.timeline.delete.useMutation({
@@ -110,7 +112,7 @@ export default function AdminTimeline() {
       utils.timeline.list.invalidate();
       toast.success("Запись удалена");
     },
-    onError: (err) => toast.error(err.message),
+    onError: err => toast.error(err.message),
   });
 
   const [formOpen, setFormOpen] = useState(false);
@@ -177,7 +179,10 @@ export default function AdminTimeline() {
           <p className="text-[#c8cdd1] mb-6">
             Этот раздел доступен только администратору.
           </p>
-          <Link to="/" className="text-sm text-[#798389] hover:text-white transition-colors">
+          <Link
+            to="/"
+            className="text-sm text-[#798389] hover:text-white transition-colors"
+          >
             На главную
           </Link>
         </div>
@@ -202,8 +207,12 @@ export default function AdminTimeline() {
                 <History size={24} className="text-yellow-400" />
               </div>
               <div>
-                <p className="formula-text text-xs mb-1">Раздел администратора</p>
-                <h1 className="text-2xl lg:text-3xl font-bold">Стрела времени</h1>
+                <p className="formula-text text-xs mb-1">
+                  Раздел администратора
+                </p>
+                <h1 className="text-2xl lg:text-3xl font-bold">
+                  Стрела времени
+                </h1>
               </div>
             </div>
             <Button
@@ -242,8 +251,11 @@ export default function AdminTimeline() {
                     <Label>Тип</Label>
                     <Select
                       value={form.type}
-                      onValueChange={(v) =>
-                        setForm((f) => ({ ...f, type: v as "physicist" | "discovery" }))
+                      onValueChange={v =>
+                        setForm(f => ({
+                          ...f,
+                          type: v as "physicist" | "discovery",
+                        }))
                       }
                     >
                       <SelectTrigger className="bg-[#262e33] border-[#434e54] text-white">
@@ -260,7 +272,9 @@ export default function AdminTimeline() {
                     <Label>Название / Имя</Label>
                     <Input
                       value={form.name}
-                      onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                      onChange={e =>
+                        setForm(f => ({ ...f, name: e.target.value }))
+                      }
                       placeholder="Например, Альберт Эйнштейн"
                       className="bg-[#262e33] border-[#434e54] text-white"
                       required
@@ -274,7 +288,9 @@ export default function AdminTimeline() {
                       min={1500}
                       max={2100}
                       value={form.yearStart}
-                      onChange={(e) => setForm((f) => ({ ...f, yearStart: e.target.value }))}
+                      onChange={e =>
+                        setForm(f => ({ ...f, yearStart: e.target.value }))
+                      }
                       className="bg-[#262e33] border-[#434e54] text-white"
                       required
                     />
@@ -287,7 +303,9 @@ export default function AdminTimeline() {
                       min={1500}
                       max={2100}
                       value={form.yearEnd}
-                      onChange={(e) => setForm((f) => ({ ...f, yearEnd: e.target.value }))}
+                      onChange={e =>
+                        setForm(f => ({ ...f, yearEnd: e.target.value }))
+                      }
                       placeholder="Не обязательно"
                       className="bg-[#262e33] border-[#434e54] text-white"
                     />
@@ -298,7 +316,9 @@ export default function AdminTimeline() {
                     <Input
                       type="number"
                       value={form.sortOrder}
-                      onChange={(e) => setForm((f) => ({ ...f, sortOrder: e.target.value }))}
+                      onChange={e =>
+                        setForm(f => ({ ...f, sortOrder: e.target.value }))
+                      }
                       className="bg-[#262e33] border-[#434e54] text-white"
                     />
                   </div>
@@ -306,14 +326,18 @@ export default function AdminTimeline() {
                   <div className="space-y-2">
                     <Label>Цвет блока</Label>
                     <div className="flex flex-wrap gap-2">
-                      {DEFAULT_COLORS.map((c) => (
+                      {DEFAULT_COLORS.map(c => (
                         <button
                           key={c.value}
                           type="button"
-                          onClick={() => setForm((f) => ({ ...f, color: c.value }))}
+                          onClick={() =>
+                            setForm(f => ({ ...f, color: c.value }))
+                          }
                           title={c.label}
                           className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${
-                            form.color === c.value ? "border-white scale-110" : "border-transparent"
+                            form.color === c.value
+                              ? "border-white scale-110"
+                              : "border-transparent"
                           }`}
                           style={{ backgroundColor: c.value }}
                         />
@@ -326,7 +350,9 @@ export default function AdminTimeline() {
                   <Label>URL портрета / изображения</Label>
                   <Input
                     value={form.portraitUrl}
-                    onChange={(e) => setForm((f) => ({ ...f, portraitUrl: e.target.value }))}
+                    onChange={e =>
+                      setForm(f => ({ ...f, portraitUrl: e.target.value }))
+                    }
                     placeholder="https://..."
                     className="bg-[#262e33] border-[#434e54] text-white"
                   />
@@ -336,7 +362,9 @@ export default function AdminTimeline() {
                   <Label>Описание</Label>
                   <Textarea
                     value={form.description}
-                    onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                    onChange={e =>
+                      setForm(f => ({ ...f, description: e.target.value }))
+                    }
                     rows={5}
                     className="bg-[#262e33] border-[#434e54] text-white"
                     required
@@ -355,7 +383,9 @@ export default function AdminTimeline() {
                   </Button>
                   <Button
                     type="submit"
-                    disabled={createMutation.isPending || updateMutation.isPending}
+                    disabled={
+                      createMutation.isPending || updateMutation.isPending
+                    }
                     className="bg-[#2eff8c] text-black hover:bg-[#26d97a]"
                   >
                     <Save size={16} className="mr-1" />
@@ -375,19 +405,27 @@ export default function AdminTimeline() {
                 <TableHead className="text-[#798389]">Название</TableHead>
                 <TableHead className="text-[#798389]">Годы</TableHead>
                 <TableHead className="text-[#798389]">Цвет</TableHead>
-                <TableHead className="text-[#798389] text-right">Действия</TableHead>
+                <TableHead className="text-[#798389] text-right">
+                  Действия
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-12 text-[#798389]">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center py-12 text-[#798389]"
+                  >
                     Загрузка...
                   </TableCell>
                 </TableRow>
               ) : entries && entries.length > 0 ? (
-                entries.map((entry) => (
-                  <TableRow key={entry.id} className="border-[#434e54] hover:bg-[#262e33]/50">
+                entries.map(entry => (
+                  <TableRow
+                    key={entry.id}
+                    className="border-[#434e54] hover:bg-[#262e33]/50"
+                  >
                     <TableCell>
                       <span
                         className="px-2 py-0.5 rounded-full text-[10px] uppercase font-semibold text-white"
@@ -396,7 +434,9 @@ export default function AdminTimeline() {
                         {entry.type}
                       </span>
                     </TableCell>
-                    <TableCell className="font-medium text-white">{entry.name}</TableCell>
+                    <TableCell className="font-medium text-white">
+                      {entry.name}
+                    </TableCell>
                     <TableCell className="text-[#c8cdd1]">
                       <span className="inline-flex items-center gap-1">
                         <Clock size={14} className="text-[#798389]" />
@@ -410,7 +450,9 @@ export default function AdminTimeline() {
                           className="w-6 h-6 rounded border border-white/10"
                           style={{ backgroundColor: entry.color }}
                         />
-                        <span className="text-xs text-[#798389]">{entry.color}</span>
+                        <span className="text-xs text-[#798389]">
+                          {entry.color}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
@@ -441,7 +483,10 @@ export default function AdminTimeline() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-12 text-[#798389]">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center py-12 text-[#798389]"
+                  >
                     Нет записей. Добавьте первую запись таймлайна.
                   </TableCell>
                 </TableRow>

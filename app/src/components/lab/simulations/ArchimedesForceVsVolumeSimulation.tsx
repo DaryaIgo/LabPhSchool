@@ -49,7 +49,12 @@ export default function ArchimedesForceVsVolumeSimulation({ params }: Props) {
       const bodyX = tankX + tankW / 2;
 
       ctx.fillStyle = "#c86464";
-      ctx.fillRect(bodyX - bodySize / 2, bodyY - bodySize / 2, bodySize, bodySize);
+      ctx.fillRect(
+        bodyX - bodySize / 2,
+        bodyY - bodySize / 2,
+        bodySize,
+        bodySize
+      );
 
       ctx.fillStyle = "rgba(100,180,255,0.3)";
       ctx.fillRect(
@@ -129,7 +134,11 @@ export default function ArchimedesForceVsVolumeSimulation({ params }: Props) {
       const plotW = graphW - 60;
       for (let i = 0; i <= 100; i += 2) {
         const x = graphX + 40 + (i / 100) * plotW;
-        const y = graphY + graphH - 30 - ((i / 100) * maxFa / Math.max(maxFa, 0.01)) * plotH;
+        const y =
+          graphY +
+          graphH -
+          30 -
+          (((i / 100) * maxFa) / Math.max(maxFa, 0.01)) * plotH;
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       }

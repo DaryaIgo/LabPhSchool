@@ -27,15 +27,13 @@ export function useAuth(options?: UseAuthOptions) {
   const navigate = useNavigate();
   const utils = trpc.useUtils();
 
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-  } = trpc.unifiedAuth.me.useQuery(undefined, {
-    staleTime: 1000 * 60 * 5,
-    retry: false,
-  });
+  const { data, isLoading, error, refetch } = trpc.unifiedAuth.me.useQuery(
+    undefined,
+    {
+      staleTime: 1000 * 60 * 5,
+      retry: false,
+    }
+  );
 
   const logoutMutation = trpc.unifiedAuth.logout.useMutation({
     onSuccess: async () => {
@@ -53,10 +51,15 @@ export function useAuth(options?: UseAuthOptions) {
       name: data.name ?? "",
       role: data.role,
       type: data.type,
-      email: "email" in data ? (data.email as string | null | undefined) : undefined,
-      avatar: "avatar" in data ? (data.avatar as string | null | undefined) : undefined,
+      email:
+        "email" in data ? (data.email as string | null | undefined) : undefined,
+      avatar:
+        "avatar" in data
+          ? (data.avatar as string | null | undefined)
+          : undefined,
       login: "login" in data ? (data.login as string | undefined) : undefined,
-      status: "status" in data ? (data.status as string | undefined) : undefined,
+      status:
+        "status" in data ? (data.status as string | undefined) : undefined,
       permissions: (data.permissions ?? []).map((p: unknown) =>
         typeof p === "string" ? p : (p as { name: string }).name
       ),

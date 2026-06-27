@@ -66,7 +66,12 @@ export default function FloatingConditionsSimulation({ params }: Props) {
       }
 
       ctx.fillStyle = "#c86464";
-      ctx.fillRect(bodyX - bodySize / 2, bodyY - bodySize / 2, bodySize, bodySize);
+      ctx.fillRect(
+        bodyX - bodySize / 2,
+        bodyY - bodySize / 2,
+        bodySize,
+        bodySize
+      );
 
       if (submergedFraction > 0) {
         const submergedH = bodySize * submergedFraction;
@@ -96,7 +101,11 @@ export default function FloatingConditionsSimulation({ params }: Props) {
       ctx.font = "11px sans-serif";
       ctx.textAlign = "left";
       ctx.textBaseline = "middle";
-      ctx.fillText("Fтяж", bodyX + 12, bodyY - bodySize / 2 - arrowScale / 2 - 8);
+      ctx.fillText(
+        "Fтяж",
+        bodyX + 12,
+        bodyY - bodySize / 2 - arrowScale / 2 - 8
+      );
 
       // Buoyancy arrow
       const fa = state === "float" ? gravity : maxFa;

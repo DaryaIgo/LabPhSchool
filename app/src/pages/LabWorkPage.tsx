@@ -12,7 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
-
 import { toast } from "sonner";
 import LabLayout from "@/components/lab/LabLayout";
 import LabControls from "@/components/lab/LabControls";
@@ -132,8 +131,12 @@ export default function LabWorkPage() {
   const utils = trpc.useUtils();
 
   const [activeTab, setActiveTab] = useState("theory");
-  const [measurements, setMeasurements] = useState<Record<string, string | number>[]>([]);
-  const [simParams, setSimParams] = useState<Record<string, number | string>>({});
+  const [measurements, setMeasurements] = useState<
+    Record<string, string | number>[]
+  >([]);
+  const [simParams, setSimParams] = useState<Record<string, number | string>>(
+    {}
+  );
   const [conclusion, setConclusion] = useState("");
   const [isSimRunning, setIsSimRunning] = useState(false);
   const simStateRef = useRef<Record<string, number>>({});
@@ -143,14 +146,14 @@ export default function LabWorkPage() {
       toast.success("Прогресс сохранён");
       utils.virtualLab.getMyLabProgress.invalidate();
     },
-    onError: (err) => toast.error(err.message),
+    onError: err => toast.error(err.message),
   });
 
   // Compute effective params: DB defaults merged with user overrides
   const effectiveSimParams: Record<string, number | string> = (() => {
     if (!labWork?.params) return simParams;
     const defaults: Record<string, number | string> = {};
-    labWork.params.forEach((p) => {
+    labWork.params.forEach(p => {
       if (p.paramType === "slider" || p.paramType === "number") {
         defaults[p.key] = Number(p.defaultValue) || 0;
       } else {
@@ -163,7 +166,7 @@ export default function LabWorkPage() {
   // Build controls from DB params and current simParams
   const controls: ControlItem[] = (() => {
     if (!labWork?.params) return [];
-    return labWork.params.map((p) => {
+    return labWork.params.map(p => {
       const value = effectiveSimParams[p.key] ?? p.defaultValue ?? 0;
       if (p.paramType === "slider") {
         return {
@@ -175,7 +178,7 @@ export default function LabWorkPage() {
           step: Number(p.step || 1),
           unit: p.unit || undefined,
           onChange: (v: number) => {
-            setSimParams((prev) => ({ ...prev, [p.key]: v }));
+            setSimParams(prev => ({ ...prev, [p.key]: v }));
             setIsSimRunning(false);
           },
         };
@@ -188,7 +191,7 @@ export default function LabWorkPage() {
           value: String(value),
           options,
           onChange: (v: string) => {
-            setSimParams((prev) => ({ ...prev, [p.key]: v }));
+            setSimParams(prev => ({ ...prev, [p.key]: v }));
             setIsSimRunning(false);
           },
         };
@@ -202,7 +205,7 @@ export default function LabWorkPage() {
         step: p.step ? Number(p.step) : undefined,
         unit: p.unit || undefined,
         onChange: (v: number) => {
-          setSimParams((prev) => ({ ...prev, [p.key]: v }));
+          setSimParams(prev => ({ ...prev, [p.key]: v }));
           setIsSimRunning(false);
         },
       };
@@ -213,7 +216,7 @@ export default function LabWorkPage() {
     const row: Record<string, string | number> = {
       "№": measurements.length + 1,
     };
-    labWork?.params?.forEach((p) => {
+    labWork?.params?.forEach(p => {
       row[p.key] = effectiveSimParams[p.key] ?? p.defaultValue ?? "";
     });
     // Add computed values based on lab type
@@ -309,8 +312,8 @@ export default function LabWorkPage() {
       const mass = Number(effectiveSimParams["bodyMass"] || 0);
       const rhoLiquid = Number(effectiveSimParams["liquidDensity"] || 1000);
       const g = 9.8;
-      const rhoBody = v > 0 ? (mass / 1000) / (v * 1e-6) : 0;
-      const gravity = mass / 1000 * g;
+      const rhoBody = v > 0 ? mass / 1000 / (v * 1e-6) : 0;
+      const gravity = (mass / 1000) * g;
       const maxFa = rhoLiquid * (v * 1e-6) * g;
       const fa = rhoBody < rhoLiquid ? gravity : maxFa;
       row["m"] = mass;
@@ -330,7 +333,8 @@ export default function LabWorkPage() {
     } else if (slug === "uniform-linear-motion") {
       const speed = Number(effectiveSimParams["speed"] || 0);
       const startX = Number(effectiveSimParams["startX"] || 0);
-      const simTime = simStateRef.current.time ?? Number(effectiveSimParams["time"] || 0);
+      const simTime =
+        simStateRef.current.time ?? Number(effectiveSimParams["time"] || 0);
       row["time"] = simTime.toFixed(1);
       row["s"] = (speed * simTime).toFixed(1);
       row["x"] = (startX + speed * simTime).toFixed(1);
@@ -339,7 +343,8 @@ export default function LabWorkPage() {
       const v0 = Number(effectiveSimParams["v0"] || 0);
       const angleDeg = Number(effectiveSimParams["angle"] || 10);
       const a = 9.8 * Math.sin((angleDeg * Math.PI) / 180);
-      const simTime = simStateRef.current.time ?? Number(effectiveSimParams["time"] || 5);
+      const simTime =
+        simStateRef.current.time ?? Number(effectiveSimParams["time"] || 5);
       row["time"] = simTime.toFixed(1);
       row["v"] = (v0 + a * simTime).toFixed(1);
       row["s"] = (v0 * simTime + 0.5 * a * simTime * simTime).toFixed(1);
@@ -385,7 +390,8 @@ export default function LabWorkPage() {
       const alpha = (Number(effectiveSimParams["angle"] || 0) * Math.PI) / 180;
       const gVal = Number(effectiveSimParams["g"] || 9.8);
       const L = (v0val * v0val * Math.sin(2 * alpha)) / gVal;
-      const H = (v0val * v0val * Math.sin(alpha) * Math.sin(alpha)) / (2 * gVal);
+      const H =
+        (v0val * v0val * Math.sin(alpha) * Math.sin(alpha)) / (2 * gVal);
       const Tflight = (2 * v0val * Math.sin(alpha)) / gVal;
       row["L"] = L.toFixed(1);
       row["H"] = H.toFixed(1);
@@ -500,7 +506,8 @@ export default function LabWorkPage() {
       const volume = Number(effectiveSimParams["volume"] || 0);
       const amount = Number(effectiveSimParams["amount"] || 0);
       const R = 8.31;
-      const pressure = volume > 0 ? (amount * R * temperature) / (volume * 1e-3) / 1000 : 0;
+      const pressure =
+        volume > 0 ? (amount * R * temperature) / (volume * 1e-3) / 1000 : 0;
       row["T"] = temperature.toFixed(0);
       row["V"] = volume.toFixed(1);
       row["p"] = pressure.toFixed(1);
@@ -510,7 +517,10 @@ export default function LabWorkPage() {
       const temperature = Number(effectiveSimParams["temperature"] || 0);
       const amount = Number(effectiveSimParams["amount"] || 0);
       const R = 8.31;
-      const volume = pressure > 0 ? (amount * R * temperature) / (pressure * 1000) * 1000 : 0;
+      const volume =
+        pressure > 0
+          ? ((amount * R * temperature) / (pressure * 1000)) * 1000
+          : 0;
       row["p"] = pressure.toFixed(0);
       row["T"] = temperature.toFixed(0);
       row["V"] = volume.toFixed(2);
@@ -520,7 +530,8 @@ export default function LabWorkPage() {
       const temperature = Number(effectiveSimParams["temperature"] || 0);
       const amount = Number(effectiveSimParams["amount"] || 0);
       const R = 8.31;
-      const pressure = volume > 0 ? (amount * R * temperature) / (volume * 1e-3) / 1000 : 0;
+      const pressure =
+        volume > 0 ? (amount * R * temperature) / (volume * 1e-3) / 1000 : 0;
       row["V"] = volume.toFixed(1);
       row["T"] = temperature.toFixed(0);
       row["p"] = pressure.toFixed(1);
@@ -562,7 +573,13 @@ export default function LabWorkPage() {
       const rh =
         deltaT <= 0
           ? 100
-          : Math.max(10, Math.min(100, Math.round(100 - deltaT * (4.5 + 0.1 * (dryTemp - 20)))));
+          : Math.max(
+              10,
+              Math.min(
+                100,
+                Math.round(100 - deltaT * (4.5 + 0.1 * (dryTemp - 20)))
+              )
+            );
       row["T_сух"] = dryTemp.toFixed(0);
       row["T_влж"] = wetTemp.toFixed(0);
       row["ΔT"] = deltaT.toFixed(1);
@@ -574,7 +591,8 @@ export default function LabWorkPage() {
       const g = 9.8;
       const dropMassMg = dropCount > 0 ? (totalMass / dropCount) * 1000 : 0;
       const detachForce = (dropMassMg / 1e6) * g * 1000;
-      const sigma = radius > 0 ? (detachForce / (2 * Math.PI * radius)) * 1000 : 0;
+      const sigma =
+        radius > 0 ? (detachForce / (2 * Math.PI * radius)) * 1000 : 0;
       row["N"] = dropCount;
       row["m_кап"] = dropMassMg.toFixed(1);
       row["F_отр"] = detachForce.toFixed(2);
@@ -597,11 +615,11 @@ export default function LabWorkPage() {
       row["M_прав"] = rightMoment.toFixed(2);
       row["ΔM"] = (leftMoment - rightMoment).toFixed(2);
     }
-    setMeasurements((prev) => [...prev, row]);
+    setMeasurements(prev => [...prev, row]);
   };
 
   const handleDeleteMeasurement = (index: number) => {
-    setMeasurements((prev) => prev.filter((_, i) => i !== index));
+    setMeasurements(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleClearMeasurements = () => {
@@ -611,11 +629,11 @@ export default function LabWorkPage() {
   const averages = useMemo(() => {
     if (measurements.length === 0) return undefined;
     const result: Record<string, string | number> = { "№": "Среднее" };
-    const keys = Object.keys(measurements[0]).filter((k) => k !== "№");
-    keys.forEach((key) => {
+    const keys = Object.keys(measurements[0]).filter(k => k !== "№");
+    keys.forEach(key => {
       const values = measurements
-        .map((m) => Number(m[key]))
-        .filter((v) => !isNaN(v));
+        .map(m => Number(m[key]))
+        .filter(v => !isNaN(v));
       if (values.length > 0) {
         const avg = values.reduce((a, b) => a + b, 0) / values.length;
         result[key] = avg.toFixed(3);
@@ -628,7 +646,7 @@ export default function LabWorkPage() {
     const data: Record<string, string | number> = { ...(averages || {}) };
 
     if (labWork?.params) {
-      labWork.params.forEach((p) => {
+      labWork.params.forEach(p => {
         data[p.key] = effectiveSimParams[p.key] ?? p.defaultValue ?? "";
       });
     }
@@ -637,9 +655,13 @@ export default function LabWorkPage() {
       const avgV = Number(data["v"]);
       const theoreticalSpeed = Number(effectiveSimParams["speed"] || 1);
       data["avgSpeed"] = avgV.toFixed(2);
-      data["errorPercent"] = theoreticalSpeed > 0
-        ? (Math.abs(avgV - theoreticalSpeed) / theoreticalSpeed * 100).toFixed(1)
-        : "0.0";
+      data["errorPercent"] =
+        theoreticalSpeed > 0
+          ? (
+              (Math.abs(avgV - theoreticalSpeed) / theoreticalSpeed) *
+              100
+            ).toFixed(1)
+          : "0.0";
     } else if (slug === "uniformly-accelerated-motion") {
       const v0 = Number(effectiveSimParams["v0"] || 0);
       const angleDeg = Number(effectiveSimParams["angle"] || 10);
@@ -648,26 +670,32 @@ export default function LabWorkPage() {
       const avgTime = Number(data["time"]);
       let expA = theoreticalA;
       if (avgTime > 0) {
-        expA = 2 * (avgS - v0 * avgTime) / (avgTime * avgTime);
+        expA = (2 * (avgS - v0 * avgTime)) / (avgTime * avgTime);
       }
       data["v0"] = v0.toFixed(1);
       data["avgAccel"] = Math.abs(expA).toFixed(2);
       data["theoreticalAccel"] = theoreticalA.toFixed(2);
     } else if (slug === "free-fall-g") {
-      const pendulumMeasurements = measurements.filter((m) => m.method === "маятник");
-      const fallMeasurements = measurements.filter((m) => m.method === "падение");
+      const pendulumMeasurements = measurements.filter(
+        m => m.method === "маятник"
+      );
+      const fallMeasurements = measurements.filter(m => m.method === "падение");
 
       const pendulumGs = pendulumMeasurements
-        .map((m) => Number(m["g"]))
-        .filter((v) => !isNaN(v));
+        .map(m => Number(m["g"]))
+        .filter(v => !isNaN(v));
       const fallGs = fallMeasurements
-        .map((m) => Number(m["g"]))
-        .filter((v) => !isNaN(v));
+        .map(m => Number(m["g"]))
+        .filter(v => !isNaN(v));
 
       if (pendulumGs.length > 0) {
-        const avgGPendulum = pendulumGs.reduce((a, b) => a + b, 0) / pendulumGs.length;
+        const avgGPendulum =
+          pendulumGs.reduce((a, b) => a + b, 0) / pendulumGs.length;
         data["avgGPendulum"] = avgGPendulum.toFixed(2);
-        data["errorPercentPendulum"] = (Math.abs(avgGPendulum - 9.8) / 9.8 * 100).toFixed(1);
+        data["errorPercentPendulum"] = (
+          (Math.abs(avgGPendulum - 9.8) / 9.8) *
+          100
+        ).toFixed(1);
       } else {
         data["avgGPendulum"] = "не проведено";
         data["errorPercentPendulum"] = "—";
@@ -676,7 +704,10 @@ export default function LabWorkPage() {
       if (fallGs.length > 0) {
         const avgGFall = fallGs.reduce((a, b) => a + b, 0) / fallGs.length;
         data["avgGFall"] = avgGFall.toFixed(2);
-        data["errorPercentFall"] = (Math.abs(avgGFall - 9.8) / 9.8 * 100).toFixed(1);
+        data["errorPercentFall"] = (
+          (Math.abs(avgGFall - 9.8) / 9.8) *
+          100
+        ).toFixed(1);
       } else {
         data["avgGFall"] = "не проведено";
         data["errorPercentFall"] = "—";
@@ -703,8 +734,8 @@ export default function LabWorkPage() {
       data["avgOmega"] = Number(data["ω"] || 0).toFixed(2);
       data["avgA"] = Number(data["a"] || 0).toFixed(2);
     } else if (slug === "projectile-motion") {
-      const Ls = measurements.map((m) => Number(m["L"])).filter((v) => !isNaN(v));
-      const Hs = measurements.map((m) => Number(m["H"])).filter((v) => !isNaN(v));
+      const Ls = measurements.map(m => Number(m["L"])).filter(v => !isNaN(v));
+      const Hs = measurements.map(m => Number(m["H"])).filter(v => !isNaN(v));
       data["maxL"] = Ls.length > 0 ? Math.max(...Ls).toFixed(1) : "0.0";
       data["maxH"] = Hs.length > 0 ? Math.max(...Hs).toFixed(1) : "0.0";
       data["avgV0"] = Number(effectiveSimParams["v0"] || 0).toFixed(1);
@@ -714,9 +745,10 @@ export default function LabWorkPage() {
       data["unit"] = "кг/м³";
       const theoretical = 1000;
       data["theoreticalDensity"] = theoretical;
-      data["errorPercent"] = theoretical > 0
-        ? (Math.abs(avgRho - theoretical) / theoretical * 100).toFixed(1)
-        : "0.0";
+      data["errorPercent"] =
+        theoretical > 0
+          ? ((Math.abs(avgRho - theoretical) / theoretical) * 100).toFixed(1)
+          : "0.0";
     } else if (slug === "archimedes-force") {
       const avgFa = Number(data["Fₐ"]);
       data["avgFaWater"] = avgFa.toFixed(3);
@@ -750,7 +782,8 @@ export default function LabWorkPage() {
       const rhoLiquid = Number(effectiveSimParams["liquidDensity"] || 1000);
       let state = "тонет";
       if (rhoBody < rhoLiquid) state = "всплывает";
-      else if (Math.abs(rhoBody - rhoLiquid) < 10) state = "плавает внутри жидкости";
+      else if (Math.abs(rhoBody - rhoLiquid) < 10)
+        state = "плавает внутри жидкости";
       data["bodyDensity"] = rhoBody;
       data["liquidDensity"] = rhoLiquid;
       data["avgGravity"] = Number(data["Fтяж"] || 0).toFixed(4);
@@ -778,7 +811,8 @@ export default function LabWorkPage() {
       const rhoLiquid = Number(effectiveSimParams["liquidDensity"] || 1000);
       let state = "тонет";
       if (rhoBody < rhoLiquid) state = "всплывает";
-      else if (Math.abs(rhoBody - rhoLiquid) < 10) state = "плавает внутри жидкости";
+      else if (Math.abs(rhoBody - rhoLiquid) < 10)
+        state = "плавает внутри жидкости";
       data["volume"] = v.toFixed(0);
       data["bodyDensity"] = rhoBody;
       data["liquidDensity"] = rhoLiquid;
@@ -789,7 +823,7 @@ export default function LabWorkPage() {
       const v = Number(effectiveSimParams["bodyVolume"] || 0);
       const mass = Number(effectiveSimParams["bodyMass"] || 0);
       const rhoLiquid = Number(effectiveSimParams["liquidDensity"] || 1000);
-      const rhoBody = v > 0 ? (mass / 1000) / (v * 1e-6) : 0;
+      const rhoBody = v > 0 ? mass / 1000 / (v * 1e-6) : 0;
       data["volume"] = v.toFixed(0);
       data["mass"] = mass.toFixed(0);
       data["bodyDensity"] = rhoBody.toFixed(0);
@@ -900,9 +934,7 @@ export default function LabWorkPage() {
     } else if (slug === "boyle-mariotte") {
       const temperature = Number(effectiveSimParams["temperature"] || 0);
       data["temperature"] = temperature.toFixed(0);
-      const pvs = measurements
-        .map((m) => Number(m["pV"]))
-        .filter((v) => !isNaN(v));
+      const pvs = measurements.map(m => Number(m["pV"])).filter(v => !isNaN(v));
       if (pvs.length > 0) {
         const avgPV = pvs.reduce((a, b) => a + b, 0) / pvs.length;
         data["avgPV"] = avgPV.toFixed(2);
@@ -913,8 +945,8 @@ export default function LabWorkPage() {
       const pressure = Number(effectiveSimParams["pressure"] || 0);
       data["pressure"] = pressure.toFixed(0);
       const vts = measurements
-        .map((m) => Number(m["V/T"]))
-        .filter((v) => !isNaN(v));
+        .map(m => Number(m["V/T"]))
+        .filter(v => !isNaN(v));
       if (vts.length > 0) {
         const avgVT = vts.reduce((a, b) => a + b, 0) / vts.length;
         data["avgVT"] = avgVT.toFixed(4);
@@ -925,8 +957,8 @@ export default function LabWorkPage() {
       const volume = Number(effectiveSimParams["volume"] || 0);
       data["volume"] = volume.toFixed(1);
       const pts = measurements
-        .map((m) => Number(m["p/T"]))
-        .filter((v) => !isNaN(v));
+        .map(m => Number(m["p/T"]))
+        .filter(v => !isNaN(v));
       if (pts.length > 0) {
         const avgPT = pts.reduce((a, b) => a + b, 0) / pts.length;
         data["avgPT"] = avgPT.toFixed(3);
@@ -953,7 +985,8 @@ export default function LabWorkPage() {
       const cMeasured = Number(data["c_изм"] || 0);
       data["specificHeat"] = cMeasured.toFixed(0);
       const tab = data["tabularHeat"] as number;
-      data["errorPercent"] = tab > 0 ? (Math.abs(cMeasured - tab) / tab * 100).toFixed(1) : "0.0";
+      data["errorPercent"] =
+        tab > 0 ? ((Math.abs(cMeasured - tab) / tab) * 100).toFixed(1) : "0.0";
     } else if (slug === "relative-humidity") {
       data["dryTemp"] = Number(effectiveSimParams["dryTemp"] || 0).toFixed(0);
       data["wetTemp"] = Number(effectiveSimParams["wetTemp"] || 0).toFixed(0);
@@ -962,8 +995,8 @@ export default function LabWorkPage() {
         Number(effectiveSimParams["wetTemp"] || 0)
       ).toFixed(1);
       const rhValues = measurements
-        .map((m) => Number(m["φ"]))
-        .filter((v) => !isNaN(v));
+        .map(m => Number(m["φ"]))
+        .filter(v => !isNaN(v));
       if (rhValues.length > 0) {
         const avgRh = rhValues.reduce((a, b) => a + b, 0) / rhValues.length;
         data["relativeHumidity"] = Math.round(avgRh);
@@ -990,26 +1023,30 @@ export default function LabWorkPage() {
       data["surfaceTension"] = sigmaMeasured.toFixed(1);
     } else if (slug === "balancing-act") {
       const leftMoments = measurements
-        .map((m) => Number(m["M_лев"]))
-        .filter((v) => !isNaN(v));
+        .map(m => Number(m["M_лев"]))
+        .filter(v => !isNaN(v));
       const rightMoments = measurements
-        .map((m) => Number(m["M_прав"]))
-        .filter((v) => !isNaN(v));
+        .map(m => Number(m["M_прав"]))
+        .filter(v => !isNaN(v));
       const diffs = measurements
-        .map((m) => Number(m["ΔM"]))
-        .filter((v) => !isNaN(v));
+        .map(m => Number(m["ΔM"]))
+        .filter(v => !isNaN(v));
       data["avgLeftMoment"] =
         leftMoments.length > 0
-          ? (leftMoments.reduce((a, b) => a + b, 0) / leftMoments.length).toFixed(2)
-          : (Number(data["M_лев"] || 0)).toFixed(2);
+          ? (
+              leftMoments.reduce((a, b) => a + b, 0) / leftMoments.length
+            ).toFixed(2)
+          : Number(data["M_лев"] || 0).toFixed(2);
       data["avgRightMoment"] =
         rightMoments.length > 0
-          ? (rightMoments.reduce((a, b) => a + b, 0) / rightMoments.length).toFixed(2)
-          : (Number(data["M_прав"] || 0)).toFixed(2);
+          ? (
+              rightMoments.reduce((a, b) => a + b, 0) / rightMoments.length
+            ).toFixed(2)
+          : Number(data["M_прав"] || 0).toFixed(2);
       data["avgDiff"] =
         diffs.length > 0
           ? (diffs.reduce((a, b) => a + b, 0) / diffs.length).toFixed(2)
-          : (Number(data["ΔM"] || 0)).toFixed(2);
+          : Number(data["ΔM"] || 0).toFixed(2);
     }
 
     return data;
@@ -1066,12 +1103,17 @@ export default function LabWorkPage() {
     );
   }
 
-  const headers = measurements.length > 0
-    ? Object.keys(measurements[0]).map((k) => ({ key: k, label: k }))
-    : [];
+  const headers =
+    measurements.length > 0
+      ? Object.keys(measurements[0]).map(k => ({ key: k, label: k }))
+      : [];
 
   return (
-    <LabLayout title={labWork.title} topic={labWork.categoryTitle || "Лабораторная работа"} fullWidth>
+    <LabLayout
+      title={labWork.title}
+      topic={labWork.categoryTitle || "Лабораторная работа"}
+      fullWidth
+    >
       <div className="flex">
         <LabSidebar
           activeTab={activeTab}
@@ -1086,39 +1128,122 @@ export default function LabWorkPage() {
             key={activeTab}
             className="max-w-5xl mx-auto space-y-6 animate-fadeIn"
           >
-              {activeTab === "theory" && (
-                <div className="space-y-6">
-                  <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <Target size={20} className="text-[#2eff8c]" />
-                      <h3 className="text-lg font-bold text-white">Цель работы</h3>
-                    </div>
-                    <div className="prose prose-invert prose-sm max-w-none text-[#c8cdd1] leading-relaxed">
-                      <MarkdownRenderer content={labWork.goal || ""} />
-                    </div>
+            {activeTab === "theory" && (
+              <div className="space-y-6">
+                <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Target size={20} className="text-[#2eff8c]" />
+                    <h3 className="text-lg font-bold text-white">
+                      Цель работы
+                    </h3>
                   </div>
+                  <div className="prose prose-invert prose-sm max-w-none text-[#c8cdd1] leading-relaxed">
+                    <MarkdownRenderer content={labWork.goal || ""} />
+                  </div>
+                </div>
 
-                  <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <BookOpen size={20} className="text-[#2eff8c]" />
-                      <h3 className="text-lg font-bold text-white">Теоретические сведения</h3>
+                <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <BookOpen size={20} className="text-[#2eff8c]" />
+                    <h3 className="text-lg font-bold text-white">
+                      Теоретические сведения
+                    </h3>
+                  </div>
+                  {(() => {
+                    const theoryContent =
+                      (labWork.theory || labWork.topicNodeContent) ?? "";
+                    const tabs = parseTheoryTabs(theoryContent);
+                    if (tabs) {
+                      return (
+                        <Tabs defaultValue="0">
+                          <TabsList>
+                            {tabs.map((tab, i) => (
+                              <TabsTrigger key={i} value={String(i)}>
+                                {tab.label}
+                              </TabsTrigger>
+                            ))}
+                          </TabsList>
+                          {tabs.map((tab, i) => (
+                            <TabsContent
+                              key={i}
+                              value={String(i)}
+                              className="mt-4"
+                            >
+                              <p className="text-white font-semibold mb-3">
+                                {tab.title}
+                              </p>
+                              <MarkdownRenderer content={tab.content} />
+                            </TabsContent>
+                          ))}
+                        </Tabs>
+                      );
+                    }
+                    return (
+                      <div className="prose prose-invert prose-sm max-w-none text-[#c8cdd1] leading-relaxed">
+                        <MarkdownRenderer content={theoryContent} />
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Wrench size={20} className="text-[#2eff8c]" />
+                    <h3 className="text-lg font-bold text-white">
+                      Оборудование
+                    </h3>
+                  </div>
+                  {labWork.equipment && (
+                    <div className="prose prose-invert prose-sm max-w-none text-[#c8cdd1]">
+                      {labWork.equipment.trim().startsWith("[") ? (
+                        <ul className="space-y-2">
+                          {JSON.parse(labWork.equipment).map(
+                            (item: string, i: number) => (
+                              <li
+                                key={i}
+                                className="flex items-center gap-2 text-[#c8cdd1]"
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#2eff8c]" />
+                                {item}
+                              </li>
+                            )
+                          )}
+                        </ul>
+                      ) : (
+                        <MarkdownRenderer content={labWork.equipment} />
+                      )}
                     </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === "experiment" && (
+              <div className="space-y-6">
+                {labWork.instruction && (
+                  <div className="bg-[#1a1f22] border border-[#37474f] rounded-xl p-4 text-sm text-[#c8cdd1]">
+                    <p className="font-medium text-white mb-2">
+                      Пошаговая инструкция:
+                    </p>
                     {(() => {
-                      const theoryContent = (labWork.theory || labWork.topicNodeContent) ?? "";
-                      const tabs = parseTheoryTabs(theoryContent);
-                      if (tabs) {
+                      const instTabs = parseTheoryTabs(labWork.instruction);
+                      if (instTabs) {
                         return (
                           <Tabs defaultValue="0">
                             <TabsList>
-                              {tabs.map((tab, i) => (
+                              {instTabs.map((tab, i) => (
                                 <TabsTrigger key={i} value={String(i)}>
                                   {tab.label}
                                 </TabsTrigger>
                               ))}
                             </TabsList>
-                            {tabs.map((tab, i) => (
-                              <TabsContent key={i} value={String(i)} className="mt-4">
-                                <p className="text-white font-semibold mb-3">
+                            {instTabs.map((tab, i) => (
+                              <TabsContent
+                                key={i}
+                                value={String(i)}
+                                className="mt-3"
+                              >
+                                <p className="text-white font-medium mb-2">
                                   {tab.title}
                                 </p>
                                 <MarkdownRenderer content={tab.content} />
@@ -1128,178 +1253,126 @@ export default function LabWorkPage() {
                         );
                       }
                       return (
-                        <div className="prose prose-invert prose-sm max-w-none text-[#c8cdd1] leading-relaxed">
-                          <MarkdownRenderer content={theoryContent} />
+                        <div className="prose prose-invert prose-sm max-w-none text-[#c8cdd1]">
+                          <MarkdownRenderer content={labWork.instruction} />
                         </div>
                       );
                     })()}
                   </div>
+                )}
 
-                  <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <Wrench size={20} className="text-[#2eff8c]" />
-                      <h3 className="text-lg font-bold text-white">Оборудование</h3>
-                    </div>
-                    {labWork.equipment && (
-                      <div className="prose prose-invert prose-sm max-w-none text-[#c8cdd1]">
-                        {labWork.equipment.trim().startsWith("[") ? (
-                          <ul className="space-y-2">
-                            {JSON.parse(labWork.equipment).map((item: string, i: number) => (
-                              <li key={i} className="flex items-center gap-2 text-[#c8cdd1]">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#2eff8c]" />
-                                {item}
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <MarkdownRenderer content={labWork.equipment} />
-                        )}
-                      </div>
-                    )}
-                  </div>
+                <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
+                  <LabControls controls={controls} />
                 </div>
-              )}
 
-              {activeTab === "experiment" && (
-                <div className="space-y-6">
-                  {labWork.instruction && (
-                    <div className="bg-[#1a1f22] border border-[#37474f] rounded-xl p-4 text-sm text-[#c8cdd1]">
-                      <p className="font-medium text-white mb-2">Пошаговая инструкция:</p>
-                      {(() => {
-                        const instTabs = parseTheoryTabs(labWork.instruction);
-                        if (instTabs) {
-                          return (
-                            <Tabs defaultValue="0">
-                              <TabsList>
-                                {instTabs.map((tab, i) => (
-                                  <TabsTrigger key={i} value={String(i)}>
-                                    {tab.label}
-                                  </TabsTrigger>
-                                ))}
-                              </TabsList>
-                              {instTabs.map((tab, i) => (
-                                <TabsContent key={i} value={String(i)} className="mt-3">
-                                  <p className="text-white font-medium mb-2">
-                                    {tab.title}
-                                  </p>
-                                  <MarkdownRenderer content={tab.content} />
-                                </TabsContent>
-                              ))}
-                            </Tabs>
-                          );
-                        }
-                        return (
-                          <div className="prose prose-invert prose-sm max-w-none text-[#c8cdd1]">
-                            <MarkdownRenderer content={labWork.instruction} />
-                          </div>
-                        );
-                      })()}
+                <div className="space-y-4">
+                  <div className="flex flex-wrap gap-3">
+                    <Button
+                      onClick={() => setIsSimRunning(prev => !prev)}
+                      className={
+                        isSimRunning
+                          ? "bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 border border-yellow-500/30"
+                          : "bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70]"
+                      }
+                    >
+                      {isSimRunning ? (
+                        <>
+                          <RotateCcw size={16} className="mr-2" />
+                          Остановить
+                        </>
+                      ) : (
+                        <>
+                          <Play size={16} className="mr-2" />
+                          Начать симуляцию
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      onClick={handleAddMeasurement}
+                      variant="outline"
+                      className="border-[#37474f] text-[#c8cdd1] hover:text-white"
+                    >
+                      <FlaskConical size={16} className="mr-2" />
+                      Зафиксировать измерение
+                    </Button>
+                  </div>
+
+                  {SimComponent && (
+                    <div className="bg-[#1a1f22] border border-[#37474f] rounded-2xl overflow-hidden flex justify-center">
+                      <SimComponent
+                        params={effectiveSimParams}
+                        isRunning={isSimRunning}
+                        onStateChange={state => {
+                          simStateRef.current = state;
+                          if (state.finished) {
+                            setIsSimRunning(false);
+                          }
+                        }}
+                      />
                     </div>
                   )}
-
-                  <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
-                    <LabControls controls={controls} />
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="flex flex-wrap gap-3">
-                      <Button
-                        onClick={() => setIsSimRunning((prev) => !prev)}
-                        className={
-                          isSimRunning
-                            ? "bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 border border-yellow-500/30"
-                            : "bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70]"
-                        }
-                      >
-                        {isSimRunning ? (
-                          <>
-                            <RotateCcw size={16} className="mr-2" />
-                            Остановить
-                          </>
-                        ) : (
-                          <>
-                            <Play size={16} className="mr-2" />
-                            Начать симуляцию
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        onClick={handleAddMeasurement}
-                        variant="outline"
-                        className="border-[#37474f] text-[#c8cdd1] hover:text-white"
-                      >
-                        <FlaskConical size={16} className="mr-2" />
-                        Зафиксировать измерение
-                      </Button>
-                    </div>
-
-                    {SimComponent && (
-                      <div className="bg-[#1a1f22] border border-[#37474f] rounded-2xl overflow-hidden flex justify-center">
-                        <SimComponent
-                          params={effectiveSimParams}
-                          isRunning={isSimRunning}
-                          onStateChange={(state) => {
-                            simStateRef.current = state;
-                            if (state.finished) {
-                              setIsSimRunning(false);
-                            }
-                          }}
-                        />
-                      </div>
-                    )}
-                    {!SimComponent && (
-                      <div className="bg-[#1a1f22] border border-[#37474f] rounded-2xl p-12 text-center text-[#798389]">
-                        Симуляция для этой лабораторной работы в разработке.
-                      </div>
-                    )}
-                  </div>
-
-                  <ResultsTable
-                    headers={headers}
-                    data={measurements}
-                    onAdd={handleAddMeasurement}
-                    onDelete={handleDeleteMeasurement}
-                    onClear={handleClearMeasurements}
-                    averages={averages}
-                  />
-
-                  {measurements.length > 0 && (
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      {Object.entries(averages || {})
-                        .filter(([k]) => k !== "№")
-                        .map(([key, value]) => (
-                          <div key={key} className="bg-[#2a3237] border border-[#434e54] rounded-xl p-4">
-                            <p className="text-xs text-[#798389] mb-1">Среднее {key}</p>
-                            <p className="text-xl font-bold text-[#2eff8c]">{String(value)}</p>
-                          </div>
-                        ))}
+                  {!SimComponent && (
+                    <div className="bg-[#1a1f22] border border-[#37474f] rounded-2xl p-12 text-center text-[#798389]">
+                      Симуляция для этой лабораторной работы в разработке.
                     </div>
                   )}
                 </div>
-              )}
 
-              {activeTab === "graphs" && (
-                <LabGraphs measurements={measurements} slug={slug || ""} />
-              )}
+                <ResultsTable
+                  headers={headers}
+                  data={measurements}
+                  onAdd={handleAddMeasurement}
+                  onDelete={handleDeleteMeasurement}
+                  onClear={handleClearMeasurements}
+                  averages={averages}
+                />
 
-              {activeTab === "conclusion" && (
-                <div className="space-y-6">
-                  <ConclusionPanel
-                    template={labWork.conclusionTemplate || ""}
-                    data={conclusionData}
-                  />
-                  <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
-                    <label className="block text-sm text-[#798389] mb-2">Свой вывод</label>
-                    <textarea
-                      value={conclusion}
-                      onChange={(e) => setConclusion(e.target.value)}
-                      rows={6}
-                      className="w-full bg-[#1a1f22] border border-[#37474f] text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-[#2eff8c] transition-colors resize-none"
-                      placeholder="Напишите свой вывод на основе полученных результатов..."
-                    />
+                {measurements.length > 0 && (
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {Object.entries(averages || {})
+                      .filter(([k]) => k !== "№")
+                      .map(([key, value]) => (
+                        <div
+                          key={key}
+                          className="bg-[#2a3237] border border-[#434e54] rounded-xl p-4"
+                        >
+                          <p className="text-xs text-[#798389] mb-1">
+                            Среднее {key}
+                          </p>
+                          <p className="text-xl font-bold text-[#2eff8c]">
+                            {String(value)}
+                          </p>
+                        </div>
+                      ))}
                   </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === "graphs" && (
+              <LabGraphs measurements={measurements} slug={slug || ""} />
+            )}
+
+            {activeTab === "conclusion" && (
+              <div className="space-y-6">
+                <ConclusionPanel
+                  template={labWork.conclusionTemplate || ""}
+                  data={conclusionData}
+                />
+                <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
+                  <label className="block text-sm text-[#798389] mb-2">
+                    Свой вывод
+                  </label>
+                  <textarea
+                    value={conclusion}
+                    onChange={e => setConclusion(e.target.value)}
+                    rows={6}
+                    className="w-full bg-[#1a1f22] border border-[#37474f] text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-[#2eff8c] transition-colors resize-none"
+                    placeholder="Напишите свой вывод на основе полученных результатов..."
+                  />
                 </div>
-              )}
+              </div>
+            )}
           </div>
         </main>
       </div>

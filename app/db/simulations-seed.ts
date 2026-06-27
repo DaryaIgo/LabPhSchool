@@ -15,7 +15,8 @@ const simulationData: SimulationSeed[] = [
   {
     slug: "uniform-linear-motion",
     title: "Равномерное прямолинейное движение",
-    description: "Анимированное движение тележки по линейке с измерением времени и пути.",
+    description:
+      "Анимированное движение тележки по линейке с измерением времени и пути.",
     category: "mechanics",
     componentRef: "uniform-linear-motion",
     params: [
@@ -54,7 +55,8 @@ const simulationData: SimulationSeed[] = [
   {
     slug: "uniformly-accelerated-motion",
     title: "Равноускоренное прямолинейное движение",
-    description: "Модель равноускоренного движения с изменением начальной скорости и ускорения.",
+    description:
+      "Модель равноускоренного движения с изменением начальной скорости и ускорения.",
     category: "mechanics",
     componentRef: "uniformly-accelerated-motion",
     params: [
@@ -93,7 +95,8 @@ const simulationData: SimulationSeed[] = [
   {
     slug: "free-fall-g",
     title: "Определение ускорения свободного падения",
-    description: "Два метода измерения g: свободное падение и математический маятник.",
+    description:
+      "Два метода измерения g: свободное падение и математический маятник.",
     category: "mechanics",
     componentRef: "free-fall-g",
     params: [
@@ -170,7 +173,8 @@ const simulationData: SimulationSeed[] = [
   {
     slug: "circular-motion",
     title: "Движение по окружности",
-    description: "Исследование центростремительного ускорения и силы при движении по окружности.",
+    description:
+      "Исследование центростремительного ускорения и силы при движении по окружности.",
     category: "mechanics",
     componentRef: "circular-motion",
     params: [
@@ -217,7 +221,8 @@ const simulationData: SimulationSeed[] = [
   {
     slug: "balancing-act",
     title: "Уравновешивание сил",
-    description: "Симуляция равновесия тел на качелях с изменением масс и расстояний.",
+    description:
+      "Симуляция равновесия тел на качелях с изменением масс и расстояний.",
     category: "mechanics",
     componentRef: "balancing-act",
     params: [
@@ -307,7 +312,8 @@ const simulationData: SimulationSeed[] = [
   {
     slug: "archimedes-force",
     title: "Сила Архимеда",
-    description: "Наглядная демонстрация выталкивающей силы для погружённого тела.",
+    description:
+      "Наглядная демонстрация выталкивающей силы для погружённого тела.",
     category: "fluid-mechanics",
     componentRef: "archimedes-force",
     params: [
@@ -346,7 +352,8 @@ const simulationData: SimulationSeed[] = [
   {
     slug: "archimedes-force-vs-volume",
     title: "Зависимость силы Архимеда от объёма",
-    description: "Исследование, как выталкивающая сила зависит от объёма погружённой части тела.",
+    description:
+      "Исследование, как выталкивающая сила зависит от объёма погружённой части тела.",
     category: "fluid-mechanics",
     componentRef: "archimedes-force-vs-volume",
     params: [
@@ -606,7 +613,8 @@ const simulationData: SimulationSeed[] = [
   {
     slug: "electric-work-measurement",
     title: "Измерение работы электрического тока",
-    description: "Электрическая цепь с батареей, резистором, амперметром и вольтметром.",
+    description:
+      "Электрическая цепь с батареей, резистором, амперметром и вольтметром.",
     category: "electrodynamics",
     componentRef: "electric-work-measurement",
     params: [
@@ -694,7 +702,8 @@ const simulationData: SimulationSeed[] = [
   {
     slug: "glass-refraction-index",
     title: "Определение показателя преломления стекла",
-    description: "Измерение углов падения и преломления для расчёта показателя преломления.",
+    description:
+      "Измерение углов падения и преломления для расчёта показателя преломления.",
     category: "optics",
     componentRef: "glass-refraction-index",
     params: [
@@ -751,7 +760,8 @@ const simulationData: SimulationSeed[] = [
   {
     slug: "lens-image-formation",
     title: "Построение изображений в линзе",
-    description: "Интерактивное построение изображения предмета в собирающей линзе.",
+    description:
+      "Интерактивное построение изображения предмета в собирающей линзе.",
     category: "optics",
     componentRef: "lens-image-formation",
     params: [
@@ -941,7 +951,8 @@ const simulationData: SimulationSeed[] = [
   {
     slug: "isobaric-process",
     title: "Изобарный процесс",
-    description: "Процесс при постоянном давлении: зависимость объёма от температуры.",
+    description:
+      "Процесс при постоянном давлении: зависимость объёма от температуры.",
     category: "molecular-thermodynamics",
     componentRef: "isobaric-process",
     params: [
@@ -980,7 +991,8 @@ const simulationData: SimulationSeed[] = [
   {
     slug: "isochoric-process",
     title: "Изохорный процесс",
-    description: "Процесс при постоянном объёме: зависимость давления от температуры.",
+    description:
+      "Процесс при постоянном объёме: зависимость давления от температуры.",
     category: "molecular-thermodynamics",
     componentRef: "isochoric-process",
     params: [
@@ -1019,7 +1031,8 @@ const simulationData: SimulationSeed[] = [
   {
     slug: "specific-heat-capacity",
     title: "Определение удельной теплоёмкости",
-    description: "Калориметрический эксперимент для измерения теплоёмкости вещества.",
+    description:
+      "Калориметрический эксперимент для измерения теплоёмкости вещества.",
     category: "molecular-thermodynamics",
     componentRef: "specific-heat-capacity",
     params: [
@@ -1080,7 +1093,8 @@ const simulationData: SimulationSeed[] = [
   {
     slug: "relative-humidity",
     title: "Относительная влажность воздуха",
-    description: "Определение относительной влажности по температуре и точке росы.",
+    description:
+      "Определение относительной влажности по температуре и точке росы.",
     category: "molecular-thermodynamics",
     componentRef: "relative-humidity",
     params: [
@@ -1138,7 +1152,7 @@ async function seedSimulations() {
   console.log(`Seeded ${simulationData.length} simulations`);
 }
 
-seedSimulations().catch((err) => {
+seedSimulations().catch(err => {
   console.error("Failed to seed simulations:", err);
   process.exit(1);
 });

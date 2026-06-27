@@ -15,16 +15,19 @@ export const permissionsRelations = relations(permissions, ({ many }) => ({
   roles: many(rolePermissions),
 }));
 
-export const rolePermissionsRelations = relations(rolePermissions, ({ one }) => ({
-  role: one(roles, {
-    fields: [rolePermissions.roleId],
-    references: [roles.id],
-  }),
-  permission: one(permissions, {
-    fields: [rolePermissions.permissionId],
-    references: [permissions.id],
-  }),
-}));
+export const rolePermissionsRelations = relations(
+  rolePermissions,
+  ({ one }) => ({
+    role: one(roles, {
+      fields: [rolePermissions.roleId],
+      references: [roles.id],
+    }),
+    permission: one(permissions, {
+      fields: [rolePermissions.permissionId],
+      references: [permissions.id],
+    }),
+  })
+);
 
 export const usersRelations = relations(users, ({ one }) => ({
   role: one(roles, {

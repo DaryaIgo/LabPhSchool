@@ -38,8 +38,18 @@ export function LabGraphs({ measurements, slug }: LabGraphsProps) {
             <ResponsiveContainer width="100%" height={300}>
               <ScatterChart>
                 <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
-                <XAxis type="number" dataKey="m" name="Масса" stroke="#798389" />
-                <YAxis type="number" dataKey="ρ" name="Плотность" stroke="#798389" />
+                <XAxis
+                  type="number"
+                  dataKey="m"
+                  name="Масса"
+                  stroke="#798389"
+                />
+                <YAxis
+                  type="number"
+                  dataKey="ρ"
+                  name="Плотность"
+                  stroke="#798389"
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "#1a1f22",
@@ -181,7 +191,12 @@ export function LabGraphs({ measurements, slug }: LabGraphsProps) {
             <ResponsiveContainer width="100%" height={300}>
               <ScatterChart>
                 <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
-                <XAxis type="number" dataKey="resistance" name="R" stroke="#798389" />
+                <XAxis
+                  type="number"
+                  dataKey="resistance"
+                  name="R"
+                  stroke="#798389"
+                />
                 <YAxis type="number" dataKey="P" name="P" stroke="#798389" />
                 <Tooltip
                   contentStyle={{
@@ -203,8 +218,15 @@ export function LabGraphs({ measurements, slug }: LabGraphsProps) {
       const startX = Number(data[0]?.startX || 0);
       const speed = Number(data[0]?.speed || 0);
       const originPoint = { time: 0, x: startX, s: 0, v: speed, speed, startX };
-      const numericData = [originPoint, ...data
-        .map((d) => ({ ...d, time: Number(d.time), x: Number(d.x), s: Number(d.s), v: Number(d.v || d.speed) }))
+      const numericData = [
+        originPoint,
+        ...data.map(d => ({
+          ...d,
+          time: Number(d.time),
+          x: Number(d.x),
+          s: Number(d.s),
+          v: Number(d.v || d.speed),
+        })),
       ].sort((a, b) => a.time - b.time);
       return (
         <div className="space-y-6">
@@ -342,15 +364,20 @@ export function LabGraphs({ measurements, slug }: LabGraphsProps) {
     }
 
     if (slug === "free-fall-g") {
-      const pendulumData = data.filter((d) => d.method === "маятник");
-      const fallData = data.filter((d) => d.method === "падение");
+      const pendulumData = data.filter(d => d.method === "маятник");
+      const fallData = data.filter(d => d.method === "падение");
       return (
         <div className="space-y-6">
           <GraphCard title="Способ 1: Зависимость квадрата периода от длины нити T²(l)">
             <ResponsiveContainer width="100%" height={300}>
               <ScatterChart>
                 <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
-                <XAxis type="number" dataKey="length" name="l" stroke="#798389" />
+                <XAxis
+                  type="number"
+                  dataKey="length"
+                  name="l"
+                  stroke="#798389"
+                />
                 <YAxis
                   type="number"
                   dataKey="T"
@@ -365,7 +392,10 @@ export function LabGraphs({ measurements, slug }: LabGraphsProps) {
                     borderRadius: "8px",
                     color: "#fff",
                   }}
-                  formatter={(value: number) => [(value * value).toFixed(3), "T²"]}
+                  formatter={(value: number) => [
+                    (value * value).toFixed(3),
+                    "T²",
+                  ]}
                 />
                 <Scatter name="T²(l)" data={pendulumData} fill="#2eff8c" />
               </ScatterChart>
@@ -376,7 +406,12 @@ export function LabGraphs({ measurements, slug }: LabGraphsProps) {
               <ScatterChart>
                 <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
                 <XAxis type="number" dataKey="t2" name="t²" stroke="#798389" />
-                <YAxis type="number" dataKey="height" name="h" stroke="#798389" />
+                <YAxis
+                  type="number"
+                  dataKey="height"
+                  name="h"
+                  stroke="#798389"
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "#1a1f22",
@@ -609,8 +644,18 @@ export function LabGraphs({ measurements, slug }: LabGraphsProps) {
             <ResponsiveContainer width="100%" height={300}>
               <ScatterChart>
                 <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
-                <XAxis type="number" dataKey="m_в" name="m_в" stroke="#798389" />
-                <YAxis type="number" dataKey="T_р" name="T_р" stroke="#798389" />
+                <XAxis
+                  type="number"
+                  dataKey="m_в"
+                  name="m_в"
+                  stroke="#798389"
+                />
+                <YAxis
+                  type="number"
+                  dataKey="T_р"
+                  name="T_р"
+                  stroke="#798389"
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "#1a1f22",
@@ -667,8 +712,18 @@ export function LabGraphs({ measurements, slug }: LabGraphsProps) {
             <ResponsiveContainer width="100%" height={300}>
               <ScatterChart>
                 <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
-                <XAxis type="number" dataKey="m_кап" name="m_кап" stroke="#798389" />
-                <YAxis type="number" dataKey="F_отр" name="F_отр" stroke="#798389" />
+                <XAxis
+                  type="number"
+                  dataKey="m_кап"
+                  name="m_кап"
+                  stroke="#798389"
+                />
+                <YAxis
+                  type="number"
+                  dataKey="F_отр"
+                  name="F_отр"
+                  stroke="#798389"
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "#1a1f22",
@@ -692,8 +747,18 @@ export function LabGraphs({ measurements, slug }: LabGraphsProps) {
             <ResponsiveContainer width="100%" height={300}>
               <ScatterChart>
                 <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
-                <XAxis type="number" dataKey="M_прав" name="M_прав" stroke="#798389" />
-                <YAxis type="number" dataKey="M_лев" name="M_лев" stroke="#798389" />
+                <XAxis
+                  type="number"
+                  dataKey="M_прав"
+                  name="M_прав"
+                  stroke="#798389"
+                />
+                <YAxis
+                  type="number"
+                  dataKey="M_лев"
+                  name="M_лев"
+                  stroke="#798389"
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "#1a1f22",
@@ -746,7 +811,13 @@ export function LabGraphs({ measurements, slug }: LabGraphsProps) {
   return <div className="space-y-6">{renderGraphs()}</div>;
 }
 
-function GraphCard({ title, children }: { title: string; children: React.ReactNode }) {
+function GraphCard({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="bg-[#1a1f22] border border-[#37474f] rounded-2xl p-6">
       <h4 className="text-sm font-semibold text-white mb-4">{title}</h4>

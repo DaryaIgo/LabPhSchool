@@ -55,9 +55,7 @@ function StatCard({
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
-        {subtitle && (
-          <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
-        )}
+        {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
       </CardContent>
     </Card>
   );
@@ -90,11 +88,10 @@ export default function AdminDashboard() {
     redirectOnUnauthenticated: true,
   });
 
-  const { data: stats } =
-    trpc.admin.dashboardStats.useQuery(undefined, {
-      enabled: !!user,
-      retry: false,
-    });
+  const { data: stats } = trpc.admin.dashboardStats.useQuery(undefined, {
+    enabled: !!user,
+    retry: false,
+  });
 
   // Redirect non-admin users
   useEffect(() => {
@@ -219,7 +216,7 @@ export default function AdminDashboard() {
           onClick={() => navigate("/admin/enrollments")}
         />
         <QuickAction
-          label="Problems"
+          label="Problem Management"
           icon={ShieldCheck}
           onClick={() => navigate("/admin/problems")}
         />

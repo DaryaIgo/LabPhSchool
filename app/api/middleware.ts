@@ -23,7 +23,7 @@ export const createRouter = t.router;
 export const publicQuery = t.procedure;
 
 // ── Level 1: Require any authentication ──
-const requireAuth = t.middleware(async (opts) => {
+const requireAuth = t.middleware(async opts => {
   const { ctx, next } = opts;
 
   if (!ctx.localUser) {
@@ -39,7 +39,7 @@ const requireAuth = t.middleware(async (opts) => {
 export const authedQuery = t.procedure.use(requireAuth);
 
 // ── Level 2a: Require admin role ──
-const requireAdmin = t.middleware(async (opts) => {
+const requireAdmin = t.middleware(async opts => {
   const { ctx, next } = opts;
 
   // Must be authenticated
@@ -64,7 +64,7 @@ const requireAdmin = t.middleware(async (opts) => {
 export const adminQuery = t.procedure.use(requireAuth).use(requireAdmin);
 
 // ── Level 2b: Require student role ──
-const requireStudent = t.middleware(async (opts) => {
+const requireStudent = t.middleware(async opts => {
   const { ctx, next } = opts;
 
   // Must have local user (student auth)
@@ -101,7 +101,7 @@ export const studentQuery = t.procedure.use(requireAuth).use(requireStudent);
 
 // ── Level 3: Require specific permission ──
 export function requirePermission(resource: string, action: string) {
-  return t.middleware(async (opts) => {
+  return t.middleware(async opts => {
     const { ctx, next } = opts;
 
     if (!ctx.localUser) {

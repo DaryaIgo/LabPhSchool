@@ -67,19 +67,13 @@ export default function DensitySimulation({ params }: Props) {
 
       // Body (cube)
       const bodySize = Math.min(40 + volume * 0.15, 70);
-      const bodyY =
-        cy + ch / 2 - liquidHeight + bodySize / 2 + 10;
+      const bodyY = cy + ch / 2 - liquidHeight + bodySize / 2 + 10;
       const density = mass / volume;
       const liquidD = liquidDensity / 1000;
       const bodyColor = density > liquidD ? "#c86464" : "#64c896";
 
       ctx.fillStyle = bodyColor;
-      ctx.fillRect(
-        cx - bodySize / 2,
-        bodyY - bodySize / 2,
-        bodySize,
-        bodySize
-      );
+      ctx.fillRect(cx - bodySize / 2, bodyY - bodySize / 2, bodySize, bodySize);
 
       // Body label
       ctx.fillStyle = "#ffffff";
@@ -157,11 +151,5 @@ export default function DensitySimulation({ params }: Props) {
     };
   }, [mass, volume, liquidDensity]);
 
-  return (
-    <SimulationCanvas
-      draw={draw}
-      width={700}
-      height={400}
-    />
-  );
+  return <SimulationCanvas draw={draw} width={700} height={400} />;
 }

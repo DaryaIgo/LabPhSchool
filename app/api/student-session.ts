@@ -51,11 +51,7 @@ export async function verifyStudentSession(
       algorithms: [JWT_ALG],
       clockTolerance: 60,
     });
-    if (
-      payload.type !== "student" ||
-      !payload.localUserId ||
-      !payload.login
-    ) {
+    if (payload.type !== "student" || !payload.localUserId || !payload.login) {
       return null;
     }
     return {

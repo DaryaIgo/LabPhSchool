@@ -89,7 +89,7 @@ export default function JupyterNotebookManagement() {
       setUploadOpen(false);
       resetUploadForm();
     },
-    onError: (err) => toast(err.message),
+    onError: err => toast(err.message),
   });
 
   const deleteMutation = trpc.admin.deleteJupyterNotebook.useMutation({
@@ -97,7 +97,7 @@ export default function JupyterNotebookManagement() {
       toast("Ноутбук удалён");
       utils.admin.listJupyterNotebooks.invalidate();
     },
-    onError: (err) => toast(err.message),
+    onError: err => toast(err.message),
   });
 
   const { data: accessList, isLoading: accessLoading } =
@@ -107,7 +107,7 @@ export default function JupyterNotebookManagement() {
     );
 
   const grantMutation = trpc.admin.grantJupyterAccess.useMutation({
-    onSuccess: (data) => {
+    onSuccess: data => {
       if (data.alreadyGranted) {
         toast("Доступ уже был предоставлен");
       } else {
@@ -119,7 +119,7 @@ export default function JupyterNotebookManagement() {
       utils.admin.listJupyterNotebooks.invalidate();
       setGrantStudentId("");
     },
-    onError: (err) => toast(err.message),
+    onError: err => toast(err.message),
   });
 
   const revokeMutation = trpc.admin.revokeJupyterAccess.useMutation({
@@ -130,18 +130,18 @@ export default function JupyterNotebookManagement() {
       });
       utils.admin.listJupyterNotebooks.invalidate();
     },
-    onError: (err) => toast(err.message),
+    onError: err => toast(err.message),
   });
 
   const subtopicMap = useMemo(() => {
     const map = new Map<number, string>();
-    topicNodes?.forEach((n) => {
+    topicNodes?.forEach(n => {
       if (n.parentId !== null) map.set(n.id, n.title);
     });
     return map;
   }, [topicNodes]);
 
-  const filtered = notebooks?.filter((n) => {
+  const filtered = notebooks?.filter(n => {
     if (!search) return true;
     const q = search.toLowerCase();
     return (
@@ -245,7 +245,7 @@ export default function JupyterNotebookManagement() {
           <Input
             placeholder="Поиск по названию или подразделу..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={e => setSearch(e.target.value)}
             className="pl-10 bg-[#1e2529] border-[#37474f]"
           />
         </div>
@@ -265,12 +265,24 @@ export default function JupyterNotebookManagement() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[#37474f]">
-                    <th className="text-left p-4 text-gray-400 font-medium">ID</th>
-                    <th className="text-left p-4 text-gray-400 font-medium">Подраздел</th>
-                    <th className="text-left p-4 text-gray-400 font-medium">Название</th>
-                    <th className="text-left p-4 text-gray-400 font-medium">Файл</th>
-                    <th className="text-left p-4 text-gray-400 font-medium">Доступы</th>
-                    <th className="text-right p-4 text-gray-400 font-medium">Действия</th>
+                    <th className="text-left p-4 text-gray-400 font-medium">
+                      ID
+                    </th>
+                    <th className="text-left p-4 text-gray-400 font-medium">
+                      Подраздел
+                    </th>
+                    <th className="text-left p-4 text-gray-400 font-medium">
+                      Название
+                    </th>
+                    <th className="text-left p-4 text-gray-400 font-medium">
+                      Файл
+                    </th>
+                    <th className="text-left p-4 text-gray-400 font-medium">
+                      Доступы
+                    </th>
+                    <th className="text-right p-4 text-gray-400 font-medium">
+                      Действия
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -281,12 +293,14 @@ export default function JupyterNotebookManagement() {
                       </td>
                     </tr>
                   )}
-                  {filtered?.map((n) => (
+                  {filtered?.map(n => (
                     <tr
                       key={n.id}
                       className="border-b border-[#37474f]/50 hover:bg-[#263238]/50"
                     >
-                      <td className="p-4 font-mono text-xs text-gray-400">{n.id}</td>
+                      <td className="p-4 font-mono text-xs text-gray-400">
+                        {n.id}
+                      </td>
                       <td className="p-4 text-gray-300">
                         {subtopicMap.get(n.subtopicNodeId) ?? "—"}
                       </td>
@@ -320,7 +334,10 @@ export default function JupyterNotebookManagement() {
                             variant="ghost"
                             size="sm"
                             onClick={() =>
-                              setAccessDialogNotebook({ id: n.id, title: n.title })
+                              setAccessDialogNotebook({
+                                id: n.id,
+                                title: n.title,
+                              })
                             }
                             title="Управление доступом"
                           >
@@ -382,8 +399,8 @@ export default function JupyterNotebookManagement() {
                 </SelectTrigger>
                 <SelectContent className="bg-[#1e2529] border-[#37474f]">
                   {topicNodes
-                    ?.filter((n) => n.parentId !== null)
-                    .map((s) => (
+                    ?.filter(n => n.parentId !== null)
+                    .map(s => (
                       <SelectItem key={s.id} value={String(s.id)}>
                         {s.title}
                       </SelectItem>
@@ -396,7 +413,7 @@ export default function JupyterNotebookManagement() {
               <Input
                 id="title"
                 value={uploadTitle}
-                onChange={(e) => setUploadTitle(e.target.value)}
+                onChange={e => setUploadTitle(e.target.value)}
                 placeholder="Название ноутбука"
                 className="bg-[#263238] border-[#37474f] mt-1"
                 required
@@ -435,7 +452,7 @@ export default function JupyterNotebookManagement() {
       {/* Access Management Dialog */}
       <Dialog
         open={!!accessDialogNotebook}
-        onOpenChange={(open) => !open && setAccessDialogNotebook(null)}
+        onOpenChange={open => !open && setAccessDialogNotebook(null)}
       >
         <DialogContent className="bg-[#1e2529] border-[#37474f] text-white max-w-lg">
           <DialogHeader>
@@ -447,19 +464,18 @@ export default function JupyterNotebookManagement() {
 
           {/* Grant access */}
           <div className="flex gap-2 mt-4">
-            <Select
-              value={grantStudentId}
-              onValueChange={setGrantStudentId}
-            >
+            <Select value={grantStudentId} onValueChange={setGrantStudentId}>
               <SelectTrigger className="bg-[#263238] border-[#37474f] flex-1">
                 <SelectValue placeholder="Выберите студента..." />
               </SelectTrigger>
               <SelectContent className="bg-[#1e2529] border-[#37474f]">
-                {students?.users.map((s: { id: number; name: string; login: string }) => (
-                  <SelectItem key={s.id} value={String(s.id)}>
-                    {s.name} ({s.login})
-                  </SelectItem>
-                ))}
+                {students?.users.map(
+                  (s: { id: number; name: string; login: string }) => (
+                    <SelectItem key={s.id} value={String(s.id)}>
+                      {s.name} ({s.login})
+                    </SelectItem>
+                  )
+                )}
               </SelectContent>
             </Select>
             <Button
@@ -482,7 +498,7 @@ export default function JupyterNotebookManagement() {
               </div>
             ) : accessList && accessList.length > 0 ? (
               <div className="space-y-2">
-                {accessList.map((a) => (
+                {accessList.map(a => (
                   <div
                     key={a.id}
                     className="flex items-center justify-between p-3 bg-[#263238] rounded-lg border border-[#37474f]"

@@ -139,12 +139,7 @@ export default function WavelengthMeasurementSimulation({
   }, [gratingConstant, diffractionAngle, order, onStateChange]);
 
   return (
-    <SimulationCanvas
-      draw={draw}
-      width={700}
-      height={400}
-      isRunning={false}
-    />
+    <SimulationCanvas draw={draw} width={700} height={400} isRunning={false} />
   );
 }
 

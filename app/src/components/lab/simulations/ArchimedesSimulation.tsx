@@ -47,8 +47,7 @@ export default function ArchimedesSimulation({ params }: Props) {
       // Body
       const bodySize = Math.min(40 + v * 0.2, 80);
       const submergedH = bodySize * (level / 100);
-      const bodyY =
-        tankY + tankH - liquidH + submergedH - bodySize / 2;
+      const bodyY = tankY + tankH - liquidH + submergedH - bodySize / 2;
       const bodyX = tankX + tankW / 2;
 
       ctx.fillStyle = "#c86464";
@@ -121,11 +120,7 @@ export default function ArchimedesSimulation({ params }: Props) {
       ctx.fillStyle = "#2eff8c";
       ctx.font = "14px sans-serif";
       ctx.fillText(`Fₐ = ${fa.toFixed(3)} Н`, 495, 210);
-      ctx.fillText(
-        `Vпогр = ${(v * (level / 100)).toFixed(1)} см³`,
-        495,
-        235
-      );
+      ctx.fillText(`Vпогр = ${(v * (level / 100)).toFixed(1)} см³`, 495, 235);
 
       // Title
       ctx.fillStyle = "#ffffff";
@@ -136,11 +131,5 @@ export default function ArchimedesSimulation({ params }: Props) {
     };
   }, [bodyVolume, immersionLevel, liquidDensity]);
 
-  return (
-    <SimulationCanvas
-      draw={draw}
-      width={700}
-      height={400}
-    />
-  );
+  return <SimulationCanvas draw={draw} width={700} height={400} />;
 }

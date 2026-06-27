@@ -35,9 +35,11 @@ export default function BoyleMariotteSimulation({
       const minVolume = 0.5;
       const maxVolume = 5;
       const pistonHeight =
-        maxCylHeight *
-        (1 - (volume - minVolume) / (maxVolume - minVolume));
-      const clampedPiston = Math.max(20, Math.min(pistonHeight, maxCylHeight - 20));
+        maxCylHeight * (1 - (volume - minVolume) / (maxVolume - minVolume));
+      const clampedPiston = Math.max(
+        20,
+        Math.min(pistonHeight, maxCylHeight - 20)
+      );
 
       // Cylinder body
       ctx.strokeStyle = "#788389";
@@ -76,7 +78,11 @@ export default function BoyleMariotteSimulation({
       ctx.fillStyle = "#ffffff";
       ctx.font = "13px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText(`V = ${volume.toFixed(1)} л`, cylX + cylWidth / 2, cylY + maxCylHeight + 28);
+      ctx.fillText(
+        `V = ${volume.toFixed(1)} л`,
+        cylX + cylWidth / 2,
+        cylY + maxCylHeight + 28
+      );
 
       // Manometer
       const gaugeX = cylX + cylWidth + 90;
@@ -153,9 +159,11 @@ export default function BoyleMariotteSimulation({
         const vPlot = minVolume + (i / 80) * (maxVolume - minVolume);
         const pPlot = constPV / vPlot; // kPa because constPV is in Pa·m³? Actually constPV = Pa * L = Pa * 1e-3 m3 = J
         // pPlot in kPa
-        const px = graphX + 30 + ((vPlot - minVolume) / (maxVolume - minVolume)) * (graphW - 40);
-        const py =
-          graphY + graphH - 25 - (pPlot / 500) * (graphH - 40);
+        const px =
+          graphX +
+          30 +
+          ((vPlot - minVolume) / (maxVolume - minVolume)) * (graphW - 40);
+        const py = graphY + graphH - 25 - (pPlot / 500) * (graphH - 40);
         if (i === 0) ctx.moveTo(px, py);
         else ctx.lineTo(px, py);
       }
@@ -163,7 +171,9 @@ export default function BoyleMariotteSimulation({
 
       // Current point
       const curPx =
-        graphX + 30 + ((volume - minVolume) / (maxVolume - minVolume)) * (graphW - 40);
+        graphX +
+        30 +
+        ((volume - minVolume) / (maxVolume - minVolume)) * (graphW - 40);
       const curPy = graphY + graphH - 25 - (pressureKPa / 500) * (graphH - 40);
       ctx.fillStyle = "#ff7043";
       ctx.beginPath();
@@ -199,11 +209,6 @@ export default function BoyleMariotteSimulation({
   }, [temperature, volume, amount, pressureKPa, pv, onStateChange]);
 
   return (
-    <SimulationCanvas
-      draw={draw}
-      width={700}
-      height={400}
-      isRunning={false}
-    />
+    <SimulationCanvas draw={draw} width={700} height={400} isRunning={false} />
   );
 }

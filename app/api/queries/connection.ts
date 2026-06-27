@@ -50,7 +50,9 @@ function createDomainDb<TSchema extends Record<string, unknown>>(
 // ═══════════════════════════════════════════════════════════════
 
 const authSchemaWithRelations = { ...authSchema, ...authRelations };
-let authDb: ReturnType<typeof createDomainDb<typeof authSchemaWithRelations>> | undefined;
+let authDb:
+  | ReturnType<typeof createDomainDb<typeof authSchemaWithRelations>>
+  | undefined;
 export function getAuthDb() {
   if (!authDb) {
     authDb = createDomainDb(env.databaseUrls.auth, authSchemaWithRelations);
@@ -58,7 +60,9 @@ export function getAuthDb() {
   return authDb;
 }
 
-let contentDb: ReturnType<typeof createDomainDb<typeof contentSchema>> | undefined;
+let contentDb:
+  | ReturnType<typeof createDomainDb<typeof contentSchema>>
+  | undefined;
 export function getContentDb() {
   if (!contentDb) {
     contentDb = createDomainDb(env.databaseUrls.content, contentSchema);
@@ -66,7 +70,9 @@ export function getContentDb() {
   return contentDb;
 }
 
-let learningDb: ReturnType<typeof createDomainDb<typeof learningSchema>> | undefined;
+let learningDb:
+  | ReturnType<typeof createDomainDb<typeof learningSchema>>
+  | undefined;
 export function getLearningDb() {
   if (!learningDb) {
     learningDb = createDomainDb(env.databaseUrls.learning, learningSchema);
@@ -75,7 +81,9 @@ export function getLearningDb() {
 }
 
 const labsSchemaWithRelations = { ...labsSchema, ...labsRelations };
-let labsDb: ReturnType<typeof createDomainDb<typeof labsSchemaWithRelations>> | undefined;
+let labsDb:
+  | ReturnType<typeof createDomainDb<typeof labsSchemaWithRelations>>
+  | undefined;
 export function getLabsDb() {
   if (!labsDb) {
     labsDb = createDomainDb(env.databaseUrls.labs, labsSchemaWithRelations);
@@ -84,32 +92,49 @@ export function getLabsDb() {
 }
 
 const problemsSchemaWithRelations = { ...problemsSchema, ...problemsRelations };
-let problemsDb: ReturnType<typeof createDomainDb<typeof problemsSchemaWithRelations>> | undefined;
+let problemsDb:
+  | ReturnType<typeof createDomainDb<typeof problemsSchemaWithRelations>>
+  | undefined;
 export function getProblemsDb() {
   if (!problemsDb) {
-    problemsDb = createDomainDb(env.databaseUrls.problems, problemsSchemaWithRelations);
+    problemsDb = createDomainDb(
+      env.databaseUrls.problems,
+      problemsSchemaWithRelations
+    );
   }
   return problemsDb;
 }
 
 const jupyterSchemaWithRelations = { ...jupyterSchema, ...jupyterRelations };
-let jupyterDb: ReturnType<typeof createDomainDb<typeof jupyterSchemaWithRelations>> | undefined;
+let jupyterDb:
+  | ReturnType<typeof createDomainDb<typeof jupyterSchemaWithRelations>>
+  | undefined;
 export function getJupyterDb() {
   if (!jupyterDb) {
-    jupyterDb = createDomainDb(env.databaseUrls.jupyter, jupyterSchemaWithRelations);
+    jupyterDb = createDomainDb(
+      env.databaseUrls.jupyter,
+      jupyterSchemaWithRelations
+    );
   }
   return jupyterDb;
 }
 
-let notificationsDb: ReturnType<typeof createDomainDb<typeof notificationsSchema>> | undefined;
+let notificationsDb:
+  | ReturnType<typeof createDomainDb<typeof notificationsSchema>>
+  | undefined;
 export function getNotificationsDb() {
   if (!notificationsDb) {
-    notificationsDb = createDomainDb(env.databaseUrls.notifications, notificationsSchema);
+    notificationsDb = createDomainDb(
+      env.databaseUrls.notifications,
+      notificationsSchema
+    );
   }
   return notificationsDb;
 }
 
-let timelineDb: ReturnType<typeof createDomainDb<typeof timelineSchema>> | undefined;
+let timelineDb:
+  | ReturnType<typeof createDomainDb<typeof timelineSchema>>
+  | undefined;
 export function getTimelineDb() {
   if (!timelineDb) {
     timelineDb = createDomainDb(env.databaseUrls.timeline, timelineSchema);

@@ -5,7 +5,8 @@ interface Props {
 
 // eslint-disable-next-line no-empty-pattern
 export default function BuoyancyPhetSimulation({}: Props) {
-  const url = "https://phet.colorado.edu/sims/html/buoyancy/latest/buoyancy_all.html";
+  const url =
+    "https://phet.colorado.edu/sims/html/buoyancy/latest/buoyancy_all.html";
 
   return (
     <div className="w-full space-y-4">

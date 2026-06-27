@@ -37,7 +37,11 @@ interface ButtonControl {
   onClick: () => void;
 }
 
-export type ControlItem = SliderControl | NumberControl | SelectControl | ButtonControl;
+export type ControlItem =
+  | SliderControl
+  | NumberControl
+  | SelectControl
+  | ButtonControl;
 
 interface LabControlsProps {
   controls: ControlItem[];
@@ -60,7 +64,11 @@ function ControlField({ control }: { control: ControlItem }) {
     case "slider": {
       return (
         <div className="flex flex-col gap-1.5 min-w-[200px] flex-none">
-          <label htmlFor={id} className="text-[#c8cdd1] text-sm font-medium truncate" title={`${control.label}${control.unit ? `, ${control.unit}` : ""}`}>
+          <label
+            htmlFor={id}
+            className="text-[#c8cdd1] text-sm font-medium truncate"
+            title={`${control.label}${control.unit ? `, ${control.unit}` : ""}`}
+          >
             {control.label}
             {control.unit ? `, ${control.unit}` : ""}
           </label>
@@ -72,7 +80,7 @@ function ControlField({ control }: { control: ControlItem }) {
               max={control.max}
               step={control.step}
               value={control.value}
-              onChange={(e) => control.onChange(parseFloat(e.target.value))}
+              onChange={e => control.onChange(parseFloat(e.target.value))}
               className="flex-1 h-2 bg-[#37474f] rounded-lg appearance-none cursor-pointer accent-[#2eff8c] min-w-0"
             />
             <span className="text-[#2eff8c] text-sm w-[68px] shrink-0 text-right font-mono font-semibold">
@@ -97,7 +105,7 @@ function ControlField({ control }: { control: ControlItem }) {
             max={control.max}
             step={control.step ?? 1}
             value={control.value}
-            onChange={(e) => control.onChange(parseFloat(e.target.value) || 0)}
+            onChange={e => control.onChange(parseFloat(e.target.value) || 0)}
             className="bg-[#1a1f22] border border-[#37474f] text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#2eff8c] transition-colors"
           />
         </div>
@@ -112,10 +120,10 @@ function ControlField({ control }: { control: ControlItem }) {
           <select
             id={id}
             value={control.value}
-            onChange={(e) => control.onChange(e.target.value)}
+            onChange={e => control.onChange(e.target.value)}
             className="bg-[#1a1f22] border border-[#37474f] text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#2eff8c] transition-colors"
           >
-            {control.options.map((opt) => (
+            {control.options.map(opt => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>
@@ -127,7 +135,8 @@ function ControlField({ control }: { control: ControlItem }) {
     case "button": {
       const btnClasses = {
         primary: "bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70]",
-        outline: "border border-[#37474f] text-[#c8cdd1] hover:border-[#2eff8c] hover:text-[#2eff8c]",
+        outline:
+          "border border-[#37474f] text-[#c8cdd1] hover:border-[#2eff8c] hover:text-[#2eff8c]",
         danger: "border border-red-500/50 text-red-400 hover:bg-red-500/10",
       };
       return (

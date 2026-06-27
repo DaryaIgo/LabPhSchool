@@ -47,7 +47,7 @@ export default function ResultsTable({
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-[#1e2529]">
-              {headers.map((h) => (
+              {headers.map(h => (
                 <th
                   key={h.key}
                   className="text-left px-4 py-3 text-[#c8cdd1] font-semibold border-b border-[#37474f] whitespace-nowrap"
@@ -74,7 +74,7 @@ export default function ResultsTable({
                   key={i}
                   className="bg-[#1a1f22] hover:bg-[#1e2529] transition-colors"
                 >
-                  {headers.map((h) => (
+                  {headers.map(h => (
                     <td
                       key={h.key}
                       className="px-4 py-2.5 text-[#c8cdd1] border-b border-[#37474f]/50 whitespace-nowrap"
@@ -96,7 +96,7 @@ export default function ResultsTable({
             )}
             {averages && data.length > 0 && (
               <tr className="bg-[#2a3237]">
-                {headers.map((h) => (
+                {headers.map(h => (
                   <td
                     key={h.key}
                     className="px-4 py-2.5 text-[#2eff8c] font-medium whitespace-nowrap"

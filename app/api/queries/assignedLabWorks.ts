@@ -23,7 +23,7 @@ export async function getAssignedLabWorksByEnrollment(enrollmentId: number) {
     .where(eq(assignedLabWorks.enrollmentId, enrollmentId))
     .orderBy(asc(assignedLabWorks.order));
 
-  const labWorkIds = rows.map((r) => r.labWorkId);
+  const labWorkIds = rows.map(r => r.labWorkId);
   const labWorksMap = new Map<number, typeof labWorks.$inferSelect>();
 
   if (labWorkIds.length > 0) {
@@ -34,7 +34,7 @@ export async function getAssignedLabWorksByEnrollment(enrollmentId: number) {
     for (const w of works) labWorksMap.set(w.id, w);
   }
 
-  return rows.map((row) => {
+  return rows.map(row => {
     const work = labWorksMap.get(row.labWorkId);
     return {
       id: row.id,
@@ -66,7 +66,7 @@ export async function getAssignedLabWorksByStudent(localUserId: number) {
     .where(eq(assignedLabWorks.localUserId, localUserId))
     .orderBy(asc(assignedLabWorks.order));
 
-  const labWorkIds = rows.map((r) => r.labWorkId);
+  const labWorkIds = rows.map(r => r.labWorkId);
   const labWorksMap = new Map<number, typeof labWorks.$inferSelect>();
 
   if (labWorkIds.length > 0) {
@@ -77,7 +77,7 @@ export async function getAssignedLabWorksByStudent(localUserId: number) {
     for (const w of works) labWorksMap.set(w.id, w);
   }
 
-  return rows.map((row) => {
+  return rows.map(row => {
     const work = labWorksMap.get(row.labWorkId);
     return {
       id: row.id,

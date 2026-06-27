@@ -83,12 +83,7 @@ export default function BalancingActSimulation({
       const leftX = -leftDistance * scale;
       const leftSize = 20 + leftMass / 25;
       ctx.fillStyle = "#ff7043";
-      ctx.fillRect(
-        leftX - leftSize / 2,
-        -leftSize,
-        leftSize,
-        leftSize
-      );
+      ctx.fillRect(leftX - leftSize / 2, -leftSize, leftSize, leftSize);
       ctx.fillStyle = "#ffffff";
       ctx.font = "11px sans-serif";
       ctx.fillText(`${leftMass}г`, leftX, -leftSize - 8);
@@ -97,12 +92,7 @@ export default function BalancingActSimulation({
       const rightX = rightDistance * scale;
       const rightSize = 20 + rightMass / 25;
       ctx.fillStyle = "#01acff";
-      ctx.fillRect(
-        rightX - rightSize / 2,
-        -rightSize,
-        rightSize,
-        rightSize
-      );
+      ctx.fillRect(rightX - rightSize / 2, -rightSize, rightSize, rightSize);
       ctx.fillStyle = "#ffffff";
       ctx.fillText(`${rightMass}г`, rightX, -rightSize - 8);
 
@@ -141,17 +131,9 @@ export default function BalancingActSimulation({
 
       ctx.fillStyle = "#ff7043";
       ctx.font = "12px sans-serif";
-      ctx.fillText(
-        `M_лев = ${(leftMoment * 100).toFixed(1)} Н·см`,
-        95,
-        350
-      );
+      ctx.fillText(`M_лев = ${(leftMoment * 100).toFixed(1)} Н·см`, 95, 350);
       ctx.fillStyle = "#01acff";
-      ctx.fillText(
-        `M_прав = ${(rightMoment * 100).toFixed(1)} Н·см`,
-        95,
-        370
-      );
+      ctx.fillText(`M_прав = ${(rightMoment * 100).toFixed(1)} Н·см`, 95, 370);
       ctx.fillStyle = isBalanced ? "#2eff8c" : "#ffcb3d";
       ctx.fillText(`ΔM = ${(diff * 100).toFixed(2)} Н·см`, 300, 360);
 
@@ -180,11 +162,6 @@ export default function BalancingActSimulation({
   ]);
 
   return (
-    <SimulationCanvas
-      draw={draw}
-      width={700}
-      height={400}
-      isRunning={false}
-    />
+    <SimulationCanvas draw={draw} width={700} height={400} isRunning={false} />
   );
 }

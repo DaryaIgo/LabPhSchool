@@ -161,11 +161,5 @@ export default function ElectricWorkSimulation({ params }: Props) {
     };
   }, [voltage, resistance, time, current, power, work]);
 
-  return (
-    <SimulationCanvas
-      draw={draw}
-      width={700}
-      height={400}
-    />
-  );
+  return <SimulationCanvas draw={draw} width={700} height={400} />;
 }

@@ -1,7 +1,11 @@
 import { useRef, useEffect } from "react";
 
 interface SimulationCanvasProps {
-  setup?: (ctx: CanvasRenderingContext2D, width: number, height: number) => void;
+  setup?: (
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number
+  ) => void;
   draw: (ctx: CanvasRenderingContext2D, width: number, height: number) => void;
   width?: number;
   height?: number;

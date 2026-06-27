@@ -7,7 +7,11 @@ interface Props {
   onStateChange?: (state: Record<string, number>) => void;
 }
 
-export default function ProjectileMotion({ params, isRunning, onStateChange }: Props) {
+export default function ProjectileMotion({
+  params,
+  isRunning,
+  onStateChange,
+}: Props) {
   const v0 = Number(params["v0"] || 20);
   const angleDeg = Number(params["angle"] || 45);
   const g = Number(params["g"] || 9.8);
@@ -123,7 +127,11 @@ export default function ProjectileMotion({ params, isRunning, onStateChange }: P
       ctx.font = "10px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
-      ctx.fillText(`L = ${L.toFixed(1)} м`, (originX + landingX) / 2, groundY + 22);
+      ctx.fillText(
+        `L = ${L.toFixed(1)} м`,
+        (originX + landingX) / 2,
+        groundY + 22
+      );
       ctx.textAlign = "left";
       ctx.textBaseline = "middle";
       ctx.fillText(`H = ${H.toFixed(1)} м`, maxHeightX + 8, maxHeightY);

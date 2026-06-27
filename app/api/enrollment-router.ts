@@ -31,6 +31,14 @@ import {
   deleteAssignedLabWork,
   getMaxOrderForEnrollment,
 } from "./queries/assignedLabWorks";
+import {
+  getAssignedProblemsByEnrollment,
+  findAssignedProblem,
+  createAssignedProblem,
+  updateAssignedProblem,
+  deleteAssignedProblem,
+  getMaxOrderForProblems,
+} from "./queries/assignedProblems";
 
 export const enrollmentRouter = createRouter({
   // ── Admin: List enrollments for a student ──
@@ -39,7 +47,10 @@ export const enrollmentRouter = createRouter({
     .query(async ({ input }) => {
       const student = await findLocalUserById(input.studentId);
       if (!student) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Student not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Student not found",
+        });
       }
 
       return getEnrollmentsWithDetails(input.studentId);
@@ -56,7 +67,10 @@ export const enrollmentRouter = createRouter({
     .mutation(async ({ ctx, input }) => {
       const student = await findLocalUserById(input.studentId);
       if (!student) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Student not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Student not found",
+        });
       }
 
       const contentDb = getContentDb();
@@ -64,10 +78,7 @@ export const enrollmentRouter = createRouter({
         .select()
         .from(topicNodes)
         .where(
-          and(
-            eq(topicNodes.id, input.topicNodeId),
-            isNull(topicNodes.parentId)
-          )
+          and(eq(topicNodes.id, input.topicNodeId), isNull(topicNodes.parentId))
         )
         .limit(1);
       if (!topic) {
@@ -81,10 +92,7 @@ export const enrollmentRouter = createRouter({
         .select({ count: topicNodes.id })
         .from(topicNodes)
         .where(
-          and(
-            eq(topicNodes.parentId, topic.id),
-            isNotNull(topicNodes.content)
-          )
+          and(eq(topicNodes.parentId, topic.id), isNotNull(topicNodes.content))
         )
         .limit(1);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -310,6 +318,121 @@ export const enrollmentRouter = createRouter({
         actorType: "user",
         action: "update",
         resource: "assigned_lab_works",
+        resourceId: assignmentId,
+        details: { status, grade },
+      });
+
+      return { success: true };
+    }),
+
+  // ═══════════════════════════════════════════════════════════════
+  // ADMIN: Assigned Problems
+  // ═══════════════════════════════════════════════════════════════
+
+  listAssignedProblems: adminQuery
+    .input(z.object({ enrollmentId: z.number().positive() }))
+    .query(async ({ input }) => {
+      return getAssignedProblemsByEnrollment(input.enrollmentId);
+    }),
+
+  assignProblem: adminQuery
+    .input(
+      z.object({
+        enrollmentId: z.number().positive(),
+        problemId: z.number().positive(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const enrollment = await getEnrollmentById(input.enrollmentId);
+      if (!enrollment) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Enrollment not found",
+        });
+      }
+
+      const existing = await findAssignedProblem(
+        input.enrollmentId,
+        input.problemId
+      );
+      if (existing) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "Problem already assigned for this enrollment",
+        });
+      }
+
+      const maxOrder = await getMaxOrderForProblems(input.enrollmentId);
+
+      const result = await createAssignedProblem({
+        enrollmentId: input.enrollmentId,
+        localUserId: enrollment.localUserId,
+        problemId: input.problemId,
+        order: maxOrder + 1,
+        assignedBy: ctx.localUser!.id,
+      });
+
+      const assignmentId = Number(result[0].insertId);
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "create",
+        resource: "assigned_problems",
+        resourceId: assignmentId,
+        details: {
+          enrollmentId: input.enrollmentId,
+          problemId: input.problemId,
+          localUserId: enrollment.localUserId,
+        },
+      });
+
+      return { id: assignmentId, success: true };
+    }),
+
+  unassignProblem: adminQuery
+    .input(z.object({ assignmentId: z.number().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      await deleteAssignedProblem(input.assignmentId);
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "delete",
+        resource: "assigned_problems",
+        resourceId: input.assignmentId,
+      });
+
+      return { success: true };
+    }),
+
+  updateAssignedProblem: adminQuery
+    .input(
+      z.object({
+        assignmentId: z.number().positive(),
+        status: z.enum(["assigned", "completed"]).optional(),
+        grade: z.number().int().min(1).max(5).nullable().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { assignmentId, status, grade } = input;
+
+      await updateAssignedProblem(assignmentId, {
+        status,
+        grade: grade === null ? null : grade,
+        completedAt:
+          status === "completed"
+            ? new Date()
+            : status === "assigned"
+              ? null
+              : undefined,
+      });
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "update",
+        resource: "assigned_problems",
         resourceId: assignmentId,
         details: { status, grade },
       });

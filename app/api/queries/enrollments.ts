@@ -20,10 +20,7 @@ export async function getEnrollmentById(id: number) {
   return rows.at(0);
 }
 
-export async function findEnrollment(
-  localUserId: number,
-  topicNodeId: number
-) {
+export async function findEnrollment(localUserId: number, topicNodeId: number) {
   const rows = await getLearningDb()
     .select()
     .from(enrollments)
@@ -44,7 +41,7 @@ async function loadTopicNodeMap(topicNodeIds: number[]) {
     .select()
     .from(topicNodes)
     .where(inArray(topicNodes.id, topicNodeIds));
-  return new Map(rows.map((t) => [t.id, t]));
+  return new Map(rows.map(t => [t.id, t]));
 }
 
 export async function getEnrollmentsByLocalUser(localUserId: number) {
@@ -53,10 +50,10 @@ export async function getEnrollmentsByLocalUser(localUserId: number) {
     .from(enrollments)
     .where(eq(enrollments.localUserId, localUserId));
 
-  const topicNodeIds = rows.map((r) => r.topicNodeId);
+  const topicNodeIds = rows.map(r => r.topicNodeId);
   const topicNodeMap = await loadTopicNodeMap(topicNodeIds);
 
-  return rows.map((row) => {
+  return rows.map(row => {
     const topic = topicNodeMap.get(row.topicNodeId);
     return {
       id: row.id,
@@ -78,10 +75,10 @@ export async function getEnrollmentsWithDetails(localUserId: number) {
     .from(enrollments)
     .where(eq(enrollments.localUserId, localUserId));
 
-  const topicNodeIds = rows.map((r) => r.topicNodeId);
+  const topicNodeIds = rows.map(r => r.topicNodeId);
   const topicNodeMap = await loadTopicNodeMap(topicNodeIds);
 
-  return rows.map((row) => {
+  return rows.map(row => {
     const topic = topicNodeMap.get(row.topicNodeId);
     return {
       id: row.id,
@@ -112,10 +109,10 @@ export async function getActiveEnrollmentsByLocalUser(localUserId: number) {
       )
     );
 
-  const topicNodeIds = rows.map((r) => r.topicNodeId);
+  const topicNodeIds = rows.map(r => r.topicNodeId);
   const topicNodeMap = await loadTopicNodeMap(topicNodeIds);
 
-  return rows.map((row) => {
+  return rows.map(row => {
     const topic = topicNodeMap.get(row.topicNodeId);
     return {
       id: row.id,

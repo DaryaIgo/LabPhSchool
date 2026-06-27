@@ -72,7 +72,6 @@ export default function StudentManagement() {
     status: string;
   } | null>(null);
 
-
   // Form states
   const [formLogin, setFormLogin] = useState("");
   const [formPassword, setFormPassword] = useState("");
@@ -93,7 +92,7 @@ export default function StudentManagement() {
       setCreateOpen(false);
       resetCreateForm();
     },
-    onError: (err) => toast(err.message),
+    onError: err => toast(err.message),
   });
 
   const updateMutation = trpc.student.update.useMutation({
@@ -102,7 +101,7 @@ export default function StudentManagement() {
       utils.student.list.invalidate();
       setEditStudent(null);
     },
-    onError: (err) => toast(err.message),
+    onError: err => toast(err.message),
   });
 
   const suspendMutation = trpc.student.suspend.useMutation({
@@ -110,7 +109,7 @@ export default function StudentManagement() {
       toast("Student suspended");
       utils.student.list.invalidate();
     },
-    onError: (err) => toast(err.message),
+    onError: err => toast(err.message),
   });
 
   const activateMutation = trpc.student.activate.useMutation({
@@ -118,7 +117,7 @@ export default function StudentManagement() {
       toast("Student activated");
       utils.student.list.invalidate();
     },
-    onError: (err) => toast(err.message),
+    onError: err => toast(err.message),
   });
 
   const deleteMutation = trpc.student.delete.useMutation({
@@ -126,9 +125,8 @@ export default function StudentManagement() {
       toast("Student deleted");
       utils.student.list.invalidate();
     },
-    onError: (err) => toast(err.message),
+    onError: err => toast(err.message),
   });
-
 
   function resetCreateForm() {
     setFormLogin("");
@@ -148,9 +146,14 @@ export default function StudentManagement() {
   function handleUpdate(e: React.FormEvent) {
     e.preventDefault();
     if (!editStudent) return;
-    const data: { name?: string; status?: "active" | "inactive" | "suspended"; password?: string } = {};
+    const data: {
+      name?: string;
+      status?: "active" | "inactive" | "suspended";
+      password?: string;
+    } = {};
     if (editName !== editStudent.name) data.name = editName;
-    if (editStatus !== editStudent.status) data.status = editStatus as "active" | "inactive" | "suspended";
+    if (editStatus !== editStudent.status)
+      data.status = editStatus as "active" | "inactive" | "suspended";
     if (editPassword) data.password = editPassword;
     if (Object.keys(data).length === 0) {
       setEditStudent(null);
@@ -194,7 +197,7 @@ export default function StudentManagement() {
                 <Input
                   id="login"
                   value={formLogin}
-                  onChange={(e) => setFormLogin(e.target.value)}
+                  onChange={e => setFormLogin(e.target.value)}
                   placeholder="student_login"
                   className="bg-[#263238] border-[#37474f] mt-1"
                   required
@@ -208,7 +211,7 @@ export default function StudentManagement() {
                 <Input
                   id="name"
                   value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
+                  onChange={e => setFormName(e.target.value)}
                   placeholder="Ivan Petrov"
                   className="bg-[#263238] border-[#37474f] mt-1"
                   required
@@ -221,7 +224,7 @@ export default function StudentManagement() {
                   id="password"
                   type="password"
                   value={formPassword}
-                  onChange={(e) => setFormPassword(e.target.value)}
+                  onChange={e => setFormPassword(e.target.value)}
                   placeholder="Min 8 chars, uppercase, lowercase, digit"
                   className="bg-[#263238] border-[#37474f] mt-1"
                   required
@@ -251,7 +254,7 @@ export default function StudentManagement() {
           <Input
             placeholder="Search by name..."
             value={search}
-            onChange={(e) => {
+            onChange={e => {
               setSearch(e.target.value);
               setPage(1);
             }}
@@ -260,9 +263,11 @@ export default function StudentManagement() {
         </div>
         <Select
           value={statusFilter ?? "all"}
-          onValueChange={(v) => {
+          onValueChange={v => {
             setStatusFilter(
-              v === "all" ? undefined : (v as "active" | "inactive" | "suspended")
+              v === "all"
+                ? undefined
+                : (v as "active" | "inactive" | "suspended")
             );
             setPage(1);
           }}
@@ -325,7 +330,7 @@ export default function StudentManagement() {
                         </td>
                       </tr>
                     )}
-                    {data?.users.map((s) => (
+                    {data?.users.map(s => (
                       <tr
                         key={s.id}
                         className="border-b border-[#37474f]/50 hover:bg-[#263238]/50"
@@ -359,15 +364,13 @@ export default function StudentManagement() {
                             {s.roleName === "admin"
                               ? "Администратор"
                               : s.roleName === "student"
-                              ? "Ученик"
-                              : s.roleName}
+                                ? "Ученик"
+                                : s.roleName}
                           </Badge>
                         </td>
                         <td className="p-4">
                           <Badge
-                            className={
-                              STATUS_COLORS[s.status] ?? "bg-gray-600"
-                            }
+                            className={STATUS_COLORS[s.status] ?? "bg-gray-600"}
                           >
                             {s.status}
                           </Badge>
@@ -455,7 +458,7 @@ export default function StudentManagement() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
                       disabled={page <= 1}
                       className="border-[#37474f]"
                     >
@@ -465,7 +468,7 @@ export default function StudentManagement() {
                       variant="outline"
                       size="sm"
                       onClick={() =>
-                        setPage((p) => Math.min(data.totalPages, p + 1))
+                        setPage(p => Math.min(data.totalPages, p + 1))
                       }
                       disabled={page >= data.totalPages}
                       className="border-[#37474f]"
@@ -495,7 +498,7 @@ export default function StudentManagement() {
                 <Label>Name</Label>
                 <Input
                   value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
+                  onChange={e => setEditName(e.target.value)}
                   className="bg-[#263238] border-[#37474f] mt-1"
                   required
                 />
@@ -504,7 +507,7 @@ export default function StudentManagement() {
                 <Label>Status</Label>
                 <Select
                   value={editStatus}
-                  onValueChange={(v) =>
+                  onValueChange={v =>
                     setEditStatus(v as "active" | "inactive" | "suspended")
                   }
                 >
@@ -523,7 +526,7 @@ export default function StudentManagement() {
                 <Input
                   type="password"
                   value={editPassword}
-                  onChange={(e) => setEditPassword(e.target.value)}
+                  onChange={e => setEditPassword(e.target.value)}
                   placeholder="Min 8 chars"
                   className="bg-[#263238] border-[#37474f] mt-1"
                   minLength={8}
@@ -540,8 +543,6 @@ export default function StudentManagement() {
           </DialogContent>
         </Dialog>
       )}
-
-
     </div>
   );
 }

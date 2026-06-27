@@ -74,9 +74,7 @@ export default function AuditLogViewer() {
         <Card className="bg-[#1e2529] border-[#37474f]">
           <CardContent className="pt-6">
             <p className="text-sm text-gray-400">Total Entries</p>
-            <p className="text-2xl font-bold">
-              {stats?.totalEntries ?? "—"}
-            </p>
+            <p className="text-2xl font-bold">{stats?.totalEntries ?? "—"}</p>
           </CardContent>
         </Card>
         <Card className="bg-[#1e2529] border-[#37474f]">
@@ -101,7 +99,7 @@ export default function AuditLogViewer() {
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <Select
           value={resourceFilter ?? "all"}
-          onValueChange={(v) => {
+          onValueChange={v => {
             setResourceFilter(v === "all" ? undefined : v);
             setPage(1);
           }}
@@ -122,7 +120,7 @@ export default function AuditLogViewer() {
         </Select>
         <Select
           value={actionFilter ?? "all"}
-          onValueChange={(v) => {
+          onValueChange={v => {
             setActionFilter(v === "all" ? undefined : v);
             setPage(1);
           }}
@@ -190,7 +188,7 @@ export default function AuditLogViewer() {
                         </td>
                       </tr>
                     )}
-                    {data?.entries.map((entry) => (
+                    {data?.entries.map(entry => (
                       <tr
                         key={entry.id}
                         className="border-b border-[#37474f]/30 hover:bg-[#263238]/30"
@@ -235,17 +233,16 @@ export default function AuditLogViewer() {
                           )}
                         </td>
                         <td className="p-3 text-gray-400 text-xs max-w-[200px] truncate">
-                          {entry.details
-                            ? JSON.stringify(entry.details)
-                            : "—"}
+                          {entry.details ? JSON.stringify(entry.details) : "—"}
                         </td>
                         <td className="p-3 text-center">
                           {entry.success ? (
-                            <span className="text-green-400 text-lg">
-                              ✓
-                            </span>
+                            <span className="text-green-400 text-lg">✓</span>
                           ) : (
-                            <span className="text-red-400 text-lg" title={entry.errorMessage ?? ""}>
+                            <span
+                              className="text-red-400 text-lg"
+                              title={entry.errorMessage ?? ""}
+                            >
                               ✗
                             </span>
                           )}
@@ -266,7 +263,7 @@ export default function AuditLogViewer() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
                       disabled={page <= 1}
                       className="border-[#37474f]"
                     >
@@ -276,7 +273,7 @@ export default function AuditLogViewer() {
                       variant="outline"
                       size="sm"
                       onClick={() =>
-                        setPage((p) => Math.min(data.totalPages, p + 1))
+                        setPage(p => Math.min(data.totalPages, p + 1))
                       }
                       disabled={page >= data.totalPages}
                       className="border-[#37474f]"

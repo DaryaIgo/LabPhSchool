@@ -62,7 +62,7 @@ export default function BuoyancySimulation({ params }: Props) {
       // Up arrows
       ctx.strokeStyle = "#64c896";
       ctx.lineWidth = 2;
-      [x1, x2].forEach((x) => {
+      [x1, x2].forEach(x => {
         ctx.beginPath();
         ctx.moveTo(x, y1 - size1 / 2 - 30);
         ctx.lineTo(x, y1 - size1 / 2 - 5);
@@ -109,22 +109,12 @@ export default function BuoyancySimulation({ params }: Props) {
       ctx.font = "16px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
-      ctx.fillText(
-        "Независимость выталкивающей силы",
-        w / 2,
-        20
-      );
+      ctx.fillText("Независимость выталкивающей силы", w / 2, 20);
       ctx.fillStyle = "#96a3ab";
       ctx.font = "11px sans-serif";
       ctx.fillText("от массы тела при постоянном V", w / 2, 42);
     };
   }, [bodyVolume, material1, material2]);
 
-  return (
-    <SimulationCanvas
-      draw={draw}
-      width={700}
-      height={400}
-    />
-  );
+  return <SimulationCanvas draw={draw} width={700} height={400} />;
 }

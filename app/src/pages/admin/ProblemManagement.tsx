@@ -20,7 +20,10 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  FlaskConical,
+  Folder,
+  FolderOpen,
+  FileText,
+  FileQuestion,
   Plus,
   Trash2,
   Save,
@@ -28,31 +31,35 @@ import {
   Images,
   ChevronRight,
   ChevronDown,
-  Folder,
-  FolderOpen,
-  FileText,
   Loader2,
-  Beaker,
+  GraduationCap,
 } from "lucide-react";
 import MDEditor from "@uiw/react-md-editor";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
-import type {
-  LabCategory,
-  LabSubcategory,
-  LabWork,
-  Simulation,
-  SimulationParamConfig,
-} from "@db/schema";
+import type { ProblemCategory, ProblemSubcategory, Problem } from "@db/schema";
 
-type TreeNodeType = "category" | "subcategory" | "labWork";
+function transliterateSlug(input: string): string {
+  const ru: Record<string, string> = {
+    а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "yo", ж: "zh", з: "z",
+    и: "i", й: "y", к: "k", л: "l", м: "m", н: "n", о: "o", п: "p", р: "r",
+    с: "s", т: "t", у: "u", ф: "f", х: "kh", ц: "ts", ч: "ch", ш: "sh",
+    щ: "shch", ы: "y", э: "e", ю: "yu", я: "ya",
+  };
+  return input
+    .toLowerCase()
+    .split("")
+    .map((ch) => (ru[ch] != null ? ru[ch] : /[a-z0-9-]/.test(ch) ? ch : "-"))
+    .join("")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
 
-type LabWorkListItem = Omit<
-  LabWork,
-  "createdAt" | "updatedAt" | "topicNodeId"
-> & {
+type TreeNodeType = "category" | "subcategory" | "problem";
+
+type ProblemListItem = Omit<Problem, "createdAt" | "updatedAt"> & {
   categoryTitle?: string | null;
   subcategoryTitle?: string | null;
 };
@@ -64,18 +71,15 @@ interface TreeNode {
   slug: string;
   order: number;
   children: TreeNode[];
-  data: LabCategory | LabSubcategory | LabWorkListItem;
+  data: ProblemCategory | ProblemSubcategory | ProblemListItem;
 }
 
 const initialCategoryForm = {
   order: 1,
   title: "",
   slug: "",
-  grade: "",
   description: "",
-  shortDesc: "",
-  color: "#2eff8c",
-  iconType: "",
+  color: "#ffcb3d",
 };
 
 const initialSubcategoryForm = {
@@ -86,26 +90,21 @@ const initialSubcategoryForm = {
   description: "",
 };
 
-const initialLabWorkForm = {
+const initialProblemForm = {
   categoryId: 0,
   subcategoryId: null as number | null,
   order: 1,
   title: "",
   slug: "",
-  law: "",
-  skills: "",
   difficulty: "medium" as "easy" | "medium" | "hard",
-  duration: 30,
-  goal: "",
-  theory: "",
-  equipment: "",
-  instruction: "",
-  conclusionTemplate: "",
-  simulationSlug: null as string | null,
+  source: "",
+  condition: "",
+  solution: "",
+  answer: "",
   status: "draft" as "draft" | "published",
 };
 
-export default function LabManagement() {
+export default function ProblemManagement() {
   const { user } = useAuth({ redirectOnUnauthenticated: true });
   const utils = trpc.useUtils();
 
@@ -118,28 +117,22 @@ export default function LabManagement() {
   const [subcategoryForm, setSubcategoryForm] = useState({
     ...initialSubcategoryForm,
   });
-  const [labForm, setLabForm] = useState({ ...initialLabWorkForm });
+  const [problemForm, setProblemForm] = useState({ ...initialProblemForm });
   const [galleryOpen, setGalleryOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: categories, isLoading: categoriesLoading } =
-    trpc.virtualLab.adminListCategories.useQuery(undefined, {
+    trpc.problems.adminListCategories.useQuery(undefined, {
       enabled: !!user && user.role === "admin",
     });
   const { data: subcategories, isLoading: subcategoriesLoading } =
-    trpc.virtualLab.adminListSubcategories.useQuery(undefined, {
+    trpc.problems.adminListSubcategories.useQuery(undefined, {
       enabled: !!user && user.role === "admin",
     });
-  const { data: labWorks, isLoading: labWorksLoading } =
-    trpc.virtualLab.adminListLabWorks.useQuery(undefined, {
+  const { data: problems, isLoading: problemsLoading } =
+    trpc.problems.adminListProblems.useQuery(undefined, {
       enabled: !!user && user.role === "admin",
     });
-  const { data: simulations } = trpc.virtualLab.listSimulations.useQuery(
-    undefined,
-    {
-      enabled: !!user && user.role === "admin",
-    }
-  );
   const { data: images } = trpc.admin.listImages.useQuery(undefined, {
     enabled: !!user && user.role === "admin" && galleryOpen,
     refetchOnWindowFocus: false,
@@ -174,37 +167,35 @@ export default function LabManagement() {
       const parent = catMap.get(sub.categoryId);
       if (parent) parent.children.push(node);
     }
-    for (const lab of labWorks ?? []) {
+    for (const problem of problems ?? []) {
       const node: TreeNode = {
-        type: "labWork",
-        id: lab.id,
-        title: lab.title,
-        slug: lab.slug,
-        order: lab.order,
+        type: "problem",
+        id: problem.id,
+        title: problem.title,
+        slug: problem.slug,
+        order: problem.order,
         children: [],
-        data: lab,
+        data: problem,
       };
       const parent =
-        subMap.get(lab.subcategoryId ?? -1) ?? catMap.get(lab.categoryId);
+        subMap.get(problem.subcategoryId ?? -1) ??
+        catMap.get(problem.categoryId);
       if (parent) parent.children.push(node);
     }
     return Array.from(catMap.values()).sort((a, b) => a.order - b.order);
-  }, [categories, subcategories, labWorks]);
+  }, [categories, subcategories, problems]);
 
-  const loadCategory = useCallback((cat: LabCategory) => {
+  const loadCategory = useCallback((cat: ProblemCategory) => {
     setCategoryForm({
       order: cat.order,
       title: cat.title,
       slug: cat.slug,
-      grade: cat.grade ?? "",
       description: cat.description ?? "",
-      shortDesc: cat.shortDesc ?? "",
-      color: cat.color ?? "#2eff8c",
-      iconType: cat.iconType ?? "",
+      color: cat.color ?? "#ffcb3d",
     });
   }, []);
 
-  const loadSubcategory = useCallback((sub: LabSubcategory) => {
+  const loadSubcategory = useCallback((sub: ProblemSubcategory) => {
     setSubcategoryForm({
       categoryId: sub.categoryId,
       order: sub.order,
@@ -214,24 +205,20 @@ export default function LabManagement() {
     });
   }, []);
 
-  const loadLabWork = useCallback((lab: LabWorkListItem) => {
-    setLabForm({
-      categoryId: lab.categoryId,
-      subcategoryId: lab.subcategoryId ?? null,
-      order: lab.order,
-      title: lab.title,
-      slug: lab.slug,
-      law: lab.law ?? "",
-      skills: lab.skills ?? "",
-      difficulty: (lab.difficulty as "easy" | "medium" | "hard") ?? "medium",
-      duration: lab.duration ?? 30,
-      goal: lab.goal ?? "",
-      theory: lab.theory ?? "",
-      equipment: lab.equipment ?? "",
-      instruction: lab.instruction ?? "",
-      conclusionTemplate: lab.conclusionTemplate ?? "",
-      simulationSlug: lab.simulationSlug ?? null,
-      status: (lab.status as "draft" | "published") ?? "draft",
+  const loadProblem = useCallback((problem: ProblemListItem) => {
+    setProblemForm({
+      categoryId: problem.categoryId,
+      subcategoryId: problem.subcategoryId ?? null,
+      order: problem.order,
+      title: problem.title,
+      slug: problem.slug,
+      difficulty:
+        (problem.difficulty as "easy" | "medium" | "hard") ?? "medium",
+      source: problem.source ?? "",
+      condition: problem.condition ?? "",
+      solution: problem.solution ?? "",
+      answer: problem.answer ?? "",
+      status: (problem.status as "draft" | "published") ?? "draft",
     });
   }, []);
 
@@ -239,12 +226,12 @@ export default function LabManagement() {
     (node: TreeNode) => {
       setSelected({ type: node.type, id: node.id });
       setCreating(null);
-      if (node.type === "category") loadCategory(node.data as LabCategory);
+      if (node.type === "category") loadCategory(node.data as ProblemCategory);
       if (node.type === "subcategory")
-        loadSubcategory(node.data as LabSubcategory);
-      if (node.type === "labWork") loadLabWork(node.data as LabWorkListItem);
+        loadSubcategory(node.data as ProblemSubcategory);
+      if (node.type === "problem") loadProblem(node.data as ProblemListItem);
     },
-    [loadCategory, loadSubcategory, loadLabWork]
+    [loadCategory, loadSubcategory, loadProblem]
   );
 
   const handleCreate = useCallback(
@@ -265,12 +252,12 @@ export default function LabManagement() {
           categoryId: catId,
           order: siblings.length + 1,
         });
-      } else if (type === "labWork") {
+      } else if (type === "problem") {
         const catId = categories?.[0]?.id ?? 0;
         const subId =
           subcategories?.find(s => s.categoryId === catId)?.id ?? null;
-        setLabForm({
-          ...initialLabWorkForm,
+        setProblemForm({
+          ...initialProblemForm,
           categoryId: catId,
           subcategoryId: subId,
         });
@@ -282,12 +269,7 @@ export default function LabManagement() {
   const handleImageUpload = useCallback(
     async (
       e: React.ChangeEvent<HTMLInputElement>,
-      field:
-        | "theory"
-        | "instruction"
-        | "goal"
-        | "equipment"
-        | "conclusionTemplate"
+      field: "condition" | "solution" | "answer"
     ) => {
       const file = e.target.files?.[0];
       if (!file) return;
@@ -305,7 +287,7 @@ export default function LabManagement() {
         }
         if (data.url) {
           const imageMarkdown = `\n![${file.name}](${data.url})\n`;
-          setLabForm(f => ({
+          setProblemForm(f => ({
             ...f,
             [field]: (f[field] || "") + imageMarkdown,
           }));
@@ -322,75 +304,75 @@ export default function LabManagement() {
   );
 
   // Mutations
-  const createCategory = trpc.virtualLab.adminCreateCategory.useMutation({
+  const createCategory = trpc.problems.adminCreateCategory.useMutation({
     onSuccess: () => {
       toast.success("Раздел создан");
-      utils.virtualLab.adminListCategories.invalidate();
+      utils.problems.adminListCategories.invalidate();
       setCreating(null);
     },
     onError: err => toast.error(err.message),
   });
-  const updateCategory = trpc.virtualLab.adminUpdateCategory.useMutation({
+  const updateCategory = trpc.problems.adminUpdateCategory.useMutation({
     onSuccess: () => {
       toast.success("Раздел обновлён");
-      utils.virtualLab.adminListCategories.invalidate();
+      utils.problems.adminListCategories.invalidate();
     },
     onError: err => toast.error(err.message),
   });
-  const deleteCategory = trpc.virtualLab.adminDeleteCategory.useMutation({
+  const deleteCategory = trpc.problems.adminDeleteCategory.useMutation({
     onSuccess: () => {
       toast.success("Раздел удалён");
-      utils.virtualLab.adminListCategories.invalidate();
+      utils.problems.adminListCategories.invalidate();
       setSelected(null);
       setCreating(null);
     },
     onError: err => toast.error(err.message),
   });
 
-  const createSubcategory = trpc.virtualLab.adminCreateSubcategory.useMutation({
+  const createSubcategory = trpc.problems.adminCreateSubcategory.useMutation({
     onSuccess: () => {
       toast.success("Тема создана");
-      utils.virtualLab.adminListSubcategories.invalidate();
+      utils.problems.adminListSubcategories.invalidate();
       setCreating(null);
     },
     onError: err => toast.error(err.message),
   });
-  const updateSubcategory = trpc.virtualLab.adminUpdateSubcategory.useMutation({
+  const updateSubcategory = trpc.problems.adminUpdateSubcategory.useMutation({
     onSuccess: () => {
       toast.success("Тема обновлена");
-      utils.virtualLab.adminListSubcategories.invalidate();
+      utils.problems.adminListSubcategories.invalidate();
     },
     onError: err => toast.error(err.message),
   });
-  const deleteSubcategory = trpc.virtualLab.adminDeleteSubcategory.useMutation({
+  const deleteSubcategory = trpc.problems.adminDeleteSubcategory.useMutation({
     onSuccess: () => {
       toast.success("Тема удалена");
-      utils.virtualLab.adminListSubcategories.invalidate();
+      utils.problems.adminListSubcategories.invalidate();
       setSelected(null);
       setCreating(null);
     },
     onError: err => toast.error(err.message),
   });
 
-  const createLab = trpc.virtualLab.adminCreateLabWork.useMutation({
+  const createProblem = trpc.problems.adminCreateProblem.useMutation({
     onSuccess: () => {
-      toast.success("Лабораторная работа создана");
-      utils.virtualLab.adminListLabWorks.invalidate();
+      toast.success("Задача создана");
+      utils.problems.adminListProblems.invalidate();
       setCreating(null);
     },
     onError: err => toast.error(err.message),
   });
-  const updateLab = trpc.virtualLab.adminUpdateLabWork.useMutation({
+  const updateProblem = trpc.problems.adminUpdateProblem.useMutation({
     onSuccess: () => {
-      toast.success("Лабораторная работа обновлена");
-      utils.virtualLab.adminListLabWorks.invalidate();
+      toast.success("Задача обновлена");
+      utils.problems.adminListProblems.invalidate();
     },
     onError: err => toast.error(err.message),
   });
-  const deleteLab = trpc.virtualLab.adminDeleteLabWork.useMutation({
+  const deleteProblem = trpc.problems.adminDeleteProblem.useMutation({
     onSuccess: () => {
-      toast.success("Лабораторная работа удалена");
-      utils.virtualLab.adminListLabWorks.invalidate();
+      toast.success("Задача удалена");
+      utils.problems.adminListProblems.invalidate();
       setSelected(null);
       setCreating(null);
     },
@@ -398,7 +380,7 @@ export default function LabManagement() {
   });
 
   const isLoading =
-    categoriesLoading || subcategoriesLoading || labWorksLoading;
+    categoriesLoading || subcategoriesLoading || problemsLoading;
 
   const handleSave = useCallback(() => {
     if (creating === "category" || selected?.type === "category") {
@@ -421,20 +403,25 @@ export default function LabManagement() {
       } else if (selected?.type === "subcategory") {
         updateSubcategory.mutate({ id: selected.id, ...subcategoryForm });
       }
-    } else if (creating === "labWork" || selected?.type === "labWork") {
-      if (!labForm.title || !labForm.slug) {
-        toast.error("Заполните название и slug");
+    } else if (creating === "problem" || selected?.type === "problem") {
+      if (
+        !problemForm.title ||
+        !problemForm.slug ||
+        !problemForm.condition ||
+        !problemForm.solution ||
+        !problemForm.answer
+      ) {
+        toast.error("Заполните название, slug, условие, решение и ответ");
         return;
       }
       const payload = {
-        ...labForm,
-        subcategoryId: labForm.subcategoryId ?? undefined,
-        simulationSlug: labForm.simulationSlug ?? undefined,
+        ...problemForm,
+        subcategoryId: problemForm.subcategoryId ?? undefined,
       };
-      if (creating === "labWork") {
-        createLab.mutate(payload);
-      } else if (selected?.type === "labWork") {
-        updateLab.mutate({ id: selected.id, ...payload });
+      if (creating === "problem") {
+        createProblem.mutate(payload);
+      } else if (selected?.type === "problem") {
+        updateProblem.mutate({ id: selected.id, ...payload });
       }
     }
   }, [
@@ -442,28 +429,27 @@ export default function LabManagement() {
     selected,
     categoryForm,
     subcategoryForm,
-    labForm,
+    problemForm,
     createCategory,
     updateCategory,
     createSubcategory,
     updateSubcategory,
-    createLab,
-    updateLab,
+    createProblem,
+    updateProblem,
   ]);
 
   const handleDelete = useCallback(() => {
     if (!selected) return;
     if (selected.type === "category") {
-      if (confirm("Удалить раздел и все его темы/работы?"))
+      if (confirm("Удалить раздел и все его темы/задачи?"))
         deleteCategory.mutate({ id: selected.id });
     } else if (selected.type === "subcategory") {
       if (confirm("Удалить тему?"))
         deleteSubcategory.mutate({ id: selected.id });
-    } else if (selected.type === "labWork") {
-      if (confirm("Удалить лабораторную работу?"))
-        deleteLab.mutate({ id: selected.id });
+    } else if (selected.type === "problem") {
+      if (confirm("Удалить задачу?")) deleteProblem.mutate({ id: selected.id });
     }
-  }, [selected, deleteCategory, deleteSubcategory, deleteLab]);
+  }, [selected, deleteCategory, deleteSubcategory, deleteProblem]);
 
   if (!user || user.role !== "admin") {
     return (
@@ -478,11 +464,11 @@ export default function LabManagement() {
       {/* Header */}
       <div className="border-b border-[#37474f] bg-[#1e2529] px-6 py-4 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <Beaker className="h-6 w-6 text-[#2eff8c]" />
+          <GraduationCap className="h-6 w-6 text-[#ffcb3d]" />
           <div>
-            <h1 className="text-xl font-bold text-white">Lab Management</h1>
+            <h1 className="text-xl font-bold text-white">Problem Management</h1>
             <p className="text-xs text-[#798389]">
-              Создание лабораторных работ: теория, симуляции и параметры
+              Создание и управление базой задач (доступно только администратору)
             </p>
           </div>
         </div>
@@ -490,7 +476,7 @@ export default function LabManagement() {
           <Button
             size="sm"
             variant="outline"
-            className="border-[#37474f] hover:bg-[#2eff8c]/10 text-black"
+            className="border-[#37474f] hover:bg-[#ffcb3d]/10 text-black"
             onClick={() => handleCreate("category")}
           >
             <Plus className="h-4 w-4 mr-1" />
@@ -499,7 +485,7 @@ export default function LabManagement() {
           <Button
             size="sm"
             variant="outline"
-            className="border-[#37474f] hover:bg-[#2eff8c]/10 text-black"
+            className="border-[#37474f] hover:bg-[#ffcb3d]/10 text-black"
             onClick={() => handleCreate("subcategory")}
           >
             <Plus className="h-4 w-4 mr-1" />
@@ -507,11 +493,11 @@ export default function LabManagement() {
           </Button>
           <Button
             size="sm"
-            className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
-            onClick={() => handleCreate("labWork")}
+            className="bg-[#ffcb3d] text-[#0d1117] hover:bg-[#e6b734]"
+            onClick={() => handleCreate("problem")}
           >
             <Plus className="h-4 w-4 mr-1" />
-            Работа
+            Задача
           </Button>
         </div>
       </div>
@@ -522,7 +508,7 @@ export default function LabManagement() {
         <div className="w-80 border-r border-[#37474f] bg-[#1a1f22] overflow-y-auto p-3">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="animate-spin text-[#2eff8c]" size={20} />
+              <Loader2 className="animate-spin text-[#ffcb3d]" size={20} />
             </div>
           ) : tree.length === 0 ? (
             <div className="text-center text-sm text-[#798389] py-8">
@@ -567,28 +553,27 @@ export default function LabManagement() {
               }
               isDeleting={deleteSubcategory.isPending}
             />
-          ) : selected?.type === "labWork" || creating === "labWork" ? (
-            <LabWorkEditor
-              form={labForm}
-              onChange={setLabForm}
+          ) : selected?.type === "problem" || creating === "problem" ? (
+            <ProblemEditor
+              form={problemForm}
+              onChange={setProblemForm}
               categories={categories ?? []}
               subcategories={subcategories ?? []}
-              simulations={simulations ?? []}
-              isNew={creating === "labWork"}
+              isNew={creating === "problem"}
               onSave={handleSave}
               onDelete={handleDelete}
-              isSaving={createLab.isPending || updateLab.isPending}
-              isDeleting={deleteLab.isPending}
+              isSaving={createProblem.isPending || updateProblem.isPending}
+              isDeleting={deleteProblem.isPending}
               onImageUpload={handleImageUpload}
               fileInputRef={fileInputRef}
               setGalleryOpen={setGalleryOpen}
             />
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-[#798389]">
-              <Beaker size={48} className="mb-4 opacity-30" />
+              <GraduationCap size={48} className="mb-4 opacity-30" />
               <p className="text-lg">Выберите элемент для редактирования</p>
               <p className="text-sm mt-2">
-                или создайте новый раздел, тему или работу
+                или создайте новый раздел, тему или задачу
               </p>
             </div>
           )}
@@ -668,14 +653,14 @@ function TreeItem({
   const icon =
     node.type === "category" ? (
       expanded ? (
-        <FolderOpen size={14} className="shrink-0 text-[#2eff8c]" />
+        <FolderOpen size={14} className="shrink-0 text-[#ffcb3d]" />
       ) : (
-        <Folder size={14} className="shrink-0 text-[#2eff8c]" />
+        <Folder size={14} className="shrink-0 text-[#ffcb3d]" />
       )
     ) : node.type === "subcategory" ? (
       <FileText size={14} className="shrink-0 text-[#01acff]" />
     ) : (
-      <FlaskConical size={14} className="shrink-0 text-[#ff7043]" />
+      <FileQuestion size={14} className="shrink-0 text-[#2eff8c]" />
     );
 
   return (
@@ -684,7 +669,7 @@ function TreeItem({
         onClick={() => onSelect(node)}
         className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors ${
           isSelected
-            ? "bg-[#2eff8c]/20 text-[#2eff8c]"
+            ? "bg-[#ffcb3d]/20 text-[#ffcb3d]"
             : "text-[#c8cdd1] hover:bg-white/5"
         }`}
         style={{ paddingLeft: `${depth * 16 + 8}px` }}
@@ -743,12 +728,12 @@ function CategoryEditor({
     <div className="max-w-3xl mx-auto space-y-5">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-white">
-          {isNew ? "Новый раздел физики" : "Редактирование раздела"}
+          {isNew ? "Новый раздел задач" : "Редактирование раздела"}
         </h2>
         <div className="flex items-center gap-2">
           <Button
             size="sm"
-            className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
+            className="bg-[#ffcb3d] text-[#0d1117] hover:bg-[#e6b734]"
             onClick={onSave}
             disabled={isSaving}
           >
@@ -785,10 +770,7 @@ function CategoryEditor({
             onChange={e =>
               onChange({
                 ...form,
-                slug: e.target.value
-                  .toLowerCase()
-                  .replace(/[^a-z0-9-]+/g, "-")
-                  .replace(/^-|-$/g, ""),
+                slug: transliterateSlug(e.target.value),
               })
             }
             className="bg-[#1e2529] border-[#37474f] mt-1 text-white"
@@ -796,7 +778,7 @@ function CategoryEditor({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <div>
           <Label className="text-xs text-[#798389]">Порядок</Label>
           <Input
@@ -808,32 +790,21 @@ function CategoryEditor({
           />
         </div>
         <div>
-          <Label className="text-xs text-[#798389]">Класс</Label>
-          <Input
-            value={form.grade}
-            onChange={e => onChange({ ...form, grade: e.target.value })}
-            className="bg-[#1e2529] border-[#37474f] mt-1 text-white"
-            placeholder="7 класс"
-          />
+          <Label className="text-xs text-[#798389]">Цвет</Label>
+          <div className="flex gap-2 mt-1">
+            <Input
+              type="color"
+              value={form.color}
+              onChange={e => onChange({ ...form, color: e.target.value })}
+              className="w-12 h-9 p-1 bg-[#1e2529] border-[#37474f]"
+            />
+            <Input
+              value={form.color}
+              onChange={e => onChange({ ...form, color: e.target.value })}
+              className="flex-1 bg-[#1e2529] border-[#37474f] text-white"
+            />
+          </div>
         </div>
-        <div>
-          <Label className="text-xs text-[#798389]">Иконка</Label>
-          <Input
-            value={form.iconType}
-            onChange={e => onChange({ ...form, iconType: e.target.value })}
-            className="bg-[#1e2529] border-[#37474f] mt-1 text-white"
-            placeholder="mechanics"
-          />
-        </div>
-      </div>
-
-      <div>
-        <Label className="text-xs text-[#798389]">Краткое описание</Label>
-        <Input
-          value={form.shortDesc}
-          onChange={e => onChange({ ...form, shortDesc: e.target.value })}
-          className="bg-[#1e2529] border-[#37474f] mt-1 text-white"
-        />
       </div>
 
       <div>
@@ -842,25 +813,8 @@ function CategoryEditor({
           value={form.description}
           onChange={e => onChange({ ...form, description: e.target.value })}
           rows={4}
-          className="w-full mt-1 bg-[#1e2529] border border-[#37474f] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#2eff8c]"
+          className="w-full mt-1 bg-[#1e2529] border border-[#37474f] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#ffcb3d]"
         />
-      </div>
-
-      <div>
-        <Label className="text-xs text-[#798389]">Цвет</Label>
-        <div className="flex gap-2 mt-1">
-          <Input
-            type="color"
-            value={form.color}
-            onChange={e => onChange({ ...form, color: e.target.value })}
-            className="w-12 h-9 p-1 bg-[#1e2529] border-[#37474f]"
-          />
-          <Input
-            value={form.color}
-            onChange={e => onChange({ ...form, color: e.target.value })}
-            className="flex-1 bg-[#1e2529] border-[#37474f] text-white"
-          />
-        </div>
       </div>
     </div>
   );
@@ -878,7 +832,7 @@ function SubcategoryEditor({
 }: {
   form: typeof initialSubcategoryForm;
   onChange: (f: typeof initialSubcategoryForm) => void;
-  categories: LabCategory[];
+  categories: ProblemCategory[];
   isNew: boolean;
   onSave: () => void;
   onDelete: () => void;
@@ -894,7 +848,7 @@ function SubcategoryEditor({
         <div className="flex items-center gap-2">
           <Button
             size="sm"
-            className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
+            className="bg-[#ffcb3d] text-[#0d1117] hover:bg-[#e6b734]"
             onClick={onSave}
             disabled={isSaving}
           >
@@ -954,10 +908,7 @@ function SubcategoryEditor({
             onChange={e =>
               onChange({
                 ...form,
-                slug: e.target.value
-                  .toLowerCase()
-                  .replace(/[^a-z0-9-]+/g, "-")
-                  .replace(/^-|-$/g, ""),
+                slug: transliterateSlug(e.target.value),
               })
             }
             className="bg-[#1e2529] border-[#37474f] mt-1 text-white"
@@ -982,19 +933,18 @@ function SubcategoryEditor({
           value={form.description}
           onChange={e => onChange({ ...form, description: e.target.value })}
           rows={4}
-          className="w-full mt-1 bg-[#1e2529] border border-[#37474f] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#2eff8c]"
+          className="w-full mt-1 bg-[#1e2529] border border-[#37474f] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#ffcb3d]"
         />
       </div>
     </div>
   );
 }
 
-function LabWorkEditor({
+function ProblemEditor({
   form,
   onChange,
   categories,
   subcategories,
-  simulations,
   isNew,
   onSave,
   onDelete,
@@ -1004,11 +954,10 @@ function LabWorkEditor({
   fileInputRef,
   setGalleryOpen,
 }: {
-  form: typeof initialLabWorkForm;
-  onChange: (f: typeof initialLabWorkForm) => void;
-  categories: LabCategory[];
-  subcategories: LabSubcategory[];
-  simulations: Simulation[];
+  form: typeof initialProblemForm;
+  onChange: (f: typeof initialProblemForm) => void;
+  categories: ProblemCategory[];
+  subcategories: ProblemSubcategory[];
   isNew: boolean;
   onSave: () => void;
   onDelete: () => void;
@@ -1016,25 +965,15 @@ function LabWorkEditor({
   isDeleting: boolean;
   onImageUpload: (
     e: React.ChangeEvent<HTMLInputElement>,
-    field:
-      | "theory"
-      | "instruction"
-      | "goal"
-      | "equipment"
-      | "conclusionTemplate"
+    field: "condition" | "solution" | "answer"
   ) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   setGalleryOpen: (v: boolean) => void;
 }) {
   const [activeTab, setActiveTab] = useState("general");
-  const [activeTheoryField, setActiveTheoryField] = useState<
-    "goal" | "theory" | "equipment" | "instruction" | "conclusionTemplate"
-  >("theory");
-
-  const selectedSimulation = useMemo(
-    () => simulations.find(s => s.slug === form.simulationSlug),
-    [simulations, form.simulationSlug]
-  );
+  const [activeContentField, setActiveContentField] = useState<
+    "condition" | "solution" | "answer"
+  >("condition");
 
   const availableSubcategories = subcategories.filter(
     s => s.categoryId === form.categoryId
@@ -1048,24 +987,22 @@ function LabWorkEditor({
     []
   );
 
-  const insertImageForTheory = useCallback(
+  const insertImageForContent = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) =>
-      onImageUpload(e, activeTheoryField),
-    [activeTheoryField, onImageUpload]
+      onImageUpload(e, activeContentField),
+    [activeContentField, onImageUpload]
   );
 
   return (
     <div className="max-w-5xl mx-auto space-y-5">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-white">
-          {isNew
-            ? "Новая лабораторная работа"
-            : "Редактирование лабораторной работы"}
+          {isNew ? "Новая задача" : "Редактирование задачи"}
         </h2>
         <div className="flex items-center gap-2">
           <Button
             size="sm"
-            className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
+            className="bg-[#ffcb3d] text-[#0d1117] hover:bg-[#e6b734]"
             onClick={onSave}
             disabled={isSaving}
           >
@@ -1090,21 +1027,15 @@ function LabWorkEditor({
         <TabsList className="bg-[#1a1f22] border border-[#37474f]">
           <TabsTrigger
             value="general"
-            className="data-[state=active]:bg-[#2a3237] data-[state=active]:text-[#2eff8c]"
+            className="data-[state=active]:bg-[#2a3237] data-[state=active]:text-[#ffcb3d]"
           >
             Общее
           </TabsTrigger>
           <TabsTrigger
-            value="theory"
-            className="data-[state=active]:bg-[#2a3237] data-[state=active]:text-[#2eff8c]"
+            value="content"
+            className="data-[state=active]:bg-[#2a3237] data-[state=active]:text-[#ffcb3d]"
           >
-            Теория
-          </TabsTrigger>
-          <TabsTrigger
-            value="simulation"
-            className="data-[state=active]:bg-[#2a3237] data-[state=active]:text-[#2eff8c]"
-          >
-            Симуляция
+            Условие / Решение / Ответ
           </TabsTrigger>
         </TabsList>
 
@@ -1215,14 +1146,6 @@ function LabWorkEditor({
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label className="text-xs text-[#798389]">Изучаемый закон</Label>
-              <Input
-                value={form.law}
-                onChange={e => onChange({ ...form, law: e.target.value })}
-                className="bg-[#1e2529] border-[#37474f] mt-1 text-white"
-              />
-            </div>
-            <div>
               <Label className="text-xs text-[#798389]">Сложность</Label>
               <Select
                 value={form.difficulty}
@@ -1247,72 +1170,55 @@ function LabWorkEditor({
               </Select>
             </div>
             <div>
-              <Label className="text-xs text-[#798389]">Время (мин)</Label>
+              <Label className="text-xs text-[#798389]">Источник</Label>
               <Input
-                type="number"
-                value={form.duration}
-                onChange={e =>
-                  onChange({ ...form, duration: Number(e.target.value) })
-                }
+                value={form.source}
+                onChange={e => onChange({ ...form, source: e.target.value })}
                 className="bg-[#1e2529] border-[#37474f] mt-1 text-white"
-                min={1}
+                placeholder="Рымкевич №8"
               />
             </div>
-          </div>
-
-          <div>
-            <Label className="text-xs text-[#798389]">
-              Приобретаемые навыки
-            </Label>
-            <Input
-              value={form.skills}
-              onChange={e => onChange({ ...form, skills: e.target.value })}
-              className="bg-[#1e2529] border-[#37474f] mt-1 text-white"
-            />
-          </div>
-
-          <div>
-            <Label className="text-xs text-[#798389]">Статус</Label>
-            <Select
-              value={form.status}
-              onValueChange={v =>
-                onChange({ ...form, status: v as typeof form.status })
-              }
-            >
-              <SelectTrigger className="bg-[#1e2529] border-[#37474f] mt-1 text-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-[#1a1f22] border-[#37474f]">
-                <SelectItem value="draft" className="text-white">
-                  Черновик
-                </SelectItem>
-                <SelectItem value="published" className="text-white">
-                  Опубликовано
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            <div>
+              <Label className="text-xs text-[#798389]">Статус</Label>
+              <Select
+                value={form.status}
+                onValueChange={v =>
+                  onChange({ ...form, status: v as typeof form.status })
+                }
+              >
+                <SelectTrigger className="bg-[#1e2529] border-[#37474f] mt-1 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1a1f22] border-[#37474f]">
+                  <SelectItem value="draft" className="text-white">
+                    Черновик
+                  </SelectItem>
+                  <SelectItem value="published" className="text-white">
+                    Опубликовано
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </TabsContent>
 
-        {/* Theory */}
-        <TabsContent value="theory" className="space-y-4 pt-4">
+        {/* Content */}
+        <TabsContent value="content" className="space-y-4 pt-4">
           <div className="flex items-center justify-between">
             <div className="flex gap-1 bg-[#1a1f22] p-1 rounded-lg border border-[#37474f]">
               {[
-                { key: "goal", label: "Цель" },
-                { key: "theory", label: "Теория" },
-                { key: "equipment", label: "Оборудование" },
-                { key: "instruction", label: "Инструкция" },
-                { key: "conclusionTemplate", label: "Вывод" },
+                { key: "condition", label: "Условие" },
+                { key: "solution", label: "Решение" },
+                { key: "answer", label: "Ответ" },
               ].map(f => (
                 <button
                   key={f.key}
                   onClick={() =>
-                    setActiveTheoryField(f.key as typeof activeTheoryField)
+                    setActiveContentField(f.key as typeof activeContentField)
                   }
                   className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
-                    activeTheoryField === f.key
-                      ? "bg-[#2a3237] text-[#2eff8c]"
+                    activeContentField === f.key
+                      ? "bg-[#2a3237] text-[#ffcb3d]"
                       : "text-[#798389] hover:text-white"
                   }`}
                 >
@@ -1344,16 +1250,16 @@ function LabWorkEditor({
                 type="file"
                 className="hidden"
                 accept="image/*"
-                onChange={insertImageForTheory}
+                onChange={insertImageForContent}
               />
             </div>
           </div>
 
           <div data-color-mode="dark">
             <MDEditor
-              value={form[activeTheoryField]}
+              value={form[activeContentField]}
               onChange={v =>
-                onChange({ ...form, [activeTheoryField]: v || "" })
+                onChange({ ...form, [activeContentField]: v || "" })
               }
               height={450}
               preview="live"
@@ -1361,94 +1267,6 @@ function LabWorkEditor({
               textareaProps={{ placeholder: "Введите Markdown..." }}
             />
           </div>
-        </TabsContent>
-
-        {/* Simulation */}
-        <TabsContent value="simulation" className="space-y-4 pt-4">
-          <div>
-            <Label className="text-xs text-[#798389]">Выберите симуляцию</Label>
-            <Select
-              value={form.simulationSlug ?? "none"}
-              onValueChange={v =>
-                onChange({ ...form, simulationSlug: v === "none" ? null : v })
-              }
-            >
-              <SelectTrigger className="bg-[#1e2529] border-[#37474f] mt-1 text-white">
-                <SelectValue placeholder="Без симуляции" />
-              </SelectTrigger>
-              <SelectContent className="bg-[#1a1f22] border-[#37474f] max-h-80">
-                <SelectItem value="none" className="text-white">
-                  Без симуляции
-                </SelectItem>
-                {simulations.map(sim => (
-                  <SelectItem
-                    key={sim.id}
-                    value={sim.slug}
-                    className="text-white"
-                  >
-                    {sim.title} ({sim.category})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {selectedSimulation && (
-            <>
-              <div className="bg-[#1a1f22] border border-[#37474f] rounded-xl p-4 space-y-2">
-                <p className="text-white font-medium">
-                  {selectedSimulation.title}
-                </p>
-                <p className="text-sm text-[#798389]">
-                  {selectedSimulation.description}
-                </p>
-                <p className="text-xs text-[#798389]">
-                  Slug: {selectedSimulation.slug} · Компонент:{" "}
-                  {selectedSimulation.componentRef}
-                </p>
-              </div>
-
-              <div className="bg-[#1a1f22] border border-[#37474f] rounded-xl p-4 space-y-3">
-                <h3 className="text-sm font-semibold text-white">
-                  Параметры симуляции
-                </h3>
-                {(selectedSimulation.config ?? []).length === 0 ? (
-                  <p className="text-sm text-[#798389]">
-                    У этой симуляции нет настраиваемых параметров.
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {(
-                      selectedSimulation.config as
-                        | SimulationParamConfig[]
-                        | null
-                        | undefined
-                    )?.map((param, idx) => (
-                      <div
-                        key={`${param.key}-${idx}`}
-                        className="bg-[#1e2529] rounded-lg p-3"
-                      >
-                        <p className="text-sm text-white font-medium">
-                          {param.label}
-                        </p>
-                        <p className="text-xs text-[#798389]">
-                          {param.key} · {param.paramType}
-                          {param.min !== undefined && param.max !== undefined
-                            ? ` · ${param.min}…${param.max}`
-                            : ""}
-                          {param.step ? ` · шаг ${param.step}` : ""}
-                          {param.defaultValue
-                            ? ` · по умолч. ${param.defaultValue}`
-                            : ""}
-                          {param.unit ? ` ${param.unit}` : ""}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
         </TabsContent>
       </Tabs>
     </div>

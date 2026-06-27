@@ -8,7 +8,12 @@ interface LabLayoutProps {
   fullWidth?: boolean;
 }
 
-export default function LabLayout({ title, topic, children, fullWidth }: LabLayoutProps) {
+export default function LabLayout({
+  title,
+  topic,
+  children,
+  fullWidth,
+}: LabLayoutProps) {
   return (
     <div className="min-h-[calc(100vh-64px)] bg-[#262e33] flex flex-col">
       {/* Header */}
@@ -34,7 +39,13 @@ export default function LabLayout({ title, topic, children, fullWidth }: LabLayo
       </div>
 
       {/* Content */}
-      <div className={fullWidth ? "py-6 flex-1 flex flex-col" : "max-w-7xl mx-auto px-6 py-6 space-y-10 flex-1"}>
+      <div
+        className={
+          fullWidth
+            ? "py-6 flex-1 flex flex-col"
+            : "max-w-7xl mx-auto px-6 py-6 space-y-10 flex-1"
+        }
+      >
         {children}
       </div>
     </div>

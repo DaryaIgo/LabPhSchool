@@ -50,9 +50,7 @@ export default function MarkdownRenderer({
               {children}
             </ol>
           ),
-          li: ({ children }) => (
-            <li className="leading-7">{children}</li>
-          ),
+          li: ({ children }) => <li className="leading-7">{children}</li>,
           strong: ({ children }) => (
             <strong className="text-white font-semibold font-sans">
               {children}
@@ -104,7 +102,16 @@ export default function MarkdownRenderer({
               {children}
             </td>
           ),
-          code: ({ inline, className, children, ...props }: { inline?: boolean; className?: string; children?: ReactNode } & HTMLAttributes<HTMLElement>) => {
+          code: ({
+            inline,
+            className,
+            children,
+            ...props
+          }: {
+            inline?: boolean;
+            className?: string;
+            children?: ReactNode;
+          } & HTMLAttributes<HTMLElement>) => {
             const match = /language-(\w+)/.exec(className || "");
             return !inline && match ? (
               <pre className="bg-[#1e2529] border border-[#434e54] rounded-lg p-4 overflow-x-auto my-5 text-sm">

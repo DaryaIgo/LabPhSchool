@@ -13,10 +13,7 @@ import {
   updateLocalUserLastLogin,
 } from "./queries/localUsers";
 import { comparePassword } from "./lib/password";
-import {
-  getStudentSetCookie,
-  getStudentClearCookie,
-} from "./student-session";
+import { getStudentSetCookie, getStudentClearCookie } from "./student-session";
 import { getRoleWithPermissions } from "./queries/roles";
 import { createAuditEntry } from "./queries/audit";
 import * as cookie from "cookie";

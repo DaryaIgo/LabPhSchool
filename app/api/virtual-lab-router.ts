@@ -7,7 +7,12 @@
  */
 
 import { z } from "zod";
-import { createRouter, publicQuery, adminQuery, studentQuery } from "./middleware";
+import {
+  createRouter,
+  publicQuery,
+  adminQuery,
+  studentQuery,
+} from "./middleware";
 import { getLabsDb, getLearningDb, getContentDb } from "./queries/connection";
 import {
   labCategories,
@@ -44,9 +49,9 @@ export const virtualLabRouter = createRouter({
       .from(labWorks)
       .groupBy(labWorks.categoryId);
 
-    const countMap = new Map(counts.map((c) => [c.categoryId, c.count]));
+    const countMap = new Map(counts.map(c => [c.categoryId, c.count]));
 
-    return categories.map((cat) => ({
+    return categories.map(cat => ({
       ...cat,
       labCount: countMap.get(cat.id) ?? 0,
     }));
@@ -122,13 +127,17 @@ export const virtualLabRouter = createRouter({
         })
         .from(labWorks)
         .leftJoin(labCategories, eq(labWorks.categoryId, labCategories.id))
-        .leftJoin(labSubcategories, eq(labWorks.subcategoryId, labSubcategories.id))
+        .leftJoin(
+          labSubcategories,
+          eq(labWorks.subcategoryId, labSubcategories.id)
+        )
         .orderBy(asc(labWorks.order));
 
       // Apply filters in memory since drizzle join filters can be tricky
       const results = await query;
-      return results.filter((r) => {
-        if (input?.categoryId && r.categoryId !== input.categoryId) return false;
+      return results.filter(r => {
+        if (input?.categoryId && r.categoryId !== input.categoryId)
+          return false;
         if (input?.subcategoryId && r.subcategoryId !== input.subcategoryId)
           return false;
         if (input?.status && r.status !== input.status) return false;
@@ -165,7 +174,10 @@ export const virtualLabRouter = createRouter({
         })
         .from(labWorks)
         .leftJoin(labCategories, eq(labWorks.categoryId, labCategories.id))
-        .leftJoin(labSubcategories, eq(labWorks.subcategoryId, labSubcategories.id))
+        .leftJoin(
+          labSubcategories,
+          eq(labWorks.subcategoryId, labSubcategories.id)
+        )
         .where(eq(labWorks.slug, input.slug))
         .limit(1);
       if (!work[0]) return null;
@@ -195,7 +207,7 @@ export const virtualLabRouter = createRouter({
             .from(simulations)
             .where(eq(simulations.slug, work[0].simulationSlug))
             .limit(1)
-            .then((rows) => rows[0] ?? null)
+            .then(rows => rows[0] ?? null)
         : null;
 
       const params =
@@ -234,7 +246,7 @@ export const virtualLabRouter = createRouter({
         .from(labProgress)
         .where(eq(labProgress.localUserId, userId));
 
-      const labWorkIds = progressRows.map((p) => p.labWorkId);
+      const labWorkIds = progressRows.map(p => p.labWorkId);
       const labWorksMap = new Map<number, typeof labWorks.$inferSelect>();
       if (labWorkIds.length > 0) {
         const works = await labsDb
@@ -244,7 +256,7 @@ export const virtualLabRouter = createRouter({
         for (const w of works) labWorksMap.set(w.id, w);
       }
 
-      return progressRows.map((p) => ({
+      return progressRows.map(p => ({
         id: p.id,
         localUserId: p.localUserId,
         labWorkId: p.labWorkId,
@@ -266,7 +278,12 @@ export const virtualLabRouter = createRouter({
       z.object({
         labWorkId: z.number().positive(),
         mode: z.enum(["training", "self"]),
-        status: z.enum(["not_started", "in_progress", "completed", "submitted"]),
+        status: z.enum([
+          "not_started",
+          "in_progress",
+          "completed",
+          "submitted",
+        ]),
         data: z.record(z.string(), z.unknown()).optional(),
         measurements: z.array(z.record(z.string(), z.unknown())).optional(),
         conclusion: z.string().optional(),
@@ -339,7 +356,11 @@ export const virtualLabRouter = createRouter({
       z.object({
         order: z.number().int().min(1),
         title: z.string().min(1).max(255),
-        slug: z.string().min(1).max(255).regex(/^[a-z0-9-]+$/),
+        slug: z
+          .string()
+          .min(1)
+          .max(255)
+          .regex(/^[a-z0-9-]+$/),
         grade: z.string().max(50).optional(),
         description: z.string().max(5000).optional(),
         shortDesc: z.string().max(500).optional(),
@@ -397,7 +418,10 @@ export const virtualLabRouter = createRouter({
       if (data.color !== undefined) updateData.color = data.color;
       if (data.iconType !== undefined) updateData.iconType = data.iconType;
 
-      await db.update(labCategories).set(updateData).where(eq(labCategories.id, id));
+      await db
+        .update(labCategories)
+        .set(updateData)
+        .where(eq(labCategories.id, id));
       await createAuditEntry({
         actorId: ctx.localUser!.id,
         actorType: "user",
@@ -412,7 +436,9 @@ export const virtualLabRouter = createRouter({
   adminDeleteCategory: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
-      await getLabsDb().delete(labCategories).where(eq(labCategories.id, input.id));
+      await getLabsDb()
+        .delete(labCategories)
+        .where(eq(labCategories.id, input.id));
       await createAuditEntry({
         actorId: ctx.localUser!.id,
         actorType: "user",
@@ -438,7 +464,10 @@ export const virtualLabRouter = createRouter({
           .where(eq(labSubcategories.categoryId, input.categoryId))
           .orderBy(asc(labSubcategories.order));
       }
-      return db.select().from(labSubcategories).orderBy(asc(labSubcategories.order));
+      return db
+        .select()
+        .from(labSubcategories)
+        .orderBy(asc(labSubcategories.order));
     }),
 
   adminCreateSubcategory: adminQuery
@@ -489,9 +518,13 @@ export const virtualLabRouter = createRouter({
       if (data.order !== undefined) updateData.order = data.order;
       if (data.title !== undefined) updateData.title = data.title;
       if (data.slug !== undefined) updateData.slug = data.slug;
-      if (data.description !== undefined) updateData.description = data.description;
+      if (data.description !== undefined)
+        updateData.description = data.description;
 
-      await db.update(labSubcategories).set(updateData).where(eq(labSubcategories.id, id));
+      await db
+        .update(labSubcategories)
+        .set(updateData)
+        .where(eq(labSubcategories.id, id));
       await createAuditEntry({
         actorId: ctx.localUser!.id,
         actorType: "user",
@@ -506,7 +539,9 @@ export const virtualLabRouter = createRouter({
   adminDeleteSubcategory: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
-      await getLabsDb().delete(labSubcategories).where(eq(labSubcategories.id, input.id));
+      await getLabsDb()
+        .delete(labSubcategories)
+        .where(eq(labSubcategories.id, input.id));
       await createAuditEntry({
         actorId: ctx.localUser!.id,
         actorType: "user",
@@ -547,7 +582,10 @@ export const virtualLabRouter = createRouter({
       })
       .from(labWorks)
       .leftJoin(labCategories, eq(labWorks.categoryId, labCategories.id))
-      .leftJoin(labSubcategories, eq(labWorks.subcategoryId, labSubcategories.id))
+      .leftJoin(
+        labSubcategories,
+        eq(labWorks.subcategoryId, labSubcategories.id)
+      )
       .orderBy(asc(labWorks.order));
   }),
 
@@ -558,7 +596,11 @@ export const virtualLabRouter = createRouter({
         subcategoryId: z.number().positive().optional(),
         order: z.number().int().min(1),
         title: z.string().min(1).max(255),
-        slug: z.string().min(1).max(255).regex(/^[a-z0-9-]+$/),
+        slug: z
+          .string()
+          .min(1)
+          .max(255)
+          .regex(/^[a-z0-9-]+$/),
         law: z.string().max(255).optional(),
         skills: z.string().max(2000).optional(),
         difficulty: z.enum(["easy", "medium", "hard"]).optional(),
@@ -629,13 +671,16 @@ export const virtualLabRouter = createRouter({
       const db = getLabsDb();
       const { id, ...data } = input;
       const updateData: Record<string, unknown> = {};
-      if (data.categoryId !== undefined) updateData.categoryId = data.categoryId;
-      if (data.subcategoryId !== undefined) updateData.subcategoryId = data.subcategoryId;
+      if (data.categoryId !== undefined)
+        updateData.categoryId = data.categoryId;
+      if (data.subcategoryId !== undefined)
+        updateData.subcategoryId = data.subcategoryId;
       if (data.order !== undefined) updateData.order = data.order;
       if (data.title !== undefined) updateData.title = data.title;
       if (data.law !== undefined) updateData.law = data.law;
       if (data.skills !== undefined) updateData.skills = data.skills;
-      if (data.difficulty !== undefined) updateData.difficulty = data.difficulty;
+      if (data.difficulty !== undefined)
+        updateData.difficulty = data.difficulty;
       if (data.duration !== undefined) updateData.duration = data.duration;
       if (data.goal !== undefined) updateData.goal = data.goal;
       if (data.theory !== undefined) updateData.theory = data.theory;
@@ -790,7 +835,6 @@ export const virtualLabRouter = createRouter({
       return { success: true };
     }),
 
-
   // ═══════════════════════════════════════════════════════════
   // ADMIN: Simulation Registry CRUD
   // ═══════════════════════════════════════════════════════════
@@ -813,7 +857,11 @@ export const virtualLabRouter = createRouter({
   adminCreateSimulation: adminQuery
     .input(
       z.object({
-        slug: z.string().min(1).max(255).regex(/^[a-z0-9-]+$/),
+        slug: z
+          .string()
+          .min(1)
+          .max(255)
+          .regex(/^[a-z0-9-]+$/),
         title: z.string().min(1).max(255),
         description: z.string().max(5000).optional(),
         category: z.string().max(50).optional(),
@@ -902,7 +950,10 @@ export const virtualLabRouter = createRouter({
       if (data.config !== undefined) updateData.config = data.config;
       if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
-      await db.update(simulations).set(updateData).where(eq(simulations.id, id));
+      await db
+        .update(simulations)
+        .set(updateData)
+        .where(eq(simulations.id, id));
       await createAuditEntry({
         actorId: ctx.localUser!.id,
         actorType: "user",

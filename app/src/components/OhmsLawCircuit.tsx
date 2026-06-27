@@ -127,7 +127,14 @@ function drawLamp(
 
   // Glow effect
   if (brightness > 0) {
-    const glow = ctx.createRadialGradient(x, y, r * 0.5, x, y, r + brightness * 25);
+    const glow = ctx.createRadialGradient(
+      x,
+      y,
+      r * 0.5,
+      x,
+      y,
+      r + brightness * 25
+    );
     const gb = Math.floor(200 - brightness * 80);
     glow.addColorStop(0, `rgba(255,255,${gb},${0.3 + brightness * 0.5})`);
     glow.addColorStop(1, "rgba(255,255,200,0)");
@@ -145,7 +152,10 @@ function drawLamp(
   ctx.stroke();
 
   // Cross inside
-  ctx.strokeStyle = brightness > 0 ? `rgba(255,255,${200 - Math.floor(brightness * 50)},${0.6 + brightness * 0.4})` : "#798389";
+  ctx.strokeStyle =
+    brightness > 0
+      ? `rgba(255,255,${200 - Math.floor(brightness * 50)},${0.6 + brightness * 0.4})`
+      : "#798389";
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.moveTo(x - 8, y - 8);
@@ -242,7 +252,7 @@ function drawSwitch(
 ) {
   // Two circles for contacts
   ctx.fillStyle = "#434e54";
-  [x - 14, x + 14].forEach((cx) => {
+  [x - 14, x + 14].forEach(cx => {
     ctx.beginPath();
     ctx.arc(cx, y, 4, 0, Math.PI * 2);
     ctx.fill();
@@ -275,7 +285,11 @@ function drawSwitch(
   ctx.textAlign = "start";
 }
 
-function drawConnectingDot(ctx: CanvasRenderingContext2D, x: number, y: number) {
+function drawConnectingDot(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number
+) {
   ctx.fillStyle = "#c8cdd1";
   ctx.beginPath();
   ctx.arc(x, y, 3, 0, Math.PI * 2);
@@ -428,7 +442,12 @@ export default function OhmsLawCircuit({ state, onAddMeasurement }: Props) {
         { x1: leftX + 80 + 44, y1: topY + 30, x2: rightX - 40, y2: topY + 30 },
         { x1: rightX - 40, y1: topY + 30, x2: rightX - 40, y2: midY - 28 },
         { x1: rightX - 40, y1: midY + 28, x2: rightX - 40, y2: bottomY - 30 },
-        { x1: rightX - 40, y1: bottomY - 30, x2: leftX + 80 + 44, y2: bottomY - 30 },
+        {
+          x1: rightX - 40,
+          y1: bottomY - 30,
+          x2: leftX + 80 + 44,
+          y2: bottomY - 30,
+        },
         { x1: leftX + 80, y1: bottomY - 30, x2: leftX + 25, y2: bottomY - 30 },
         { x1: leftX + 25, y1: bottomY - 30, x2: leftX + 25, y2: midY },
       ];
@@ -437,7 +456,9 @@ export default function OhmsLawCircuit({ state, onAddMeasurement }: Props) {
 
       for (let e = 0; e < 6; e++) {
         const offset = (e / 6) * totalSegments;
-        const totalPos = (electronPos.current / 100 * totalSegments + offset) % totalSegments;
+        const totalPos =
+          ((electronPos.current / 100) * totalSegments + offset) %
+          totalSegments;
         const segIdx = Math.floor(totalPos);
         const frac = totalPos - segIdx;
 
@@ -471,7 +492,11 @@ export default function OhmsLawCircuit({ state, onAddMeasurement }: Props) {
     // ---- TITLE BOX (textbook style) ----
     ctx.fillStyle = "#2a2520";
     ctx.font = "bold 13px 'Geist Sans', sans-serif";
-    ctx.fillText("Рис. 1.  Электрическая цепь для проверки закона Ома", marginX, 28);
+    ctx.fillText(
+      "Рис. 1.  Электрическая цепь для проверки закона Ома",
+      marginX,
+      28
+    );
 
     // Legend box
     const legendX = rightX - 140;
@@ -515,10 +540,22 @@ export default function OhmsLawCircuit({ state, onAddMeasurement }: Props) {
     ctx.fillText("ИЗМЕРЕНИЯ:", panelX + 8, panelY + 16);
 
     const readings = [
-      { label: "U =", value: `${state.voltage.toFixed(1)} В`, color: "#01acff" },
-      { label: "I =", value: state.switchOn ? `${current.toFixed(3)} А` : "0 А", color: state.switchOn ? "#2a7a4a" : "#999" },
+      {
+        label: "U =",
+        value: `${state.voltage.toFixed(1)} В`,
+        color: "#01acff",
+      },
+      {
+        label: "I =",
+        value: state.switchOn ? `${current.toFixed(3)} А` : "0 А",
+        color: state.switchOn ? "#2a7a4a" : "#999",
+      },
       { label: "R =", value: `${state.resistance} Ом`, color: "#c89220" },
-      { label: "P =", value: `${(current * state.voltage).toFixed(2)} Вт`, color: "#2a2520" },
+      {
+        label: "P =",
+        value: `${(current * state.voltage).toFixed(2)} Вт`,
+        color: "#2a2520",
+      },
     ];
     readings.forEach((r, i) => {
       const rowY = panelY + 30 + i * 13;
@@ -576,7 +613,12 @@ export default function OhmsLawCircuit({ state, onAddMeasurement }: Props) {
       <canvas
         ref={canvasRef}
         className="w-full rounded-xl border-2 border-[#d4cfc7] shadow-lg"
-        style={{ maxWidth: 720, height: "auto", aspectRatio: "720/460", background: "#f0ede8" }}
+        style={{
+          maxWidth: 720,
+          height: "auto",
+          aspectRatio: "720/460",
+          background: "#f0ede8",
+        }}
       />
       {state.switchOn && current > 0 && (
         <button
@@ -591,7 +633,14 @@ export default function OhmsLawCircuit({ state, onAddMeasurement }: Props) {
   );
 }
 
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number
+) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
   ctx.lineTo(x + w - r, y);
@@ -604,4 +653,3 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.quadraticCurveTo(x, y, x + r, y);
   ctx.closePath();
 }
-

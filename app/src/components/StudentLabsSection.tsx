@@ -1,13 +1,7 @@
 import { trpc } from "@/providers/trpc";
 import { Link } from "react-router";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Beaker,
-  Trophy,
-  Clock,
-  CheckCircle2,
-  ArrowRight,
-} from "lucide-react";
+import { Beaker, Trophy, Clock, CheckCircle2, ArrowRight } from "lucide-react";
 
 const GRADE_CONFIG: Record<
   number,

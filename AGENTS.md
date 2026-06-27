@@ -46,7 +46,7 @@ app/
 │   ├── auth-router.ts      # Роутер аутентификации (me, logout, claimAdmin)
 │   ├── course-router.ts    # Публичные данные курса (темы, подтемы, лабы, ресурсы)
 │   ├── progress-router.ts  # Прогресс пользователя (OAuth)
-│   ├── problems-router.ts  # Управление задачами (admin-only)
+│   ├── problem-management-router.ts  # Problem Management (admin-only)
 │   ├── admin-router.ts     # CRUD для тем, подтем, задач
 │   ├── student-router.ts   # Аутентификация и прогресс учеников
 │   ├── student-session.ts  # JWT-токены для учеников
@@ -75,7 +75,7 @@ app/
 │   │   ├── StudentLogin.tsx
 │   │   ├── StudentDashboard.tsx
 │   │   ├── LabPendulum.tsx, OhmsLawLab.tsx, ProjectileLab.tsx ...
-│   │   └── admin/AdminProblems.tsx
+│   │   └── admin/ProblemManagement.tsx   # Редактор базы задач (категории/темы/задачи)
 │   │   └── admin/LabManagement.tsx   # Редактор лабораторий (категории/темы/работы/симуляции)
 │   ├── components/         # React-компоненты
 │   │   ├── Header.tsx
@@ -261,7 +261,7 @@ npm run db:push       # Push схемы (для разработки)
 | `content` | `topic_nodes`, `resources` | `getContentDb()` |
 | `learning` | `enrollments`, `student_progress`, `lab_progress` | `getLearningDb()` |
 | `labs` | `lab_categories`, `lab_subcategories`, `lab_works`, `lab_blocks`, `lab_analytics`, `simulations` | `getLabsDb()` |
-| `problems` | `problem_types`, `problems` | `getProblemsDb()` |
+| `problems` | `problem_categories`, `problem_subcategories`, `problems` | `getProblemsDb()` |
 | `jupyter` | `jupyter_notebooks`, `jupyter_notebook_access` | `getJupyterDb()` |
 | `notifications` | `notifications` | `getNotificationsDb()` |
 | `timeline` | `timeline_entries` | `getTimelineDb()` |
@@ -311,6 +311,25 @@ npm run db:push       # Push схемы (для разработки)
 ### Связь работы и симуляции
 
 Поле `lab_works.simulationSlug` — soft-link на `simulations.slug`. Страница `LabWorkPage.tsx` выбирает React-компонент симуляции по `simulationSlug`, а не по `slug` лаборатории. Это позволяет переиспользовать одну симуляцию в разных работах.
+
+---
+
+## Архитектура задач (Problem Management)
+
+Задачи доступны **только администратору** и не публикуются на главном сайте. Структура повторяет лабораторные работы:
+
+- **Раздел** (`problem_categories`)
+- **Тема** (`problem_subcategories`)
+- **Задача** (`problems`)
+
+Админ-страница `/admin/problems` (`src/pages/admin/ProblemManagement.tsx`) предоставляет дерево навигации и редактор:
+- Markdown-редактор `@uiw/react-md-editor` для условия, решения и ответа.
+- Загрузка картинок через `/api/upload/image`.
+- Галерея уже загруженных изображений (`trpc.admin.listImages`).
+
+### Назначение задач ученикам
+
+Аналогично лабораторным работам, задачи назначаются внутри записи на курс (`enrollments`) через таблицу `assigned_problems` (`learning` domain). Управление назначением находится на странице `/admin/enrollments` (`EnrollmentManagement.tsx`), компонент `AssignedProblemsManager`.
 
 ---
 
@@ -374,7 +393,7 @@ npm run db:push       # Push схемы (для разработки)
 | `/about` | О проекте | Публичный |
 | `/login` | Вход для преподавателя | Публичный |
 | `/profile` | Профиль преподавателя | Требуется OAuth |
-| `/admin/problems` | Управление задачами | Требуется admin |
+| `/admin/problems` | Problem Management | Требуется admin |
 | `/student/login` | Вход для ученика | Публичный |
 | `/student/dashboard` | Дашборд ученика | Требуется ученик |
 | `/student/profile` | Профиль ученика | Требуется ученик |

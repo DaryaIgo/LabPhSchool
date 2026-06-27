@@ -25,10 +25,14 @@ export const enrollments = mysqlTable(
   "enrollments",
   {
     id: serial("id").primaryKey(),
-    localUserId: bigint("local_user_id", { mode: "number", unsigned: true })
-      .notNull(),
-    topicNodeId: bigint("topic_node_id", { mode: "number", unsigned: true })
-      .notNull(),
+    localUserId: bigint("local_user_id", {
+      mode: "number",
+      unsigned: true,
+    }).notNull(),
+    topicNodeId: bigint("topic_node_id", {
+      mode: "number",
+      unsigned: true,
+    }).notNull(),
     status: mysqlEnum("status", ["active", "completed", "suspended"])
       .default("active")
       .notNull(),
@@ -44,7 +48,7 @@ export const enrollments = mysqlTable(
     // Soft reference to users.id (auth domain).
     createdBy: bigint("created_by", { mode: "number", unsigned: true }),
   },
-  (table) => ({
+  table => ({
     uniqueEnrollment: uniqueIndex("unique_enrollment").on(
       table.localUserId,
       table.topicNodeId
@@ -58,10 +62,14 @@ export type Enrollment = typeof enrollments.$inferSelect;
 
 export const studentProgress = mysqlTable("student_progress", {
   id: serial("id").primaryKey(),
-  localUserId: bigint("local_user_id", { mode: "number", unsigned: true })
-    .notNull(),
-  subtopicNodeId: bigint("subtopic_node_id", { mode: "number", unsigned: true })
-    .notNull(),
+  localUserId: bigint("local_user_id", {
+    mode: "number",
+    unsigned: true,
+  }).notNull(),
+  subtopicNodeId: bigint("subtopic_node_id", {
+    mode: "number",
+    unsigned: true,
+  }).notNull(),
   theoryCompleted: mysqlEnum("theory_completed", ["pending", "completed"])
     .default("pending")
     .notNull(),
@@ -89,12 +97,21 @@ export type StudentProgress = typeof studentProgress.$inferSelect;
 
 export const labProgress = mysqlTable("lab_progress", {
   id: serial("id").primaryKey(),
-  localUserId: bigint("local_user_id", { mode: "number", unsigned: true })
-    .notNull(),
-  labWorkId: bigint("lab_work_id", { mode: "number", unsigned: true })
-    .notNull(),
+  localUserId: bigint("local_user_id", {
+    mode: "number",
+    unsigned: true,
+  }).notNull(),
+  labWorkId: bigint("lab_work_id", {
+    mode: "number",
+    unsigned: true,
+  }).notNull(),
   mode: mysqlEnum("mode", ["training", "self"]).default("self").notNull(),
-  status: mysqlEnum("status", ["not_started", "in_progress", "completed", "submitted"])
+  status: mysqlEnum("status", [
+    "not_started",
+    "in_progress",
+    "completed",
+    "submitted",
+  ])
     .default("not_started")
     .notNull(),
   data: json("data"),
@@ -127,12 +144,18 @@ export const assignedLabWorks = mysqlTable(
   "assigned_lab_works",
   {
     id: serial("id").primaryKey(),
-    enrollmentId: bigint("enrollment_id", { mode: "number", unsigned: true })
-      .notNull(),
-    localUserId: bigint("local_user_id", { mode: "number", unsigned: true })
-      .notNull(),
-    labWorkId: bigint("lab_work_id", { mode: "number", unsigned: true })
-      .notNull(),
+    enrollmentId: bigint("enrollment_id", {
+      mode: "number",
+      unsigned: true,
+    }).notNull(),
+    localUserId: bigint("local_user_id", {
+      mode: "number",
+      unsigned: true,
+    }).notNull(),
+    labWorkId: bigint("lab_work_id", {
+      mode: "number",
+      unsigned: true,
+    }).notNull(),
     order: int("order").notNull().default(1),
     status: mysqlEnum("status", ["assigned", "completed"])
       .default("assigned")
@@ -147,7 +170,7 @@ export const assignedLabWorks = mysqlTable(
       .notNull()
       .$onUpdate(() => new Date()),
   },
-  (table) => ({
+  table => ({
     uniqueAssignment: uniqueIndex("unique_assignment").on(
       table.enrollmentId,
       table.labWorkId
@@ -162,3 +185,59 @@ export const assignedLabWorks = mysqlTable(
 );
 
 export type AssignedLabWork = typeof assignedLabWorks.$inferSelect;
+
+// ═══════════════════════════════════════════════════════════════
+// Teacher-assigned problems per enrollment
+// ═══════════════════════════════════════════════════════════════
+
+// Soft references:
+// - enrollmentId -> learning.enrollments.id
+// - localUserId  -> auth.local_users.id
+// - problemId    -> problems.problems.id
+// - assignedBy   -> auth.local_users.id
+
+export const assignedProblems = mysqlTable(
+  "assigned_problems",
+  {
+    id: serial("id").primaryKey(),
+    enrollmentId: bigint("enrollment_id", {
+      mode: "number",
+      unsigned: true,
+    }).notNull(),
+    localUserId: bigint("local_user_id", {
+      mode: "number",
+      unsigned: true,
+    }).notNull(),
+    problemId: bigint("problem_id", {
+      mode: "number",
+      unsigned: true,
+    }).notNull(),
+    order: int("order").notNull().default(1),
+    status: mysqlEnum("status", ["assigned", "completed"])
+      .default("assigned")
+      .notNull(),
+    grade: int("grade"),
+    assignedBy: bigint("assigned_by", { mode: "number", unsigned: true }),
+    assignedAt: timestamp("assigned_at").defaultNow().notNull(),
+    completedAt: timestamp("completed_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
+  },
+  table => ({
+    uniqueAssignment: uniqueIndex("unique_problem_assignment").on(
+      table.enrollmentId,
+      table.problemId
+    ),
+    enrollmentIdx: index("assigned_problem_enrollment_idx").on(
+      table.enrollmentId
+    ),
+    localUserIdx: index("assigned_problem_local_user_idx").on(
+      table.localUserId
+    ),
+  })
+);
+
+export type AssignedProblem = typeof assignedProblems.$inferSelect;

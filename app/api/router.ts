@@ -12,7 +12,7 @@
  */
 
 import { courseRouter } from "./course-router";
-import { problemsRouter } from "./problems-router";
+import { problemManagementRouter } from "./problem-management-router";
 import { adminRouter } from "./admin-router";
 import { studentRouter } from "./student-router";
 import { unifiedAuthRouter } from "./unified-auth-router";
@@ -26,7 +26,7 @@ export const appRouter = createRouter({
   ping: publicQuery.query(() => ({ ok: true, ts: Date.now() })),
   unifiedAuth: unifiedAuthRouter,
   course: courseRouter,
-  problems: problemsRouter,
+  problems: problemManagementRouter,
   admin: adminRouter,
   student: studentRouter,
   audit: auditRouter,

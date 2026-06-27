@@ -49,12 +49,7 @@ export default function LiquidDensityMeasurementSimulation({ params }: Props) {
 
       // Body in air
       ctx.fillStyle = "#c86464";
-      ctx.fillRect(
-        airX - bodySize / 2,
-        airY + 50,
-        bodySize,
-        bodySize
-      );
+      ctx.fillRect(airX - bodySize / 2, airY + 50, bodySize, bodySize);
       ctx.fillStyle = "#ffffff";
       ctx.font = "10px sans-serif";
       ctx.fillText("в воздухе", airX, airY + 50 + bodySize + 15);
@@ -94,12 +89,7 @@ export default function LiquidDensityMeasurementSimulation({ params }: Props) {
 
       // Body in liquid
       ctx.fillStyle = "#c86464";
-      ctx.fillRect(
-        liqX - bodySize / 2,
-        liqY + 50,
-        bodySize,
-        bodySize
-      );
+      ctx.fillRect(liqX - bodySize / 2, liqY + 50, bodySize, bodySize);
       ctx.fillStyle = "rgba(100,180,255,0.3)";
       ctx.fillRect(
         liqX - bodySize / 2,

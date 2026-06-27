@@ -6,7 +6,7 @@ import Course from "./pages/Course";
 import Labs from "./pages/Labs";
 import LabCategoryPage from "./pages/LabCategoryPage";
 import LabWorkPage from "./pages/LabWorkPage";
-import AdminProblems from "./pages/admin/AdminProblems";
+import ProblemManagement from "./pages/admin/ProblemManagement";
 import Profile from "./pages/Profile";
 import Resources from "./pages/Resources";
 import Timeline from "./pages/Timeline";
@@ -52,7 +52,7 @@ export default function App() {
         <Route path="/student/profile" element={<Profile />} />
 
         {/* Admin Routes */}
-        <Route path="/admin/problems" element={<AdminProblems />} />
+        <Route path="/admin/problems" element={<ProblemManagement />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/students" element={<StudentManagement />} />
         <Route path="/admin/topics" element={<TopicManagement />} />
@@ -61,7 +61,10 @@ export default function App() {
         <Route path="/admin/audit" element={<AuditLogViewer />} />
         <Route path="/admin/resources" element={<ResourceManagement />} />
         <Route path="/admin/lab-submissions" element={<LabSubmissions />} />
-        <Route path="/admin/jupyter-notebooks" element={<JupyterNotebookManagement />} />
+        <Route
+          path="/admin/jupyter-notebooks"
+          element={<JupyterNotebookManagement />}
+        />
         <Route path="/admin/timeline" element={<AdminTimeline />} />
 
         <Route path="*" element={<NotFound />} />

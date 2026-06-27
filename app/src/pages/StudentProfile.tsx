@@ -323,18 +323,6 @@ export default function StudentProfile() {
                                   </span>
                                 </div>
                               )}
-                            {currentTopic.problemTypes &&
-                              currentTopic.problemTypes.length > 0 && (
-                                <div className="flex items-center gap-2 px-3 py-1.5 bg-[#1e2529] rounded-lg border border-[#37474f]">
-                                  <FileText
-                                    size={14}
-                                    className="text-[#ffcb3d]"
-                                  />
-                                  <span className="text-xs text-[#c8cdd1]">
-                                    {currentTopic.problemTypes.length} задач
-                                  </span>
-                                </div>
-                              )}
                             <Link
                               to={`/course?topic=${encodeURIComponent(currentTopic.topic?.title ?? "")}&node=${encodeURIComponent(currentTopic.subtopic?.title ?? "")}`}
                               className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#2eff8c]/10 text-[#2eff8c] rounded-lg border border-[#2eff8c]/30 text-xs hover:bg-[#2eff8c]/20 transition-colors"

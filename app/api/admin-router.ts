@@ -12,20 +12,15 @@ import {
   getContentDb,
   getLearningDb,
   getLabsDb,
-  getProblemsDb,
   getJupyterDb,
   getNotificationsDb,
   getMediaDb,
 } from "./queries/connection";
 import { topicNodes, resources } from "@db/schema/content";
-import { problems } from "@db/schema/problems";
 import { labWorks } from "@db/schema/labs";
 import { labProgress } from "@db/schema/learning";
 import { localUsers, roles } from "@db/schema/auth";
-import {
-  jupyterNotebooks,
-  jupyterNotebookAccess,
-} from "@db/schema/jupyter";
+import { jupyterNotebooks, jupyterNotebookAccess } from "@db/schema/jupyter";
 import { notifications } from "@db/schema/notifications";
 import { images } from "@db/schema/media";
 import { eq, asc, desc, count, and, inArray, isNull } from "drizzle-orm";
@@ -56,12 +51,16 @@ export const adminRouter = createRouter({
       .select({ count: count() })
       .from(localUsers)
       .innerJoin(roles, eq(localUsers.roleId, roles.id))
-      .where(and(eq(roles.name, "student"), eq(localUsers.status, "suspended")));
+      .where(
+        and(eq(roles.name, "student"), eq(localUsers.status, "suspended"))
+      );
     const [topicCount] = await contentDb
       .select({ count: count() })
       .from(topicNodes)
       .where(isNull(topicNodes.parentId));
-    const [labWorkCount] = await labsDb.select({ count: count() }).from(labWorks);
+    const [labWorkCount] = await labsDb
+      .select({ count: count() })
+      .from(labWorks);
     const [resourceCount] = await contentDb
       .select({ count: count() })
       .from(resources);
@@ -120,7 +119,11 @@ export const adminRouter = createRouter({
         parentId: z.number().positive().optional(),
         order: z.number().int().min(1).default(1),
         title: z.string().min(1).max(255),
-        slug: z.string().min(1).max(255).regex(/^[a-z0-9-]+$/),
+        slug: z
+          .string()
+          .min(1)
+          .max(255)
+          .regex(/^[a-z0-9-]+$/),
         content: z.string().max(100000).optional(),
         color: z.string().max(20).optional(),
         jupyterUrl: z.string().max(500).optional().nullable(),
@@ -146,7 +149,11 @@ export const adminRouter = createRouter({
         action: "create",
         resource: "topic_nodes",
         resourceId: id,
-        details: { title: input.title, slug: input.slug, parentId: input.parentId },
+        details: {
+          title: input.title,
+          slug: input.slug,
+          parentId: input.parentId,
+        },
       });
       return { id, success: true };
     }),
@@ -158,7 +165,12 @@ export const adminRouter = createRouter({
         parentId: z.number().positive().optional().nullable(),
         order: z.number().int().min(1).optional(),
         title: z.string().min(1).max(255).optional(),
-        slug: z.string().min(1).max(255).regex(/^[a-z0-9-]+$/).optional(),
+        slug: z
+          .string()
+          .min(1)
+          .max(255)
+          .regex(/^[a-z0-9-]+$/)
+          .optional(),
         content: z.string().max(100000).optional(),
         color: z.string().max(20).optional(),
         jupyterUrl: z.string().max(500).optional().nullable(),
@@ -175,7 +187,8 @@ export const adminRouter = createRouter({
       if (data.slug !== undefined) updateData.slug = data.slug;
       if (data.content !== undefined) updateData.content = data.content;
       if (data.color !== undefined) updateData.color = data.color;
-      if (data.jupyterUrl !== undefined) updateData.jupyterUrl = data.jupyterUrl;
+      if (data.jupyterUrl !== undefined)
+        updateData.jupyterUrl = data.jupyterUrl;
       if (data.labCategorySlug !== undefined)
         updateData.labCategorySlug = data.labCategorySlug;
 
@@ -300,113 +313,11 @@ export const adminRouter = createRouter({
     }),
 
   // ═══════════════════════════════════════════════════════════
-  // PROBLEMS CRUD
-  // ═══════════════════════════════════════════════════════════
-
-  createProblem: adminQuery
-    .input(
-      z.object({
-        problemTypeId: z.number().positive(),
-        order: z.number().int().min(1),
-        level: z.enum(["basic", "intermediate", "advanced"]),
-        source: z.string().max(255).optional(),
-        condition: z.string().min(1).max(10000),
-        given: z.string().max(5000).optional(),
-        find: z.string().max(2000).optional(),
-        solution: z.string().min(1).max(20000),
-        answer: z.string().min(1).max(5000),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const db = getProblemsDb();
-      const result = await db.insert(problems).values({
-        problemTypeId: input.problemTypeId,
-        order: input.order,
-        level: input.level,
-        source: input.source ?? null,
-        condition: input.condition,
-        given: input.given ?? null,
-        find: input.find ?? null,
-        solution: input.solution,
-        answer: input.answer,
-      });
-
-      const id = Number(result[0].insertId);
-
-      await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
-        action: "create",
-        resource: "problems",
-        resourceId: id,
-      });
-
-      return { id, success: true };
-    }),
-
-  updateProblem: adminQuery
-    .input(
-      z.object({
-        id: z.number().positive(),
-        condition: z.string().max(10000).optional(),
-        given: z.string().max(5000).optional(),
-        find: z.string().max(2000).optional(),
-        solution: z.string().max(20000).optional(),
-        answer: z.string().max(5000).optional(),
-        source: z.string().max(255).optional(),
-        level: z.enum(["basic", "intermediate", "advanced"]).optional(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const db = getProblemsDb();
-      const { id, ...data } = input;
-      const updateData: Record<string, unknown> = {};
-      if (data.condition !== undefined) updateData.condition = data.condition;
-      if (data.given !== undefined) updateData.given = data.given;
-      if (data.find !== undefined) updateData.find = data.find;
-      if (data.solution !== undefined) updateData.solution = data.solution;
-      if (data.answer !== undefined) updateData.answer = data.answer;
-      if (data.source !== undefined) updateData.source = data.source;
-      if (data.level !== undefined) updateData.level = data.level;
-
-      await db.update(problems).set(updateData).where(eq(problems.id, id));
-
-      await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
-        action: "update",
-        resource: "problems",
-        resourceId: id,
-      });
-
-      return { success: true };
-    }),
-
-  deleteProblem: adminQuery
-    .input(z.object({ id: z.number().positive() }))
-    .mutation(async ({ ctx, input }) => {
-      await getProblemsDb().delete(problems).where(eq(problems.id, input.id));
-
-      await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
-        action: "delete",
-        resource: "problems",
-        resourceId: input.id,
-      });
-
-      return { success: true };
-    }),
-
-  // ═══════════════════════════════════════════════════════════
   // RESOURCES CRUD
   // ═══════════════════════════════════════════════════════════
 
   listResources: adminQuery.query(async () => {
-    return getContentDb()
-      .select()
-      .from(resources)
-      .orderBy(asc(resources.id));
+    return getContentDb().select().from(resources).orderBy(asc(resources.id));
   }),
 
   createResource: adminQuery
@@ -459,7 +370,8 @@ export const adminRouter = createRouter({
       const { id, ...data } = input;
       const updateData: Record<string, unknown> = {};
       if (data.title !== undefined) updateData.title = data.title;
-      if (data.description !== undefined) updateData.description = data.description;
+      if (data.description !== undefined)
+        updateData.description = data.description;
       if (data.type !== undefined) updateData.type = data.type;
       if (data.url !== undefined) updateData.url = data.url;
       if (data.tags !== undefined) updateData.tags = data.tags;
@@ -500,14 +412,16 @@ export const adminRouter = createRouter({
 
   getLabSubmissions: adminQuery
     .input(
-      z.object({
-        status: z.enum(["submitted", "completed"]).optional(),
-        labWorkId: z.number().positive().optional(),
-        studentId: z.number().positive().optional(),
-        search: z.string().optional(),
-        page: z.number().min(1).default(1),
-        pageSize: z.number().min(1).max(100).default(20),
-      }).optional()
+      z
+        .object({
+          status: z.enum(["submitted", "completed"]).optional(),
+          labWorkId: z.number().positive().optional(),
+          studentId: z.number().positive().optional(),
+          search: z.string().optional(),
+          page: z.number().min(1).default(1),
+          pageSize: z.number().min(1).max(100).default(20),
+        })
+        .optional()
     )
     .query(async ({ input }) => {
       const learningDb = getLearningDb();
@@ -531,7 +445,8 @@ export const adminRouter = createRouter({
         conditions.push(eq(labProgress.localUserId, input.studentId));
       }
 
-      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+      const whereClause =
+        conditions.length > 0 ? and(...conditions) : undefined;
 
       const progressRows = await learningDb
         .select()
@@ -546,8 +461,8 @@ export const adminRouter = createRouter({
         .from(labProgress)
         .where(whereClause);
 
-      const studentIds = progressRows.map((p) => p.localUserId);
-      const labWorkIds = progressRows.map((p) => p.labWorkId);
+      const studentIds = progressRows.map(p => p.localUserId);
+      const labWorkIds = progressRows.map(p => p.labWorkId);
 
       const studentMap = new Map<number, typeof localUsers.$inferSelect>();
       if (studentIds.length > 0) {
@@ -567,7 +482,7 @@ export const adminRouter = createRouter({
         for (const w of works) labWorkMap.set(w.id, w);
       }
 
-      const items = progressRows.map((p) => {
+      const items = progressRows.map(p => {
         const student = studentMap.get(p.localUserId);
         const work = labWorkMap.get(p.labWorkId);
         return {
@@ -701,7 +616,7 @@ export const adminRouter = createRouter({
       .orderBy(desc(jupyterNotebooks.createdAt));
 
     // Get subtopic node names
-    const subtopicNodeIds = notebooks.map((n) => n.subtopicNodeId);
+    const subtopicNodeIds = notebooks.map(n => n.subtopicNodeId);
     const subtopicMap = new Map<number, string>();
     if (subtopicNodeIds.length > 0) {
       const subtopicList = await contentDb
@@ -719,9 +634,11 @@ export const adminRouter = createRouter({
       })
       .from(jupyterNotebookAccess)
       .groupBy(jupyterNotebookAccess.notebookId);
-    const accessCountMap = new Map(accessList.map((a) => [a.notebookId, a.count]));
+    const accessCountMap = new Map(
+      accessList.map(a => [a.notebookId, a.count])
+    );
 
-    return notebooks.map((n) => ({
+    return notebooks.map(n => ({
       ...n,
       subtopicTitle: subtopicMap.get(n.subtopicNodeId) ?? "—",
       accessCount: accessCountMap.get(n.id) ?? 0,
@@ -770,7 +687,9 @@ export const adminRouter = createRouter({
         .delete(jupyterNotebookAccess)
         .where(eq(jupyterNotebookAccess.notebookId, input.id));
 
-      await db.delete(jupyterNotebooks).where(eq(jupyterNotebooks.id, input.id));
+      await db
+        .delete(jupyterNotebooks)
+        .where(eq(jupyterNotebooks.id, input.id));
 
       await createAuditEntry({
         actorId: ctx.localUser!.id,
@@ -796,7 +715,7 @@ export const adminRouter = createRouter({
         .from(jupyterNotebookAccess)
         .where(eq(jupyterNotebookAccess.notebookId, input.notebookId));
 
-      const studentIds = accesses.map((a) => a.localUserId);
+      const studentIds = accesses.map(a => a.localUserId);
       const studentMap = new Map<number, typeof localUsers.$inferSelect>();
       if (studentIds.length > 0) {
         const students = await authDb
@@ -806,7 +725,7 @@ export const adminRouter = createRouter({
         for (const s of students) studentMap.set(s.id, s);
       }
 
-      return accesses.map((a) => ({
+      return accesses.map(a => ({
         id: a.id,
         notebookId: a.notebookId,
         localUserId: a.localUserId,

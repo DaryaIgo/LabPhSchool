@@ -132,11 +132,7 @@ export default function SurfaceTensionSimulation({
 
       ctx.fillStyle = "#96a3ab";
       ctx.font = "12px sans-serif";
-      ctx.fillText(
-        `σ_табл = ${tabularTension} мН/м`,
-        340,
-        296
-      );
+      ctx.fillText(`σ_табл = ${tabularTension} мН/м`, 340, 296);
 
       if (onStateChange) {
         onStateChange({
@@ -163,11 +159,6 @@ export default function SurfaceTensionSimulation({
   ]);
 
   return (
-    <SimulationCanvas
-      draw={draw}
-      width={700}
-      height={400}
-      isRunning={false}
-    />
+    <SimulationCanvas draw={draw} width={700} height={400} isRunning={false} />
   );
 }

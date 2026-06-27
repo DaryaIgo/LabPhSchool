@@ -134,11 +134,6 @@ export default function InterferenceDiffractionSimulation({
   }, [slitDistance, screenDistance, fringeSpacing, onStateChange]);
 
   return (
-    <SimulationCanvas
-      draw={draw}
-      width={700}
-      height={400}
-      isRunning={false}
-    />
+    <SimulationCanvas draw={draw} width={700} height={400} isRunning={false} />
   );
 }

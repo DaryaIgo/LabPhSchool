@@ -31,7 +31,7 @@ export const timelineEntries = mysqlTable(
       .notNull()
       .$onUpdate(() => new Date()),
   },
-  (table) => ({
+  table => ({
     typeIdx: index("timeline_type_idx").on(table.type),
     yearIdx: index("timeline_year_idx").on(table.yearStart),
   })

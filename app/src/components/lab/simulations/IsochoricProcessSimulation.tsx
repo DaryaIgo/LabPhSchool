@@ -70,7 +70,12 @@ export default function IsochoricProcessSimulation({
 
       // Stopper
       ctx.fillStyle = "#5c6b73";
-      ctx.fillRect(flaskX - neckWidth / 2 - 3, flaskY - neckHeight - 8, neckWidth + 6, 10);
+      ctx.fillRect(
+        flaskX - neckWidth / 2 - 3,
+        flaskY - neckHeight - 8,
+        neckWidth + 6,
+        10
+      );
 
       // Heater
       ctx.fillStyle = "#3c474f";
@@ -161,15 +166,16 @@ export default function IsochoricProcessSimulation({
       for (let i = 0; i <= 50; i++) {
         const tPlot = minT + (i / 50) * (maxT - minT);
         const pPlot = (amount * R * tPlot) / (volume * 1e-3) / 1000;
-        const px = graphX + 30 + ((tPlot - minT) / (maxT - minT)) * (graphW - 40);
-        const py =
-          graphY + graphH - 25 - (pPlot / 500) * (graphH - 40);
+        const px =
+          graphX + 30 + ((tPlot - minT) / (maxT - minT)) * (graphW - 40);
+        const py = graphY + graphH - 25 - (pPlot / 500) * (graphH - 40);
         if (i === 0) ctx.moveTo(px, py);
         else ctx.lineTo(px, py);
       }
       ctx.stroke();
 
-      const curPx = graphX + 30 + ((temperature - minT) / (maxT - minT)) * (graphW - 40);
+      const curPx =
+        graphX + 30 + ((temperature - minT) / (maxT - minT)) * (graphW - 40);
       const curPy = graphY + graphH - 25 - (pressureKPa / 500) * (graphH - 40);
       ctx.fillStyle = "#ff7043";
       ctx.beginPath();
@@ -202,11 +208,6 @@ export default function IsochoricProcessSimulation({
   }, [volume, temperature, amount, pressureKPa, pt, onStateChange]);
 
   return (
-    <SimulationCanvas
-      draw={draw}
-      width={700}
-      height={400}
-      isRunning={false}
-    />
+    <SimulationCanvas draw={draw} width={700} height={400} isRunning={false} />
   );
 }

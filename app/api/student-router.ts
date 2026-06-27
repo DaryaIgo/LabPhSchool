@@ -24,13 +24,21 @@ import {
 } from "./queries/enrollments";
 import { getAssignedLabWorksByStudent } from "./queries/assignedLabWorks";
 import { createAuditEntry } from "./queries/audit";
-import { eq, and, desc, sql, inArray, count, isNull, isNotNull } from "drizzle-orm";
+import {
+  eq,
+  and,
+  desc,
+  sql,
+  inArray,
+  count,
+  isNull,
+  isNotNull,
+} from "drizzle-orm";
 
 import {
   getAuthDb,
   getContentDb,
   getLearningDb,
-  getProblemsDb,
   getJupyterDb,
   getNotificationsDb,
 } from "./queries/connection";
@@ -43,7 +51,6 @@ import {
   labProgress,
   type StudentProgress,
 } from "@db/schema/learning";
-import { problemTypes } from "@db/schema/problems";
 import { jupyterNotebooks, jupyterNotebookAccess } from "@db/schema/jupyter";
 import { notifications } from "@db/schema/notifications";
 
@@ -339,7 +346,12 @@ export const studentRouter = createRouter({
         comment: enrollment.comment,
         currentSubtopicNodeId: enrollment.currentSubtopicNodeId,
         subtopics: subsWithProgress,
-        labs: [] as { id: number; title: string; slug: string; shortDesc: string | null }[],
+        labs: [] as {
+          id: number;
+          title: string;
+          slug: string;
+          shortDesc: string | null;
+        }[],
       };
     });
 
@@ -350,7 +362,6 @@ export const studentRouter = createRouter({
   getCurrentTopics: studentQuery.query(async ({ ctx }) => {
     const contentDb = getContentDb();
     const learningDb = getLearningDb();
-    const problemsDb = getProblemsDb();
     const studentId = ctx.localUser!.id;
 
     if (ctx.role?.name === "admin") {
@@ -369,18 +380,16 @@ export const studentRouter = createRouter({
         .where(eq(topicNodes.parentId, topic.id))
         .orderBy(topicNodes.order)
         .limit(1);
-      const subtopicProblemTypes = topicSubtopics.length
-        ? await problemsDb
-            .select()
-            .from(problemTypes)
-            .where(eq(problemTypes.subtopicNodeId, topicSubtopics[0].id))
-        : [];
       return [
         {
           subtopic: topicSubtopics[0] ?? null,
           topic,
-          labs: [] as { id: number; title: string; slug: string; shortDesc: string | null }[],
-          problemTypes: subtopicProblemTypes,
+          labs: [] as {
+            id: number;
+            title: string;
+            slug: string;
+            shortDesc: string | null;
+          }[],
           enrollmentComment: null,
         },
       ];
@@ -475,14 +484,6 @@ export const studentRouter = createRouter({
         : [];
     const topicById = new Map(topicRows.map(t => [t.id, t]));
 
-    const allProblemTypes =
-      subtopicNodeIds.length > 0
-        ? await problemsDb
-            .select()
-            .from(problemTypes)
-            .where(inArray(problemTypes.subtopicNodeId, subtopicNodeIds))
-        : [];
-
     // Keep a stable order: topic order → subtopic order
     currentItems.sort((a, b) => {
       const aSubtopic = subtopicById.get(a.subtopicNodeId);
@@ -500,14 +501,15 @@ export const studentRouter = createRouter({
       const subtopic = subtopicById.get(item.subtopicNodeId) ?? null;
       const topicNodeId = item.topicNodeId ?? subtopic?.parentId;
       const topic = topicNodeId ? (topicById.get(topicNodeId) ?? null) : null;
-      const subtopicProblemTypes = allProblemTypes.filter(
-        p => p.subtopicNodeId === item.subtopicNodeId
-      );
       return {
         subtopic,
         topic,
-        labs: [] as { id: number; title: string; slug: string; shortDesc: string | null }[],
-        problemTypes: subtopicProblemTypes,
+        labs: [] as {
+          id: number;
+          title: string;
+          slug: string;
+          shortDesc: string | null;
+        }[],
         enrollmentComment: item.enrollmentComment,
       };
     });
@@ -1030,8 +1032,8 @@ export const studentRouter = createRouter({
   // ── Get my assigned lab works (active + archived) ──
   getMyAssignedLabWorks: studentQuery.query(async ({ ctx }) => {
     const rows = await getAssignedLabWorksByStudent(ctx.localUser!.id);
-    const active = rows.filter((r) => r.status === "assigned");
-    const archived = rows.filter((r) => r.status === "completed");
+    const active = rows.filter(r => r.status === "assigned");
+    const archived = rows.filter(r => r.status === "completed");
     return { active, archived };
   }),
 });

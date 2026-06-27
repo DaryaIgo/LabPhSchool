@@ -1,7 +1,15 @@
 import { useMemo, useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { trpc } from "@/providers/trpc";
-import { X, Clock, FlaskConical, User, Filter, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  X,
+  Clock,
+  FlaskConical,
+  User,
+  Filter,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import type { TimelineEntry } from "@contracts/types";
 
 const MIN_YEAR = -300;
@@ -43,7 +51,7 @@ function packIntoRows<T extends { left: number; width: number }>(
     for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
       const row = rows[rowIndex];
       const hasCollision = row.some(
-        (r) => left < r.right + gap && right > r.left - gap
+        r => left < r.right + gap && right > r.left - gap
       );
       if (!hasCollision) {
         row.push({ left, right });
@@ -145,7 +153,7 @@ function TimelineArrow() {
           filter: "drop-shadow(0 0 6px rgba(255,220,100,0.8))",
         }}
       />
-      {ticks.map((year) => {
+      {ticks.map(year => {
         const left = yearToPercent(year);
         return (
           <div
@@ -186,7 +194,7 @@ function EntryModal({
         initial={{ scale: 0.85, y: 30 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.85, y: 30 }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={e => e.stopPropagation()}
         className={`relative max-w-lg w-full rounded-2xl border overflow-hidden shadow-2xl ${
           isEinstein
             ? "bg-[#051022] border-blue-500/60 shadow-[0_0_60px_rgba(1,172,255,0.35)]"
@@ -211,7 +219,7 @@ function EntryModal({
                 src={entry.portraitUrl}
                 alt={entry.name}
                 className="w-24 h-24 rounded-xl object-cover border-2 border-white/10 shadow-lg"
-                onError={(e) => {
+                onError={e => {
                   (e.target as HTMLImageElement).style.display = "none";
                 }}
               />
@@ -220,7 +228,11 @@ function EntryModal({
                 className="w-24 h-24 rounded-xl flex items-center justify-center text-white/60 border-2 border-white/10"
                 style={{ backgroundColor: `${entry.color}22` }}
               >
-                {entry.type === "physicist" ? <User size={32} /> : <FlaskConical size={32} />}
+                {entry.type === "physicist" ? (
+                  <User size={32} />
+                ) : (
+                  <FlaskConical size={32} />
+                )}
               </div>
             )}
             <div className="flex-1 min-w-0">
@@ -258,8 +270,12 @@ function EntryModal({
 
 export default function Timeline() {
   const { data: entries, isLoading } = trpc.timeline.list.useQuery();
-  const [selectedEntry, setSelectedEntry] = useState<TimelineEntry | null>(null);
-  const [typeFilter, setTypeFilter] = useState<"all" | "physicist" | "discovery">("all");
+  const [selectedEntry, setSelectedEntry] = useState<TimelineEntry | null>(
+    null
+  );
+  const [typeFilter, setTypeFilter] = useState<
+    "all" | "physicist" | "discovery"
+  >("all");
   const [selectedCenturies, setSelectedCenturies] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -270,14 +286,19 @@ export default function Timeline() {
 
     if (selectedCenturies.length === 0) {
       // Default view: show the modern era (right end of the timeline)
-      const maxScroll = scrollRef.current.scrollWidth - scrollRef.current.clientWidth;
-      scrollRef.current.scrollTo({ left: Math.max(0, maxScroll), behavior: "smooth" });
+      const maxScroll =
+        scrollRef.current.scrollWidth - scrollRef.current.clientWidth;
+      scrollRef.current.scrollTo({
+        left: Math.max(0, maxScroll),
+        behavior: "smooth",
+      });
       return;
     }
 
-    const selected = CENTURIES.filter((c) => selectedCenturies.includes(c.label));
-    const earliestStart = Math.min(...selected.map((c) => c.start));
-    const left = PADDING_X + (yearToPercent(earliestStart) / 100) * TIMELINE_WIDTH;
+    const selected = CENTURIES.filter(c => selectedCenturies.includes(c.label));
+    const earliestStart = Math.min(...selected.map(c => c.start));
+    const left =
+      PADDING_X + (yearToPercent(earliestStart) / 100) * TIMELINE_WIDTH;
     scrollRef.current.scrollTo({
       left: Math.max(0, left - PADDING_X),
       behavior: "smooth",
@@ -287,7 +308,8 @@ export default function Timeline() {
   const handleScroll = () => {
     if (!scrollRef.current) return;
     const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-    const progress = scrollWidth > clientWidth ? scrollLeft / (scrollWidth - clientWidth) : 0;
+    const progress =
+      scrollWidth > clientWidth ? scrollLeft / (scrollWidth - clientWidth) : 0;
     setScrollProgress(progress);
   };
 
@@ -322,33 +344,36 @@ export default function Timeline() {
 
   const filteredEntries = useMemo(() => {
     if (!entries) return [];
-    return entries.filter((e) => {
+    return entries.filter(e => {
       const typeOk = typeFilter === "all" || e.type === typeFilter;
       if (selectedCenturies.length === 0) return typeOk;
 
-      const selected = CENTURIES.filter((c) => selectedCenturies.includes(c.label));
+      const selected = CENTURIES.filter(c =>
+        selectedCenturies.includes(c.label)
+      );
 
       if (e.type === "physicist") {
         const lifeEnd = e.yearEnd ?? e.yearStart + 50;
-        return selected.some((c) => e.yearStart <= c.end && lifeEnd >= c.start);
+        return selected.some(c => e.yearStart <= c.end && lifeEnd >= c.start);
       }
 
       // Discoveries: the year of discovery must fall inside a selected century
-      return selected.some((c) => e.yearStart >= c.start && e.yearStart <= c.end);
+      return selected.some(c => e.yearStart >= c.start && e.yearStart <= c.end);
     });
   }, [entries, typeFilter, selectedCenturies]);
 
-  const physicists = filteredEntries.filter((e) => e.type === "physicist");
-  const discoveries = filteredEntries.filter((e) => e.type === "discovery");
+  const physicists = filteredEntries.filter(e => e.type === "physicist");
+  const discoveries = filteredEntries.filter(e => e.type === "discovery");
 
   const PHYSICIST_ROW_HEIGHT = 92;
   const DISCOVERY_ROW_HEIGHT = 118;
   const EMPTY_TIMELINE_HEIGHT = 320;
 
   const physicistItems = useMemo(() => {
-    const items = physicists.map((entry) => {
+    const items = physicists.map(entry => {
       const endYear = entry.yearEnd ?? entry.yearStart + 50;
-      const startX = PADDING_X + (yearToPercent(entry.yearStart) / 100) * TIMELINE_WIDTH;
+      const startX =
+        PADDING_X + (yearToPercent(entry.yearStart) / 100) * TIMELINE_WIDTH;
       const endX = PADDING_X + (yearToPercent(endYear) / 100) * TIMELINE_WIDTH;
       const width = Math.max(160, endX - startX);
       const left = (startX + endX) / 2;
@@ -358,7 +383,7 @@ export default function Timeline() {
   }, [physicists]);
 
   const discoveryItems = useMemo(() => {
-    const items = discoveries.map((entry) => ({
+    const items = discoveries.map(entry => ({
       entry,
       left: PADDING_X + (yearToPercent(entry.yearStart) / 100) * TIMELINE_WIDTH,
       width: 160,
@@ -367,8 +392,14 @@ export default function Timeline() {
   }, [discoveries]);
 
   const hasEntries = filteredEntries.length > 0;
-  const physicistRows = physicistItems.length > 0 ? Math.max(...physicistItems.map((i) => i.row)) + 1 : 0;
-  const discoveryRows = discoveryItems.length > 0 ? Math.max(...discoveryItems.map((i) => i.row)) + 1 : 0;
+  const physicistRows =
+    physicistItems.length > 0
+      ? Math.max(...physicistItems.map(i => i.row)) + 1
+      : 0;
+  const discoveryRows =
+    discoveryItems.length > 0
+      ? Math.max(...discoveryItems.map(i => i.row)) + 1
+      : 0;
 
   const containerHeight = hasEntries
     ? Math.max(
@@ -388,8 +419,8 @@ export default function Timeline() {
   const discoveriesTop = hasEntries ? arrowTop + 40 : 0;
 
   const toggleCentury = (label: string) => {
-    setSelectedCenturies((prev) =>
-      prev.includes(label) ? prev.filter((c) => c !== label) : [...prev, label]
+    setSelectedCenturies(prev =>
+      prev.includes(label) ? prev.filter(c => c !== label) : [...prev, label]
     );
   };
 
@@ -422,7 +453,9 @@ export default function Timeline() {
               <span className="text-sm font-medium text-white/80">Тип</span>
               <select
                 value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value as typeof typeFilter)}
+                onChange={e =>
+                  setTypeFilter(e.target.value as typeof typeFilter)
+                }
                 className="bg-[#1a2024] border border-white/15 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-yellow-400"
               >
                 <option value="all">Все</option>
@@ -433,7 +466,7 @@ export default function Timeline() {
 
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-sm font-medium text-white/80">Век</span>
-              {CENTURIES.map((c) => (
+              {CENTURIES.map(c => (
                 <label
                   key={c.label}
                   className="flex items-center gap-1.5 text-sm text-white/70 cursor-pointer hover:text-white transition-colors"
@@ -453,7 +486,9 @@ export default function Timeline() {
 
         {/* Scroll controls */}
         <div className="max-w-6xl mx-auto mb-3 flex items-center justify-between">
-          <span className="text-xs text-white/40">Начало — Архимед, III в. до н.э.</span>
+          <span className="text-xs text-white/40">
+            Начало — Архимед, III в. до н.э.
+          </span>
           <div className="flex items-center gap-2">
             <button
               onClick={() => scrollBy(-400)}
@@ -489,7 +524,10 @@ export default function Timeline() {
           onMouseUp={onMouseUp}
           onMouseLeave={onMouseUp}
           className="relative max-w-6xl mx-auto overflow-x-auto overflow-y-hidden rounded-2xl border border-white/10 bg-black/20 backdrop-blur-sm cursor-grab active:cursor-grabbing select-none"
-          style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,200,50,0.5) transparent" }}
+          style={{
+            scrollbarWidth: "thin",
+            scrollbarColor: "rgba(255,200,50,0.5) transparent",
+          }}
         >
           <div
             className="relative"
@@ -516,43 +554,51 @@ export default function Timeline() {
                     {/* Physicists row */}
                     <div
                       className="absolute left-0 right-0"
-                      style={{ top: 32, height: physicistRows * PHYSICIST_ROW_HEIGHT }}
+                      style={{
+                        top: 32,
+                        height: physicistRows * PHYSICIST_ROW_HEIGHT,
+                      }}
                     >
-                      {physicistItems.map(({ entry, left, width, row }, idx) => (
-                        <motion.button
-                          key={entry.id}
-                          initial={{ opacity: 0, y: -20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.05 }}
-                          onClick={() => setSelectedEntry(entry)}
-                          className="absolute text-left rounded-xl px-4 py-3 border shadow-lg transition-transform hover:scale-105 hover:z-20 overflow-hidden"
-                          style={{
-                            left: `calc(${left}px - ${width / 2}px)`,
-                            top: row * PHYSICIST_ROW_HEIGHT,
-                            width: `${width}px`,
-                            backgroundColor: `${entry.color}20`,
-                            borderColor: `${entry.color}60`,
-                            boxShadow: `0 0 18px ${entry.color}30`,
-                          }}
-                        >
-                          <div
-                            className="text-sm font-bold text-white leading-tight truncate"
-                            style={{ textShadow: `0 0 8px ${entry.color}` }}
+                      {physicistItems.map(
+                        ({ entry, left, width, row }, idx) => (
+                          <motion.button
+                            key={entry.id}
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.05 }}
+                            onClick={() => setSelectedEntry(entry)}
+                            className="absolute text-left rounded-xl px-4 py-3 border shadow-lg transition-transform hover:scale-105 hover:z-20 overflow-hidden"
+                            style={{
+                              left: `calc(${left}px - ${width / 2}px)`,
+                              top: row * PHYSICIST_ROW_HEIGHT,
+                              width: `${width}px`,
+                              backgroundColor: `${entry.color}20`,
+                              borderColor: `${entry.color}60`,
+                              boxShadow: `0 0 18px ${entry.color}30`,
+                            }}
                           >
-                            {entry.name}
-                          </div>
-                          <div className="text-xs text-white/70 mt-1 font-mono">
-                            {entry.yearStart}
-                            {entry.yearEnd ? `—${entry.yearEnd}` : ""}
-                          </div>
-                        </motion.button>
-                      ))}
+                            <div
+                              className="text-sm font-bold text-white leading-tight truncate"
+                              style={{ textShadow: `0 0 8px ${entry.color}` }}
+                            >
+                              {entry.name}
+                            </div>
+                            <div className="text-xs text-white/70 mt-1 font-mono">
+                              {entry.yearStart}
+                              {entry.yearEnd ? `—${entry.yearEnd}` : ""}
+                            </div>
+                          </motion.button>
+                        )
+                      )}
                     </div>
 
                     {/* Discoveries row */}
                     <div
                       className="absolute left-0 right-0"
-                      style={{ top: discoveriesTop, height: discoveryRows * DISCOVERY_ROW_HEIGHT }}
+                      style={{
+                        top: discoveriesTop,
+                        height: discoveryRows * DISCOVERY_ROW_HEIGHT,
+                      }}
                     >
                       {discoveryItems.map(({ entry, left, row }, idx) => (
                         <motion.div
@@ -595,7 +641,11 @@ export default function Timeline() {
                 {/* Main arrow — always visible */}
                 <div
                   className="absolute -translate-y-1/2"
-                  style={{ top: arrowTop, left: PADDING_X, width: TIMELINE_WIDTH }}
+                  style={{
+                    top: arrowTop,
+                    left: PADDING_X,
+                    width: TIMELINE_WIDTH,
+                  }}
                 >
                   <TimelineArrow />
                 </div>
@@ -605,13 +655,17 @@ export default function Timeline() {
         </div>
 
         <p className="text-center text-xs text-white/40 mt-4">
-          Используйте колёсико мыши, жесты или кнопки, чтобы прокручивать таймлайн.
+          Используйте колёсико мыши, жесты или кнопки, чтобы прокручивать
+          таймлайн.
         </p>
       </div>
 
       <AnimatePresence>
         {selectedEntry && (
-          <EntryModal entry={selectedEntry} onClose={() => setSelectedEntry(null)} />
+          <EntryModal
+            entry={selectedEntry}
+            onClose={() => setSelectedEntry(null)}
+          />
         )}
       </AnimatePresence>
     </div>

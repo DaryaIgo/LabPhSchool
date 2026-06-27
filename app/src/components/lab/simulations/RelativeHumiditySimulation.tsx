@@ -59,7 +59,11 @@ export default function RelativeHumiditySimulation({
       ctx.fillText("Сухой", dryX, thermY - 15);
       ctx.fillStyle = "#ff7043";
       ctx.font = "bold 14px sans-serif";
-      ctx.fillText(`${dryTemp.toFixed(0)}°C`, dryX + 25, thermY + thermH - mercuryDry + 5);
+      ctx.fillText(
+        `${dryTemp.toFixed(0)}°C`,
+        dryX + 25,
+        thermY + thermH - mercuryDry + 5
+      );
 
       // Wet thermometer
       const wetX = 320;
@@ -84,7 +88,11 @@ export default function RelativeHumiditySimulation({
       ctx.fillText("Влажный", wetX, thermY - 15);
       ctx.fillStyle = "#01acff";
       ctx.font = "bold 14px sans-serif";
-      ctx.fillText(`${wetTemp.toFixed(0)}°C`, wetX + 25, thermY + thermH - mercuryWet + 5);
+      ctx.fillText(
+        `${wetTemp.toFixed(0)}°C`,
+        wetX + 25,
+        thermY + thermH - mercuryWet + 5
+      );
 
       // Psychrometric table hint
       ctx.fillStyle = "#2a3237";
@@ -121,13 +129,23 @@ export default function RelativeHumiditySimulation({
       ctx.fillStyle = "#2a3237";
       ctx.fillRect(indicatorX, indicatorY, indicatorW, indicatorH);
 
-      const gradient = ctx.createLinearGradient(indicatorX, 0, indicatorX + indicatorW, 0);
+      const gradient = ctx.createLinearGradient(
+        indicatorX,
+        0,
+        indicatorX + indicatorW,
+        0
+      );
       gradient.addColorStop(0, "#ff7043");
       gradient.addColorStop(0.5, "#ffcb3d");
       gradient.addColorStop(1, "#2eff8c");
 
       ctx.fillStyle = gradient;
-      ctx.fillRect(indicatorX, indicatorY, indicatorW * (relativeHumidity / 100), indicatorH);
+      ctx.fillRect(
+        indicatorX,
+        indicatorY,
+        indicatorW * (relativeHumidity / 100),
+        indicatorH
+      );
 
       ctx.strokeStyle = "#788389";
       ctx.lineWidth = 1;
@@ -152,11 +170,6 @@ export default function RelativeHumiditySimulation({
   }, [dryTemp, wetTemp, deltaT, relativeHumidity, onStateChange]);
 
   return (
-    <SimulationCanvas
-      draw={draw}
-      width={700}
-      height={400}
-      isRunning={false}
-    />
+    <SimulationCanvas draw={draw} width={700} height={400} isRunning={false} />
   );
 }

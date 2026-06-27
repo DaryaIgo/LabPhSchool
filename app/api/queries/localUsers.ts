@@ -65,13 +65,10 @@ export async function listLocalUsers(options?: {
     conditions.push(eq(localUsers.status, status));
   }
   if (search) {
-    conditions.push(
-      like(localUsers.name, `%${search}%`)
-    );
+    conditions.push(like(localUsers.name, `%${search}%`));
   }
 
-  const whereClause =
-    conditions.length > 0 ? and(...conditions) : undefined;
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
   // Get total count
   const [totalResult] = await db
@@ -162,5 +159,3 @@ export async function activateLocalUser(id: number) {
     .set({ status: "active", updatedAt: new Date() })
     .where(eq(localUsers.id, id));
 }
-
-

@@ -38,7 +38,12 @@ function GlobeCanvas() {
     resize();
     window.addEventListener("resize", resize);
 
-    const rays: { angle: number; speed: number; length: number; alpha: number }[] = [];
+    const rays: {
+      angle: number;
+      speed: number;
+      length: number;
+      alpha: number;
+    }[] = [];
     for (let i = 0; i < 12; i++) {
       rays.push({
         angle: (Math.PI * 2 * i) / 12 + Math.random() * 0.5,
@@ -89,7 +94,7 @@ function GlobeCanvas() {
       }
 
       // Rays
-      rays.forEach((ray) => {
+      rays.forEach(ray => {
         ray.angle += ray.speed;
         const x1 = cx + Math.cos(ray.angle) * radius;
         const y1 = cy + Math.sin(ray.angle) * radius * 0.8;
@@ -170,8 +175,6 @@ function TypewriterText({
 
 /* ---------- Main Page ---------- */
 export default function Home() {
-
-
   return (
     <div>
       {/* ====== HERO ====== */}
@@ -186,7 +189,6 @@ export default function Home() {
               <TypewriterText text="Это способ мыслить" delay={1800} />
             </h1>
           </div>
-
         </div>
       </section>
 
@@ -202,7 +204,6 @@ export default function Home() {
                   className="w-full h-full object-cover"
                 />
               </div>
-
             </div>
             <div>
               <h2 className="text-3xl lg:text-4xl font-bold text-[#1a1a1a] mb-6 leading-tight">
@@ -215,18 +216,18 @@ export default function Home() {
                 Меня зовут Дарья Дмитриевна.
               </p>
               <p className="text-[#434e54] mb-4 leading-relaxed">
-                Я окончила СПбПУ (Политех Петра Великого) с отличием. Я не просто
-                знаю теорию из учебников — я каждый день вижу, как физика работает
-                на практике и в технологиях.
+                Я окончила СПбПУ (Политех Петра Великого) с отличием. Я не
+                просто знаю теорию из учебников — я каждый день вижу, как физика
+                работает на практике и в технологиях.
               </p>
               <p className="text-[#434e54] mb-8 leading-relaxed">
                 С помощью интерактивных симуляций PhET ученики могут сами
                 «потрогать» физические процессы — от движения молекул до
-                оптических лучей и электрических цепей. На занятиях мы используем
-                видеосвязь в Яндекс Телемост, удобную онлайн-доску Chattern и
-                ноутбуки Jupyter для наглядного разбора сложных задач.
+                оптических лучей и электрических цепей. На занятиях мы
+                используем видеосвязь в Яндекс Телемост, удобную онлайн-доску
+                Chattern и ноутбуки Jupyter для наглядного разбора сложных
+                задач.
               </p>
-
             </div>
           </div>
         </div>
@@ -276,7 +277,7 @@ export default function Home() {
                 icon: ExternalLink,
                 color: "#ffcb3d",
               },
-            ].map((card) => {
+            ].map(card => {
               const Icon = card.icon;
               return (
                 <Link
@@ -302,7 +303,10 @@ export default function Home() {
                   <h3 className="text-xl font-black uppercase tracking-tight mb-3 leading-tight">
                     {card.title}
                     {card.titleAccent && (
-                      <span className="text-[#2eff8c]"> {card.titleAccent}</span>
+                      <span className="text-[#2eff8c]">
+                        {" "}
+                        {card.titleAccent}
+                      </span>
                     )}
                   </h3>
                   <p className="text-sm text-[#c8cdd1] leading-relaxed flex-1">
@@ -362,7 +366,7 @@ export default function Home() {
                 icon: TrendingUp,
                 color: "#ff6b6b",
               },
-            ].map((item) => {
+            ].map(item => {
               const Icon = item.icon;
               return (
                 <div
@@ -388,9 +392,7 @@ export default function Home() {
                       {item.num}
                     </span>
                   </div>
-                  <h3 className="text-lg font-bold mb-2">
-                    {item.title}
-                  </h3>
+                  <h3 className="text-lg font-bold mb-2">{item.title}</h3>
                   <p className="text-sm text-[#c8cdd1] leading-relaxed flex-1">
                     {item.desc}
                   </p>
@@ -451,7 +453,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
     </div>
   );
 }

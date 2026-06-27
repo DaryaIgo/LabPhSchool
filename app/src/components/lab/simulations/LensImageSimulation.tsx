@@ -7,10 +7,7 @@ interface Props {
   onStateChange?: (state: Record<string, number>) => void;
 }
 
-export default function LensImageSimulation({
-  params,
-  onStateChange,
-}: Props) {
+export default function LensImageSimulation({ params, onStateChange }: Props) {
   const objectDistance = Number(params["objectDistance"] || 30);
   const focalLength = Number(params["focalLength"] || 10);
   const objectHeight = Number(params["objectHeight"] || 3);
@@ -29,7 +26,8 @@ export default function LensImageSimulation({
       f = 1 / (1 / F - 1 / d);
       gamma = f / d;
       imageType = "уменьшенное, перевёрнутое, действительное";
-      imageDescription = "d > 2F: изображение уменьшенное, перевёрнутое, действительное";
+      imageDescription =
+        "d > 2F: изображение уменьшенное, перевёрнутое, действительное";
       real = true;
     } else if (Math.abs(d - 2 * F) < 0.1) {
       f = 1 / (1 / F - 1 / d);
@@ -41,7 +39,8 @@ export default function LensImageSimulation({
       f = 1 / (1 / F - 1 / d);
       gamma = f / d;
       imageType = "увеличенное, перевёрнутое, действительное";
-      imageDescription = "F < d < 2F: изображение увеличенное, перевёрнутое, действительное";
+      imageDescription =
+        "F < d < 2F: изображение увеличенное, перевёрнутое, действительное";
       real = true;
     } else if (Math.abs(d - F) < 0.1) {
       f = Infinity;
@@ -214,12 +213,7 @@ export default function LensImageSimulation({
   }, [objectDistance, focalLength, objectHeight, onStateChange]);
 
   return (
-    <SimulationCanvas
-      draw={draw}
-      width={700}
-      height={400}
-      isRunning={false}
-    />
+    <SimulationCanvas draw={draw} width={700} height={400} isRunning={false} />
   );
 }
 

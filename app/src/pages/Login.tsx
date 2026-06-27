@@ -16,7 +16,7 @@ export default function Login() {
       await utils.unifiedAuth.me.refetch();
       navigate("/profile");
     },
-    onError: (err) => {
+    onError: err => {
       setError(err.message);
     },
   });
@@ -49,19 +49,19 @@ export default function Login() {
             </div>
             <div>
               <h1 className="text-2xl font-bold">Вход в систему</h1>
-              <p className="text-sm text-[#798389]">
-                Введите логин и пароль
-              </p>
+              <p className="text-sm text-[#798389]">Введите логин и пароль</p>
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs text-[#798389] mb-1.5">Логин</label>
+              <label className="block text-xs text-[#798389] mb-1.5">
+                Логин
+              </label>
               <input
                 type="text"
                 value={login}
-                onChange={(e) => setLogin(e.target.value)}
+                onChange={e => setLogin(e.target.value)}
                 className="w-full bg-[#262e33] border border-[#434e54] rounded-lg px-3 py-2.5 text-sm text-white focus:border-[#2eff8c] outline-none"
                 placeholder="your_login"
                 autoComplete="username"
@@ -69,11 +69,13 @@ export default function Login() {
               />
             </div>
             <div>
-              <label className="block text-xs text-[#798389] mb-1.5">Пароль</label>
+              <label className="block text-xs text-[#798389] mb-1.5">
+                Пароль
+              </label>
               <input
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 className="w-full bg-[#262e33] border border-[#434e54] rounded-lg px-3 py-2.5 text-sm text-white focus:border-[#2eff8c] outline-none"
                 placeholder="••••••••"
                 autoComplete="current-password"

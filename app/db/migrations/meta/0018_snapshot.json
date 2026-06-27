@@ -92,16 +92,12 @@
       "indexes": {
         "local_user_status_idx": {
           "name": "local_user_status_idx",
-          "columns": [
-            "status"
-          ],
+          "columns": ["status"],
           "isUnique": false
         },
         "local_user_created_by_idx": {
           "name": "local_user_created_by_idx",
-          "columns": [
-            "created_by"
-          ],
+          "columns": ["created_by"],
           "isUnique": false
         }
       },
@@ -110,12 +106,8 @@
           "name": "local_users_role_id_roles_id_fk",
           "tableFrom": "local_users",
           "tableTo": "roles",
-          "columnsFrom": [
-            "role_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["role_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -123,17 +115,13 @@
       "compositePrimaryKeys": {
         "local_users_id": {
           "name": "local_users_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "local_users_login_unique": {
           "name": "local_users_login_unique",
-          "columns": [
-            "login"
-          ]
+          "columns": ["login"]
         }
       },
       "checkConstraint": {}
@@ -188,10 +176,7 @@
       "indexes": {
         "resource_action_idx": {
           "name": "resource_action_idx",
-          "columns": [
-            "resource",
-            "action"
-          ],
+          "columns": ["resource", "action"],
           "isUnique": false
         }
       },
@@ -199,17 +184,13 @@
       "compositePrimaryKeys": {
         "permissions_id": {
           "name": "permissions_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "permissions_name_unique": {
           "name": "permissions_name_unique",
-          "columns": [
-            "name"
-          ]
+          "columns": ["name"]
         }
       },
       "checkConstraint": {}
@@ -250,10 +231,7 @@
       "indexes": {
         "unique_role_permission": {
           "name": "unique_role_permission",
-          "columns": [
-            "role_id",
-            "permission_id"
-          ],
+          "columns": ["role_id", "permission_id"],
           "isUnique": true
         }
       },
@@ -262,12 +240,8 @@
           "name": "role_permissions_role_id_roles_id_fk",
           "tableFrom": "role_permissions",
           "tableTo": "roles",
-          "columnsFrom": [
-            "role_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["role_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -275,12 +249,8 @@
           "name": "role_permissions_permission_id_permissions_id_fk",
           "tableFrom": "role_permissions",
           "tableTo": "permissions",
-          "columnsFrom": [
-            "permission_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["permission_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -288,9 +258,7 @@
       "compositePrimaryKeys": {
         "role_permissions_id": {
           "name": "role_permissions_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -334,17 +302,13 @@
       "compositePrimaryKeys": {
         "roles_id": {
           "name": "roles_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "roles_name_unique": {
           "name": "roles_name_unique",
-          "columns": [
-            "name"
-          ]
+          "columns": ["name"]
         }
       },
       "checkConstraint": {}
@@ -426,12 +390,8 @@
           "name": "users_role_id_roles_id_fk",
           "tableFrom": "users",
           "tableTo": "roles",
-          "columnsFrom": [
-            "role_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["role_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -439,17 +399,13 @@
       "compositePrimaryKeys": {
         "users_id": {
           "name": "users_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "users_union_id_unique": {
           "name": "users_union_id_unique",
-          "columns": [
-            "union_id"
-          ]
+          "columns": ["union_id"]
         }
       },
       "checkConstraint": {}
@@ -535,12 +491,8 @@
           "name": "labs_topic_id_topics_id_fk",
           "tableFrom": "labs",
           "tableTo": "topics",
-          "columnsFrom": [
-            "topic_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["topic_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -548,17 +500,13 @@
       "compositePrimaryKeys": {
         "labs_id": {
           "name": "labs_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "labs_slug_unique": {
           "name": "labs_slug_unique",
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "checkConstraint": {}
@@ -622,9 +570,7 @@
       "compositePrimaryKeys": {
         "resources_id": {
           "name": "resources_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -697,12 +643,8 @@
           "name": "subtopics_topic_id_topics_id_fk",
           "tableFrom": "subtopics",
           "tableTo": "topics",
-          "columnsFrom": [
-            "topic_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["topic_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -710,9 +652,7 @@
       "compositePrimaryKeys": {
         "subtopics_id": {
           "name": "subtopics_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -801,12 +741,8 @@
           "name": "topic_nodes_parent_id_topic_nodes_id_fk",
           "tableFrom": "topic_nodes",
           "tableTo": "topic_nodes",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -814,17 +750,13 @@
       "compositePrimaryKeys": {
         "topic_nodes_id": {
           "name": "topic_nodes_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "topic_nodes_slug_unique": {
           "name": "topic_nodes_slug_unique",
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "checkConstraint": {}
@@ -903,17 +835,13 @@
       "compositePrimaryKeys": {
         "topics_id": {
           "name": "topics_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "topics_slug_unique": {
           "name": "topics_slug_unique",
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "checkConstraint": {}
@@ -1004,24 +932,17 @@
       "indexes": {
         "unique_enrollment": {
           "name": "unique_enrollment",
-          "columns": [
-            "local_user_id",
-            "topic_id"
-          ],
+          "columns": ["local_user_id", "topic_id"],
           "isUnique": true
         },
         "enrollment_local_user_idx": {
           "name": "enrollment_local_user_idx",
-          "columns": [
-            "local_user_id"
-          ],
+          "columns": ["local_user_id"],
           "isUnique": false
         },
         "enrollment_topic_idx": {
           "name": "enrollment_topic_idx",
-          "columns": [
-            "topic_id"
-          ],
+          "columns": ["topic_id"],
           "isUnique": false
         }
       },
@@ -1029,9 +950,7 @@
       "compositePrimaryKeys": {
         "enrollments_id": {
           "name": "enrollments_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -1148,9 +1067,7 @@
       "compositePrimaryKeys": {
         "lab_progress_id": {
           "name": "lab_progress_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -1262,9 +1179,7 @@
       "compositePrimaryKeys": {
         "student_progress_id": {
           "name": "student_progress_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -1339,12 +1254,8 @@
           "name": "lab_analytics_lab_work_id_lab_works_id_fk",
           "tableFrom": "lab_analytics",
           "tableTo": "lab_works",
-          "columnsFrom": [
-            "lab_work_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["lab_work_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1352,9 +1263,7 @@
       "compositePrimaryKeys": {
         "lab_analytics_id": {
           "name": "lab_analytics_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -1427,12 +1336,8 @@
           "name": "lab_blocks_lab_work_id_lab_works_id_fk",
           "tableFrom": "lab_blocks",
           "tableTo": "lab_works",
-          "columnsFrom": [
-            "lab_work_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["lab_work_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1440,9 +1345,7 @@
       "compositePrimaryKeys": {
         "lab_blocks_id": {
           "name": "lab_blocks_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -1529,17 +1432,13 @@
       "compositePrimaryKeys": {
         "lab_categories_id": {
           "name": "lab_categories_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "lab_categories_slug_unique": {
           "name": "lab_categories_slug_unique",
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "checkConstraint": {}
@@ -1604,12 +1503,8 @@
           "name": "lab_subcategories_category_id_lab_categories_id_fk",
           "tableFrom": "lab_subcategories",
           "tableTo": "lab_categories",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["category_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1617,9 +1512,7 @@
       "compositePrimaryKeys": {
         "lab_subcategories_id": {
           "name": "lab_subcategories_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -1779,12 +1672,8 @@
           "name": "lab_works_category_id_lab_categories_id_fk",
           "tableFrom": "lab_works",
           "tableTo": "lab_categories",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["category_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1792,12 +1681,8 @@
           "name": "lab_works_subcategory_id_lab_subcategories_id_fk",
           "tableFrom": "lab_works",
           "tableTo": "lab_subcategories",
-          "columnsFrom": [
-            "subcategory_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["subcategory_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1805,17 +1690,13 @@
       "compositePrimaryKeys": {
         "lab_works_id": {
           "name": "lab_works_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "lab_works_slug_unique": {
           "name": "lab_works_slug_unique",
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "checkConstraint": {}
@@ -1909,17 +1790,13 @@
       "compositePrimaryKeys": {
         "simulations_id": {
           "name": "simulations_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "simulations_slug_unique": {
           "name": "simulations_slug_unique",
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "checkConstraint": {}
@@ -1983,17 +1860,13 @@
       "compositePrimaryKeys": {
         "problem_types_id": {
           "name": "problem_types_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "problem_types_slug_unique": {
           "name": "problem_types_slug_unique",
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "checkConstraint": {}
@@ -2087,12 +1960,8 @@
           "name": "problems_problem_type_id_problem_types_id_fk",
           "tableFrom": "problems",
           "tableTo": "problem_types",
-          "columnsFrom": [
-            "problem_type_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["problem_type_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2100,9 +1969,7 @@
       "compositePrimaryKeys": {
         "problems_id": {
           "name": "problems_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -2151,10 +2018,7 @@
       "indexes": {
         "unique_jupyter_access": {
           "name": "unique_jupyter_access",
-          "columns": [
-            "notebook_id",
-            "local_user_id"
-          ],
+          "columns": ["notebook_id", "local_user_id"],
           "isUnique": true
         }
       },
@@ -2163,12 +2027,8 @@
           "name": "jupyter_notebook_access_notebook_id_jupyter_notebooks_id_fk",
           "tableFrom": "jupyter_notebook_access",
           "tableTo": "jupyter_notebooks",
-          "columnsFrom": [
-            "notebook_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["notebook_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2176,9 +2036,7 @@
       "compositePrimaryKeys": {
         "jupyter_notebook_access_id": {
           "name": "jupyter_notebook_access_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -2243,9 +2101,7 @@
       "compositePrimaryKeys": {
         "jupyter_notebooks_id": {
           "name": "jupyter_notebooks_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -2319,9 +2175,7 @@
       "compositePrimaryKeys": {
         "notifications_id": {
           "name": "notifications_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -2415,16 +2269,12 @@
       "indexes": {
         "timeline_type_idx": {
           "name": "timeline_type_idx",
-          "columns": [
-            "type"
-          ],
+          "columns": ["type"],
           "isUnique": false
         },
         "timeline_year_idx": {
           "name": "timeline_year_idx",
-          "columns": [
-            "year_start"
-          ],
+          "columns": ["year_start"],
           "isUnique": false
         }
       },
@@ -2432,9 +2282,7 @@
       "compositePrimaryKeys": {
         "timeline_entries_id": {
           "name": "timeline_entries_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -2533,25 +2381,17 @@
       "indexes": {
         "audit_actor_idx": {
           "name": "audit_actor_idx",
-          "columns": [
-            "actor_id",
-            "actor_type"
-          ],
+          "columns": ["actor_id", "actor_type"],
           "isUnique": false
         },
         "audit_resource_idx": {
           "name": "audit_resource_idx",
-          "columns": [
-            "resource",
-            "resource_id"
-          ],
+          "columns": ["resource", "resource_id"],
           "isUnique": false
         },
         "audit_created_at_idx": {
           "name": "audit_created_at_idx",
-          "columns": [
-            "created_at"
-          ],
+          "columns": ["created_at"],
           "isUnique": false
         }
       },
@@ -2559,9 +2399,7 @@
       "compositePrimaryKeys": {
         "audit_log_id": {
           "name": "audit_log_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -2619,9 +2457,7 @@
       "compositePrimaryKeys": {
         "images_id": {
           "name": "images_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},

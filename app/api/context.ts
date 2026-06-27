@@ -9,11 +9,16 @@
 import type { LocalUser } from "@db/schema";
 import { verifyStudentSession } from "./student-session";
 import { findLocalUserWithRole } from "./queries/localUsers";
-import { getRoleWithPermissions, type RoleWithPermissions } from "./queries/roles";
+import {
+  getRoleWithPermissions,
+  type RoleWithPermissions,
+} from "./queries/roles";
 
-export type UnifiedActor =
-  | { type: "local_user"; localUser: LocalUser & { roleName?: string }; role: RoleWithPermissions }
-  | null;
+export type UnifiedActor = {
+  type: "local_user";
+  localUser: LocalUser & { roleName?: string };
+  role: RoleWithPermissions;
+} | null;
 
 export type TrpcContext = {
   req: Request;
@@ -23,9 +28,10 @@ export type TrpcContext = {
   actor?: UnifiedActor;
 };
 
-export async function createContext(
-  opts: { req: Request; resHeaders: Headers }
-): Promise<TrpcContext> {
+export async function createContext(opts: {
+  req: Request;
+  resHeaders: Headers;
+}): Promise<TrpcContext> {
   const ctx: TrpcContext = { req: opts.req, resHeaders: opts.resHeaders };
 
   // ── Try local auth via JWT cookie ──

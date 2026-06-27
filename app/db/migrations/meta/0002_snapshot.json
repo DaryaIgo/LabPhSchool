@@ -97,25 +97,17 @@
       "indexes": {
         "audit_actor_idx": {
           "name": "audit_actor_idx",
-          "columns": [
-            "actor_id",
-            "actor_type"
-          ],
+          "columns": ["actor_id", "actor_type"],
           "isUnique": false
         },
         "audit_resource_idx": {
           "name": "audit_resource_idx",
-          "columns": [
-            "resource",
-            "resource_id"
-          ],
+          "columns": ["resource", "resource_id"],
           "isUnique": false
         },
         "audit_created_at_idx": {
           "name": "audit_created_at_idx",
-          "columns": [
-            "created_at"
-          ],
+          "columns": ["created_at"],
           "isUnique": false
         }
       },
@@ -123,9 +115,7 @@
       "compositePrimaryKeys": {
         "audit_log_id": {
           "name": "audit_log_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -189,24 +179,17 @@
       "indexes": {
         "unique_enrollment": {
           "name": "unique_enrollment",
-          "columns": [
-            "local_user_id",
-            "topic_id"
-          ],
+          "columns": ["local_user_id", "topic_id"],
           "isUnique": true
         },
         "enrollment_local_user_idx": {
           "name": "enrollment_local_user_idx",
-          "columns": [
-            "local_user_id"
-          ],
+          "columns": ["local_user_id"],
           "isUnique": false
         },
         "enrollment_topic_idx": {
           "name": "enrollment_topic_idx",
-          "columns": [
-            "topic_id"
-          ],
+          "columns": ["topic_id"],
           "isUnique": false
         }
       },
@@ -215,12 +198,8 @@
           "name": "enrollments_local_user_id_local_users_id_fk",
           "tableFrom": "enrollments",
           "tableTo": "local_users",
-          "columnsFrom": [
-            "local_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["local_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -228,12 +207,8 @@
           "name": "enrollments_topic_id_topics_id_fk",
           "tableFrom": "enrollments",
           "tableTo": "topics",
-          "columnsFrom": [
-            "topic_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["topic_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -241,12 +216,8 @@
           "name": "enrollments_created_by_local_users_id_fk",
           "tableFrom": "enrollments",
           "tableTo": "local_users",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -254,9 +225,7 @@
       "compositePrimaryKeys": {
         "enrollments_id": {
           "name": "enrollments_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -337,12 +306,8 @@
           "name": "lab_results_user_id_users_id_fk",
           "tableFrom": "lab_results",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -350,12 +315,8 @@
           "name": "lab_results_lab_id_labs_id_fk",
           "tableFrom": "lab_results",
           "tableTo": "labs",
-          "columnsFrom": [
-            "lab_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["lab_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -363,9 +324,7 @@
       "compositePrimaryKeys": {
         "lab_results_id": {
           "name": "lab_results_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -452,12 +411,8 @@
           "name": "labs_topic_id_topics_id_fk",
           "tableFrom": "labs",
           "tableTo": "topics",
-          "columnsFrom": [
-            "topic_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["topic_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -465,17 +420,13 @@
       "compositePrimaryKeys": {
         "labs_id": {
           "name": "labs_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "labs_slug_unique": {
           "name": "labs_slug_unique",
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "checkConstraint": {}
@@ -561,16 +512,12 @@
       "indexes": {
         "local_user_status_idx": {
           "name": "local_user_status_idx",
-          "columns": [
-            "status"
-          ],
+          "columns": ["status"],
           "isUnique": false
         },
         "local_user_created_by_idx": {
           "name": "local_user_created_by_idx",
-          "columns": [
-            "created_by"
-          ],
+          "columns": ["created_by"],
           "isUnique": false
         }
       },
@@ -579,12 +526,8 @@
           "name": "local_users_role_id_roles_id_fk",
           "tableFrom": "local_users",
           "tableTo": "roles",
-          "columnsFrom": [
-            "role_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["role_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -592,12 +535,8 @@
           "name": "local_users_created_by_local_users_id_fk",
           "tableFrom": "local_users",
           "tableTo": "local_users",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -605,17 +544,13 @@
       "compositePrimaryKeys": {
         "local_users_id": {
           "name": "local_users_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "local_users_login_unique": {
           "name": "local_users_login_unique",
-          "columns": [
-            "login"
-          ]
+          "columns": ["login"]
         }
       },
       "checkConstraint": {}
@@ -670,10 +605,7 @@
       "indexes": {
         "resource_action_idx": {
           "name": "resource_action_idx",
-          "columns": [
-            "resource",
-            "action"
-          ],
+          "columns": ["resource", "action"],
           "isUnique": false
         }
       },
@@ -681,17 +613,13 @@
       "compositePrimaryKeys": {
         "permissions_id": {
           "name": "permissions_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "permissions_name_unique": {
           "name": "permissions_name_unique",
-          "columns": [
-            "name"
-          ]
+          "columns": ["name"]
         }
       },
       "checkConstraint": {}
@@ -756,12 +684,8 @@
           "name": "problem_types_subtopic_id_subtopics_id_fk",
           "tableFrom": "problem_types",
           "tableTo": "subtopics",
-          "columnsFrom": [
-            "subtopic_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["subtopic_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -769,17 +693,13 @@
       "compositePrimaryKeys": {
         "problem_types_id": {
           "name": "problem_types_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "problem_types_slug_unique": {
           "name": "problem_types_slug_unique",
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "checkConstraint": {}
@@ -873,12 +793,8 @@
           "name": "problems_problem_type_id_problem_types_id_fk",
           "tableFrom": "problems",
           "tableTo": "problem_types",
-          "columnsFrom": [
-            "problem_type_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["problem_type_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -886,9 +802,7 @@
       "compositePrimaryKeys": {
         "problems_id": {
           "name": "problems_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -956,12 +870,8 @@
           "name": "progress_user_id_users_id_fk",
           "tableFrom": "progress",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -969,12 +879,8 @@
           "name": "progress_subtopic_id_subtopics_id_fk",
           "tableFrom": "progress",
           "tableTo": "subtopics",
-          "columnsFrom": [
-            "subtopic_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["subtopic_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -982,9 +888,7 @@
       "compositePrimaryKeys": {
         "progress_id": {
           "name": "progress_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -1049,9 +953,7 @@
       "compositePrimaryKeys": {
         "resources_id": {
           "name": "resources_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -1093,10 +995,7 @@
       "indexes": {
         "unique_role_permission": {
           "name": "unique_role_permission",
-          "columns": [
-            "role_id",
-            "permission_id"
-          ],
+          "columns": ["role_id", "permission_id"],
           "isUnique": true
         }
       },
@@ -1105,12 +1004,8 @@
           "name": "role_permissions_role_id_roles_id_fk",
           "tableFrom": "role_permissions",
           "tableTo": "roles",
-          "columnsFrom": [
-            "role_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["role_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1118,12 +1013,8 @@
           "name": "role_permissions_permission_id_permissions_id_fk",
           "tableFrom": "role_permissions",
           "tableTo": "permissions",
-          "columnsFrom": [
-            "permission_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["permission_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1131,9 +1022,7 @@
       "compositePrimaryKeys": {
         "role_permissions_id": {
           "name": "role_permissions_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -1177,17 +1066,13 @@
       "compositePrimaryKeys": {
         "roles_id": {
           "name": "roles_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "roles_name_unique": {
           "name": "roles_name_unique",
-          "columns": [
-            "name"
-          ]
+          "columns": ["name"]
         }
       },
       "checkConstraint": {}
@@ -1270,12 +1155,8 @@
           "name": "student_progress_local_user_id_local_users_id_fk",
           "tableFrom": "student_progress",
           "tableTo": "local_users",
-          "columnsFrom": [
-            "local_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["local_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1283,12 +1164,8 @@
           "name": "student_progress_subtopic_id_subtopics_id_fk",
           "tableFrom": "student_progress",
           "tableTo": "subtopics",
-          "columnsFrom": [
-            "subtopic_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["subtopic_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1296,9 +1173,7 @@
       "compositePrimaryKeys": {
         "student_progress_id": {
           "name": "student_progress_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -1364,12 +1239,8 @@
           "name": "subtopics_topic_id_topics_id_fk",
           "tableFrom": "subtopics",
           "tableTo": "topics",
-          "columnsFrom": [
-            "topic_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["topic_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1377,9 +1248,7 @@
       "compositePrimaryKeys": {
         "subtopics_id": {
           "name": "subtopics_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -1461,12 +1330,8 @@
           "name": "topic_nodes_parent_id_topic_nodes_id_fk",
           "tableFrom": "topic_nodes",
           "tableTo": "topic_nodes",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1474,17 +1339,13 @@
       "compositePrimaryKeys": {
         "topic_nodes_id": {
           "name": "topic_nodes_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "topic_nodes_slug_unique": {
           "name": "topic_nodes_slug_unique",
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "checkConstraint": {}
@@ -1563,17 +1424,13 @@
       "compositePrimaryKeys": {
         "topics_id": {
           "name": "topics_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "topics_slug_unique": {
           "name": "topics_slug_unique",
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "checkConstraint": {}
@@ -1655,12 +1512,8 @@
           "name": "users_role_id_roles_id_fk",
           "tableFrom": "users",
           "tableTo": "roles",
-          "columnsFrom": [
-            "role_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["role_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1668,17 +1521,13 @@
       "compositePrimaryKeys": {
         "users_id": {
           "name": "users_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "users_union_id_unique": {
           "name": "users_union_id_unique",
-          "columns": [
-            "union_id"
-          ]
+          "columns": ["union_id"]
         }
       },
       "checkConstraint": {}

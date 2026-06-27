@@ -7,7 +7,11 @@ interface Props {
   onStateChange?: (state: Record<string, number>) => void;
 }
 
-export default function UniformLinearMotion({ params, isRunning, onStateChange }: Props) {
+export default function UniformLinearMotion({
+  params,
+  isRunning,
+  onStateChange,
+}: Props) {
   const speed = Number(params["speed"] || 5);
   const time = Number(params["time"] || 10);
   const startX = Number(params["startX"] || 0);
@@ -117,7 +121,11 @@ export default function UniformLinearMotion({ params, isRunning, onStateChange }
       ctx.font = "13px sans-serif";
       ctx.fillText(`t = ${currentTime.toFixed(1)} с`, 495, 205);
       ctx.fillText(`s = ${(speed * currentTime).toFixed(1)} м`, 495, 230);
-      ctx.fillText(`x = ${(startX + speed * currentTime).toFixed(1)} м`, 495, 255);
+      ctx.fillText(
+        `x = ${(startX + speed * currentTime).toFixed(1)} м`,
+        495,
+        255
+      );
 
       // Title
       ctx.fillStyle = "#ffffff";

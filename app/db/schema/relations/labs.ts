@@ -12,12 +12,15 @@ export const labCategoriesRelations = relations(labCategories, ({ many }) => ({
   works: many(labWorks),
 }));
 
-export const labSubcategoriesRelations = relations(labSubcategories, ({ one }) => ({
-  category: one(labCategories, {
-    fields: [labSubcategories.categoryId],
-    references: [labCategories.id],
-  }),
-}));
+export const labSubcategoriesRelations = relations(
+  labSubcategories,
+  ({ one }) => ({
+    category: one(labCategories, {
+      fields: [labSubcategories.categoryId],
+      references: [labCategories.id],
+    }),
+  })
+);
 
 export const labWorksRelations = relations(labWorks, ({ one, many }) => ({
   category: one(labCategories, {
@@ -38,7 +41,6 @@ export const labBlocksRelations = relations(labBlocks, ({ one }) => ({
     references: [labWorks.id],
   }),
 }));
-
 
 export const labAnalyticsRelations = relations(labAnalytics, ({ one }) => ({
   labWork: one(labWorks, {

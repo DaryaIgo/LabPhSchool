@@ -74,7 +74,8 @@ export default function LabSubmissions() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>("submitted");
   const [search, setSearch] = useState("");
-  const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
+  const [selectedSubmission, setSelectedSubmission] =
+    useState<Submission | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [grade, setGrade] = useState<string>("");
   const [comment, setComment] = useState("");
@@ -103,7 +104,7 @@ export default function LabSubmissions() {
       setDetailOpen(false);
       setSelectedSubmission(null);
     },
-    onError: (err) => toast.error(err.message),
+    onError: err => toast.error(err.message),
   });
 
   const handleGrade = () => {
@@ -123,15 +124,16 @@ export default function LabSubmissions() {
     setDetailOpen(true);
   };
 
-  const filteredItems = data?.items.filter((item) => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return (
-      item.studentName?.toLowerCase().includes(q) ||
-      item.studentLogin.toLowerCase().includes(q) ||
-      item.labWorkTitle.toLowerCase().includes(q)
-    );
-  }) ?? [];
+  const filteredItems =
+    data?.items.filter(item => {
+      if (!search) return true;
+      const q = search.toLowerCase();
+      return (
+        item.studentName?.toLowerCase().includes(q) ||
+        item.studentLogin.toLowerCase().includes(q) ||
+        item.labWorkTitle.toLowerCase().includes(q)
+      );
+    }) ?? [];
 
   if (!user || user.role !== "admin") return null;
 
@@ -155,7 +157,7 @@ export default function LabSubmissions() {
           <Input
             placeholder="Поиск по студенту или работе..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={e => setSearch(e.target.value)}
             className="pl-10 bg-[#1e2529] border-[#37474f] text-white"
           />
         </div>
@@ -210,7 +212,7 @@ export default function LabSubmissions() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredItems.map((item) => (
+                  {filteredItems.map(item => (
                     <tr
                       key={item.id}
                       className="border-b border-[#2a3237] hover:bg-[#263238] transition-colors"
@@ -222,16 +224,24 @@ export default function LabSubmissions() {
                             <div className="text-sm font-medium text-white">
                               {item.studentName || item.studentLogin}
                             </div>
-                            <div className="text-xs text-gray-500">{item.studentLogin}</div>
+                            <div className="text-xs text-gray-500">
+                              {item.studentLogin}
+                            </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="text-sm text-white">{item.labWorkTitle}</div>
-                        <div className="text-xs text-gray-500">{item.labWorkSlug}</div>
+                        <div className="text-sm text-white">
+                          {item.labWorkTitle}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {item.labWorkSlug}
+                        </div>
                       </td>
                       <td className="px-4 py-3">
-                        <Badge className={`${STATUS_COLORS[item.status] ?? "bg-gray-600"} text-xs`}>
+                        <Badge
+                          className={`${STATUS_COLORS[item.status] ?? "bg-gray-600"} text-xs`}
+                        >
                           {STATUS_LABELS[item.status] ?? item.status}
                         </Badge>
                       </td>
@@ -239,7 +249,9 @@ export default function LabSubmissions() {
                         {item.grade ? (
                           <div className="flex items-center gap-1">
                             <Star className="h-4 w-4 text-[#ffc832] fill-[#ffc832]" />
-                            <span className="text-sm font-bold text-white">{item.grade}</span>
+                            <span className="text-sm font-bold text-white">
+                              {item.grade}
+                            </span>
                           </div>
                         ) : (
                           <span className="text-sm text-gray-500">—</span>
@@ -279,7 +291,7 @@ export default function LabSubmissions() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page <= 1}
                   className="bg-[#1e2529] border-[#37474f] text-white hover:bg-[#263238]"
                 >
@@ -288,7 +300,7 @@ export default function LabSubmissions() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
+                  onClick={() => setPage(p => Math.min(data.totalPages, p + 1))}
                   disabled={page >= data.totalPages}
                   className="bg-[#1e2529] border-[#37474f] text-white hover:bg-[#263238]"
                 >
@@ -309,18 +321,20 @@ export default function LabSubmissions() {
               {detailData?.labWorkTitle ?? selectedSubmission?.labWorkTitle}
             </DialogTitle>
             <DialogDescription className="text-gray-400">
-              {detailData?.studentName || detailData?.studentLogin}
-              {" "}({detailData?.studentLogin})
+              {detailData?.studentName || detailData?.studentLogin} (
+              {detailData?.studentLogin})
             </DialogDescription>
           </DialogHeader>
 
           {detailData && (
             <div className="space-y-6">
-
               {/* Status & Dates */}
               <div className="flex flex-wrap gap-3">
-                <Badge className={`${STATUS_COLORS[String(detailData.status)] ?? ""}`}>
-                  {STATUS_LABELS[String(detailData.status)] ?? String(detailData.status)}
+                <Badge
+                  className={`${STATUS_COLORS[String(detailData.status)] ?? ""}`}
+                >
+                  {STATUS_LABELS[String(detailData.status)] ??
+                    String(detailData.status)}
                 </Badge>
                 {detailData.grade && (
                   <Badge className="bg-[#ffc832] text-[#0d1117]">
@@ -331,36 +345,52 @@ export default function LabSubmissions() {
               </div>
 
               {/* Measurements */}
-              {Array.isArray(detailData.measurements) && detailData.measurements.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-semibold text-[#2eff8c] mb-2 flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4" />
-                    Измерения
-                  </h4>
-                  <div className="bg-[#0d1117] border border-[#37474f] rounded-lg overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-[#37474f]">
-                          {Object.keys(detailData.measurements[0] as Record<string, unknown>).map((key) => (
-                            <th key={key} className="px-3 py-2 text-left text-xs text-gray-400 uppercase">
-                              {key}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(detailData.measurements as Record<string, unknown>[]).map((row, i) => (
-                          <tr key={i} className="border-b border-[#2a3237]">
-                            {Object.values(row).map((val, j) => (
-                              <td key={j} className="px-3 py-2 text-[#c8cdd1]">{String(val)}</td>
+              {Array.isArray(detailData.measurements) &&
+                detailData.measurements.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-[#2eff8c] mb-2 flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Измерения
+                    </h4>
+                    <div className="bg-[#0d1117] border border-[#37474f] rounded-lg overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-[#37474f]">
+                            {Object.keys(
+                              detailData.measurements[0] as Record<
+                                string,
+                                unknown
+                              >
+                            ).map(key => (
+                              <th
+                                key={key}
+                                className="px-3 py-2 text-left text-xs text-gray-400 uppercase"
+                              >
+                                {key}
+                              </th>
                             ))}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {(
+                            detailData.measurements as Record<string, unknown>[]
+                          ).map((row, i) => (
+                            <tr key={i} className="border-b border-[#2a3237]">
+                              {Object.values(row).map((val, j) => (
+                                <td
+                                  key={j}
+                                  className="px-3 py-2 text-[#c8cdd1]"
+                                >
+                                  {String(val)}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Conclusion */}
               {detailData.conclusion && (
@@ -390,16 +420,20 @@ export default function LabSubmissions() {
 
               {/* Grade Form */}
               <div className="border-t border-[#37474f] pt-4 space-y-4">
-                <h4 className="text-sm font-semibold text-white">Оценка работы</h4>
+                <h4 className="text-sm font-semibold text-white">
+                  Оценка работы
+                </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-xs text-gray-400 mb-2 block">Оценка (1–5)</Label>
+                    <Label className="text-xs text-gray-400 mb-2 block">
+                      Оценка (1–5)
+                    </Label>
                     <Select value={grade} onValueChange={setGrade}>
                       <SelectTrigger className="bg-[#0d1117] border-[#37474f] text-white">
                         <SelectValue placeholder="Выберите оценку" />
                       </SelectTrigger>
                       <SelectContent className="bg-[#1e2529] border-[#37474f]">
-                        {[1, 2, 3, 4, 5].map((n) => (
+                        {[1, 2, 3, 4, 5].map(n => (
                           <SelectItem key={n} value={String(n)}>
                             {n}
                           </SelectItem>
@@ -409,10 +443,12 @@ export default function LabSubmissions() {
                   </div>
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-400 mb-2 block">Комментарий</Label>
+                  <Label className="text-xs text-gray-400 mb-2 block">
+                    Комментарий
+                  </Label>
                   <Textarea
                     value={comment}
-                    onChange={(e) => setComment(e.target.value)}
+                    onChange={e => setComment(e.target.value)}
                     placeholder="Ваш комментарий к работе..."
                     rows={4}
                     className="bg-[#0d1117] border-[#37474f] text-white resize-none"
@@ -425,7 +461,9 @@ export default function LabSubmissions() {
                     className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70]"
                   >
                     <CheckCircle2 className="h-4 w-4 mr-2" />
-                    {gradeMutation.isPending ? "Сохранение..." : "Сохранить оценку"}
+                    {gradeMutation.isPending
+                      ? "Сохранение..."
+                      : "Сохранить оценку"}
                   </Button>
                   <Button
                     variant="outline"

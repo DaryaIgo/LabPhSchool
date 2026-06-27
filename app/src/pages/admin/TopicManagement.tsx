@@ -14,7 +14,6 @@ import {
 import {
   TreePine,
   Plus,
-
   Trash2,
   Save,
   Download,
@@ -75,7 +74,7 @@ function TreeItem({
       <button
         onClick={() => {
           onSelect(node.id);
-          if (hasChildren) setExpanded((e) => !e);
+          if (hasChildren) setExpanded(e => !e);
         }}
         className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors ${
           selectedId === node.id
@@ -86,17 +85,13 @@ function TreeItem({
       >
         {hasChildren ? (
           <span
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation();
-              setExpanded((e) => !e);
+              setExpanded(e => !e);
             }}
             className="shrink-0"
           >
-            {expanded ? (
-              <ChevronDown size={14} />
-            ) : (
-              <ChevronRight size={14} />
-            )}
+            {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           </span>
         ) : (
           <span className="w-[14px] shrink-0" />
@@ -106,7 +101,7 @@ function TreeItem({
       </button>
       {hasChildren && expanded && (
         <div>
-          {node.children.map((child) => (
+          {node.children.map(child => (
             <TreeItem
               key={child.id}
               node={child}
@@ -145,11 +140,14 @@ export default function TopicManagement() {
   const importFileRef = useRef<HTMLInputElement>(null);
   const lastSelectedIdRef = useRef<number | null>(null);
 
-  const { data: nodes, isLoading } = trpc.admin.listTopicNodes.useQuery(undefined, {
-    enabled: !!user && user.role === "admin",
-    refetchOnWindowFocus: false,
-    staleTime: 60_000,
-  });
+  const { data: nodes, isLoading } = trpc.admin.listTopicNodes.useQuery(
+    undefined,
+    {
+      enabled: !!user && user.role === "admin",
+      refetchOnWindowFocus: false,
+      staleTime: 60_000,
+    }
+  );
 
   const { data: images } = trpc.admin.listImages.useQuery(undefined, {
     enabled: !!user && user.role === "admin" && galleryOpen,
@@ -158,23 +156,26 @@ export default function TopicManagement() {
 
   const tree = useMemo(() => buildTree(nodes || []), [nodes]);
 
-  const loadNodeIntoForm = useCallback((id: number) => {
-    const node = nodes?.find((n) => n.id === id);
-    if (node) {
-      setForm({
-        title: node.title,
-        slug: node.slug,
-        order: node.order,
-        color: node.color || "#2eff8c",
-        content: node.content || "",
-        jupyterUrl: node.jupyterUrl || "",
-      });
-      setIsEditing(true);
-    }
-  }, [nodes]);
+  const loadNodeIntoForm = useCallback(
+    (id: number) => {
+      const node = nodes?.find(n => n.id === id);
+      if (node) {
+        setForm({
+          title: node.title,
+          slug: node.slug,
+          order: node.order,
+          color: node.color || "#2eff8c",
+          content: node.content || "",
+          jupyterUrl: node.jupyterUrl || "",
+        });
+        setIsEditing(true);
+      }
+    },
+    [nodes]
+  );
 
   const createMutation = trpc.admin.createTopicNode.useMutation({
-    onSuccess: (res) => {
+    onSuccess: res => {
       toast("Узел создан");
       utils.admin.listTopicNodes.invalidate();
       utils.course.topicNodes.invalidate();
@@ -185,7 +186,7 @@ export default function TopicManagement() {
       }
       setCreatingChildOf(null);
     },
-    onError: (err) => toast(err.message),
+    onError: err => toast(err.message),
   });
 
   const updateMutation = trpc.admin.updateTopicNode.useMutation({
@@ -194,7 +195,7 @@ export default function TopicManagement() {
       utils.admin.listTopicNodes.invalidate();
       utils.course.topicNodes.invalidate();
     },
-    onError: (err) => toast(err.message),
+    onError: err => toast(err.message),
   });
 
   const deleteMutation = trpc.admin.deleteTopicNode.useMutation({
@@ -207,11 +208,11 @@ export default function TopicManagement() {
       setForm({ ...initialForm });
       setIsEditing(false);
     },
-    onError: (err) => toast(err.message),
+    onError: err => toast(err.message),
   });
 
   const importMutation = trpc.admin.importTopicNode.useMutation({
-    onSuccess: (res) => {
+    onSuccess: res => {
       toast("Импорт завершен");
       utils.admin.listTopicNodes.invalidate();
       utils.course.topicNodes.invalidate();
@@ -223,7 +224,7 @@ export default function TopicManagement() {
         setIsEditing(true);
       }
     },
-    onError: (err) => toast(err.message),
+    onError: err => toast(err.message),
   });
 
   const handleSave = useCallback(() => {
@@ -252,7 +253,14 @@ export default function TopicManagement() {
         jupyterUrl: form.jupyterUrl || null,
       });
     }
-  }, [form, isEditing, selectedId, creatingChildOf, updateMutation, createMutation]);
+  }, [
+    form,
+    isEditing,
+    selectedId,
+    creatingChildOf,
+    updateMutation,
+    createMutation,
+  ]);
 
   const handleDelete = useCallback(() => {
     if (!selectedId) return;
@@ -266,7 +274,7 @@ export default function TopicManagement() {
     setCreatingChildOf(selectedId);
     setSelectedId(null);
     const siblingCount =
-      nodes?.filter((n) => n.parentId === selectedId).length ?? 0;
+      nodes?.filter(n => n.parentId === selectedId).length ?? 0;
     setForm({ ...initialForm, order: siblingCount + 1 });
     setIsEditing(false);
   }, [selectedId, nodes]);
@@ -289,13 +297,15 @@ export default function TopicManagement() {
         }
         if (data.url) {
           const imageMarkdown = `\n![${file.name}](${data.url})\n`;
-          setForm((f) => ({ ...f, content: f.content + imageMarkdown }));
+          setForm(f => ({ ...f, content: f.content + imageMarkdown }));
           toast("Картинка загружена");
         } else {
           toast("Ошибка загрузки: сервер не вернул ссылку");
         }
       } catch (err) {
-        toast(`Ошибка загрузки: ${err instanceof Error ? err.message : "неизвестная ошибка"}`);
+        toast(
+          `Ошибка загрузки: ${err instanceof Error ? err.message : "неизвестная ошибка"}`
+        );
       }
       if (fileInputRef.current) fileInputRef.current.value = "";
     },
@@ -411,12 +421,12 @@ export default function TopicManagement() {
             </div>
           ) : (
             <div className="space-y-0.5">
-              {tree.map((node) => (
+              {tree.map(node => (
                 <TreeItem
                   key={node.id}
                   node={node}
                   selectedId={selectedId}
-                  onSelect={(id) => {
+                  onSelect={id => {
                     if (lastSelectedIdRef.current !== id) {
                       lastSelectedIdRef.current = id;
                       loadNodeIntoForm(id);
@@ -436,7 +446,11 @@ export default function TopicManagement() {
             <div className="max-w-4xl mx-auto space-y-5">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">
-                  {isEditing ? "Редактирование" : creatingChildOf !== null ? "Новый дочерний узел" : "Новая тема"}
+                  {isEditing
+                    ? "Редактирование"
+                    : creatingChildOf !== null
+                      ? "Новый дочерний узел"
+                      : "Новая тема"}
                 </h2>
                 <div className="flex items-center gap-2">
                   {isEditing && (
@@ -465,7 +479,9 @@ export default function TopicManagement() {
                     size="sm"
                     className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
                     onClick={handleSave}
-                    disabled={createMutation.isPending || updateMutation.isPending}
+                    disabled={
+                      createMutation.isPending || updateMutation.isPending
+                    }
                   >
                     <Save className="h-4 w-4 mr-1" />
                     {createMutation.isPending || updateMutation.isPending
@@ -491,8 +507,8 @@ export default function TopicManagement() {
                   <Label className="text-xs text-[#798389]">Название</Label>
                   <Input
                     value={form.title}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, title: e.target.value }))
+                    onChange={e =>
+                      setForm(f => ({ ...f, title: e.target.value }))
                     }
                     className="bg-[#1e2529] border-[#37474f] mt-1"
                     placeholder="Название темы"
@@ -502,8 +518,8 @@ export default function TopicManagement() {
                   <Label className="text-xs text-[#798389]">Slug</Label>
                   <Input
                     value={form.slug}
-                    onChange={(e) =>
-                      setForm((f) => ({
+                    onChange={e =>
+                      setForm(f => ({
                         ...f,
                         slug: e.target.value
                           .toLowerCase()
@@ -523,8 +539,8 @@ export default function TopicManagement() {
                   <Input
                     type="number"
                     value={form.order}
-                    onChange={(e) =>
-                      setForm((f) => ({
+                    onChange={e =>
+                      setForm(f => ({
                         ...f,
                         order: Number(e.target.value),
                       }))
@@ -539,15 +555,15 @@ export default function TopicManagement() {
                     <Input
                       type="color"
                       value={form.color}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, color: e.target.value }))
+                      onChange={e =>
+                        setForm(f => ({ ...f, color: e.target.value }))
                       }
                       className="w-12 h-9 p-1 bg-[#1e2529] border-[#37474f]"
                     />
                     <Input
                       value={form.color}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, color: e.target.value }))
+                      onChange={e =>
+                        setForm(f => ({ ...f, color: e.target.value }))
                       }
                       className="flex-1 bg-[#1e2529] border-[#37474f]"
                     />
@@ -561,8 +577,8 @@ export default function TopicManagement() {
                 </Label>
                 <Input
                   value={form.jupyterUrl}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, jupyterUrl: e.target.value }))
+                  onChange={e =>
+                    setForm(f => ({ ...f, jupyterUrl: e.target.value }))
                   }
                   className="bg-[#1e2529] border-[#37474f] mt-1"
                   placeholder="https://..."
@@ -605,9 +621,7 @@ export default function TopicManagement() {
                 <div data-color-mode="dark">
                   <MDEditor
                     value={form.content}
-                    onChange={(v) =>
-                      setForm((f) => ({ ...f, content: v || "" }))
-                    }
+                    onChange={v => setForm(f => ({ ...f, content: v || "" }))}
                     height={500}
                     preview="live"
                     previewOptions={mdPreviewOptions}
@@ -634,7 +648,7 @@ export default function TopicManagement() {
           </DialogHeader>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-2">
             {images && images.length > 0 ? (
-              images.map((img) => {
+              images.map(img => {
                 const url = `/uploads/${img.id}/${img.filename}`;
                 const markdown = `![${img.originalName}](${url})`;
                 return (
@@ -649,7 +663,10 @@ export default function TopicManagement() {
                         className="max-w-full max-h-full object-contain"
                       />
                     </div>
-                    <p className="text-xs text-[#798389] truncate mb-2" title={img.originalName}>
+                    <p
+                      className="text-xs text-[#798389] truncate mb-2"
+                      title={img.originalName}
+                    >
                       {img.originalName}
                     </p>
                     <Button
@@ -706,7 +723,7 @@ export default function TopicManagement() {
             </div>
             <textarea
               value={importMd}
-              onChange={(e) => setImportMd(e.target.value)}
+              onChange={e => setImportMd(e.target.value)}
               className="w-full h-64 p-3 bg-[#262e33] border border-[#37474f] rounded-md text-sm font-mono resize-none focus:outline-none focus:ring-2 focus:ring-[#2eff8c]"
               placeholder={`---\ntitle: "Название"\nslug: "slug"\norder: 1\ncolor: "#2eff8c"\n---\n\nСодержимое в Markdown...`}
             />

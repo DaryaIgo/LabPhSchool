@@ -33,7 +33,7 @@ export const permissions = mysqlTable(
     description: varchar("description", { length: 255 }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
-  (table) => ({
+  table => ({
     resourceActionIdx: index("resource_action_idx").on(
       table.resource,
       table.action
@@ -55,7 +55,7 @@ export const rolePermissions = mysqlTable(
       .references(() => permissions.id),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
-  (table) => ({
+  table => ({
     uniqueRolePermission: uniqueIndex("unique_role_permission").on(
       table.roleId,
       table.permissionId
@@ -111,7 +111,7 @@ export const localUsers = mysqlTable(
       .$onUpdate(() => new Date()),
     lastLoginAt: timestamp("last_login_at"),
   },
-  (table) => ({
+  table => ({
     statusIdx: index("local_user_status_idx").on(table.status),
     createdByIdx: index("local_user_created_by_idx").on(table.createdBy),
   })

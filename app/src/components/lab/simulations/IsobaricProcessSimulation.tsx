@@ -16,7 +16,7 @@ export default function IsobaricProcessSimulation({
   const amount = Number(params["amount"] || 0.05); // mol
 
   const R = 8.31;
-  const volume = (amount * R * temperature) / (pressure * 1000) * 1000; // L
+  const volume = ((amount * R * temperature) / (pressure * 1000)) * 1000; // L
   const vt = volume / temperature;
 
   const draw = useMemo(() => {
@@ -33,9 +33,11 @@ export default function IsobaricProcessSimulation({
       const minVolume = 0.5;
       const maxVolume = 8;
       const pistonHeight =
-        maxCylHeight *
-        (1 - (volume - minVolume) / (maxVolume - minVolume));
-      const clampedPiston = Math.max(20, Math.min(pistonHeight, maxCylHeight - 20));
+        maxCylHeight * (1 - (volume - minVolume) / (maxVolume - minVolume));
+      const clampedPiston = Math.max(
+        20,
+        Math.min(pistonHeight, maxCylHeight - 20)
+      );
 
       // Weight on piston = constant pressure
       ctx.strokeStyle = "#788389";
@@ -88,12 +90,20 @@ export default function IsobaricProcessSimulation({
       ctx.fillRect(cylX - 10, cylY + maxCylHeight + 5, cylWidth + 20, 15);
       ctx.fillStyle = "#ff7043";
       ctx.font = "11px sans-serif";
-      ctx.fillText("Нагреватель", cylX + cylWidth / 2, cylY + maxCylHeight + 35);
+      ctx.fillText(
+        "Нагреватель",
+        cylX + cylWidth / 2,
+        cylY + maxCylHeight + 35
+      );
 
       // Volume label
       ctx.fillStyle = "#ffffff";
       ctx.font = "13px sans-serif";
-      ctx.fillText(`V = ${volume.toFixed(2)} л`, cylX + cylWidth / 2, cylY + maxCylHeight + 55);
+      ctx.fillText(
+        `V = ${volume.toFixed(2)} л`,
+        cylX + cylWidth / 2,
+        cylY + maxCylHeight + 55
+      );
 
       // Thermometer
       const thermX = cylX + cylWidth + 50;
@@ -113,7 +123,11 @@ export default function IsobaricProcessSimulation({
       ctx.fill();
       ctx.fillStyle = "#ffffff";
       ctx.font = "12px sans-serif";
-      ctx.fillText(`${temperature.toFixed(0)} К`, thermX + 20, thermY + 185 - mercuryHeight);
+      ctx.fillText(
+        `${temperature.toFixed(0)} К`,
+        thermX + 20,
+        thermY + 185 - mercuryHeight
+      );
 
       // V-T graph
       const graphX = 420;
@@ -150,16 +164,17 @@ export default function IsobaricProcessSimulation({
       ctx.beginPath();
       for (let i = 0; i <= 50; i++) {
         const tPlot = minT + (i / 50) * (maxT - minT);
-        const vPlot = (amount * R * tPlot) / (pressure * 1000) * 1000;
-        const px = graphX + 30 + ((tPlot - minT) / (maxT - minT)) * (graphW - 40);
-        const py =
-          graphY + graphH - 25 - ((vPlot - 0) / 8) * (graphH - 40);
+        const vPlot = ((amount * R * tPlot) / (pressure * 1000)) * 1000;
+        const px =
+          graphX + 30 + ((tPlot - minT) / (maxT - minT)) * (graphW - 40);
+        const py = graphY + graphH - 25 - ((vPlot - 0) / 8) * (graphH - 40);
         if (i === 0) ctx.moveTo(px, py);
         else ctx.lineTo(px, py);
       }
       ctx.stroke();
 
-      const curPx = graphX + 30 + ((temperature - minT) / (maxT - minT)) * (graphW - 40);
+      const curPx =
+        graphX + 30 + ((temperature - minT) / (maxT - minT)) * (graphW - 40);
       const curPy = graphY + graphH - 25 - ((volume - 0) / 8) * (graphH - 40);
       ctx.fillStyle = "#ff7043";
       ctx.beginPath();
@@ -192,11 +207,6 @@ export default function IsobaricProcessSimulation({
   }, [pressure, temperature, amount, volume, vt, onStateChange]);
 
   return (
-    <SimulationCanvas
-      draw={draw}
-      width={700}
-      height={400}
-      isRunning={false}
-    />
+    <SimulationCanvas draw={draw} width={700} height={400} isRunning={false} />
   );
 }

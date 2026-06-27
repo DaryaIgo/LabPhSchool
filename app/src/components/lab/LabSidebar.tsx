@@ -33,7 +33,7 @@ export default function LabSidebar({
   return (
     <aside className="w-[64px] flex-shrink-0 bg-[#1e2428] flex flex-col items-center sticky top-[80px] self-start h-fit rounded-2xl py-3 gap-2 mx-3 my-2 relative z-20 shadow-lg shadow-black/20">
       <nav className="flex flex-col gap-1 w-full px-1.5">
-        {navItems.map((item) => {
+        {navItems.map(item => {
           const isActive = activeTab === item.id;
           const isHovered = hoveredId === item.id;
           const Icon = item.icon;
@@ -71,8 +71,16 @@ export default function LabSidebar({
 
                 <div
                   style={{
-                    transform: isActive ? "scale(1.1)" : isHovered ? "scale(1.08)" : "scale(1)",
-                    color: isActive ? item.color : isHovered ? "#c8cdd1" : "#5c6b73",
+                    transform: isActive
+                      ? "scale(1.1)"
+                      : isHovered
+                        ? "scale(1.08)"
+                        : "scale(1)",
+                    color: isActive
+                      ? item.color
+                      : isHovered
+                        ? "#c8cdd1"
+                        : "#5c6b73",
                     transition: "all 0.2s",
                   }}
                 >
@@ -87,8 +95,18 @@ export default function LabSidebar({
       <div className="w-6 h-px bg-[#2a3237]/60 my-1" />
 
       <div className="flex flex-col gap-1.5 px-1.5 pb-1">
-        <ActionButton icon={Save} label="Сохранить" onClick={onSave} color="#2eff8c" />
-        <ActionButton icon={Send} label="Отправить" onClick={onSubmit} color="#ffc832" />
+        <ActionButton
+          icon={Save}
+          label="Сохранить"
+          onClick={onSave}
+          color="#2eff8c"
+        />
+        <ActionButton
+          icon={Send}
+          label="Отправить"
+          onClick={onSubmit}
+          color="#ffc832"
+        />
       </div>
     </aside>
   );

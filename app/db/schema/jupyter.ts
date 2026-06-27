@@ -14,7 +14,10 @@ import {
 export const jupyterNotebooks = mysqlTable("jupyter_notebooks", {
   id: serial("id").primaryKey(),
   // Soft reference to content.topic_nodes.id (content domain).
-  subtopicNodeId: bigint("subtopic_node_id", { mode: "number", unsigned: true }).notNull(),
+  subtopicNodeId: bigint("subtopic_node_id", {
+    mode: "number",
+    unsigned: true,
+  }).notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   filename: varchar("filename", { length: 255 }).notNull(),
   filePath: varchar("file_path", { length: 500 }).notNull(),
@@ -33,13 +36,15 @@ export const jupyterNotebookAccess = mysqlTable(
       .notNull()
       .references(() => jupyterNotebooks.id, { onDelete: "cascade" }),
     // Soft reference to auth.local_users.id (auth domain).
-    localUserId: bigint("local_user_id", { mode: "number", unsigned: true })
-      .notNull(),
+    localUserId: bigint("local_user_id", {
+      mode: "number",
+      unsigned: true,
+    }).notNull(),
     // Soft reference to users.id (auth domain).
     grantedBy: bigint("granted_by", { mode: "number", unsigned: true }),
     grantedAt: timestamp("granted_at").defaultNow().notNull(),
   },
-  (table) => ({
+  table => ({
     uniqueAccess: uniqueIndex("unique_jupyter_access").on(
       table.notebookId,
       table.localUserId

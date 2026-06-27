@@ -29,7 +29,16 @@ export default function FreeFallG({ params, isRunning }: Props) {
       ctx.fillRect(0, 0, w, h);
 
       if (method === "pendulum") {
-        drawPendulum(ctx, w, h, length, n, measuredTime, isRunning, startTimeRef);
+        drawPendulum(
+          ctx,
+          w,
+          h,
+          length,
+          n,
+          measuredTime,
+          isRunning,
+          startTimeRef
+        );
       } else {
         drawFall(ctx, w, h, height, fallTime, trials, isRunning, startTimeRef);
       }
@@ -75,7 +84,7 @@ function drawPendulum(
   let swingAngle = 0;
   if (isRunning && startTimeRef) {
     const elapsed = (Date.now() - startTimeRef.current) / 1000;
-    swingAngle = Math.sin(elapsed * (2 * Math.PI / Ttheory)) * 0.15;
+    swingAngle = Math.sin(elapsed * ((2 * Math.PI) / Ttheory)) * 0.15;
   }
 
   const maxLenPx = 250;
@@ -112,11 +121,7 @@ function drawPendulum(
   ctx.font = "11px sans-serif";
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
-  ctx.fillText(
-    `l = ${length.toFixed(2)} м`,
-    pivotX + 12,
-    (pivotY + bobY) / 2
-  );
+  ctx.fillText(`l = ${length.toFixed(2)} м`, pivotX + 12, (pivotY + bobY) / 2);
 
   // Info panel
   ctx.fillStyle = "#3c474f";
@@ -231,7 +236,11 @@ function drawFall(
   ctx.font = "11px sans-serif";
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
-  ctx.fillText(`h = ${height.toFixed(1)} м`, ballX + 20, (startY + groundY) / 2);
+  ctx.fillText(
+    `h = ${height.toFixed(1)} м`,
+    ballX + 20,
+    (startY + groundY) / 2
+  );
 
   // Dashed line for height
   ctx.strokeStyle = "rgba(46,255,140,0.3)";

@@ -10,10 +10,7 @@ import fs from "node:fs/promises";
 import { verifyStudentSession } from "./student-session";
 import { getAuthDb, getJupyterDb, getMediaDb } from "./queries/connection";
 import { localUsers, roles } from "@db/schema/auth";
-import {
-  jupyterNotebooks,
-  jupyterNotebookAccess,
-} from "@db/schema/jupyter";
+import { jupyterNotebooks, jupyterNotebookAccess } from "@db/schema/jupyter";
 import { images } from "@db/schema/media";
 import { eq, and } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -21,7 +18,7 @@ import { nanoid } from "nanoid";
 const app = new Hono<{ Bindings: HttpBindings }>();
 
 // File upload endpoint for markdown images — stores files in the database
-app.post("/api/upload/image", async (c) => {
+app.post("/api/upload/image", async c => {
   try {
     const body = await c.req.parseBody();
     const file = body.file as File | undefined;
@@ -29,7 +26,13 @@ app.post("/api/upload/image", async (c) => {
       return c.json({ error: "No file provided" }, 400);
     }
 
-    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"];
+    const allowedTypes = [
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      "image/gif",
+      "image/webp",
+    ];
     if (!allowedTypes.includes(file.type)) {
       return c.json({ error: "Invalid file type" }, 400);
     }
@@ -61,7 +64,7 @@ app.post("/api/upload/image", async (c) => {
 });
 
 // Serve uploaded images from the database
-app.get("/uploads/:id/:filename", async (c) => {
+app.get("/uploads/:id/:filename", async c => {
   try {
     const id = Number(c.req.param("id"));
     if (!Number.isFinite(id) || id <= 0) {
@@ -89,7 +92,7 @@ app.get("/uploads/:id/:filename", async (c) => {
 });
 
 // Fallback for legacy image links and filesystem uploads
-app.get("/uploads/:filename", async (c) => {
+app.get("/uploads/:filename", async c => {
   try {
     const filename = path.basename(c.req.param("filename"));
     const db = getMediaDb();
@@ -115,12 +118,12 @@ app.get("/uploads/:filename", async (c) => {
       ext === ".png"
         ? "image/png"
         : ext === ".jpg" || ext === ".jpeg"
-        ? "image/jpeg"
-        : ext === ".gif"
-        ? "image/gif"
-        : ext === ".webp"
-        ? "image/webp"
-        : "application/octet-stream";
+          ? "image/jpeg"
+          : ext === ".gif"
+            ? "image/gif"
+            : ext === ".webp"
+              ? "image/webp"
+              : "application/octet-stream";
 
     c.header("Content-Type", mimeType);
     c.header("Cache-Control", "public, max-age=86400");
@@ -135,7 +138,7 @@ app.get("/uploads/:filename", async (c) => {
 });
 
 // File upload endpoint for Jupyter notebooks
-app.post("/api/upload/jupyter", async (c) => {
+app.post("/api/upload/jupyter", async c => {
   try {
     const body = await c.req.parseBody();
     const file = body.file as File | undefined;
@@ -145,7 +148,10 @@ app.post("/api/upload/jupyter", async (c) => {
 
     const ext = path.extname(file.name).toLowerCase();
     if (ext !== ".ipynb") {
-      return c.json({ error: "Invalid file type. Only .ipynb files are allowed." }, 400);
+      return c.json(
+        { error: "Invalid file type. Only .ipynb files are allowed." },
+        400
+      );
     }
 
     const maxSize = 20 * 1024 * 1024; // 20 MB
@@ -174,7 +180,7 @@ app.post("/api/upload/jupyter", async (c) => {
 });
 
 // ── Secure Jupyter notebook download for students ──
-app.get("/api/jupyter/download/:id", async (c) => {
+app.get("/api/jupyter/download/:id", async c => {
   try {
     const notebookId = Number(c.req.param("id"));
     if (!Number.isFinite(notebookId) || notebookId <= 0) {
@@ -254,7 +260,7 @@ app.get("/api/jupyter/download/:id", async (c) => {
   }
 });
 
-app.use("/api/trpc/*", async (c) => {
+app.use("/api/trpc/*", async c => {
   return fetchRequestHandler({
     endpoint: "/api/trpc",
     req: c.req.raw,
@@ -262,7 +268,7 @@ app.use("/api/trpc/*", async (c) => {
     createContext,
   });
 });
-app.all("/api/*", (c) => c.json({ error: "Not Found" }, 404));
+app.all("/api/*", c => c.json({ error: "Not Found" }, 404));
 
 if (process.env.NODE_ENV === "production") {
   serveStaticFiles(app);
