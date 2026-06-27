@@ -288,11 +288,11 @@ export default function Home() {
               {/* Floating tags cloud under/over the photo */}
               <div className="relative -mt-10 z-10 flex flex-wrap justify-center gap-3 max-w-md lg:max-w-lg mx-auto px-4">
                 {[
+                  "Личный кабинет",
                   "Jupyter-ноутбуки",
                   "Онлайн-доска",
                   "Виртуальные лаборатории",
-                  "Алгоритмический подход",
-                  "Персональный трекинг",
+                  "Индивидуальная программа",
                 ].map((tag, i) => (
                   <FloatingTag
                     key={tag}
@@ -369,7 +369,7 @@ export default function Home() {
             {[
               {
                 to: "/course",
-                label: "12 тем",
+                label: "12 Разделов",
                 title: "Курс физики",
                 titleAccent: "школьная программа",
                 description:
