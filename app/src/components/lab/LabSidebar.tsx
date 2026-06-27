@@ -1,12 +1,5 @@
 import { useState } from "react";
-import {
-  BookOpen,
-  Play,
-  TrendingUp,
-  CheckCircle2,
-  Save,
-  Send,
-} from "lucide-react";
+import { BookOpen, Play, TrendingUp, CheckCircle2 } from "lucide-react";
 
 const navItems = [
   { id: "theory", icon: BookOpen, label: "Теория", color: "#2eff8c" },
@@ -18,15 +11,11 @@ const navItems = [
 interface LabSidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
-  onSave: () => void;
-  onSubmit: () => void;
 }
 
 export default function LabSidebar({
   activeTab,
   onTabChange,
-  onSave,
-  onSubmit,
 }: LabSidebarProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
@@ -91,72 +80,6 @@ export default function LabSidebar({
           );
         })}
       </nav>
-
-      <div className="w-6 h-px bg-[#2a3237]/60 my-1" />
-
-      <div className="flex flex-col gap-1.5 px-1.5 pb-1">
-        <ActionButton
-          icon={Save}
-          label="Сохранить"
-          onClick={onSave}
-          color="#2eff8c"
-        />
-        <ActionButton
-          icon={Send}
-          label="Отправить"
-          onClick={onSubmit}
-          color="#ffc832"
-        />
-      </div>
     </aside>
-  );
-}
-
-function ActionButton({
-  icon: Icon,
-  label,
-  onClick,
-  color,
-}: {
-  icon: React.FC<{ size?: number; className?: string }>;
-  label: string;
-  onClick: () => void;
-  color: string;
-}) {
-  const [hovered, setHovered] = useState(false);
-
-  return (
-    <div className="relative">
-      {hovered && (
-        <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 pointer-events-none z-50 bg-[#1e2529] border border-[#37474f]/60 text-[#c8cdd1] text-xs px-2.5 py-1 rounded-md whitespace-nowrap shadow-lg shadow-black/20">
-          {label}
-        </div>
-      )}
-      <button
-        onClick={onClick}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        className="relative w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200 outline-none focus:outline-none"
-        aria-label={label}
-      >
-        <div
-          className="absolute inset-0 rounded-xl border"
-          style={{
-            borderColor: hovered ? `${color}40` : "transparent",
-            backgroundColor: hovered ? `${color}10` : "transparent",
-            transition: "all 0.15s",
-          }}
-        />
-        <div
-          style={{
-            transform: hovered ? "scale(1.1)" : "scale(1)",
-            color: hovered ? color : "#5c6b73",
-            transition: "all 0.2s",
-          }}
-        >
-          <Icon size={16} />
-        </div>
-      </button>
-    </div>
   );
 }

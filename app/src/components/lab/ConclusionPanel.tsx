@@ -1,58 +1,91 @@
-import { useState } from "react";
-import { FileText } from "lucide-react";
+import { useRef } from "react";
 
 interface ConclusionPanelProps {
-  template: string;
-  data: Record<string, string | number>;
-  onGenerate?: () => void;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
 }
 
-export default function ConclusionPanel({
-  template,
-  data,
-  onGenerate,
-}: ConclusionPanelProps) {
-  const [conclusion, setConclusion] = useState("");
+const SYMBOLS = [
+  "α",
+  "β",
+  "γ",
+  "δ",
+  "ε",
+  "θ",
+  "λ",
+  "μ",
+  "π",
+  "ρ",
+  "σ",
+  "τ",
+  "φ",
+  "ω",
+  "Δ",
+  "Σ",
+  "Ω",
+  "°",
+  "±",
+  "×",
+  "→",
+  "≈",
+  "²",
+  "³",
+];
 
-  const generate = () => {
-    if (onGenerate) {
-      onGenerate();
-      return;
-    }
-    let result = template;
-    for (const [key, value] of Object.entries(data)) {
-      result = result.replace(new RegExp(`{{${key}}}`, "g"), String(value));
-    }
-    setConclusion(result);
-  };
+export default function ConclusionPanel({
+  value,
+  onChange,
+  placeholder = "Напишите свой вывод на основе полученных результатов...",
+}: ConclusionPanelProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const insertSymbol = (symbol: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart ?? 0;
+    const end = textarea.selectionEnd ?? 0;
+    const newValue = value.slice(0, start) + symbol + value.slice(end);
+    onChange(newValue);
+
+    requestAnimationFrame(() => {
+      textarea.focus();
+      const cursor = start + symbol.length;
+      textarea.setSelectionRange(cursor, cursor);
+    });
+  };ы
 
   return (
-    <div className="space-y-4">
-      <button
-        onClick={generate}
-        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#2eff8c] text-[#0d1117] text-sm font-semibold hover:bg-[#25cc70] transition-colors"
-      >
-        <FileText size={18} />
-        Сформировать вывод
-      </button>
+    <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 space-y-4">
+      <label className="block text-sm text-[#798389]">Напиши вывод</label>
+      <textarea
+        ref={textareaRef}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        rows={8}
+        className="w-full bg-[#1a1f22] border border-[#37474f] text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-[#2eff8c] transition-colors resize-none"
+        placeholder={placeholder}
+      />
 
-      {conclusion && (
-        <div className="bg-[#1a1f22] border border-[#37474f] rounded-xl p-5">
-          <h4 className="text-[#2eff8c] font-semibold mb-3 text-sm uppercase tracking-wide">
-            Вывод
-          </h4>
-          <div className="text-[#c8cdd1] text-sm leading-relaxed whitespace-pre-wrap">
-            {conclusion}
-          </div>
+      <div className="space-y-2">
+        <p className="text-xs text-[#798389]">
+          Нажмите на символ, чтобы вставить его в текст вывода
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {SYMBOLS.map(symbol => (
+            <button
+              key={symbol}
+              type="button"
+              onClick={() => insertSymbol(symbol)}
+              className="h-9 min-w-[2.25rem] px-2 rounded-lg bg-[#1a1f22] border border-[#37474f] text-[#c8cdd1] hover:border-[#2eff8c] hover:text-white transition-colors text-sm font-medium"
+              aria-label={`Вставить символ ${symbol}`}
+            >
+              {symbol}
+            </button>
+          ))}
         </div>
-      )}
-
-      {!conclusion && (
-        <div className="bg-[#1a1f22] border border-[#37474f] rounded-xl p-8 text-center text-[#c8cdd1] text-sm">
-          Нажмите «Сформировать вывод», чтобы автоматически сгенерировать вывод
-          на основе полученных данных.
-        </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -793,7 +793,7 @@ function SubtopicProgressManager({
             <span>Подтема</span>
             <span>Комментарий</span>
             <span className="text-center">Теория</span>
-            <span className="text-center">Практика</span>
+            <span className="text-center">Задача</span>
             <span className="text-center">Лаба</span>
             <span>Статус</span>
           </div>
@@ -864,7 +864,7 @@ function SubtopicRow({
         onToggle={() => onUpdate({ practiceCompleted: !sub.practiceCompleted })}
         icon={<FileText className="h-4 w-4" />}
         activeClass="text-sky-400 bg-sky-400/10"
-        title="Практика"
+        title="Задача"
         isPending={isPending}
       />
       <CompletionToggle
