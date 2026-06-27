@@ -234,6 +234,266 @@ function FloatingTag({
   );
 }
 
+const ROCKET_FORMULAS = [
+  "E=mc²",
+  "F=ma",
+  "a=v/t",
+  "P=mg",
+  "Q=cmΔT",
+  "I=U/R",
+  "p=mv",
+  "E=kq/r²",
+];
+class FormulaPopup {
+  x: number;
+  y: number;
+  formula: string;
+  opacity: number;
+
+  constructor(x: number, y: number, formula: string) {
+    this.x = x;
+    this.y = y;
+    this.formula = formula;
+    this.opacity = 1;
+  }
+
+  update(): boolean {
+    this.y -= 0.6;
+    this.opacity -= 0.015;
+    return this.opacity > 0;
+  }
+
+  draw(ctx: CanvasRenderingContext2D) {
+    ctx.save();
+    ctx.globalAlpha = this.opacity;
+
+    ctx.font = '12px "Geist Mono", monospace';
+    const metrics = ctx.measureText(this.formula);
+    const paddingX = 10;
+    const w = metrics.width + paddingX * 2;
+    const h = 22;
+    const x = this.x - w / 2;
+    const y = this.y - h / 2;
+    const r = 8;
+
+    ctx.fillStyle = "rgba(38, 46, 51, 0.9)";
+    ctx.strokeStyle = "#2eff8c";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(this.formula, this.x, this.y + 1);
+
+    ctx.restore();
+  }
+}
+
+class Rocket {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  size: number;
+  formula: string;
+  angle: number;
+  vAngle: number;
+  falling: boolean;
+  opacity: number;
+  hit: boolean;
+
+  constructor(W: number, H: number) {
+    this.formula =
+      ROCKET_FORMULAS[Math.floor(Math.random() * ROCKET_FORMULAS.length)];
+    this.size = 20 + Math.random() * 8;
+    this.opacity = 1;
+    this.falling = false;
+    this.hit = false;
+
+    const side = Math.floor(Math.random() * 4);
+    const margin = 60;
+    if (side === 0) {
+      this.x = Math.random() * W;
+      this.y = -margin;
+    } else if (side === 1) {
+      this.x = W + margin;
+      this.y = Math.random() * H;
+    } else if (side === 2) {
+      this.x = Math.random() * W;
+      this.y = H + margin;
+    } else {
+      this.x = -margin;
+      this.y = Math.random() * H;
+    }
+
+    const targetX = Math.random() * W;
+    const targetY = Math.random() * H;
+    const distance = Math.hypot(targetX - this.x, targetY - this.y);
+    const duration = 2 + Math.random() * 3;
+    const speed = distance / (duration * 60);
+    const angleToTarget = Math.atan2(targetY - this.y, targetX - this.x);
+    const spread = (Math.random() - 0.5) * 0.6;
+    const dir = angleToTarget + spread;
+
+    this.vx = Math.cos(dir) * speed;
+    this.vy = Math.sin(dir) * speed;
+    this.angle = dir;
+    this.vAngle = (Math.random() - 0.5) * 0.015;
+  }
+
+  update(mouse: { x: number; y: number }, W: number, H: number): boolean {
+    const dx = this.x - mouse.x;
+    const dy = this.y - mouse.y;
+    const dist = Math.hypot(dx, dy);
+
+    if (!this.falling && dist < 45) {
+      this.falling = true;
+      this.hit = true;
+      this.vx = (Math.random() - 0.5) * 3;
+      this.vy = 2 + Math.random() * 2;
+      this.vAngle = (Math.random() - 0.5) * 0.1;
+    }
+
+    if (this.falling) {
+      this.vy += 0.2;
+      this.vx *= 0.99;
+      this.opacity -= 0.012;
+    }
+
+    this.x += this.vx;
+    this.y += this.vy;
+    this.angle += this.vAngle;
+
+    if (this.opacity <= 0) return false;
+    if (
+      !this.falling &&
+      (this.x < -80 || this.x > W + 80 || this.y < -80 || this.y > H + 80)
+    ) {
+      return false;
+    }
+    return true;
+  }
+
+  draw(ctx: CanvasRenderingContext2D) {
+    ctx.save();
+    ctx.globalAlpha = this.opacity;
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.angle + Math.PI / 4);
+    ctx.font = `${this.size}px sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("🚀", 0, 0);
+    ctx.restore();
+  }
+}
+
+/* ---------- Rocket Canvas ---------- */
+function RocketCanvas() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let W = 0,
+      H = 0;
+    let raf = 0;
+    const mouse = { x: -1000, y: -1000 };
+
+    const resize = () => {
+      const dpr = window.devicePixelRatio || 1;
+      W = canvas.offsetWidth;
+      H = canvas.offsetHeight;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = e.clientX - rect.left;
+      mouse.y = e.clientY - rect.top;
+    };
+    const handleMouseLeave = () => {
+      mouse.x = -1000;
+      mouse.y = -1000;
+    };
+    canvas.addEventListener("mousemove", handleMouseMove);
+    canvas.addEventListener("mouseleave", handleMouseLeave);
+
+    const rockets: Rocket[] = [];
+    const popups: FormulaPopup[] = [];
+    let spawnTimer = 0;
+    const spawnInterval = 90 + Math.floor(Math.random() * 90); // ~1.5-3s
+
+    const loop = () => {
+      ctx.clearRect(0, 0, W, H);
+
+      spawnTimer++;
+      if (spawnTimer > spawnInterval && rockets.length < 5) {
+        rockets.push(new Rocket(W, H));
+        spawnTimer = 0;
+      }
+
+      for (let i = rockets.length - 1; i >= 0; i--) {
+        const rocket = rockets[i];
+        const wasFalling = rocket.falling;
+        if (!rocket.update(mouse, W, H)) {
+          rockets.splice(i, 1);
+        } else {
+          rocket.draw(ctx);
+          if (rocket.falling && !wasFalling) {
+            popups.push(new FormulaPopup(rocket.x, rocket.y, rocket.formula));
+          }
+        }
+      }
+
+      for (let i = popups.length - 1; i >= 0; i--) {
+        const popup = popups[i];
+        if (!popup.update()) {
+          popups.splice(i, 1);
+        } else {
+          popup.draw(ctx);
+        }
+      }
+
+      raf = requestAnimationFrame(loop);
+    };
+    loop();
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", resize);
+      canvas.removeEventListener("mousemove", handleMouseMove);
+      canvas.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 w-full h-full z-10"
+    />
+  );
+}
+
 /* ---------- Main Page ---------- */
 export default function Home() {
   return (
@@ -241,7 +501,8 @@ export default function Home() {
       {/* ====== HERO ====== */}
       <section className="relative min-h-[calc(100dvh-4rem)] flex items-center justify-center overflow-hidden bg-[#262e33]">
         <GlobeCanvas />
-        <div className="relative z-10 text-center px-6 max-w-4xl mx-auto pt-10">
+        <RocketCanvas />
+        <div className="relative z-20 text-center px-6 max-w-4xl mx-auto pt-10">
           <div className="space-y-2 mb-8">
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white uppercase tracking-tight leading-[0.95]">
               <TypewriterText text="Физика — это не предмет" delay={600} />
