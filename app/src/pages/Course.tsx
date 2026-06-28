@@ -212,7 +212,7 @@ export default function Course() {
 
   return (
     <div className="pt-16 min-h-screen bg-[#262e33]">
-      <section className="section-dark pt-10 pb-16 lg:pt-14 lg:pb-24">
+      <section className="section-dark pt-10 pb-16 lg:pt-14 lg:pb-24 rocket-cursor">
         <div className="max-w-7xl mx-auto px-6">
           <div className="mb-12 lg:mb-16 text-center">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight">

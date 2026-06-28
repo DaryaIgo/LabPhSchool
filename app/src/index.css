@@ -409,3 +409,13 @@
   overflow-x: auto;
   padding: 0.5rem 0;
 }
+
+.rocket-cursor,
+.rocket-cursor * {
+  cursor: url("/rocket-cursor.svg") 24 8, auto !important;
+}
+
+.rocket-cursor .reader-cursor,
+.rocket-cursor .reader-cursor * {
+  cursor: auto !important;
+}

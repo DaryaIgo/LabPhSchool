@@ -341,8 +341,8 @@ export default function TopicOrbitView({
       const dx = mousePos.x - nodeX;
       const dy = mousePos.y - nodeY;
       const distance = Math.sqrt(dx * dx + dy * dy);
-      const maxDistance = Math.min(orbitWidth, orbitHeight) * 0.5;
-      const maxOffset = 10;
+      const maxDistance = Math.min(orbitWidth, orbitHeight) * 0.65;
+      const maxOffset = 45;
       if (distance >= maxDistance || distance < 1) return { x: 0, y: 0 };
       const force = maxOffset * (1 - distance / maxDistance);
       return {
@@ -355,7 +355,7 @@ export default function TopicOrbitView({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0d1012]/85 backdrop-blur-md animate-fadeIn"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0d1012]/85 backdrop-blur-md animate-fadeIn rocket-cursor"
       onClick={handleBackdropClick}
       onMouseMove={handleMouseMove}
       onMouseEnter={handleMouseEnter}
@@ -371,7 +371,7 @@ export default function TopicOrbitView({
 
       {activeNode ? (
         <div
-          className="fixed inset-0 z-[70] bg-[#0b0d0f] overflow-y-auto"
+          className="fixed inset-0 z-[70] bg-[#0b0d0f] overflow-y-auto reader-cursor"
           onClick={e => e.stopPropagation()}
         >
           <NodeContent

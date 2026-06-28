@@ -4,7 +4,7 @@ import SnakeTimeline from "@/components/SnakeTimeline";
 import { useAuth } from "@/hooks/useAuth";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { Progress } from "@/components/ui/progress";
-import { FlaskConical, Loader2 } from "lucide-react";
+import { FlaskConical, Loader2, Atom } from "lucide-react";
 
 export default function Labs() {
   const { user } = useAuth();
@@ -81,12 +81,34 @@ export default function Labs() {
     <div className="pt-16 min-h-screen bg-[#262e33]">
       <section className="section-dark pt-8 pb-16 lg:pt-12 lg:pb-20">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="mb-10">
-            <h2 className="text-2xl lg:text-3xl font-bold text-white mb-3 flex items-center gap-3">
-              <span className="w-2 h-8 bg-[#2eff8c] rounded-full" />
-              Разделы физики
+          <div className="mb-12 lg:mb-16 text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#2eff8c]/20 bg-[#2eff8c]/5 text-[#2eff8c] text-xs font-medium tracking-wide mb-5">
+              <Atom size={14} className="animate-spin-slow" />
+              Виртуальные лаборатории
+            </div>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight">
+              Лабораторные{" "}
+              <span className="relative inline-block">
+                <span
+                  className="relative z-10"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, #2eff8c, #5fffa8, #2eff8c)",
+                    backgroundSize: "200% auto",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
+                  симуляции
+                </span>
+                <span
+                  className="absolute -inset-1 rounded-lg blur-xl opacity-30"
+                  style={{ backgroundColor: "#2eff8c" }}
+                />
+              </span>
             </h2>
-            <p className="text-[#c8cdd1] max-w-2xl">
+            <p className="text-[#a0a8ad] text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
               Исследуйте виртуальные лаборатории по разделам физики. Каждая
               точка — путь к интерактивным работам и симуляциям.
             </p>
