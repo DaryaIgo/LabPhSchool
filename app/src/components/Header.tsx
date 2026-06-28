@@ -164,7 +164,7 @@ export default function Header() {
             </Link>
 
             {/* Desktop Nav */}
-            <nav className="hidden lg:flex items-center gap-1">
+            <nav className="hidden lg:flex items-center gap-1" aria-label="Основная навигация">
               {navLinks.map(link => {
                 const active = isActive(link.to);
                 return (
@@ -236,8 +236,9 @@ export default function Header() {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2 rounded-full text-[#c8cdd1] hover:text-white hover:bg-white/5 transition-colors"
+            className="lg:hidden p-2 rounded-full text-[#c8cdd1] hover:text-white hover:bg-white/5 transition-colors"
             onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label={mobileOpen ? "Закрыть меню" : "Открыть меню"}
           >
             {mobileOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
@@ -246,7 +247,7 @@ export default function Header() {
 
       {/* Mobile Menu */}
       {mobileOpen && (
-        <div className="md:hidden mx-4 mt-2 pointer-events-auto">
+        <div className="lg:hidden mx-4 mt-2 pointer-events-auto">
           <div className="rounded-3xl border border-white/10 bg-[#1a1f22]/95 backdrop-blur-xl shadow-2xl p-3 space-y-1">
             {navLinks.map(link => (
               <Link

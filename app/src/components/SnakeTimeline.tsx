@@ -68,7 +68,18 @@ export default function SnakeTimeline({
         ? "grid-cols-1 sm:grid-cols-2"
         : columns === 3
           ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-          : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4";
+          : "grid-cols-1 sm:grid-cols-4";
+
+  // Hide connection lines on single-column (phone) layouts where they would be
+  // meaningless or visually broken.
+  const linesVisibleClass =
+    columns === 1
+      ? "hidden"
+      : columns === 2
+        ? "hidden sm:block"
+        : columns === 3
+          ? "hidden lg:block"
+          : "hidden sm:block";
 
   const flatItems = useMemo(() => {
     const list: Array<{
@@ -212,25 +223,25 @@ export default function SnakeTimeline({
 
   const sizeClasses = {
     sm: {
-      cell: "min-h-[130px]",
-      node: "w-16 h-16",
-      expanded: "w-64",
-      title: "text-xs",
-      subtitle: "text-[10px]",
+      cell: "min-h-[130px] sm:min-h-[150px]",
+      node: "w-16 h-16 sm:w-20 sm:h-20",
+      expanded: "w-64 sm:w-72",
+      title: "text-xs sm:text-sm",
+      subtitle: "text-[10px] sm:text-xs",
     },
     md: {
-      cell: "min-h-[170px]",
-      node: "w-20 h-20",
-      expanded: "w-72",
-      title: "text-sm",
-      subtitle: "text-xs",
+      cell: "min-h-[150px] sm:min-h-[170px] lg:min-h-[190px]",
+      node: "w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24",
+      expanded: "w-64 sm:w-72 lg:w-80",
+      title: "text-xs sm:text-sm lg:text-base",
+      subtitle: "text-[10px] sm:text-xs lg:text-sm",
     },
     lg: {
-      cell: "min-h-[210px]",
-      node: "w-24 h-24",
-      expanded: "w-80",
-      title: "text-base",
-      subtitle: "text-sm",
+      cell: "min-h-[160px] sm:min-h-[180px] lg:min-h-[210px]",
+      node: "w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24",
+      expanded: "w-64 sm:w-72 lg:w-80",
+      title: "text-sm sm:text-base",
+      subtitle: "text-xs sm:text-sm",
     },
   };
 
@@ -240,11 +251,11 @@ export default function SnakeTimeline({
     <div ref={containerRef} className={`relative pt-20 ${className}`}>
       <svg
         ref={svgRef}
-        className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible"
+        className={`absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible ${linesVisibleClass}`}
         aria-hidden="true"
       />
 
-      <div className={`relative z-10 grid ${gridColsClass} gap-y-12`}>
+      <div className={`relative z-10 grid ${gridColsClass} gap-y-8 sm:gap-y-12`}>
         {rows.map((row, rowIndex) =>
           row.map((item, index) => {
             const accent = item.color || DEFAULT_ACCENT;

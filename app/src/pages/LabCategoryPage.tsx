@@ -1,6 +1,8 @@
+import { useRef } from "react";
 import { trpc } from "@/providers/trpc";
-import { Link, Navigate, useParams, useLocation } from "react-router";
+import { Link, Navigate, useParams } from "react-router";
 import { CategoryIcon } from "@/components/CategoryIcon";
+import InteractiveTetheredBall from "@/components/InteractiveTetheredBall";
 import { ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -53,8 +55,7 @@ const LAB_THEMES = [
 
 export default function LabCategoryPage() {
   const { slug } = useParams<{ slug: string }>();
-  const location = useLocation();
-  const fromLabs = location.state?.fromLabs === true;
+  const ballAnchorRef = useRef<HTMLDivElement>(null);
 
   if (slug && LEGACY_CATEGORY_SLUGS.has(slug)) {
     return <Navigate to="/labs/category/electrodynamics" replace />;
@@ -100,18 +101,11 @@ export default function LabCategoryPage() {
     labsBySubcategory.set(lab.subcategoryId ?? null, list);
   });
 
-  const nodeVariants = {
-    hidden: { opacity: 0, y: fromLabs ? -120 : -40, scale: 0.75 },
+  const heroBallVariants = {
+    hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: {
-        type: "spring" as const,
-        stiffness: 120,
-        damping: 14,
-        delay: 0.05,
-      },
+      transition: { duration: 0.5, delay: 0.05 },
     },
   } satisfies import("framer-motion").Variants;
 
@@ -152,7 +146,19 @@ export default function LabCategoryPage() {
   } satisfies import("framer-motion").Variants;
 
   return (
-    <div className="min-h-screen bg-[#262e33] overflow-x-hidden">
+    <div className="relative min-h-screen bg-[#262e33] overflow-x-hidden">
+      {/* Global interactive ball overlay — covers the whole page so the ball can fall to the very bottom */}
+      <div className="absolute inset-0 z-20 pointer-events-none">
+        <InteractiveTetheredBall
+          accent={accent}
+          anchorRef={ballAnchorRef}
+          className="w-full h-full"
+          ballClassName="w-28 h-28 md:w-36 md:h-36"
+        >
+          <CategoryIcon iconKey={category.iconType} size={64} />
+        </InteractiveTetheredBall>
+      </div>
+
       {/* Top hero area */}
       <section className="relative pt-28 pb-10 md:pt-32 md:pb-14">
         {/* Soft radial glow behind the node */}
@@ -179,35 +185,17 @@ export default function LabCategoryPage() {
           </motion.div>
 
           <div className="mt-8 flex flex-col items-center text-center">
-            {/* Floating category node */}
+            {/* Anchor placeholder for the interactive ball */}
             <motion.div
-              variants={nodeVariants}
+              variants={heroBallVariants}
               initial="hidden"
               animate="visible"
-              className="relative animate-snake-float"
+              className="w-full max-w-xl"
             >
               <div
-                className="absolute inset-0 rounded-full blur-2xl opacity-40"
-                style={{ backgroundColor: accent }}
+                ref={ballAnchorRef}
+                className="w-28 h-28 md:w-36 md:h-36 mx-auto"
               />
-              <div
-                className="relative flex items-center justify-center w-28 h-28 md:w-36 md:h-36 rounded-full border-2"
-                style={{
-                  borderColor: `${accent}55`,
-                  backgroundColor: `${accent}14`,
-                  boxShadow: `0 0 60px ${accent}20, inset 0 0 40px ${accent}10`,
-                }}
-              >
-                <div
-                  className="absolute inset-0 rounded-full opacity-60"
-                  style={{
-                    background: `radial-gradient(circle at 30% 25%, rgba(255,255,255,0.25) 0%, transparent 45%)`,
-                  }}
-                />
-                <div className="relative z-10" style={{ color: accent }}>
-                  <CategoryIcon iconKey={category.iconType} size={64} />
-                </div>
-              </div>
             </motion.div>
 
             <motion.div
