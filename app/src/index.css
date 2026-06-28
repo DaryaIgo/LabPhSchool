@@ -325,21 +325,21 @@
     transform: translate(0, 0);
   }
   20% {
-    transform: translate(2px, -4px);
+    transform: translate(5px, -9px);
   }
   40% {
-    transform: translate(-3px, 2px);
+    transform: translate(-7px, 5px);
   }
   60% {
-    transform: translate(2px, 3px);
+    transform: translate(6px, 7px);
   }
   80% {
-    transform: translate(-2px, -3px);
+    transform: translate(-5px, -6px);
   }
 }
 
 .animate-snake-float {
-  animation: snakeFloat 6s ease-in-out infinite;
+  animation: snakeFloat 10s ease-in-out infinite;
 }
 
 @keyframes orbit-pop-in {
@@ -398,4 +398,14 @@
 
 .animate-nebula-pulse {
   animation: nebula-pulse 10s ease-in-out infinite;
+}
+
+.markdown-body .katex {
+  font-size: 1.12em;
+}
+
+.markdown-body .katex-display {
+  margin: 1.75rem 0;
+  overflow-x: auto;
+  padding: 0.5rem 0;
 }

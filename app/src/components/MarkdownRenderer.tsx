@@ -21,36 +21,38 @@ export default function MarkdownRenderer({
         rehypePlugins={[[rehypeKatex, { output: "html" }]]}
         components={{
           h1: ({ children }) => (
-            <h1 className="text-2xl font-bold mt-8 mb-4 text-white font-sans">
+            <h1 className="text-3xl sm:text-4xl font-bold mt-10 mb-6 text-white font-sans tracking-tight">
               {children}
             </h1>
           ),
           h2: ({ children }) => (
-            <h2 className="text-xl font-bold mt-6 mb-3 text-white font-sans">
+            <h2 className="text-2xl sm:text-3xl font-bold mt-9 mb-5 text-white font-sans tracking-tight">
               {children}
             </h2>
           ),
           h3: ({ children }) => (
-            <h3 className="text-lg font-semibold mt-5 mb-2 text-white font-sans">
+            <h3 className="text-xl sm:text-2xl font-semibold mt-7 mb-3 text-white font-sans tracking-tight">
               {children}
             </h3>
           ),
           p: ({ children }) => (
-            <p className="text-base text-[#d8dde0] leading-7 mb-4 font-serif">
+            <p className="text-lg sm:text-xl text-[#d8dde0] leading-8 sm:leading-9 mb-6 font-serif">
               {children}
             </p>
           ),
           ul: ({ children }) => (
-            <ul className="list-disc list-inside text-base text-[#d8dde0] mb-4 space-y-2 font-serif">
+            <ul className="list-disc list-inside text-lg sm:text-xl text-[#d8dde0] mb-6 space-y-3 font-serif">
               {children}
             </ul>
           ),
           ol: ({ children }) => (
-            <ol className="list-decimal list-inside text-base text-[#d8dde0] mb-4 space-y-2 font-serif">
+            <ol className="list-decimal list-inside text-lg sm:text-xl text-[#d8dde0] mb-6 space-y-3 font-serif">
               {children}
             </ol>
           ),
-          li: ({ children }) => <li className="leading-7">{children}</li>,
+          li: ({ children }) => (
+            <li className="leading-8 sm:leading-9">{children}</li>
+          ),
           strong: ({ children }) => (
             <strong className="text-white font-semibold font-sans">
               {children}
@@ -77,7 +79,7 @@ export default function MarkdownRenderer({
             />
           ),
           blockquote: ({ children }) => (
-            <blockquote className="border-l-4 border-[#2eff8c] pl-4 py-2 my-5 bg-[#1e2529] rounded-r-lg text-base text-[#d8dde0] leading-7 font-serif">
+            <blockquote className="border-l-4 border-[#2eff8c] pl-5 py-3 my-6 bg-[#1e2529] rounded-r-lg text-lg sm:text-xl text-[#d8dde0] leading-8 sm:leading-9 font-serif">
               {children}
             </blockquote>
           ),
@@ -98,7 +100,7 @@ export default function MarkdownRenderer({
             </th>
           ),
           td: ({ children }) => (
-            <td className="border border-[#434e54] px-3 py-2.5 text-[#d8dde0] font-serif">
+            <td className="border border-[#434e54] px-4 py-3 text-base text-[#d8dde0] font-serif leading-7">
               {children}
             </td>
           ),

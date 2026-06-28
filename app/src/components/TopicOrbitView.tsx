@@ -2,10 +2,11 @@ import {
   useMemo,
   useRef,
   useLayoutEffect,
+  useCallback,
   useState,
   useEffect,
 } from "react";
-import { X, ArrowLeft, FileText, ExternalLink, Sparkles } from "lucide-react";
+import { X, ArrowLeft, FileText, ExternalLink, BookOpen } from "lucide-react";
 import MarkdownRenderer from "./MarkdownRenderer";
 import { CategoryIcon } from "./CategoryIcon";
 import type { TopicNode } from "@db/schema";
@@ -27,94 +28,111 @@ function NodeContent({
   onSelectNode,
   jupyterUrl,
   showJupyter,
-  topicColor,
+  topicTitle,
 }: {
   node: TreeNode;
   onBack: () => void;
   onSelectNode: (id: number) => void;
   jupyterUrl?: string | null;
   showJupyter?: boolean;
-  topicColor?: string | null;
+  topicTitle?: string;
 }) {
-  const accent = topicColor || "#2eff8c";
+  const wordCount = node.content
+    ? node.content.replace(/[#*_`[\]\n\r]/g, " ").split(/\s+/).filter(Boolean).length
+    : 0;
+  const readTime = Math.max(1, Math.ceil(wordCount / 200));
 
   return (
-    <div className="animate-fadeIn w-full max-w-3xl mx-auto">
-      <button
-        onClick={onBack}
-        className="inline-flex items-center gap-1.5 text-sm text-[#a0a8ad] hover:text-[#2eff8c] transition-colors mb-4"
-      >
-        <ArrowLeft size={14} /> Назад к подтемам
-      </button>
-
-      <div
-        className="rounded-2xl border border-[#434e54] overflow-hidden"
-        style={{
-          background:
-            "linear-gradient(180deg, rgba(42,50,55,0.95) 0%, rgba(26,31,34,0.95) 100%)",
-        }}
-      >
-        <div className="p-6 border-b border-white/5">
-          <div className="flex items-center gap-3">
-            <span
-              className="inline-flex items-center justify-center w-10 h-10 rounded-xl text-sm font-bold shrink-0"
-              style={{
-                backgroundColor: `${accent}15`,
-                color: accent,
-              }}
-            >
-              <FileText size={18} />
-            </span>
-            <h4 className="text-xl font-semibold text-white">{node.title}</h4>
-          </div>
+    <div className="min-h-screen bg-[#0b0d0f] animate-fadeIn">
+      {/* Sticky header */}
+      <header className="sticky top-0 z-30 bg-[#0b0d0f]/95 backdrop-blur-md border-b border-white/5">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
+          <button
+            onClick={onBack}
+            className="inline-flex items-center gap-1.5 text-sm text-[#a0a8ad] hover:text-[#2eff8c] transition-colors shrink-0"
+          >
+            <ArrowLeft size={16} /> Назад
+          </button>
+          <h1 className="flex-1 text-sm sm:text-base font-semibold text-white truncate text-center">
+            {node.title}
+          </h1>
+          <div className="w-16 shrink-0" />
         </div>
+      </header>
 
-        <div className="p-6">
-          {node.content ? (
-            <MarkdownRenderer content={node.content} />
-          ) : (
-            <p className="text-sm text-[#798389]">Нет содержимого</p>
-          )}
+      {/* Hero */}
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-8">
+        {topicTitle && (
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#2eff8c]/20 bg-[#2eff8c]/5 text-[#2eff8c] text-xs font-medium tracking-wide mb-4">
+            {topicTitle}
+          </div>
+        )}
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight tracking-tight">
+          {node.title}
+        </h2>
+        <div className="flex items-center gap-4 mt-4 text-sm text-[#798389]">
+          <span className="inline-flex items-center gap-1.5">
+            <BookOpen size={14} />
+            {readTime} мин чтения
+          </span>
+          {wordCount > 0 && <span>{wordCount} слов</span>}
+        </div>
+      </div>
 
-          {showJupyter &&
-            (jupyterUrl ? (
+      {/* Content */}
+      <article className="max-w-3xl mx-auto px-4 sm:px-6 pb-24">
+        {node.content ? (
+          <MarkdownRenderer content={node.content} />
+        ) : (
+          <p className="text-lg text-[#798389]">Нет содержимого</p>
+        )}
+
+        {showJupyter && (
+          <div className="mt-10 pt-6 border-t border-white/10">
+            {jupyterUrl ? (
               <a
                 href={jupyterUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 mt-4 text-xs bg-[#2eff8c]/10 text-[#2eff8c] px-3 py-1.5 rounded-md hover:bg-[#2eff8c]/20 transition-colors"
+                className="inline-flex items-center gap-2 text-sm bg-[#2eff8c]/10 text-[#2eff8c] px-4 py-2 rounded-lg hover:bg-[#2eff8c]/20 transition-colors"
               >
-                <ExternalLink size={12} />
-                Jupyter- {node.title}
+                <ExternalLink size={16} />
+                Открыть Jupyter-ноутбук: {node.title}
               </a>
             ) : (
-              <span className="inline-flex items-center gap-1.5 mt-4 text-xs text-[#798389] bg-white/5 px-3 py-1.5 rounded-md">
-                <ExternalLink size={12} />
-                Jupyter: не задан
+              <span className="inline-flex items-center gap-2 text-sm text-[#798389] bg-white/5 px-4 py-2 rounded-lg">
+                <ExternalLink size={16} />
+                Jupyter-ноутбук не задан
               </span>
-            ))}
+            )}
+          </div>
+        )}
 
-          {node.children.length > 0 && (
-            <div className="mt-8 pt-6 border-t border-white/5">
-              <h5 className="text-sm font-semibold text-[#798389] uppercase tracking-wider mb-4">
-                Вложенные материалы
-              </h5>
-              <div className="grid sm:grid-cols-2 gap-3">
-                {node.children.map(child => (
-                  <button
-                    key={child.id}
-                    onClick={() => onSelectNode(child.id)}
-                    className="text-left bg-[#1a1f22] border border-[#434e54] rounded-xl p-4 hover:border-[#2eff8c]/40 transition-colors"
-                  >
-                    <FileText size={16} className="text-[#2eff8c] mb-2" />
-                    <span className="text-sm text-white">{child.title}</span>
-                  </button>
-                ))}
-              </div>
+        {node.children.length > 0 && (
+          <div className="mt-12 pt-8 border-t border-white/10">
+            <h5 className="text-lg font-semibold text-white mb-5">
+              Вложенные материалы
+            </h5>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {node.children.map(child => (
+                <button
+                  key={child.id}
+                  onClick={() => onSelectNode(child.id)}
+                  className="text-left bg-[#15191c] border border-[#2a3136] rounded-xl p-5 hover:border-[#2eff8c]/40 hover:bg-[#1a1f22] transition-colors group"
+                >
+                  <FileText
+                    size={20}
+                    className="text-[#2eff8c] mb-3 group-hover:scale-110 transition-transform"
+                  />
+                  <span className="text-base font-medium text-white">
+                    {child.title}
+                  </span>
+                </button>
+              ))}
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        )}
+      </article>
     </div>
   );
 }
@@ -146,6 +164,59 @@ interface TopicOrbitViewProps {
   showJupyter?: boolean;
 }
 
+interface PlanetStyle {
+  background: string;
+  boxShadow: string;
+  ring?: boolean;
+}
+
+function getPlanetStyle(order: number): PlanetStyle {
+  const planets: PlanetStyle[] = [
+    {
+      background:
+        "linear-gradient(160deg, #b8b8b8 0%, #6e6e6e 60%, #4a4a4a 100%)",
+      boxShadow: "0 0 28px rgba(184,184,184,0.45)",
+    }, // Mercury
+    {
+      background:
+        "linear-gradient(160deg, #f8e9b8 0%, #d4a574 50%, #a67c52 100%)",
+      boxShadow: "0 0 28px rgba(248,233,184,0.45)",
+    }, // Venus
+    {
+      background:
+        "linear-gradient(160deg, #4a90e2 0%, #2d6a4f 45%, #1a5f2a 100%)",
+      boxShadow: "0 0 28px rgba(74,144,226,0.45)",
+    }, // Earth
+    {
+      background:
+        "linear-gradient(160deg, #e07a4f 0%, #a84a28 50%, #6b2310 100%)",
+      boxShadow: "0 0 28px rgba(224,122,79,0.45)",
+    }, // Mars
+    {
+      background:
+        "repeating-linear-gradient(180deg, #d4a574 0px, #c49a6c 7px, #8b5a2b 14px, #c49a6c 21px, #d4a574 28px)",
+      boxShadow: "0 0 28px rgba(212,165,116,0.45)",
+    }, // Jupiter
+    {
+      background:
+        "linear-gradient(160deg, #f5e6a3 0%, #d4a574 50%, #a6844a 100%)",
+      boxShadow: "0 0 28px rgba(245,230,163,0.45)",
+      ring: true,
+    }, // Saturn
+    {
+      background:
+        "linear-gradient(160deg, #a8e0f0 0%, #6bb3cd 50%, #4a90a8 100%)",
+      boxShadow: "0 0 28px rgba(168,224,240,0.45)",
+    }, // Uranus
+    {
+      background:
+        "linear-gradient(160deg, #4a6de2 0%, #2a4aa8 50%, #1a2f6b 100%)",
+      boxShadow: "0 0 28px rgba(74,109,226,0.45)",
+    }, // Neptune
+  ];
+  return planets[(order - 1) % planets.length];
+}
+
 export default function TopicOrbitView({
   topic,
   activeNodeId,
@@ -157,7 +228,10 @@ export default function TopicOrbitView({
   const orbitRef = useRef<HTMLDivElement>(null);
   const { width: orbitWidth, height: orbitHeight } = useContainerSize(orbitRef);
   const centerRef = useRef<HTMLDivElement>(null);
-  const [hoveredId, setHoveredId] = useState<number | null>(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [mouseInOverlay, setMouseInOverlay] = useState(false);
+  const mouseRafRef = useRef<number | undefined>(undefined);
+  const mousePosRef = useRef({ x: 0, y: 0 });
 
   const accent = topic.color || "#2eff8c";
   const isMobile = orbitWidth > 0 && orbitWidth < 640;
@@ -233,14 +307,63 @@ export default function TopicOrbitView({
     }
   };
 
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      const rect = orbitRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      mousePosRef.current = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      };
+      if (!mouseRafRef.current) {
+        mouseRafRef.current = requestAnimationFrame(() => {
+          setMousePos(mousePosRef.current);
+          mouseRafRef.current = undefined;
+        });
+      }
+    },
+    [setMousePos]
+  );
+
+  const handleMouseEnter = () => setMouseInOverlay(true);
+  const handleMouseLeave = () => setMouseInOverlay(false);
+
+  const centerX = orbitWidth / 2;
+  const centerY = orbitHeight / 2;
+
+  const getGravityOffset = useCallback(
+    (x: number, y: number) => {
+      if (!mouseInOverlay || orbitWidth === 0 || orbitHeight === 0) {
+        return { x: 0, y: 0 };
+      }
+      const nodeX = centerX + x;
+      const nodeY = centerY + y;
+      const dx = mousePos.x - nodeX;
+      const dy = mousePos.y - nodeY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      const maxDistance = Math.min(orbitWidth, orbitHeight) * 0.5;
+      const maxOffset = 10;
+      if (distance >= maxDistance || distance < 1) return { x: 0, y: 0 };
+      const force = maxOffset * (1 - distance / maxDistance);
+      return {
+        x: (dx / distance) * force,
+        y: (dy / distance) * force,
+      };
+    },
+    [mouseInOverlay, mousePos, centerX, centerY, orbitWidth, orbitHeight]
+  );
+
   return (
     <div
       className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0d1012]/85 backdrop-blur-md animate-fadeIn"
       onClick={handleBackdropClick}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <button
         onClick={onClose}
-        className="absolute top-5 right-5 z-50 inline-flex items-center justify-center w-10 h-10 rounded-full border border-[#434e54] bg-[#1a1f22]/80 text-[#a0a8ad] hover:text-white hover:border-[#2eff8c]/50 transition-colors"
+        className={`absolute top-5 right-5 inline-flex items-center justify-center w-10 h-10 rounded-full border border-[#434e54] bg-[#1a1f22]/80 text-[#a0a8ad] hover:text-white hover:border-[#2eff8c]/50 transition-colors ${activeNode ? "z-[80]" : "z-50"}`}
         aria-label="Закрыть"
       >
         <X size={18} />
@@ -248,7 +371,7 @@ export default function TopicOrbitView({
 
       {activeNode ? (
         <div
-          className="w-full max-w-4xl max-h-[85vh] overflow-y-auto px-6 py-8"
+          className="fixed inset-0 z-[70] bg-[#0b0d0f] overflow-y-auto"
           onClick={e => e.stopPropagation()}
         >
           <NodeContent
@@ -257,7 +380,7 @@ export default function TopicOrbitView({
             onSelectNode={onSelectNode}
             jupyterUrl={jupyterUrlMap?.get(activeNode.title)}
             showJupyter={showJupyter}
-            topicColor={topic.color}
+            topicTitle={topic.title}
           />
         </div>
       ) : (
@@ -315,9 +438,10 @@ export default function TopicOrbitView({
             <div
               ref={centerRef}
               className="flex flex-col items-center animate-snake-float"
+              style={{ animationDelay: "2.5s" }}
             >
               <div
-                className="relative flex flex-col items-center justify-center text-center w-32 h-32 sm:w-40 sm:h-40 rounded-full border-2 transition-all duration-500 hover:scale-105"
+                className="relative flex flex-col items-center justify-center text-center w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 transition-all duration-500 hover:scale-105"
                 style={{
                   borderColor: `${accent}60`,
                   backgroundColor: `${accent}14`,
@@ -333,7 +457,7 @@ export default function TopicOrbitView({
                 <div className="relative z-10 flex flex-col items-center gap-1">
                   <CategoryIcon
                     iconKey={topic.iconType}
-                    size={36}
+                    size={isMobile ? 20 : 28}
                     color={accent}
                   />
                   <span
@@ -350,12 +474,6 @@ export default function TopicOrbitView({
               >
                 {topic.title}
               </h3>
-              {topic.content && (
-                <p className="mt-2 text-sm text-[#a0a8ad] text-center max-w-[320px] line-clamp-3 px-4">
-                  {topic.content.replace(/[#*_`[\]]/g, "").slice(0, 120)}
-                  {topic.content.length > 120 ? "..." : ""}
-                </p>
-              )}
             </div>
           </div>
 
@@ -364,106 +482,108 @@ export default function TopicOrbitView({
             const sub = item.node;
             const floatDelay = `${(index * 0.7) % 6}s`;
             const popDelay = `${index * 0.08}s`;
-            const isHovered = hoveredId === sub.id;
+            const gravity = getGravityOffset(item.x, item.y);
+            const labelOnLeft = item.x < 0;
+
+            const planetOrder = sub.order || index + 1;
+            const planet = getPlanetStyle(planetOrder);
 
             return (
               <div
                 key={sub.id}
-                className="absolute left-1/2 top-1/2 z-20 flex flex-col items-center"
+                className="absolute left-1/2 top-1/2 z-20 will-change-transform"
                 style={{
-                  transform: `translate(-50%, -50%) translate(${item.x}px, ${item.y}px)`,
+                  transform: `translate(-50%, -50%) translate(${item.x + gravity.x}px, ${item.y + gravity.y}px)`,
                 }}
-                onMouseEnter={() => setHoveredId(sub.id)}
-                onMouseLeave={() => setHoveredId(null)}
               >
-                {/* Hover card */}
-                <div
-                  className={`
-                    absolute left-1/2 -translate-x-1/2
-                    w-56 sm:w-64
-                    opacity-0 invisible scale-95
-                    ${isHovered ? "opacity-100 visible scale-100" : ""}
-                    transition-all duration-300 ease-out pointer-events-none z-30
-                    ${item.y < 0 ? "top-[calc(100%+0.75rem)]" : "bottom-[calc(100%+0.75rem)]"}
-                  `}
-                >
-                  <div
-                    className="relative overflow-hidden rounded-2xl border p-4 text-left shadow-2xl backdrop-blur-md"
-                    style={{
-                      borderColor: `${accent}40`,
-                      backgroundColor: "rgba(26,31,34,0.96)",
-                      boxShadow: `0 20px 60px rgba(0,0,0,0.5), 0 0 40px ${accent}15`,
-                    }}
-                  >
-                    <div
-                      className="absolute top-0 left-0 right-0 h-1"
-                      style={{
-                        background: `linear-gradient(90deg, transparent, ${accent}, transparent)`,
-                      }}
-                    />
-                    <h5 className="font-bold text-white text-sm leading-tight mb-2">
-                      {sub.title}
-                    </h5>
-                    {sub.content && (
-                      <p className="text-xs text-[#c8cdd1] leading-relaxed line-clamp-4">
-                        {sub.content
-                          .replace(/[#*_`[\]]/g, "")
-                          .slice(0, 140)}
-                        {sub.content.length > 140 ? "..." : ""}
-                      </p>
-                    )}
-                    <div
-                      className="inline-flex items-center gap-1 mt-2 text-xs font-medium"
-                      style={{ color: accent }}
-                    >
-                      Открыть
-                      <Sparkles size={12} />
-                    </div>
-                  </div>
-                </div>
-
                 <div
                   className="animate-orbit-pop-in"
                   style={{ animationDelay: popDelay }}
                 >
-                  <button
-                    type="button"
-                    className="outline-none bg-transparent border-0 p-0 flex flex-col items-center group"
-                    onClick={() => onSelectNode(sub.id)}
+                  <div
+                    className="relative flex items-center animate-snake-float"
+                    style={{ animationDelay: floatDelay }}
                   >
-                    <div
-                      className={`
-                        relative flex flex-col items-center justify-center text-center
-                        w-14 h-14 sm:w-20 sm:h-20 rounded-full border-2 transition-all duration-500 ease-out
-                        group-hover:scale-110 group-hover:shadow-[0_0_30px_rgba(46,255,140,0.35)]
-                        animate-snake-float
-                      `}
-                      style={{
-                        borderColor: `${accent}50`,
-                        backgroundColor: `${accent}12`,
-                        boxShadow: `0 0 24px ${accent}12`,
-                        animationDelay: floatDelay,
-                      }}
+                    <button
+                      type="button"
+                      className="outline-none bg-transparent border-0 p-0 relative z-10 group"
+                      onClick={() => onSelectNode(sub.id)}
                     >
                       <div
-                        className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                        className={`
+                          relative flex flex-col items-center justify-center text-center
+                          w-20 h-20 sm:w-28 sm:h-28 rounded-full transition-all duration-500 ease-out
+                          group-hover:scale-110
+                        `}
                         style={{
-                          boxShadow: `0 0 40px ${accent}40, inset 0 0 16px ${accent}14`,
+                          background: planet.background,
+                          boxShadow: planet.boxShadow,
                         }}
-                      />
-                      <FileText
-                        size={isMobile ? 16 : 20}
-                        className="relative z-10"
-                        style={{ color: accent }}
-                      />
-                    </div>
-                    <span
-                      className="mt-3 text-xs sm:text-sm font-semibold text-center max-w-[120px] line-clamp-2 transition-colors"
-                      style={{ color: accent }}
+                      >
+                        {/* 3D sphere highlight */}
+                        <div
+                          className="absolute inset-0 rounded-full opacity-40"
+                          style={{
+                            background:
+                              "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.35) 0%, transparent 45%)",
+                          }}
+                        />
+                        <div
+                          className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                          style={{
+                            boxShadow: "0 0 48px rgba(255,255,255,0.25), inset 0 0 24px rgba(255,255,255,0.15)",
+                          }}
+                        />
+
+                        {/* Saturn ring */}
+                        {planet.ring && (
+                          <div
+                            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none"
+                            style={{
+                              width: "140%",
+                              height: "40%",
+                              border: "3px solid rgba(220, 200, 150, 0.6)",
+                              boxShadow: "0 0 10px rgba(220,200,150,0.4)",
+                              transform: "translate(-50%, -50%) rotate(-15deg)",
+                            }}
+                          />
+                        )}
+                      </div>
+                    </button>
+
+                    {/* Side label card */}
+                    <div
+                      className={`
+                        absolute top-1/2 -translate-y-1/2 z-20
+                        w-40 sm:w-52
+                        ${labelOnLeft ? "right-full mr-4 text-right" : "left-full ml-4 text-left"}
+                      `}
                     >
-                      {sub.title}
-                    </span>
-                  </button>
+                      <div
+                        className="rounded-xl border p-3 backdrop-blur-md"
+                        style={{
+                          borderColor: `${accent}40`,
+                          backgroundColor: "rgba(26,31,34,0.92)",
+                          boxShadow: `0 10px 40px rgba(0,0,0,0.4), 0 0 24px ${accent}10`,
+                        }}
+                      >
+                        <h6
+                          className="text-sm font-bold leading-tight mb-1"
+                          style={{ color: accent }}
+                        >
+                          {sub.title}
+                        </h6>
+                        {sub.content && (
+                          <p className="text-[11px] sm:text-xs text-[#a0a8ad] leading-relaxed line-clamp-2">
+                            {sub.content
+                              .replace(/[#*_`[\]]/g, "")
+                              .slice(0, 100)}
+                            {sub.content.length > 100 ? "..." : ""}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             );
