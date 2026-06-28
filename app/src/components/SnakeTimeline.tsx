@@ -17,6 +17,7 @@ export interface SnakeTimelineItem {
   order?: number;
   icon?: ReactNode;
   href?: string;
+  state?: Record<string, unknown>;
   onClick?: () => void;
   meta?: ReactNode;
   details?: ReactNode;
@@ -322,6 +323,7 @@ export default function SnakeTimeline({
                     hasLink ? (
                       <Link
                         to={item.href!}
+                        state={item.state}
                         className="outline-none"
                         onClick={e => e.stopPropagation()}
                       >

@@ -56,6 +56,11 @@ module.exports = {
         sm: "calc(var(--radius) - 4px)",
         xs: "calc(var(--radius) - 6px)",
       },
+      fontFamily: {
+        sans: ["Nunito", "system-ui", "sans-serif"],
+        serif: ["Literata", "Georgia", "serif"],
+        mono: ["Geist Mono", "monospace"],
+      },
       boxShadow: {
         xs: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
       },

@@ -50,6 +50,7 @@ export default function Labs() {
         order: cat.order,
         icon: <CategoryIcon iconKey={cat.iconType} size={24} />,
         href: `/labs/category/${cat.slug}`,
+        state: { fromLabs: true },
         meta: isStudent ? (
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs">

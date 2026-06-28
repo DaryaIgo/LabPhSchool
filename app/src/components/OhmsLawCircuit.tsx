@@ -485,13 +485,13 @@ export default function OhmsLawCircuit({ state, onAddMeasurement }: Props) {
 
       // Current direction label
       ctx.fillStyle = "rgba(46,130,90,0.6)";
-      ctx.font = "italic 10px 'Geist Sans', sans-serif";
+      ctx.font = "italic 10px 'Nunito', sans-serif";
       ctx.fillText("I", leftX + circuitW / 2 - 20, topY + 18);
     }
 
     // ---- TITLE BOX (textbook style) ----
     ctx.fillStyle = "#2a2520";
-    ctx.font = "bold 13px 'Geist Sans', sans-serif";
+    ctx.font = "bold 13px 'Nunito', sans-serif";
     ctx.fillText(
       "Рис. 1.  Электрическая цепь для проверки закона Ома",
       marginX,
@@ -508,7 +508,7 @@ export default function OhmsLawCircuit({ state, onAddMeasurement }: Props) {
     ctx.strokeRect(legendX, legendY, 130, 70);
 
     ctx.fillStyle = "#2a2520";
-    ctx.font = "bold 9px 'Geist Sans', sans-serif";
+    ctx.font = "bold 9px 'Nunito', sans-serif";
     ctx.fillText("Условные обозначения:", legendX + 6, legendY + 14);
 
     const legendItems = [
@@ -521,7 +521,7 @@ export default function OhmsLawCircuit({ state, onAddMeasurement }: Props) {
       ctx.fillStyle = item.color;
       ctx.fillRect(legendX + 6, legendY + 22 + i * 12, 10, 2);
       ctx.fillStyle = "#2a2520";
-      ctx.font = "8px 'Geist Sans', sans-serif";
+      ctx.font = "8px 'Nunito', sans-serif";
       ctx.fillText(item.label, legendX + 20, legendY + 26 + i * 12);
     });
 
@@ -570,7 +570,7 @@ export default function OhmsLawCircuit({ state, onAddMeasurement }: Props) {
     // Add measurement button hint
     if (state.switchOn && current > 0) {
       ctx.fillStyle = "rgba(46,130,90,0.8)";
-      ctx.font = "italic 9px 'Geist Sans', sans-serif";
+      ctx.font = "italic 9px 'Nunito', sans-serif";
       ctx.fillText("Нажмите «Записать в таблицу»", panelX + 8, panelY - 6);
     }
 
