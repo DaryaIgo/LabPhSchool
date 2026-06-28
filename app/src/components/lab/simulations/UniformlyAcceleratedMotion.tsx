@@ -70,25 +70,38 @@ export default function UniformlyAcceleratedMotion({
       const viewMax = maxViewX + padding;
       const viewRange = viewMax - viewMin;
 
-      // Track geometry
-      const trackY = 270;
+      // Track geometry. The track is drawn rotated by angleRad so that the
+      // inclined plane is visualised correctly. We shrink the track width if
+      // necessary so that the rotated track still fits inside the canvas.
+      const trackCenterY = 270;
       const trackHeight = 70;
       const marginX = 50;
-      const trackLeft = marginX;
-      const trackRight = w - marginX;
-      const trackWidth = trackRight - trackLeft;
+      const maxVertical = h - 160;
+      const sinAbs = Math.abs(Math.sin(angleRad));
+      const trackWidth =
+        sinAbs > 0.01
+          ? Math.min(w - 2 * marginX, maxVertical / sinAbs)
+          : w - 2 * marginX;
+      const centerX = w / 2;
       const scale = trackWidth / viewRange;
-      const posToX = (pos: number) => trackLeft + (pos - viewMin) * scale;
+      const posToLocalX = (pos: number) =>
+        (pos - viewMin) * scale - trackWidth / 2;
+
+      // Switch to local track coordinates: origin at the track centre,
+      // X-axis pointing along the inclined plane.
+      ctx.save();
+      ctx.translate(centerX, trackCenterY);
+      ctx.rotate(angleRad);
 
       // Draw track
       ctx.fillStyle = "#2a3237";
-      ctx.fillRect(trackLeft, trackY, trackWidth, trackHeight);
+      ctx.fillRect(-trackWidth / 2, 0, trackWidth, trackHeight);
 
       ctx.strokeStyle = "#3c474f";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(trackLeft, trackY);
-      ctx.lineTo(trackRight, trackY);
+      ctx.moveTo(-trackWidth / 2, 0);
+      ctx.lineTo(trackWidth / 2, 0);
       ctx.stroke();
 
       // Draw ruler ticks
@@ -101,53 +114,59 @@ export default function UniformlyAcceleratedMotion({
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
 
-      for (let x = startTick; x <= endTick; x += tickStep) {
-        const px = posToX(x);
-        if (px < trackLeft - 10 || px > trackRight + 10) continue;
+      for (let t = startTick; t <= endTick; t += tickStep) {
+        const px = posToLocalX(t);
+        if (px < -trackWidth / 2 - 10 || px > trackWidth / 2 + 10) continue;
 
         ctx.strokeStyle = "#96a3ab";
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(px, trackY);
-        ctx.lineTo(px, trackY + 10);
+        ctx.moveTo(px, 0);
+        ctx.lineTo(px, 10);
         ctx.stroke();
 
-        const label = Math.abs(x) < tickStep / 100 ? "0" : String(roundNice(x));
-        ctx.fillText(label, px, trackY + 14);
+        const label = Math.abs(t) < tickStep / 100 ? "0" : String(roundNice(t));
+        ctx.fillText(label, px, 14);
 
         const minorStep = tickStep / 5;
-        for (let mx = x + minorStep; mx < x + tickStep; mx += minorStep) {
-          const mpx = posToX(mx);
-          if (mpx < trackLeft || mpx > trackRight) continue;
+        for (let mx = t + minorStep; mx < t + tickStep; mx += minorStep) {
+          const mpx = posToLocalX(mx);
+          if (mpx < -trackWidth / 2 || mpx > trackWidth / 2) continue;
           ctx.strokeStyle = "#788389";
           ctx.beginPath();
-          ctx.moveTo(mpx, trackY);
-          ctx.lineTo(mpx, trackY + 5);
+          ctx.moveTo(mpx, 0);
+          ctx.lineTo(mpx, 5);
           ctx.stroke();
         }
       }
 
       // Zero line
-      const zeroX = posToX(0);
-      if (zeroX >= trackLeft - 1 && zeroX <= trackRight + 1) {
+      const zeroLocalX = posToLocalX(0);
+      if (
+        zeroLocalX >= -trackWidth / 2 - 1 &&
+        zeroLocalX <= trackWidth / 2 + 1
+      ) {
         ctx.strokeStyle = "#2eff8c";
         ctx.lineWidth = 1;
         ctx.setLineDash([4, 4]);
         ctx.beginPath();
-        ctx.moveTo(zeroX, trackY - 25);
-        ctx.lineTo(zeroX, trackY + trackHeight);
+        ctx.moveTo(zeroLocalX, -25);
+        ctx.lineTo(zeroLocalX, trackHeight);
         ctx.stroke();
         ctx.setLineDash([]);
 
         ctx.fillStyle = "#2eff8c";
         ctx.font = "10px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("x = 0", zeroX, trackY - 36);
+        ctx.fillText("x = 0", zeroLocalX, -36);
       }
 
-      // Draw car
-      const carX = Math.min(Math.max(posToX(x), trackLeft), trackRight);
-      const carY = trackY - 12;
+      // Draw car (in local track coordinates)
+      const carLocalX = Math.min(
+        Math.max(posToLocalX(x), -trackWidth / 2),
+        trackWidth / 2
+      );
+      const carY = -12;
       const carWidth = 44;
       const carHeight = 22;
       const wheelRadius = 5;
@@ -155,12 +174,12 @@ export default function UniformlyAcceleratedMotion({
       // Face velocity direction
       const facingRight = v >= 0;
 
-      // Velocity vector (drawn in world coords before car transform)
+      // Velocity vector (in local track coords, so it follows the plane)
       if (Math.abs(v) > 0.05) {
         const arrowLen = Math.min(Math.abs(v) * 5 + 24, 80);
         const arrowY = carY - carHeight - 10;
         const dir = v >= 0 ? 1 : -1;
-        const endX = carX + dir * arrowLen;
+        const endX = carLocalX + dir * arrowLen;
 
         ctx.strokeStyle = "#2eff8c";
         ctx.lineWidth = 3;
@@ -168,7 +187,7 @@ export default function UniformlyAcceleratedMotion({
         ctx.lineJoin = "round";
 
         ctx.beginPath();
-        ctx.moveTo(carX, arrowY);
+        ctx.moveTo(carLocalX, arrowY);
         ctx.lineTo(endX, arrowY);
         ctx.stroke();
 
@@ -181,7 +200,7 @@ export default function UniformlyAcceleratedMotion({
         const label = `v = ${v.toFixed(1)} м/с`;
         ctx.font = "bold 12px sans-serif";
         const textWidth = ctx.measureText(label).width;
-        const labelX = carX + (dir * arrowLen) / 2;
+        const labelX = carLocalX + (dir * arrowLen) / 2;
         const labelY = arrowY - 16;
 
         ctx.fillStyle = "rgba(26, 31, 34, 0.92)";
@@ -202,7 +221,7 @@ export default function UniformlyAcceleratedMotion({
       }
 
       ctx.save();
-      ctx.translate(carX, carY);
+      ctx.translate(carLocalX, carY);
       if (!facingRight) {
         ctx.scale(-1, 1);
       }
@@ -230,11 +249,11 @@ export default function UniformlyAcceleratedMotion({
 
       ctx.restore();
 
-      // Acceleration indicator above track
+      // Acceleration indicator above track (in local track coords)
       if (Math.abs(a) > 0.01) {
         const arrowLen = Math.min(Math.abs(a) * 6 + 16, 70);
-        const arrowX = w / 2;
-        const arrowY = 85;
+        const arrowLocalX = 0;
+        const arrowY = -55;
         const dir = a >= 0 ? 1 : -1;
 
         ctx.strokeStyle = "#01acff";
@@ -242,20 +261,20 @@ export default function UniformlyAcceleratedMotion({
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
         ctx.beginPath();
-        ctx.moveTo(arrowX, arrowY);
-        ctx.lineTo(arrowX + dir * arrowLen, arrowY);
+        ctx.moveTo(arrowLocalX, arrowY);
+        ctx.lineTo(arrowLocalX + dir * arrowLen, arrowY);
         ctx.stroke();
 
         ctx.beginPath();
-        ctx.moveTo(arrowX + dir * arrowLen - dir * 8, arrowY - 6);
-        ctx.lineTo(arrowX + dir * arrowLen, arrowY);
-        ctx.lineTo(arrowX + dir * arrowLen - dir * 8, arrowY + 6);
+        ctx.moveTo(arrowLocalX + dir * arrowLen - dir * 8, arrowY - 6);
+        ctx.lineTo(arrowLocalX + dir * arrowLen, arrowY);
+        ctx.lineTo(arrowLocalX + dir * arrowLen - dir * 8, arrowY + 6);
         ctx.stroke();
 
         const label = `a = ${a.toFixed(2)} м/с²`;
         ctx.font = "bold 11px sans-serif";
         const textWidth = ctx.measureText(label).width;
-        const labelX = arrowX + (dir * arrowLen) / 2;
+        const labelX = arrowLocalX + (dir * arrowLen) / 2;
         const labelY = arrowY - 14;
 
         ctx.fillStyle = "rgba(26, 31, 34, 0.92)";
@@ -274,6 +293,8 @@ export default function UniformlyAcceleratedMotion({
         ctx.textBaseline = "middle";
         ctx.fillText(label, labelX, labelY - 0);
       }
+
+      ctx.restore(); // back to world coordinates
 
       // Title
       ctx.fillStyle = "#ffffff";
@@ -301,7 +322,7 @@ export default function UniformlyAcceleratedMotion({
         onStateChange(state);
       }
     };
-  }, [v0, a, time, startX, isRunning, onStateChange]);
+  }, [v0, a, angleRad, time, startX, isRunning, onStateChange]);
 
   return (
     <SimulationCanvas
