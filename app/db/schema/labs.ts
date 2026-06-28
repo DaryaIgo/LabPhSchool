@@ -118,7 +118,7 @@ export interface SimulationParamConfig {
   max?: string;
   step?: string;
   defaultValue?: string;
-  options?: string;
+  options?: { value: string; label: string }[];
   unit?: string;
 }
 

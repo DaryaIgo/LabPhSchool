@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Удобный скрипт для управления проектом Ph."""
+"""Удобный скрипт для управления проектом nebuls."""
 
 import argparse
 import subprocess
@@ -104,7 +104,7 @@ def cmd_full(args) -> int:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Управление проектом Ph",
+        description="Управление проектом nebuls",
         formatter_class=argparse.RawTextHelpFormatter,
     )
     sub = parser.add_subparsers(dest="command", required=True)

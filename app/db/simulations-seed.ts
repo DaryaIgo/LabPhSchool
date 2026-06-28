@@ -111,6 +111,48 @@ const simulationData: SimulationSeed[] = [
     ],
   },
   {
+    slug: "free-fall",
+    title: "Свободное падение",
+    description:
+      "Модель свободного падения тела с возможностью задать начальную высоту, скорость и ускорение свободного падения.",
+    category: "mechanics",
+    isDynamic: true,
+    componentRef: "free-fall",
+    params: [
+      {
+        key: "h0",
+        label: "Начальная высота",
+        paramType: "slider",
+        min: "0",
+        max: "100",
+        step: "1",
+        defaultValue: "20",
+        unit: "м",
+      },
+      {
+        key: "v0",
+        label: "Начальная скорость",
+        paramType: "slider",
+        min: "-20",
+        max: "20",
+        step: "0.5",
+        defaultValue: "0",
+        unit: "м/с",
+      },
+      {
+        key: "g",
+        label: "Ускорение свободного падения",
+        paramType: "select",
+        defaultValue: "9.8",
+        options: [
+          { value: "9.8", label: "Земля (9.8 м/с²)" },
+          { value: "1.62", label: "Луна (1.62 м/с²)" },
+          { value: "3.71", label: "Марс (3.71 м/с²)" },
+        ],
+      },
+    ],
+  },
+  {
     slug: "projectile-motion",
     title: "Движение тела, брошенного под углом",
     description: "Интерактивная PhET-симуляция баллистического движения.",

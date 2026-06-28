@@ -19,6 +19,11 @@ import {
   uniformlyAcceleratedMotionManifest,
   computeUniformlyAcceleratedMotionMeasurement,
 } from "./UniformlyAcceleratedMotion.manifest";
+import FreeFall from "./FreeFall";
+import {
+  freeFallManifest,
+  computeFreeFallMeasurement,
+} from "./FreeFall.manifest";
 import type { RegisteredSimulation } from "./types";
 
 export const simulationRegistry: Record<string, RegisteredSimulation> = {
@@ -31,6 +36,11 @@ export const simulationRegistry: Record<string, RegisteredSimulation> = {
     manifest: uniformlyAcceleratedMotionManifest,
     component: UniformlyAcceleratedMotion,
     computeMeasurement: computeUniformlyAcceleratedMotionMeasurement,
+  },
+  "free-fall": {
+    manifest: freeFallManifest,
+    component: FreeFall,
+    computeMeasurement: computeFreeFallMeasurement,
   },
 };
 

@@ -142,6 +142,7 @@ function OwnSimulationView({
     {}
   );
   const [isRunning, setIsRunning] = useState(false);
+  const [hasFinished, setHasFinished] = useState(false);
   const [currentState, setCurrentState] = useState<Record<string, number>>({});
   const stateRef = useRef<Record<string, number>>({});
 
@@ -168,6 +169,7 @@ function OwnSimulationView({
           onChange: (v: number) => {
             setSimParams(prev => ({ ...prev, [p.key]: v }));
             setIsRunning(false);
+            setHasFinished(false);
           },
         };
       }
@@ -180,6 +182,7 @@ function OwnSimulationView({
           onChange: (v: string) => {
             setSimParams(prev => ({ ...prev, [p.key]: v }));
             setIsRunning(false);
+            setHasFinished(false);
           },
         };
       }
@@ -199,10 +202,17 @@ function OwnSimulationView({
     });
   }, [manifest.params, effectiveParams]);
 
-  const handleStart = () => setIsRunning(prev => !prev);
+  const handleStart = () => {
+    setIsRunning(prev => {
+      const next = !prev;
+      if (next) setHasFinished(false);
+      return next;
+    });
+  };
 
   const handleReset = () => {
     setIsRunning(false);
+    setHasFinished(false);
     setSimParams({});
     setCurrentState({});
     stateRef.current = {};
@@ -269,10 +279,12 @@ function OwnSimulationView({
             <SimComponent
               params={effectiveParams}
               isRunning={isRunning}
+              isFinished={hasFinished}
               onStateChange={state => {
                 stateRef.current = state;
                 setCurrentState(state);
                 if (state.finished) {
+                  setHasFinished(true);
                   setIsRunning(false);
                 }
               }}
@@ -304,7 +316,7 @@ function OwnSimulationView({
             <Button
               onClick={handleReset}
               variant="outline"
-              className="border-[#37474f] text-[#c8cdd1] hover:text-white"
+              className="border-white bg-white text-[#0d1117] hover:bg-[#e5e7eb] hover:text-[#0d1117]"
             >
               <Trash2 size={16} className="mr-2" />
               Сброс

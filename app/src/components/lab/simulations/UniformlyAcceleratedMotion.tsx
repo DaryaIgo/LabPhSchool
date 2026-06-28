@@ -1,10 +1,11 @@
-import { useMemo, useRef, useEffect } from "react";
+import { useMemo, useRef } from "react";
 import SimulationCanvas from "@/components/lab/SimulationCanvas";
 import type { SimComponentProps } from "./types";
 
 export default function UniformlyAcceleratedMotion({
   params,
   isRunning,
+  isFinished,
   onStateChange,
 }: SimComponentProps) {
   const v0 = Number(params.v0 || 0);
@@ -16,14 +17,7 @@ export default function UniformlyAcceleratedMotion({
   const a = 9.8 * Math.sin(angleRad);
 
   const startTimeRef = useRef<number>(0);
-  const finishedRef = useRef(false);
-
-  useEffect(() => {
-    if (isRunning) {
-      startTimeRef.current = Date.now();
-      finishedRef.current = false;
-    }
-  }, [isRunning]);
+  const wasRunningRef = useRef(false);
 
   const draw = useMemo(() => {
     return (ctx: CanvasRenderingContext2D, w: number, h: number) => {
@@ -32,12 +26,20 @@ export default function UniformlyAcceleratedMotion({
 
       // Current animation time: when not running the object stays at the
       // start position (x0).
+      // Reset the animation timer on the first frame after starting.
+      if (isRunning && !wasRunningRef.current) {
+        startTimeRef.current = Date.now();
+      }
+      wasRunningRef.current = isRunning ?? false;
+
       let currentTime = 0;
       if (isRunning) {
         const animDuration = Math.max(time * 1000, 1000);
         const elapsed = Date.now() - startTimeRef.current;
         const progress = Math.min(elapsed / animDuration, 1);
         currentTime = time * progress;
+      } else if (isFinished) {
+        currentTime = time;
       }
 
       const displacement =
@@ -315,14 +317,13 @@ export default function UniformlyAcceleratedMotion({
           v,
           a,
         };
-        if (currentTime >= time && isRunning && !finishedRef.current) {
-          finishedRef.current = true;
+        if (currentTime >= time && isRunning) {
           state.finished = 1;
         }
         onStateChange(state);
       }
     };
-  }, [v0, a, angleRad, time, startX, isRunning, onStateChange]);
+  }, [v0, a, angleRad, time, startX, isRunning, isFinished, onStateChange]);
 
   return (
     <SimulationCanvas

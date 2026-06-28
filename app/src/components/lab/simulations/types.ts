@@ -85,6 +85,9 @@ export interface SimulationManifest {
 export interface SimComponentProps {
   params: Record<string, number | string>;
   isRunning?: boolean;
+  /** If true, the simulation animation has finished and the component
+   *  should render the final state instead of the initial one. */
+  isFinished?: boolean;
   onStateChange?: (state: Record<string, number>) => void;
 }
 
