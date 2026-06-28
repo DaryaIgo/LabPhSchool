@@ -81,7 +81,13 @@ function generateNebula(count: number, size: number): Star[] {
   return stars;
 }
 
-export default function NebulaLogo() {
+interface NebulaLogoProps {
+  animateRotation?: boolean;
+}
+
+export default function NebulaLogo({
+  animateRotation = true,
+}: NebulaLogoProps) {
   const size = 100;
   const starCount = 140;
   const cx = size / 2;
@@ -136,7 +142,11 @@ export default function NebulaLogo() {
       />
 
       {/* Outer rotating shell */}
-      <g className="origin-center animate-nebulaSpin-slow group-hover:animate-nebulaSpin-fast">
+      <g
+        className={`origin-center ${
+          animateRotation ? "animate-nebulaSpin-slow" : ""
+        } ${animateRotation ? "group-hover:animate-nebulaSpin-fast" : ""}`}
+      >
         {outer.map((star, i) => (
           <circle
             key={`o-${i}`}
@@ -159,7 +169,13 @@ export default function NebulaLogo() {
       </g>
 
       {/* Inner core — counter-rotates */}
-      <g className="origin-center animate-nebulaSpin-reverse-slow group-hover:animate-nebulaSpin-reverse-fast">
+      <g
+        className={`origin-center ${
+          animateRotation ? "animate-nebulaSpin-reverse-slow" : ""
+        } ${
+          animateRotation ? "group-hover:animate-nebulaSpin-reverse-fast" : ""
+        }`}
+      >
         {inner.map((star, i) => (
           <circle
             key={`i-${i}`}

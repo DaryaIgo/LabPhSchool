@@ -137,6 +137,18 @@ export default function Header() {
 
   const isActive = (path: string) => location.pathname === path;
 
+  const topLevelPaths = [
+    "/",
+    "/course",
+    "/labs",
+    "/resources",
+    "/timeline",
+    "/about",
+    "/login",
+    "/student/login",
+  ];
+  const isTopLevel = topLevelPaths.includes(location.pathname);
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/50 border-b border-white/5">
       <div className="w-full px-6 lg:px-8">
@@ -144,7 +156,7 @@ export default function Header() {
           <div className="flex items-center gap-6">
             {/* Logo */}
             <Link to="/" className="group flex items-center gap-2">
-              <NebulaLogo />
+              <NebulaLogo animateRotation={isTopLevel} />
             </Link>
 
             {/* Desktop Nav */}
