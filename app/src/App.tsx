@@ -36,10 +36,17 @@ function ScrollToTop() {
 }
 
 export default function App() {
+  const { pathname } = useLocation();
+  const immersiveLab = pathname.startsWith("/labs/work");
+
   return (
-    <div className="min-h-screen bg-[#262e33] text-white pt-16">
+    <div
+      className={`min-h-screen bg-[#262e33] text-white ${
+        immersiveLab ? "" : "pt-16"
+      }`}
+    >
       <ScrollToTop />
-      <Header />
+      {!immersiveLab && <Header />}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/course" element={<Course />} />

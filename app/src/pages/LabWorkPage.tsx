@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/providers/trpc";
-import { Link, useParams } from "react-router";
-import { ArrowLeft, Target, Wrench, BookOpen, PenLine } from "lucide-react";
+import { useParams, useNavigate } from "react-router";
+import { X, Target, Wrench, BookOpen, PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
@@ -53,7 +53,20 @@ function SectionHeading({
 }
 
 export default function LabWorkPage() {
+  const navigate = useNavigate();
   const { slug } = useParams<{ slug: string }>();
+
+  useEffect(() => {
+    // Ensure scrolling is not locked by a previous immersive overlay
+    const originalHtml = document.documentElement.style.overflow;
+    const originalBody = document.body.style.overflow;
+    document.documentElement.style.overflow = "auto";
+    document.body.style.overflow = "auto";
+    return () => {
+      document.documentElement.style.overflow = originalHtml;
+      document.body.style.overflow = originalBody;
+    };
+  }, []);
   const { data: labWork, isLoading } = trpc.virtualLab.labWorkBySlug.useQuery(
     { slug: slug! },
     { enabled: !!slug }
@@ -126,25 +139,18 @@ export default function LabWorkPage() {
 
   return (
     <div className="min-h-screen bg-[#0b0d0f]">
-      {/* Sticky header */}
-      <header className="sticky top-0 z-30 bg-[#0b0d0f]/95 backdrop-blur-md border-b border-white/5">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
-          <Link
-            to="/labs"
-            className="inline-flex items-center gap-1.5 text-sm text-[#a0a8ad] hover:text-[#2eff8c] transition-colors shrink-0"
-          >
-            <ArrowLeft size={16} />
-            Все лабораторные
-          </Link>
-          <h1 className="flex-1 text-sm sm:text-base font-semibold text-white truncate text-center">
-            {labWork.title}
-          </h1>
-          <div className="w-16 shrink-0" />
-        </div>
-      </header>
+      {/* Floating close button */}
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        aria-label="Закрыть"
+        className="fixed top-5 right-5 z-50 w-10 h-10 rounded-full border border-[#434e54] bg-[#1a1f22]/80 backdrop-blur-md text-[#a0a8ad] hover:text-white hover:border-[#2eff8c]/50 flex items-center justify-center transition-colors shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
+      >
+        <X size={18} />
+      </button>
 
       {/* Hero */}
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-8">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6 pb-8">
         {labWork.categoryTitle && (
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#2eff8c]/20 bg-[#2eff8c]/5 text-[#2eff8c] text-xs font-medium tracking-wide mb-4">
             {labWork.categoryTitle}
