@@ -233,7 +233,7 @@ export default function AdminDashboard() {
           <CompactStat value={stats?.content.topics ?? "—"} label="тем" />
           <CompactStat value={stats?.content.subtopics ?? "—"} label="разделов" />
         </CompactCard>
-        <CompactCard title="Лаборатории" icon={FlaskConical}>
+        <CompactCard title="Лабораторные" icon={FlaskConical}>
           <CompactStat value={stats?.content.simulations ?? "—"} label="симуляций" />
           <CompactStat value={stats?.content.labWorks ?? "—"} label="работ" />
         </CompactCard>
@@ -273,7 +273,7 @@ export default function AdminDashboard() {
           onClick={() => navigate("/admin/topics")}
         />
         <QuickAction
-          label="Лаборатории"
+          label="Лабораторные"
           icon={Beaker}
           onClick={() => navigate("/admin/lab-management")}
         />

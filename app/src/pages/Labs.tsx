@@ -105,7 +105,7 @@ export default function Labs() {
               </span>
             </h2>
             <p className="text-[#a0a8ad] text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-              Исследуйте виртуальные лаборатории по разделам физики.
+              Исследуйте виртуальные лабораторные работы по разделам физики.
               <br />
               Каждая точка — путь к интерактивным работам и симуляциям.
             </p>

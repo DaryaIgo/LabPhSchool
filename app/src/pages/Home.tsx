@@ -458,7 +458,7 @@ function RocketCanvas() {
     const rockets: Rocket[] = [];
     const popups: FormulaPopup[] = [];
     let spawnTimer = 0;
-    const spawnInterval = 90 + Math.floor(Math.random() * 90); // ~1.5-3s
+    const spawnInterval = 150 + Math.floor(Math.random() * 108); // 
 
     const loop = () => {
       ctx.clearRect(0, 0, W, H);
