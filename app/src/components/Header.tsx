@@ -150,46 +150,54 @@ export default function Header() {
   const isTopLevel = topLevelPaths.includes(location.pathname);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/50 border-b border-white/5">
-      <div className="w-full px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center gap-6">
+    <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
+      <div className="mx-auto max-w-6xl px-4 pt-3 pointer-events-auto">
+        {/* Floating glass capsule */}
+        <div className="relative flex items-center justify-between h-14 pl-2 pr-2 sm:pr-3 rounded-full border border-white/10 bg-[#1a1f22]/70 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.4),0_0_20px_rgba(46,255,140,0.04)]">
+          {/* Subtle bottom glow line */}
+          <div className="absolute inset-x-4 -bottom-px h-px bg-gradient-to-r from-transparent via-[#2eff8c]/20 to-transparent pointer-events-none" />
+
+          <div className="flex items-center gap-2 sm:gap-4">
             {/* Logo */}
-            <Link to="/" className="group flex items-center gap-2">
+            <Link to="/" className="group flex items-center gap-2 pl-2">
               <NebulaLogo animateRotation={isTopLevel} />
             </Link>
 
             {/* Desktop Nav */}
-            <nav className="hidden md:flex items-center gap-1">
-              {navLinks.map(link => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                    isActive(link.to)
-                      ? "text-[#2eff8c] bg-[#2eff8c]/10"
-                      : "text-[#c8cdd1] hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
+            <nav className="hidden lg:flex items-center gap-1">
+              {navLinks.map(link => {
+                const active = isActive(link.to);
+                return (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 border ${
+                      active
+                        ? "text-[#2eff8c] bg-gradient-to-r from-[#2eff8c]/15 to-[#01acff]/10 border-[#2eff8c]/25 shadow-[0_0_16px_rgba(46,255,140,0.12)]"
+                        : "text-[#c8cdd1] border-transparent hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    <link.icon size={16} className={active ? "text-[#2eff8c]" : ""} />
+                    <span>{link.label}</span>
+                  </Link>
+                );
+              })}
             </nav>
           </div>
 
           {/* Auth Buttons */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-2">
             {isAuthenticated && user ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 {user.role === "student" && <StudentNotifications />}
                 <Link
                   to={user.role === "admin" ? "/admin" : "/profile"}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-all border ${
                     isActive("/profile") ||
                     isActive("/student/profile") ||
                     isActive("/admin")
-                      ? "text-[#2eff8c] bg-[#2eff8c]/10"
-                      : "text-[#c8cdd1] hover:text-white"
+                      ? "text-[#2eff8c] bg-gradient-to-r from-[#2eff8c]/15 to-[#01acff]/10 border-[#2eff8c]/25 shadow-[0_0_16px_rgba(46,255,140,0.12)]"
+                      : "text-[#c8cdd1] border-transparent hover:text-white hover:bg-white/5"
                   }`}
                 >
                   {user.avatar ? (
@@ -201,20 +209,23 @@ export default function Header() {
                   ) : (
                     <User size={16} />
                   )}
-                  <span className="max-w-[100px] truncate">
+                  <span className="max-w-[80px] lg:max-w-[100px] truncate">
                     {user.name || "Кабинет"}
                   </span>
                 </Link>
                 <button
                   onClick={logout}
-                  className="text-xs text-[#798389] hover:text-white transition-colors flex items-center gap-1"
+                  className="p-2 rounded-full text-[#798389] hover:text-white hover:bg-white/5 transition-colors"
+                  title="Выйти"
                 >
-                  <LogOut size={14} />
-                  Выйти
+                  <LogOut size={16} />
                 </button>
               </div>
             ) : (
-              <Link to="/login" className="btn-lime text-sm">
+              <Link
+                to="/login"
+                className="relative overflow-hidden rounded-full px-5 py-2 text-sm font-semibold text-black bg-gradient-to-r from-[#2eff8c] to-[#01acff] shadow-[0_0_20px_rgba(46,255,140,0.25)] hover:shadow-[0_0_28px_rgba(46,255,140,0.45)] hover:scale-105 active:scale-95 transition-all duration-200"
+              >
                 Войти
               </Link>
             )}
@@ -222,26 +233,26 @@ export default function Header() {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden text-white p-2"
+            className="md:hidden p-2 rounded-full text-[#c8cdd1] hover:text-white hover:bg-white/5 transition-colors"
             onClick={() => setMobileOpen(!mobileOpen)}
           >
-            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
       </div>
 
       {/* Mobile Menu */}
       {mobileOpen && (
-        <div className="md:hidden bg-[#1a1f22] border-t border-white/5">
-          <div className="px-6 py-4 space-y-1">
+        <div className="md:hidden mx-4 mt-2 pointer-events-auto">
+          <div className="rounded-3xl border border-white/10 bg-[#1a1f22]/95 backdrop-blur-xl shadow-2xl p-3 space-y-1">
             {navLinks.map(link => (
               <Link
                 key={link.to}
                 to={link.to}
                 onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all ${
                   isActive(link.to)
-                    ? "text-[#2eff8c] bg-[#2eff8c]/10"
+                    ? "text-[#2eff8c] bg-gradient-to-r from-[#2eff8c]/15 to-[#01acff]/10 border border-[#2eff8c]/25 shadow-[0_0_12px_rgba(46,255,140,0.1)]"
                     : "text-[#c8cdd1] hover:text-white hover:bg-white/5"
                 }`}
               >
@@ -249,13 +260,13 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
-            <div className="pt-3 border-t border-white/5">
+            <div className="pt-2 mt-2 border-t border-white/5">
               {isAuthenticated && user ? (
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Link
                     to={user.role === "admin" ? "/admin" : "/profile"}
                     onClick={() => setMobileOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#2eff8c] bg-[#2eff8c]/10"
+                    className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium text-[#2eff8c] bg-gradient-to-r from-[#2eff8c]/15 to-[#01acff]/10 border border-[#2eff8c]/25"
                   >
                     {user.avatar ? (
                       <img
@@ -273,7 +284,7 @@ export default function Header() {
                       logout();
                       setMobileOpen(false);
                     }}
-                    className="w-full text-left px-4 py-3 rounded-xl text-sm text-[#798389] hover:text-white transition-colors flex items-center gap-3"
+                    className="w-full text-left px-4 py-3 rounded-2xl text-sm text-[#798389] hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3"
                   >
                     <LogOut size={18} />
                     Выйти
@@ -283,7 +294,7 @@ export default function Header() {
                 <Link
                   to="/login"
                   onClick={() => setMobileOpen(false)}
-                  className="btn-lime block text-center"
+                  className="block text-center rounded-full px-5 py-3 text-sm font-semibold text-black bg-gradient-to-r from-[#2eff8c] to-[#01acff] shadow-[0_0_20px_rgba(46,255,140,0.25)]"
                 >
                   Войти
                 </Link>
