@@ -82,10 +82,6 @@ export default function Labs() {
       <section className="section-dark pt-8 pb-16 lg:pt-12 lg:pb-20">
         <div className="max-w-7xl mx-auto px-6">
           <div className="mb-12 lg:mb-16 text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#2eff8c]/20 bg-[#2eff8c]/5 text-[#2eff8c] text-xs font-medium tracking-wide mb-5">
-              <Atom size={14} className="animate-spin-slow" />
-              Виртуальные лаборатории
-            </div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight">
               Лабораторные{" "}
               <span className="relative inline-block">
@@ -93,7 +89,7 @@ export default function Labs() {
                   className="relative z-10"
                   style={{
                     background:
-                      "linear-gradient(90deg, #2eff8c, #5fffa8, #2eff8c)",
+                      "linear-gradient(90deg, #71c7ff, #58a7ff, #2f7cff)",
                     backgroundSize: "200% auto",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
@@ -104,13 +100,14 @@ export default function Labs() {
                 </span>
                 <span
                   className="absolute -inset-1 rounded-lg blur-xl opacity-30"
-                  style={{ backgroundColor: "#2eff8c" }}
+                  style={{ backgroundColor: "#58a7ff" }}
                 />
               </span>
             </h2>
             <p className="text-[#a0a8ad] text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-              Исследуйте виртуальные лаборатории по разделам физики. Каждая
-              точка — путь к интерактивным работам и симуляциям.
+              Исследуйте виртуальные лаборатории по разделам физики.
+              <br />
+              Каждая точка — путь к интерактивным работам и симуляциям.
             </p>
           </div>
 
