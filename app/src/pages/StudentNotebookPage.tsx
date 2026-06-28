@@ -192,7 +192,7 @@ export default function StudentNotebookPage() {
                 <div>
                   <Label className="text-[#798389] mb-2 block flex items-center gap-2">
                     <Link2 size={14} />
-                    Ссылка на выполненный ноутбук
+                    Ссылка на тетрадь
                   </Label>
                   <a
                     href={data.studentColabUrl}
@@ -207,7 +207,7 @@ export default function StudentNotebookPage() {
               ) : (
                 <div className="flex items-center gap-2 text-sm text-[#798389]">
                   <Link2 size={14} />
-                  Ссылка на Colab не прикреплена
+                  Ссылка не прикреплена
                 </div>
               )}
 
@@ -247,7 +247,7 @@ export default function StudentNotebookPage() {
                     className="text-[#c8cdd1] mb-2 block flex items-center gap-2"
                   >
                     <Link2 size={14} />
-                    Ссылка на Google Colab
+                    Ссылка на тетрадь
                   </Label>
                   <Input
                     id="colab-url"
@@ -270,7 +270,7 @@ export default function StudentNotebookPage() {
                     htmlFor="no-url"
                     className="text-sm text-[#c8cdd1] font-normal cursor-pointer"
                   >
-                    Отправить без ссылки на Colab
+                    Просмотренно
                   </Label>
                 </div>
 
@@ -285,7 +285,7 @@ export default function StudentNotebookPage() {
                     <Send size={16} className="mr-2" />
                     {submitMutation.isPending
                       ? "Отправка..."
-                      : "Отправить на проверку"}
+                      : "Отправить"}
                   </Button>
                 </div>
               </form>

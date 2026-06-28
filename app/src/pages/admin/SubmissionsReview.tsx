@@ -595,7 +595,7 @@ export default function SubmissionsReview() {
                     <div className="bg-[#1e2529] border border-[#37474f] rounded-lg p-4">
                       <p className="text-sm text-[#798389] flex items-center gap-2">
                         <Link2 className="h-4 w-4" />
-                        Студент не прикрепил ссылку на Colab
+                        Студент не прикрепил ссылку
                       </p>
                     </div>
                   )}

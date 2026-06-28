@@ -704,8 +704,7 @@ export default function StudentProfile() {
                     <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-8 text-center">
                       <Clock size={32} className="text-[#798389] mx-auto mb-3" />
                       <p className="text-[#c8cdd1]">
-                        Пока нет выполненных заданий. Выполните назначенные лабораторные
-                        или задачи, чтобы они появились здесь.
+                        Пока нет выполненных заданий.
                       </p>
                     </div>
                   )}
