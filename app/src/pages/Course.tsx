@@ -1,18 +1,11 @@
 import { useState, useMemo, useLayoutEffect, useCallback } from "react";
 import { trpc } from "@/providers/trpc";
 import { useAuth } from "@/hooks/useAuth";
-import MarkdownRenderer from "@/components/MarkdownRenderer";
 import SnakeTimeline from "@/components/SnakeTimeline";
+import TopicOrbitView from "@/components/TopicOrbitView";
 import { CategoryIcon } from "@/components/CategoryIcon";
-import {
-  FlaskConical,
-  ArrowLeft,
-  Loader2,
-  ExternalLink,
-  FileText,
-  BookOpen,
-} from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router";
+import { Loader2 } from "lucide-react";
+import { useLocation, useNavigate } from "react-router";
 import type { TopicNode } from "@db/schema";
 
 interface TreeNode extends TopicNode {
@@ -40,206 +33,6 @@ function buildTree(nodes: TopicNode[]): TreeNode[] {
   }
 
   return roots;
-}
-
-function NodeContent({
-  node,
-  onBack,
-  jupyterUrl,
-  showJupyter,
-}: {
-  node: TreeNode;
-  onBack: () => void;
-  jupyterUrl?: string | null;
-  showJupyter?: boolean;
-}) {
-  return (
-    <div className="bg-[#1a1f22]/80 border border-[#2eff8c]/20 rounded-2xl p-6 mb-6 backdrop-blur-sm">
-      <button
-        onClick={onBack}
-        className="inline-flex items-center gap-1.5 text-sm text-[#a0a8ad] hover:text-[#2eff8c] transition-colors mb-3"
-      >
-        <ArrowLeft size={14} /> Назад к подтемам
-      </button>
-      <h4 className="text-xl font-semibold text-[#2eff8c] mb-4">{node.title}</h4>
-      <div className="border-t border-white/5 pt-4">
-        {node.content ? (
-          <MarkdownRenderer content={node.content} />
-        ) : (
-          <p className="text-sm text-[#798389]">Нет содержимого</p>
-        )}
-        {showJupyter &&
-          (jupyterUrl ? (
-            <a
-              href={jupyterUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 mt-4 text-xs bg-[#2eff8c]/10 text-[#2eff8c] px-3 py-1.5 rounded-md hover:bg-[#2eff8c]/20 transition-colors"
-            >
-              <ExternalLink size={12} />
-              Jupyter- {node.title}
-            </a>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 mt-4 text-xs text-[#798389] bg-white/5 px-3 py-1.5 rounded-md">
-              <ExternalLink size={12} />
-              Jupyter: не задан
-            </span>
-          ))}
-      </div>
-    </div>
-  );
-}
-
-function TopicDetail({
-  topic,
-  activeNodeId,
-  onSelectNode,
-  onBack,
-  jupyterUrlMap,
-  showJupyter,
-  onClose,
-}: {
-  topic: TreeNode;
-  activeNodeId: number | null;
-  onSelectNode: (id: number) => void;
-  onBack: () => void;
-  jupyterUrlMap?: Map<string, string | null>;
-  showJupyter?: boolean;
-  onClose: () => void;
-}) {
-  const activeNode = useMemo(() => {
-    const find = (nodes: TreeNode[]): TreeNode | null => {
-      for (const n of nodes) {
-        if (n.id === activeNodeId) return n;
-        const found = find(n.children);
-        if (found) return found;
-      }
-      return null;
-    };
-    return find(topic.children);
-  }, [topic.children, activeNodeId]);
-
-  const subtopicItems = useMemo(() => {
-    return topic.children.map((sub, index) => ({
-      id: sub.id,
-      title: sub.title,
-      order: index + 1,
-      color: topic.color || "#2eff8c",
-      icon: <FileText size={18} />,
-      description: sub.content
-        ? sub.content.replace(/[#*_`[\]]/g, "").slice(0, 160) +
-          (sub.content.length > 160 ? "..." : "")
-        : "Нет краткого описания",
-      onClick: () => onSelectNode(sub.id),
-    }));
-  }, [topic.children, topic.color, onSelectNode]);
-
-  return (
-    <div className="animate-fadeIn">
-      <button
-        onClick={onClose}
-        className="inline-flex items-center gap-1.5 text-sm text-[#a0a8ad] hover:text-[#2eff8c] transition-colors mb-4"
-      >
-        <ArrowLeft size={14} /> Назад к темам
-      </button>
-
-      <div
-        className="rounded-2xl border border-[#434e54] overflow-hidden"
-        style={{
-          background:
-            "linear-gradient(180deg, rgba(42,50,55,0.9) 0%, rgba(26,31,34,0.9) 100%)",
-        }}
-      >
-        {/* Header */}
-        <div className="p-6 border-b border-white/5">
-          <div className="flex items-center gap-3 mb-3">
-            <span
-              className="inline-flex items-center justify-center w-10 h-10 rounded-xl text-sm font-bold shrink-0"
-              style={{
-                backgroundColor: `${topic.color || "#2eff8c"}15`,
-                color: topic.color || "#2eff8c",
-              }}
-            >
-              {String(topic.order).padStart(2, "0")}
-            </span>
-            <h3 className="text-2xl font-bold text-white">{topic.title}</h3>
-          </div>
-          {topic.content && (
-            <div className="prose prose-invert prose-sm max-w-none text-[#c8cdd1]">
-              <MarkdownRenderer content={topic.content} />
-            </div>
-          )}
-          {topic.labCategorySlug && (
-            <div className="mt-4">
-              <Link
-                to={`/labs/category/${topic.labCategorySlug}`}
-                className="inline-flex items-center gap-2 text-sm text-[#2eff8c] hover:underline"
-              >
-                <FlaskConical size={16} />
-                Перейти к лабораторным
-              </Link>
-            </div>
-          )}
-        </div>
-
-        {/* Body */}
-        <div className="p-6">
-          {activeNode ? (
-            <>
-              <NodeContent
-                node={activeNode}
-                onBack={onBack}
-                jupyterUrl={jupyterUrlMap?.get(activeNode.title)}
-                showJupyter={showJupyter}
-              />
-              {activeNode.children.length > 0 && (
-                <div className="mt-6">
-                  <h5 className="text-sm font-semibold text-[#798389] uppercase tracking-wider mb-4">
-                    Вложенные материалы
-                  </h5>
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {activeNode.children.map(child => (
-                      <button
-                        key={child.id}
-                        onClick={() => onSelectNode(child.id)}
-                        className="text-left bg-[#1a1f22] border border-[#434e54] rounded-xl p-4 hover:border-[#2eff8c]/40 transition-colors"
-                      >
-                        <FileText size={16} className="text-[#2eff8c] mb-2" />
-                        <span className="text-sm text-white">{child.title}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              <div className="flex items-center gap-2 mb-5">
-                <BookOpen size={18} className="text-[#2eff8c]" />
-                <h4 className="text-lg font-semibold text-white">
-                  Подтемы курса
-                </h4>
-                <span className="text-xs text-[#798389] ml-auto">
-                  Наведите для деталей, нажмите для открытия
-                </span>
-              </div>
-              {subtopicItems.length > 0 ? (
-                <SnakeTimeline
-                  items={subtopicItems}
-                  columns={Math.min(subtopicItems.length, 3)}
-                  baseSize="sm"
-                />
-              ) : (
-                <p className="text-sm text-[#798389]">
-                  Подтем пока нет. Добавьте их в панели администратора.
-                </p>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
 }
 
 export default function Course() {
@@ -356,15 +149,18 @@ export default function Course() {
   );
 
   const handleSelectNode = useCallback(
-    (id: number) => {
-      setActiveNodeId(prev => {
-        const next = prev === id ? null : id;
-        syncUrlWithState(openTopicId, next);
-        return next;
-      });
+    (id: number | null) => {
+      setActiveNodeId(id);
+      syncUrlWithState(openTopicId, id);
     },
     [syncUrlWithState, openTopicId]
   );
+
+  const handleCloseTopic = useCallback(() => {
+    setOpenTopicId(null);
+    setActiveNodeId(null);
+    syncUrlWithState(null, null);
+  }, [syncUrlWithState]);
 
   const topicItems = useMemo(() => {
     return tree.map(topic => ({
@@ -416,14 +212,32 @@ export default function Course() {
 
   return (
     <div className="pt-16 min-h-screen bg-[#262e33]">
-      <section className="section-dark pt-8 pb-16 lg:pt-12 lg:pb-20">
+      <section className="section-dark pt-10 pb-16 lg:pt-14 lg:pb-24">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="mb-10">
-            <h2 className="text-2xl lg:text-3xl font-bold text-white mb-3 flex items-center gap-3">
-              <span className="w-2 h-8 bg-[#2eff8c] rounded-full" />
-              Курс по физике
+          <div className="mb-12 lg:mb-16 text-center">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight">
+              Курс по{" "}
+              <span className="relative inline-block">
+                <span
+                  className="relative z-10"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, #2eff8c, #5fffa8, #2eff8c)",
+                    backgroundSize: "200% auto",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
+                  физике
+                </span>
+                <span
+                  className="absolute -inset-1 rounded-lg blur-xl opacity-30"
+                  style={{ backgroundColor: "#2eff8c" }}
+                />
+              </span>
             </h2>
-            <p className="text-[#c8cdd1] max-w-2xl">
+            <p className="text-[#a0a8ad] text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
               Пройдите путь от кинематики до квантовой физики.
             </p>
           </div>
@@ -436,24 +250,22 @@ export default function Course() {
             <div className="text-center text-[#a0a8ad] py-12">
               Пока нет тем. Добавьте их в панели администратора.
             </div>
-          ) : openTopicId === null || !activeTopic ? (
-            <SnakeTimeline items={topicItems} columns={4} baseSize="lg" />
           ) : (
-            <TopicDetail
-              topic={activeTopic}
-              activeNodeId={activeNodeId}
-              onSelectNode={handleSelectNode}
-              onBack={() => {
-                setActiveNodeId(null);
-                syncUrlWithState(openTopicId, null);
-              }}
-              jupyterUrlMap={jupyterUrlMap}
-              showJupyter={isAuthenticated}
-              onClose={() => handleToggleTopic(openTopicId)}
-            />
+            <SnakeTimeline items={topicItems} columns={4} baseSize="lg" />
           )}
         </div>
       </section>
+
+      {activeTopic && (
+        <TopicOrbitView
+          topic={activeTopic}
+          activeNodeId={activeNodeId}
+          onSelectNode={handleSelectNode}
+          onClose={handleCloseTopic}
+          jupyterUrlMap={jupyterUrlMap}
+          showJupyter={isAuthenticated}
+        />
+      )}
     </div>
   );
 }
