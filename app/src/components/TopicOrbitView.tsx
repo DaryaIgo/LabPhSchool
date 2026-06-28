@@ -441,11 +441,21 @@ export default function TopicOrbitView({
               style={{ animationDelay: "2.5s" }}
             >
               <div
-                className="relative flex flex-col items-center justify-center text-center w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 transition-all duration-500 hover:scale-105"
+                onClick={onClose}
+                role="button"
+                tabIndex={0}
+                aria-label="Закрыть"
+                className="relative flex flex-col items-center justify-center text-center w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 transition-all duration-500 hover:scale-105 cursor-pointer"
                 style={{
                   borderColor: `${accent}60`,
                   backgroundColor: `${accent}14`,
                   boxShadow: `0 0 60px ${accent}20, inset 0 0 30px ${accent}10`,
+                }}
+                onKeyDown={e => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onClose();
+                  }
                 }}
               >
                 <div

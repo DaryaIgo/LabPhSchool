@@ -309,6 +309,7 @@ class Rocket {
   vy: number;
   size: number;
   formula: string;
+  emoji: string;
   angle: number;
   vAngle: number;
   falling: boolean;
@@ -318,6 +319,7 @@ class Rocket {
   constructor(W: number, H: number) {
     this.formula =
       ROCKET_FORMULAS[Math.floor(Math.random() * ROCKET_FORMULAS.length)];
+    this.emoji = Rocket.pickEmoji();
     this.size = 20 + Math.random() * 8;
     this.opacity = 1;
     this.falling = false;
@@ -344,6 +346,14 @@ class Rocket {
     const distance = Math.hypot(targetX - this.x, targetY - this.y);
     const duration = 2 + Math.random() * 3;
     const speed = distance / (duration * 60);
+
+    // Scale: slower objects are bigger (min x1, max x2)
+    const MIN_SPEED = 0.5;
+    const MAX_SPEED = 5.0;
+    const clampedSpeed = Math.max(MIN_SPEED, Math.min(MAX_SPEED, speed));
+    const scaleFactor = 2 - (clampedSpeed - MIN_SPEED) / (MAX_SPEED - MIN_SPEED);
+    this.size = (20 + Math.random() * 8) * scaleFactor;
+
     const angleToTarget = Math.atan2(targetY - this.y, targetX - this.x);
     const spread = (Math.random() - 0.5) * 0.6;
     const dir = angleToTarget + spread;
@@ -352,6 +362,13 @@ class Rocket {
     this.vy = Math.sin(dir) * speed;
     this.angle = dir;
     this.vAngle = (Math.random() - 0.5) * 0.015;
+  }
+
+  static pickEmoji(): string {
+    const r = Math.random();
+    if (r < 0.70) return "🚀";
+    const others = ["⭐", "👨‍🚀", "👽", "🪐", "🌟"];
+    return others[Math.floor(Math.random() * others.length)];
   }
 
   update(mouse: { x: number; y: number }, W: number, H: number): boolean {
@@ -395,7 +412,7 @@ class Rocket {
     ctx.font = `${this.size}px sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("🚀", 0, 0);
+    ctx.fillText(this.emoji, 0, 0);
     ctx.restore();
   }
 }
