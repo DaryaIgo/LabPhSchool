@@ -18,7 +18,11 @@ const GRADE_CONFIG: Record<
   number,
   { label: string; textColor: string; trophyColor: string }
 > = {
-  5: { label: "Отлично", textColor: "text-emerald-400", trophyColor: "#ffd700" },
+  5: {
+    label: "Отлично",
+    textColor: "text-emerald-400",
+    trophyColor: "#ffd700",
+  },
   4: { label: "Хорошо", textColor: "text-sky-400", trophyColor: "#c0c0c0" },
   3: {
     label: "Удовлетворительно",
@@ -227,10 +231,7 @@ function ActiveNotebookCard({
 }) {
   return (
     <div className="flex items-center gap-3 px-3 py-2.5 bg-[#2a3237] border border-[#434e54] hover:border-[#2eff8c]/50 rounded-xl transition-colors">
-      <NotebookPen
-        size={18}
-        className="text-[#2eff8c] shrink-0 mt-0.5"
-      />
+      <NotebookPen size={18} className="text-[#2eff8c] shrink-0 mt-0.5" />
       <div className="flex-1 min-w-0">
         <h3 className="text-sm font-semibold text-[#c8cdd1] truncate">
           {notebook.notebookTitle}
@@ -322,10 +323,7 @@ function ArchivedNotebookCard({
       className="relative flex items-center gap-2 px-3 py-2 bg-[#232b2f] rounded-lg border border-[#37474f] lab-glow transition-colors"
       style={{ "--glow-color": glowColor } as React.CSSProperties}
     >
-      <NotebookPen
-        size={16}
-        className="text-[#2eff8c] shrink-0"
-      />
+      <NotebookPen size={16} className="text-[#2eff8c] shrink-0" />
       <div className="flex-1 min-w-0">
         <Link
           to={`/student/notebook/${notebook.id}`}

@@ -116,7 +116,8 @@ export default function StudentProblemPage() {
     );
   }
 
-  const isSubmitted = data.status === "submitted" || data.status === "completed";
+  const isSubmitted =
+    data.status === "submitted" || data.status === "completed";
 
   return (
     <div className="min-h-screen bg-[#262e33] pt-24 pb-12">

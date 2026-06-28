@@ -29,55 +29,7 @@ export default function UniformlyAcceleratedMotion({
       ctx.fillStyle = "#1a1f22";
       ctx.fillRect(0, 0, w, h);
 
-      // Inclined plane — шарик скатывается сверху вниз
-      const rampLen = 400;
-      const rampStartX = 80;
-      const rampStartY = 120;
-      const rampEndX = rampStartX + rampLen * Math.cos(angleRad);
-      const rampEndY = rampStartY + rampLen * Math.sin(angleRad);
-
-      ctx.fillStyle = "#2a3237";
-      ctx.beginPath();
-      ctx.moveTo(rampStartX, rampStartY);
-      ctx.lineTo(rampEndX, rampEndY);
-      ctx.lineTo(rampEndX, rampStartY);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.strokeStyle = "#788389";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(rampStartX, rampStartY);
-      ctx.lineTo(rampEndX, rampEndY);
-      ctx.stroke();
-
-      // Ground
-      ctx.strokeStyle = "#505a60";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(rampStartX - 20, rampEndY);
-      ctx.lineTo(rampEndX + 50, rampEndY);
-      ctx.stroke();
-
-      // Angle arc
-      if (angleDeg > 1) {
-        ctx.strokeStyle = "#2eff8c";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(rampEndX, rampEndY, 25, -Math.PI, -Math.PI + angleRad);
-        ctx.stroke();
-        ctx.fillStyle = "#2eff8c";
-        ctx.font = "11px sans-serif";
-        ctx.textAlign = "left";
-        ctx.textBaseline = "bottom";
-        ctx.fillText(
-          `α ≈ ${angleDeg.toFixed(1)}°`,
-          rampEndX + 30,
-          rampEndY - 8
-        );
-      }
-
-      // Animation progress
+      // Current animation time
       let currentTime = time;
       if (isRunning) {
         const animDuration = Math.max(time * 1000, 1000);
@@ -86,62 +38,229 @@ export default function UniformlyAcceleratedMotion({
         currentTime = time * progress;
       }
 
-      // Ball on ramp
       const s = v0 * currentTime + 0.5 * a * currentTime * currentTime;
-      const maxS = 100;
-      const ballProgress = Math.min(s / maxS, 1);
-      const ballX = rampStartX + ballProgress * rampLen * Math.cos(angleRad);
-      const ballY =
-        rampStartY + ballProgress * rampLen * Math.sin(angleRad) - 12;
-
-      ctx.fillStyle = "#ff6464";
-      ctx.beginPath();
-      ctx.arc(ballX, ballY, 12, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Velocity arrow along the ramp
       const v = v0 + a * currentTime;
-      if (Math.abs(v) > 0.1) {
-        const arrowLen = Math.min(Math.abs(v) * 8, 60);
-        const dir = v >= 0 ? 1 : -1;
-        const arrowStartX = ballX;
-        const arrowStartY = ballY;
-        const arrowEndX = arrowStartX + dir * arrowLen * Math.cos(angleRad);
-        const arrowEndY = arrowStartY + dir * arrowLen * Math.sin(angleRad);
 
+      // Visible x-range based on the whole animation path
+      const finalS = v0 * time + 0.5 * a * time * time;
+      const positions = [0, finalS];
+      if (Math.abs(a) > 0.001) {
+        const tTurn = -v0 / a;
+        if (tTurn > 0 && tTurn < time) {
+          positions.push(v0 * tTurn + 0.5 * a * tTurn * tTurn);
+        }
+      }
+      const minS = Math.min(...positions);
+      const maxS = Math.max(...positions);
+      const range = Math.max(maxS - minS, 0.001);
+      const padding = Math.max(range * 0.12, 1);
+      const viewMin = minS - padding;
+      const viewMax = maxS + padding;
+      const viewRange = viewMax - viewMin;
+
+      // Track geometry
+      const trackY = 270;
+      const trackHeight = 70;
+      const marginX = 50;
+      const trackLeft = marginX;
+      const trackRight = w - marginX;
+      const trackWidth = trackRight - trackLeft;
+      const scale = trackWidth / viewRange;
+      const posToX = (pos: number) => trackLeft + (pos - viewMin) * scale;
+
+      // Draw track
+      ctx.fillStyle = "#2a3237";
+      ctx.fillRect(trackLeft, trackY, trackWidth, trackHeight);
+
+      ctx.strokeStyle = "#3c474f";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(trackLeft, trackY);
+      ctx.lineTo(trackRight, trackY);
+      ctx.stroke();
+
+      // Draw ruler ticks
+      const tickStep = chooseTickStep(viewRange);
+      const startTick = Math.floor(viewMin / tickStep) * tickStep;
+      const endTick = Math.ceil(viewMax / tickStep) * tickStep;
+
+      ctx.fillStyle = "#96a3ab";
+      ctx.font = "10px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+
+      for (let x = startTick; x <= endTick; x += tickStep) {
+        const px = posToX(x);
+        if (px < trackLeft - 10 || px > trackRight + 10) continue;
+
+        ctx.strokeStyle = "#96a3ab";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(px, trackY);
+        ctx.lineTo(px, trackY + 10);
+        ctx.stroke();
+
+        const label = Math.abs(x) < tickStep / 100 ? "0" : String(roundNice(x));
+        ctx.fillText(label, px, trackY + 14);
+
+        const minorStep = tickStep / 5;
+        for (let mx = x + minorStep; mx < x + tickStep; mx += minorStep) {
+          const mpx = posToX(mx);
+          if (mpx < trackLeft || mpx > trackRight) continue;
+          ctx.strokeStyle = "#788389";
+          ctx.beginPath();
+          ctx.moveTo(mpx, trackY);
+          ctx.lineTo(mpx, trackY + 5);
+          ctx.stroke();
+        }
+      }
+
+      // Zero line
+      const zeroX = posToX(0);
+      if (zeroX >= trackLeft - 1 && zeroX <= trackRight + 1) {
         ctx.strokeStyle = "#2eff8c";
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
         ctx.beginPath();
-        ctx.moveTo(arrowStartX, arrowStartY);
-        ctx.lineTo(arrowEndX, arrowEndY);
+        ctx.moveTo(zeroX, trackY - 25);
+        ctx.lineTo(zeroX, trackY + trackHeight);
         ctx.stroke();
-
-        // Arrowhead
-        const headAngle = Math.atan2(
-          arrowEndY - arrowStartY,
-          arrowEndX - arrowStartX
-        );
-        ctx.beginPath();
-        ctx.moveTo(
-          arrowEndX - 6 * Math.cos(headAngle - 0.4),
-          arrowEndY - 6 * Math.sin(headAngle - 0.4)
-        );
-        ctx.lineTo(arrowEndX, arrowEndY);
-        ctx.lineTo(
-          arrowEndX - 6 * Math.cos(headAngle + 0.4),
-          arrowEndY - 6 * Math.sin(headAngle + 0.4)
-        );
-        ctx.stroke();
+        ctx.setLineDash([]);
 
         ctx.fillStyle = "#2eff8c";
         ctx.font = "10px sans-serif";
         ctx.textAlign = "center";
-        ctx.textBaseline = "bottom";
-        ctx.fillText(
-          `v = ${v.toFixed(1)} м/с`,
-          (arrowStartX + arrowEndX) / 2,
-          (arrowStartY + arrowEndY) / 2 - 6
+        ctx.fillText("x = 0", zeroX, trackY - 36);
+      }
+
+      // Draw car
+      const carX = Math.min(Math.max(posToX(s), trackLeft), trackRight);
+      const carY = trackY - 12;
+      const carWidth = 44;
+      const carHeight = 22;
+      const wheelRadius = 5;
+
+      // Face velocity direction
+      const facingRight = v >= 0;
+
+      // Velocity vector (drawn in world coords before car transform)
+      if (Math.abs(v) > 0.05) {
+        const arrowLen = Math.min(Math.abs(v) * 5 + 24, 80);
+        const arrowY = carY - carHeight - 10;
+        const dir = v >= 0 ? 1 : -1;
+        const endX = carX + dir * arrowLen;
+
+        ctx.strokeStyle = "#2eff8c";
+        ctx.lineWidth = 3;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+
+        ctx.beginPath();
+        ctx.moveTo(carX, arrowY);
+        ctx.lineTo(endX, arrowY);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(endX - dir * 10, arrowY - 7);
+        ctx.lineTo(endX, arrowY);
+        ctx.lineTo(endX - dir * 10, arrowY + 7);
+        ctx.stroke();
+
+        const label = `v = ${v.toFixed(1)} м/с`;
+        ctx.font = "bold 12px sans-serif";
+        const textWidth = ctx.measureText(label).width;
+        const labelX = carX + (dir * arrowLen) / 2;
+        const labelY = arrowY - 16;
+
+        ctx.fillStyle = "rgba(26, 31, 34, 0.92)";
+        ctx.beginPath();
+        ctx.roundRect(
+          labelX - textWidth / 2 - 6,
+          labelY - 13,
+          textWidth + 12,
+          22,
+          6
         );
+        ctx.fill();
+
+        ctx.fillStyle = "#2eff8c";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(label, labelX, labelY - 1);
+      }
+
+      ctx.save();
+      ctx.translate(carX, carY);
+      if (!facingRight) {
+        ctx.scale(-1, 1);
+      }
+
+      // Body
+      ctx.fillStyle = "#2eff8c";
+      ctx.beginPath();
+      ctx.roundRect(-carWidth / 2, -carHeight, carWidth, carHeight, 5);
+      ctx.fill();
+
+      // Cabin
+      ctx.fillStyle = "#25cc70";
+      ctx.beginPath();
+      ctx.roundRect(-carWidth / 2 + 5, -carHeight - 9, carWidth - 16, 9, 3);
+      ctx.fill();
+
+      // Wheels
+      ctx.fillStyle = "#1a1f22";
+      ctx.beginPath();
+      ctx.arc(-carWidth / 2 + 11, -1, wheelRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(carWidth / 2 - 11, -1, wheelRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+
+      // Acceleration indicator above track
+      if (Math.abs(a) > 0.01) {
+        const arrowLen = Math.min(Math.abs(a) * 6 + 16, 70);
+        const arrowX = w / 2;
+        const arrowY = 85;
+        const dir = a >= 0 ? 1 : -1;
+
+        ctx.strokeStyle = "#01acff";
+        ctx.lineWidth = 2;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.beginPath();
+        ctx.moveTo(arrowX, arrowY);
+        ctx.lineTo(arrowX + dir * arrowLen, arrowY);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(arrowX + dir * arrowLen - dir * 8, arrowY - 6);
+        ctx.lineTo(arrowX + dir * arrowLen, arrowY);
+        ctx.lineTo(arrowX + dir * arrowLen - dir * 8, arrowY + 6);
+        ctx.stroke();
+
+        const label = `a = ${a.toFixed(2)} м/с²`;
+        ctx.font = "bold 11px sans-serif";
+        const textWidth = ctx.measureText(label).width;
+        const labelX = arrowX + (dir * arrowLen) / 2;
+        const labelY = arrowY - 14;
+
+        ctx.fillStyle = "rgba(26, 31, 34, 0.92)";
+        ctx.beginPath();
+        ctx.roundRect(
+          labelX - textWidth / 2 - 6,
+          labelY - 12,
+          textWidth + 12,
+          22,
+          6
+        );
+        ctx.fill();
+
+        ctx.fillStyle = "#01acff";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(label, labelX, labelY - 0);
       }
 
       // Title
@@ -149,12 +268,12 @@ export default function UniformlyAcceleratedMotion({
       ctx.font = "16px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
-      ctx.fillText("Равноускоренное движение", w / 2, 20);
+      ctx.fillText("Равноускоренное прямолинейное движение", w / 2, 18);
 
       // Formulas
       ctx.fillStyle = "#96a3ab";
       ctx.font = "11px sans-serif";
-      ctx.fillText("s = v₀t + at²/2          v = v₀ + at", w / 2, 45);
+      ctx.fillText("s = v₀t + at²/2          v = v₀ + at", w / 2, 42);
 
       if (onStateChange) {
         const state: Record<string, number> = {
@@ -163,14 +282,14 @@ export default function UniformlyAcceleratedMotion({
           v,
           a,
         };
-        if (ballProgress >= 1 && isRunning && !finishedRef.current) {
+        if (currentTime >= time && isRunning && !finishedRef.current) {
           finishedRef.current = true;
           state.finished = 1;
         }
         onStateChange(state);
       }
     };
-  }, [v0, angleDeg, angleRad, a, time, isRunning, onStateChange]);
+  }, [v0, a, time, isRunning, onStateChange]);
 
   return (
     <SimulationCanvas
@@ -180,4 +299,19 @@ export default function UniformlyAcceleratedMotion({
       isRunning={isRunning}
     />
   );
+}
+
+function chooseTickStep(range: number): number {
+  if (range <= 0) return 1;
+  const rough = range / 10;
+  const exp = Math.floor(Math.log10(rough));
+  const frac = rough / 10 ** exp;
+  if (frac < 1.5) return 10 ** exp;
+  if (frac < 3.5) return 2 * 10 ** exp;
+  if (frac < 7.5) return 5 * 10 ** exp;
+  return 10 ** (exp + 1);
+}
+
+function roundNice(value: number): number {
+  return Math.round(value * 100) / 100;
 }

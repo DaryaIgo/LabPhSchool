@@ -323,15 +323,15 @@ export default function SubmissionsReview() {
                           {item.type === "lab"
                             ? item.labWorkTitle
                             : item.type === "problem"
-                            ? item.problemTitle
-                            : item.notebookTitle}
+                              ? item.problemTitle
+                              : item.notebookTitle}
                         </div>
                         <div className="text-xs text-gray-500">
                           {item.type === "lab"
                             ? item.labWorkSlug
                             : item.type === "problem"
-                            ? item.problemSlug
-                            : "Jupyter-ноутбук"}
+                              ? item.problemSlug
+                              : "Jupyter-ноутбук"}
                         </div>
                       </td>
                       <td className="px-4 py-3">
@@ -363,7 +363,9 @@ export default function SubmissionsReview() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleOpenDetail(item as SubmissionItem)}
+                          onClick={() =>
+                            handleOpenDetail(item as SubmissionItem)
+                          }
                           className="text-[#2eff8c] hover:text-[#25cc70] hover:bg-[#2eff8c]/10"
                         >
                           <Eye className="h-4 w-4 mr-1" />
@@ -421,12 +423,12 @@ export default function SubmissionsReview() {
                 <NotebookPen className="h-6 w-6 text-[#2eff8c]" />
               )}
               {selectedSubmission?.type === "lab"
-                ? detailData?.labWorkTitle ?? selectedSubmission?.labWorkTitle
+                ? (detailData?.labWorkTitle ?? selectedSubmission?.labWorkTitle)
                 : selectedSubmission?.type === "problem"
-                  ? detailData?.problemTitle ??
-                    selectedSubmission?.problemTitle
-                  : detailData?.notebookTitle ??
-                    selectedSubmission?.notebookTitle}
+                  ? (detailData?.problemTitle ??
+                    selectedSubmission?.problemTitle)
+                  : (detailData?.notebookTitle ??
+                    selectedSubmission?.notebookTitle)}
             </DialogTitle>
             <DialogDescription className="text-gray-400">
               {detailData?.studentName || detailData?.studentLogin} (
@@ -491,7 +493,10 @@ export default function SubmissionsReview() {
                                   unknown
                                 >[]
                               ).map((row, i) => (
-                                <tr key={i} className="border-b border-[#2a3237]">
+                                <tr
+                                  key={i}
+                                  className="border-b border-[#2a3237]"
+                                >
                                   {Object.values(row).map((val, j) => (
                                     <td
                                       key={j}

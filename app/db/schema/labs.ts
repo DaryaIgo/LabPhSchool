@@ -133,9 +133,7 @@ export const simulations = mysqlTable("simulations", {
   category: varchar("category", { length: 50 }),
   thumbnail: varchar("thumbnail", { length: 500 }),
   componentRef: varchar("component_ref", { length: 100 }).notNull(),
-  kind: mysqlEnum("kind", ["own", "external"])
-    .default("own")
-    .notNull(),
+  kind: mysqlEnum("kind", ["own", "external"]).default("own").notNull(),
   isDynamic: boolean("is_dynamic").default(false).notNull(),
   config: json("config").$type<SimulationParamConfig[] | null>(),
   isActive: boolean("is_active").default(true).notNull(),

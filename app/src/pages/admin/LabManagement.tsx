@@ -49,7 +49,6 @@ import type {
 } from "@db/schema";
 import { LAB_CATEGORY_ICON_KEYS } from "@contracts/constants";
 
-
 type CategoryIconKey = (typeof LAB_CATEGORY_ICON_KEYS)[number];
 
 type TreeNodeType = "category" | "subcategory" | "labWork";
@@ -1327,7 +1326,7 @@ function LabWorkEditor({
         {/* Simulation */}
         <TabsContent value="simulation" className="space-y-4 pt-4">
           <div className="bg-[#1a1f22] border border-[#37474f] rounded-xl p-4 text-sm text-[#c8cdd1]">
-            Тип карточки: {" "}
+            Тип карточки:{" "}
             <span className="text-white font-medium">
               {form.cardType === "own"
                 ? "Наша симуляция (с обвязкой)"

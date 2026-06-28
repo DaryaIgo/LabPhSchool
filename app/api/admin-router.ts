@@ -647,7 +647,10 @@ export const adminRouter = createRouter({
       }
 
       const notebookIds = notebookRows.map(r => r.notebookId);
-      const notebookMap = new Map<number, typeof jupyterNotebooks.$inferSelect>();
+      const notebookMap = new Map<
+        number,
+        typeof jupyterNotebooks.$inferSelect
+      >();
       if (notebookIds.length > 0) {
         const notebookRowsDb = await jupyterDb
           .select()
@@ -948,10 +951,8 @@ export const adminRouter = createRouter({
             await updateAssignedLabWork(assignedLab.id, {
               grade: input.grade,
               teacherComment: input.teacherComment,
-              status:
-                input.status === "completed" ? "completed" : undefined,
-              completedAt:
-                input.status === "completed" ? now : undefined,
+              status: input.status === "completed" ? "completed" : undefined,
+              completedAt: input.status === "completed" ? now : undefined,
             });
           }
         }

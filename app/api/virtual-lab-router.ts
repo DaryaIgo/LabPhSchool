@@ -349,9 +349,13 @@ export const virtualLabRouter = createRouter({
           await updateAssignedLabWork(assignedLab.id, {
             status: input.status,
             submittedAt:
-              input.status === "submitted" ? new Date() : assignedLab.submittedAt,
+              input.status === "submitted"
+                ? new Date()
+                : assignedLab.submittedAt,
             completedAt:
-              input.status === "completed" ? new Date() : assignedLab.completedAt,
+              input.status === "completed"
+                ? new Date()
+                : assignedLab.completedAt,
           });
         }
       }

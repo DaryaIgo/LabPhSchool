@@ -123,7 +123,7 @@ export default function JupyterNotebookManagement() {
     if (!search) return true;
     const q = search.toLowerCase();
     const sub = subtopicMap.get(n.subtopicNodeId);
-    const topicTitle = sub ? topicMap.get(sub.parentId) ?? "" : "";
+    const topicTitle = sub ? (topicMap.get(sub.parentId) ?? "") : "";
     return (
       n.filename.toLowerCase().includes(q) ||
       (sub?.title ?? "").toLowerCase().includes(q) ||
@@ -279,7 +279,9 @@ export default function JupyterNotebookManagement() {
                           const topicTitle = topicMap.get(sub.parentId) ?? "—";
                           return (
                             <span className="text-xs">
-                              <span className="text-gray-400">{topicTitle}</span>
+                              <span className="text-gray-400">
+                                {topicTitle}
+                              </span>
                               <span className="mx-1 text-gray-500">→</span>
                               <span>{sub.title}</span>
                             </span>

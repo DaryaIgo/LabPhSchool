@@ -1,7 +1,4 @@
-import type {
-  MeasurementRow,
-  SimulationManifest,
-} from "./types";
+import type { MeasurementRow, SimulationManifest } from "./types";
 
 export const uniformlyAcceleratedMotionManifest: SimulationManifest = {
   slug: "uniformly-accelerated-motion",
@@ -12,8 +9,8 @@ export const uniformlyAcceleratedMotionManifest: SimulationManifest = {
       key: "v0",
       label: "Начальная скорость",
       paramType: "slider",
-      min: 0,
-      max: 10,
+      min: -20,
+      max: 20,
       step: 0.5,
       defaultValue: 0,
       unit: "м/с",
@@ -22,7 +19,7 @@ export const uniformlyAcceleratedMotionManifest: SimulationManifest = {
       key: "angle",
       label: "Угол наклона плоскости",
       paramType: "slider",
-      min: 0,
+      min: -45,
       max: 45,
       step: 1,
       defaultValue: 10,
@@ -33,7 +30,7 @@ export const uniformlyAcceleratedMotionManifest: SimulationManifest = {
       label: "Время",
       paramType: "slider",
       min: 1,
-      max: 10,
+      max: 30,
       step: 0.5,
       defaultValue: 5,
       unit: "с",

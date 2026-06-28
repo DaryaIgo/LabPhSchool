@@ -358,13 +358,7 @@ export default function TopicManagement() {
         jupyterUrl: form.jupyterUrl || null,
       });
     }
-  }, [
-    form,
-    isEditing,
-    selectedId,
-    updateMutation,
-    createMutation,
-  ]);
+  }, [form, isEditing, selectedId, updateMutation, createMutation]);
 
   const handleDelete = useCallback(() => {
     if (!selectedId) return;
@@ -383,7 +377,10 @@ export default function TopicManagement() {
     setIsCreating(true);
   }, [selectedId, nodes]);
 
-  const [dragOver, setDragOver] = useState<{ id: number; pos: DropPosition } | null>(null);
+  const [dragOver, setDragOver] = useState<{
+    id: number;
+    pos: DropPosition;
+  } | null>(null);
 
   const handleDragStart = useCallback(() => {
     setDragOver(null);
@@ -391,7 +388,9 @@ export default function TopicManagement() {
 
   const handleDragOver = useCallback(
     (_e: React.DragEvent, id: number, pos: DropPosition) => {
-      setDragOver(prev => (prev?.id === id && prev?.pos === pos ? prev : { id, pos }));
+      setDragOver(prev =>
+        prev?.id === id && prev?.pos === pos ? prev : { id, pos }
+      );
     },
     []
   );
@@ -411,7 +410,9 @@ export default function TopicManagement() {
 
       if (pos === "inside") {
         newParentId = target.id;
-        siblings = nodes.filter(n => n.parentId === newParentId && n.id !== draggedId);
+        siblings = nodes.filter(
+          n => n.parentId === newParentId && n.id !== draggedId
+        );
       } else {
         newParentId = target.parentId ?? null;
         siblings = nodes.filter(
@@ -424,7 +425,8 @@ export default function TopicManagement() {
       const insertIndex =
         pos === "inside"
           ? siblings.length
-          : siblings.findIndex(n => n.id === targetId) + (pos === "after" ? 1 : 0);
+          : siblings.findIndex(n => n.id === targetId) +
+            (pos === "after" ? 1 : 0);
 
       const reordered = [
         ...siblings.slice(0, insertIndex),
@@ -467,7 +469,9 @@ export default function TopicManagement() {
       const dragged = nodes.find(n => n.id === draggedId);
       if (!dragged) return;
 
-      const roots = nodes.filter(n => n.parentId === null && n.id !== draggedId);
+      const roots = nodes.filter(
+        n => n.parentId === null && n.id !== draggedId
+      );
       roots.sort((a, b) => a.order - b.order);
       roots.push(dragged);
       const updates = roots.map((n, index) => ({

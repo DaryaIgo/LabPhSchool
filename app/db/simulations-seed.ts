@@ -18,7 +18,7 @@ type SimulationSeed = {
 };
 
 const simulationData: SimulationSeed[] = [
-{
+  {
     slug: "uniform-linear-motion",
     title: "Равномерное прямолинейное движение",
     description:
@@ -31,7 +31,7 @@ const simulationData: SimulationSeed[] = [
         key: "speed",
         label: "Скорость",
         paramType: "slider",
-        min: "0",
+        min: "-20",
         max: "20",
         step: "0.5",
         defaultValue: "5",
@@ -59,7 +59,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-{
+  {
     slug: "uniformly-accelerated-motion",
     title: "Равноускоренное прямолинейное движение",
     description:
@@ -72,8 +72,8 @@ const simulationData: SimulationSeed[] = [
         key: "v0",
         label: "Начальная скорость",
         paramType: "slider",
-        min: "0",
-        max: "10",
+        min: "-20",
+        max: "20",
         step: "0.5",
         defaultValue: "0",
         unit: "м/с",
@@ -82,7 +82,7 @@ const simulationData: SimulationSeed[] = [
         key: "angle",
         label: "Угол наклона плоскости",
         paramType: "slider",
-        min: "0",
+        min: "-45",
         max: "45",
         step: "1",
         defaultValue: "10",
@@ -93,14 +93,14 @@ const simulationData: SimulationSeed[] = [
         label: "Время",
         paramType: "slider",
         min: "1",
-        max: "10",
+        max: "30",
         step: "0.5",
         defaultValue: "5",
         unit: "с",
       },
     ],
   },
-{
+  {
     slug: "projectile-motion",
     title: "Движение тела, брошенного под углом",
     description: "Интерактивная PhET-симуляция баллистического движения.",
@@ -109,7 +109,7 @@ const simulationData: SimulationSeed[] = [
     componentRef: "projectile-motion",
     params: [],
   },
-{
+  {
     slug: "under-pressure-phet",
     title: "Давление в жидкости (PhET)",
     description: "Интерактивная симуляция давления в жидкости и на тело.",
@@ -118,7 +118,7 @@ const simulationData: SimulationSeed[] = [
     componentRef: "under-pressure-phet",
     params: [],
   },
-{
+  {
     slug: "buoyancy-phet",
     title: "Плавучесть (PhET)",
     description: "PhET-симуляция плавучести и силы Архимеда.",
@@ -127,7 +127,7 @@ const simulationData: SimulationSeed[] = [
     componentRef: "buoyancy-phet",
     params: [],
   },
-{
+  {
     slug: "buoyancy-basics-phet",
     title: "Основы плавучести (PhET)",
     description: "Упрощённая PhET-симуляция для изучения условий плавания.",
@@ -136,7 +136,7 @@ const simulationData: SimulationSeed[] = [
     componentRef: "buoyancy-basics-phet",
     params: [],
   },
-{
+  {
     slug: "masses-and-springs",
     title: "Массы и пружины",
     description:
@@ -154,7 +154,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-{
+  {
     slug: "wave-interference",
     title: "Интерференция волн",
     description: "Интерактивная симуляция для изучения интерференции волн.",
@@ -171,7 +171,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-{
+  {
     slug: "sound-waves",
     title: "Звуковые волны",
     description: "Интерактивная симуляция для изучения звуковых волн.",
@@ -188,7 +188,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-{
+  {
     slug: "states-of-matter-basics",
     title: "Состояния веществ: Основы",
     description:
@@ -206,7 +206,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-{
+  {
     slug: "gases-intro",
     title: "Газы: Введение",
     description:
@@ -224,7 +224,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-{
+  {
     slug: "charges-and-fields",
     title: "Заряды и поля",
     description:
@@ -242,7 +242,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-{
+  {
     slug: "electricity-maps",
     title: "Интерактивная карта потребления и генерации электроэнергии",
     description:
@@ -255,11 +255,12 @@ const simulationData: SimulationSeed[] = [
         key: "url",
         label: "URL",
         paramType: "url",
-        defaultValue: "https://app.electricitymaps.com/map/live/fifteen_minutes",
+        defaultValue:
+          "https://app.electricitymaps.com/map/live/fifteen_minutes",
       },
     ],
   },
-{
+  {
     slug: "circuit-construction-kit-dc",
     title: "Электрическая цепь постоянного тока",
     description:
@@ -277,7 +278,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-{
+  {
     slug: "magnet-and-compass",
     title: "Магнит и компас",
     description:
@@ -295,7 +296,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-{
+  {
     slug: "faradays-law",
     title: "Закон электромагнитной индукции Фарадея",
     description:
@@ -313,7 +314,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-{
+  {
     slug: "faradays-electromagnetic-lab",
     title: "Электромагнитная лаборатория Фарадея",
     description:
@@ -331,7 +332,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-{
+  {
     slug: "geometric-optics",
     title: "Геометрическая оптика",
     description:
@@ -349,11 +350,10 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-{
+  {
     slug: "build-an-atom",
     title: "Построй атом",
-    description:
-      "Интерактивная симуляция для изучения строения атома.",
+    description: "Интерактивная симуляция для изучения строения атома.",
     category: "nuclear-physics",
     kind: "external",
     componentRef: "external-iframe",
@@ -367,11 +367,10 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-{
+  {
     slug: "models-of-hydrogen-atom",
     title: "Модели атома водорода",
-    description:
-      "Интерактивная симуляция для изучения моделей атома водорода.",
+    description: "Интерактивная симуляция для изучения моделей атома водорода.",
     category: "nuclear-physics",
     kind: "external",
     componentRef: "external-iframe",
@@ -384,7 +383,7 @@ const simulationData: SimulationSeed[] = [
           "https://phet.colorado.edu/sims/html/models-of-the-hydrogen-atom/latest/models-of-the-hydrogen-atom_all.html",
       },
     ],
-  }
+  },
 ];
 
 async function seedSimulations() {
@@ -421,9 +420,7 @@ async function seedSimulations() {
   // Remove simulations that are no longer in the seed list
   const slugs = simulationData.map(s => s.slug);
   if (slugs.length > 0) {
-    await db
-      .delete(simulations)
-      .where(not(inArray(simulations.slug, slugs)));
+    await db.delete(simulations).where(not(inArray(simulations.slug, slugs)));
     console.log("Removed stale simulations");
   }
 

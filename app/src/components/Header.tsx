@@ -177,7 +177,10 @@ export default function Header() {
                         : "text-[#c8cdd1] border-transparent hover:text-white hover:bg-white/5"
                     }`}
                   >
-                    <link.icon size={16} className={active ? "text-[#2eff8c]" : ""} />
+                    <link.icon
+                      size={16}
+                      className={active ? "text-[#2eff8c]" : ""}
+                    />
                     <span>{link.label}</span>
                   </Link>
                 );

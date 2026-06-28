@@ -204,7 +204,6 @@ export default function Resources() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="mb-10">
             <h2 className="text-2xl lg:text-3xl font-bold text-white mb-3 flex items-center gap-3">
-              <span className="w-2 h-8 bg-[#2eff8c] rounded-full" />
               Дополнительные ресурсы
             </h2>
             <p className="text-[#c8cdd1] max-w-2xl">

@@ -70,7 +70,11 @@ export default function SnakeTimeline({
           : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4";
 
   const flatItems = useMemo(() => {
-    const list: Array<{ item: SnakeTimelineItem; rowIndex: number; colIndex: number }> = [];
+    const list: Array<{
+      item: SnakeTimelineItem;
+      rowIndex: number;
+      colIndex: number;
+    }> = [];
     rows.forEach((row, rowIndex) => {
       row.forEach((item, colIndex) => {
         list.push({ item, rowIndex, colIndex });
@@ -244,8 +248,7 @@ export default function SnakeTimeline({
           row.map((item, index) => {
             const accent = item.color || DEFAULT_ACCENT;
             const hasLink = !!item.href && !item.disabled;
-            const isClickable =
-              !item.disabled && (hasLink || item.onClick);
+            const isClickable = !item.disabled && (hasLink || item.onClick);
             const animationDelay = `${((rowIndex * columns + index) * 0.7) % 6}s`;
 
             const nodeCircle = (
@@ -391,9 +394,7 @@ export default function SnakeTimeline({
                       </p>
                     )}
 
-                    {item.details && (
-                      <div className="mb-3">{item.details}</div>
-                    )}
+                    {item.details && <div className="mb-3">{item.details}</div>}
 
                     {item.meta && <div className="mb-3">{item.meta}</div>}
 

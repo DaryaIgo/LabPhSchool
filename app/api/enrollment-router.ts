@@ -53,10 +53,7 @@ import {
   deleteAssignedJupyterNotebook,
   getMaxOrderForJupyterNotebooks,
 } from "./queries/assignedJupyterNotebooks";
-import {
-  jupyterNotebooks,
-  jupyterNotebookAccess,
-} from "@db/schema/jupyter";
+import { jupyterNotebooks, jupyterNotebookAccess } from "@db/schema/jupyter";
 import { assignedJupyterNotebooks } from "@db/schema/learning";
 
 export const enrollmentRouter = createRouter({
@@ -283,7 +280,8 @@ export const enrollmentRouter = createRouter({
         localUserId: enrollment.localUserId,
         type: "lab",
         title: "Назначена новая лабораторная работа",
-        message: "Вам назначена новая лабораторная работа. Перейдите во вкладку «Мои Лабораторные».",
+        message:
+          "Вам назначена новая лабораторная работа. Перейдите во вкладку «Мои Лабораторные».",
         resourceId: assignmentId,
       });
 
@@ -409,7 +407,8 @@ export const enrollmentRouter = createRouter({
         localUserId: enrollment.localUserId,
         type: "problem",
         title: "Назначена новая задача",
-        message: "Вам назначена новая задача. Перейдите во вкладку «Мои Задачи».",
+        message:
+          "Вам назначена новая задача. Перейдите во вкладку «Мои Задачи».",
         resourceId: assignmentId,
       });
 
@@ -615,10 +614,7 @@ export const enrollmentRouter = createRouter({
             .where(
               and(
                 eq(jupyterNotebookAccess.notebookId, assignment.notebookId),
-                eq(
-                  jupyterNotebookAccess.localUserId,
-                  assignment.localUserId
-                )
+                eq(jupyterNotebookAccess.localUserId, assignment.localUserId)
               )
             );
         }

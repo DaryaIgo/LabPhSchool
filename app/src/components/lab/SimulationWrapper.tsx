@@ -1,5 +1,12 @@
-import { useMemo, useRef, useState } from "react";
-import { Play, RotateCcw, Ruler, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Play,
+  RotateCcw,
+  Ruler,
+  Trash2,
+  Eraser,
+  TrendingUp,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import LabControls from "@/components/lab/LabControls";
@@ -10,6 +17,7 @@ import type { ControlItem } from "@/components/lab/LabControls";
 import type {
   MeasurementRow,
   RegisteredSimulation,
+  GraphConfig,
 } from "@/components/lab/simulations/types";
 import {
   LineChart,
@@ -21,7 +29,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
 
 interface SimulationWrapperProps {
@@ -45,9 +52,7 @@ export default function SimulationWrapper({
   measurements,
   onMeasurementsChange,
 }: SimulationWrapperProps) {
-  const registered = getRegisteredSimulation(
-    simulation?.componentRef ?? slug
-  );
+  const registered = getRegisteredSimulation(simulation?.componentRef ?? slug);
   const isExternal = cardType === "external";
 
   if (isExternal || !registered) {
@@ -69,7 +74,6 @@ function ExternalSimulationView({
 }: {
   simulation: SimulationWrapperProps["simulation"];
 }) {
-
   const [notes, setNotes] = useState("");
 
   const params: Record<string, number | string> = useMemo(() => {
@@ -91,7 +95,7 @@ function ExternalSimulationView({
   }, [simulation]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {simulation?.componentRef === "external-iframe" && (
         <div className="bg-[#1a1f22] border border-[#37474f] rounded-2xl overflow-hidden flex justify-center">
           <ExternalIframeSimulation params={params} />
@@ -111,8 +115,7 @@ function ExternalSimulationView({
           className="min-h-[160px] bg-[#1a1f22] border-[#37474f] text-white resize-y"
         />
         <p className="text-xs text-[#798389]">
-          Заметки не сохраняются и предназначены только для личного
-          пользования.
+          Заметки не сохраняются и предназначены только для личного пользования.
         </p>
       </div>
     </div>
@@ -144,8 +147,7 @@ function OwnSimulationView({
   const effectiveParams: Record<string, number | string> = useMemo(() => {
     const defaults: Record<string, number | string> = {};
     manifest.params.forEach(p => {
-      defaults[p.key] =
-        p.defaultValue ?? (p.paramType === "select" ? "" : 0);
+      defaults[p.key] = p.defaultValue ?? (p.paramType === "select" ? "" : 0);
     });
     return { ...defaults, ...simParams };
   }, [manifest.params, simParams]);
@@ -205,13 +207,34 @@ function OwnSimulationView({
     stateRef.current = {};
   };
 
-  const handleAddMeasurement = () => {
+  const handleAddMeasurement = useCallback(() => {
     const row = computeMeasurement(stateRef.current, effectiveParams);
     onMeasurementsChange([
       ...measurements,
       { "№": measurements.length + 1, ...row },
     ]);
-  };
+  }, [computeMeasurement, effectiveParams, measurements, onMeasurementsChange]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.code !== "Space" || e.repeat) return;
+
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.tagName === "SELECT"
+      ) {
+        return;
+      }
+
+      e.preventDefault();
+      handleAddMeasurement();
+    };
+
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [handleAddMeasurement]);
 
   const handleDeleteMeasurement = (index: number) => {
     onMeasurementsChange(measurements.filter((_, i) => i !== index));
@@ -221,202 +244,176 @@ function OwnSimulationView({
     onMeasurementsChange([]);
   };
 
-  const headers =
-    measurements.length > 0
-      ? Object.keys(measurements[0]).map(k => ({ key: k, label: k }))
-      : [];
+  const headers = useMemo(() => {
+    if (measurements.length > 0) {
+      return Object.keys(measurements[0]).map(k => ({ key: k, label: k }));
+    }
+    return [
+      { key: "№", label: "№" },
+      ...manifest.measurements.map(m => ({
+        key: m.key,
+        label: `${m.label}${m.unit ? `, ${m.unit}` : ""}`,
+      })),
+    ];
+  }, [measurements, manifest.measurements]);
 
   return (
-    <div className="space-y-6">
-      {/* Parameters block */}
-      {controls.length > 0 && (
-        <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
-          <h3 className="text-sm font-semibold text-white mb-4">
-            {blockTitles.parameters ?? "Параметры"}
-          </h3>
-          <LabControls controls={controls} />
-        </div>
-      )}
+    <div className="space-y-4">
+      {/* Main simulation area: canvas + controls + sidebar */}
+      <div className="flex flex-col lg:flex-row gap-4">
+        {/* Left: simulation and controls */}
+        <div className="flex-1 min-w-0 space-y-3">
+          {/* Simulation visualization */}
+          <div className="bg-[#1a1f22] border border-[#37474f] rounded-2xl overflow-hidden flex justify-center p-2">
+            <SimComponent
+              params={effectiveParams}
+              isRunning={isRunning}
+              onStateChange={state => {
+                stateRef.current = state;
+                setCurrentState(state);
+                if (state.finished) {
+                  setIsRunning(false);
+                }
+              }}
+            />
+          </div>
 
-      {/* Controls block */}
-      <div className="flex flex-wrap gap-3">
-        {manifest.wrapper.blockTitles.controls && (
-          <h3 className="w-full text-sm font-semibold text-white mb-1">
-            {blockTitles.controls}
-          </h3>
-        )}
-        <Button
-          onClick={handleStart}
-          className={
-            isRunning
-              ? "bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 border border-yellow-500/30"
-              : "bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70]"
-          }
-        >
-          {isRunning ? (
-            <>
-              <RotateCcw size={16} className="mr-2" />
-              Остановить
-            </>
-          ) : (
-            <>
-              <Play size={16} className="mr-2" />
-              Старт
-            </>
-          )}
-        </Button>
-        <Button
-          onClick={handleReset}
-          variant="outline"
-          className="border-[#37474f] text-[#c8cdd1] hover:text-white"
-        >
-          <Trash2 size={16} className="mr-2" />
-          Сброс
-        </Button>
-      </div>
-
-      {/* Simulation visualization */}
-      <div className="bg-[#1a1f22] border border-[#37474f] rounded-2xl overflow-hidden flex justify-center p-4">
-        <SimComponent
-          params={effectiveParams}
-          isRunning={isRunning}
-          onStateChange={state => {
-            stateRef.current = state;
-            setCurrentState(state);
-            if (state.finished) {
-              setIsRunning(false);
-            }
-          }}
-        />
-      </div>
-
-      {/* Current values block */}
-      {manifest.currentValues.length > 0 && (
-        <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
-          <h3 className="text-sm font-semibold text-white mb-4">
-            {blockTitles.currentValues ?? "Текущие величины"}
-          </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
-            {manifest.currentValues.map(item => {
-              const raw = currentState[item.key] ?? 0;
-              const formatted =
-                item.decimals !== undefined
-                  ? raw.toFixed(item.decimals)
-                  : String(raw);
-              return (
-                <div
-                  key={item.key}
-                  className="bg-[#1a1f22] border border-[#37474f] rounded-xl p-3"
-                >
-                  <p className="text-xs text-[#798389] mb-1">
-                    {item.label}
-                    {item.unit ? `, ${item.unit}` : ""}
-                  </p>
-                  <p className="text-lg font-mono font-semibold text-[#2eff8c]">
-                    {formatted}
-                  </p>
-                </div>
-              );
-            })}
+          {/* Controls block */}
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              onClick={handleStart}
+              className={
+                isRunning
+                  ? "bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 border border-yellow-500/30"
+                  : "bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70]"
+              }
+            >
+              {isRunning ? (
+                <>
+                  <RotateCcw size={16} className="mr-2" />
+                  Остановить
+                </>
+              ) : (
+                <>
+                  <Play size={16} className="mr-2" />
+                  Старт
+                </>
+              )}
+            </Button>
+            <Button
+              onClick={handleReset}
+              variant="outline"
+              className="border-[#37474f] text-[#c8cdd1] hover:text-white"
+            >
+              <Trash2 size={16} className="mr-2" />
+              Сброс
+            </Button>
+            <Button
+              onClick={handleAddMeasurement}
+              className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70]"
+            >
+              <Ruler size={16} className="mr-2" />
+              Зафиксировать
+            </Button>
           </div>
         </div>
-      )}
 
-      {/* Measurements block */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-white">
-            {blockTitles.measurements ?? "Измерения"}
-          </h3>
-          <Button
-            onClick={handleAddMeasurement}
-            className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70]"
-          >
-            <Ruler size={16} className="mr-2" />
-            Зафиксировать
-          </Button>
-        </div>
-        <ResultsTable
-          headers={headers}
-          data={measurements}
-          onDelete={handleDeleteMeasurement}
-          onClear={handleClearMeasurements}
-        />
-      </div>
-
-      {/* Graphs block */}
-      {manifest.wrapper.hasGraphs && manifest.graphs.length > 0 && (
-        <div className="space-y-6">
-          <h3 className="text-sm font-semibold text-white">
-            {blockTitles.graphs ?? "Графики"}
-          </h3>
-          {measurements.length === 0 ? (
-            <div className="bg-[#1a1f22] border border-[#37474f] rounded-2xl p-8 text-center text-[#798389]">
-              Нет данных для построения графиков. Зафиксируйте измерения.
+        {/* Right: parameters and current values */}
+        <div className="w-full lg:w-64 shrink-0 space-y-3">
+          {controls.length > 0 && (
+            <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-4">
+              <h3 className="text-sm font-semibold text-white mb-3">
+                {blockTitles.parameters ?? "Параметры"}
+              </h3>
+              <LabControls controls={controls} compact />
             </div>
-          ) : (
-            manifest.graphs.map(graph => (
-              <GraphCard key={graph.title} title={graph.title}>
-                <ResponsiveContainer width="100%" height={300}>
-                  {graph.type === "scatter" ? (
-                    <ScatterChart>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
-                      <XAxis
-                        type="number"
-                        dataKey={graph.xKey}
-                        name={graph.xLabel ?? graph.xKey}
-                        stroke="#798389"
-                      />
-                      <YAxis
-                        type="number"
-                        dataKey={graph.yKey}
-                        name={graph.yLabel ?? graph.yKey}
-                        stroke="#798389"
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "#1a1f22",
-                          border: "1px solid #37474f",
-                          borderRadius: "8px",
-                          color: "#fff",
-                        }}
-                      />
-                      <Scatter
-                        name={`${graph.yKey}(${graph.xKey})`}
-                        data={measurements}
-                        fill="#2eff8c"
-                      />
-                    </ScatterChart>
-                  ) : (
-                    <LineChart data={measurements}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
-                      <XAxis dataKey={graph.xKey} stroke="#798389" />
-                      <YAxis dataKey={graph.yKey} stroke="#798389" />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "#1a1f22",
-                          border: "1px solid #37474f",
-                          borderRadius: "8px",
-                          color: "#fff",
-                        }}
-                      />
-                      <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey={graph.yKey}
-                        stroke="#2eff8c"
-                        strokeWidth={2}
-                        dot={{ r: 4, fill: "#2eff8c" }}
-                        name={`${graph.yKey}(${graph.xKey})`}
-                      />
-                    </LineChart>
-                  )}
-                </ResponsiveContainer>
-              </GraphCard>
-            ))
+          )}
+
+          {manifest.currentValues.length > 0 && (
+            <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-4">
+              <h3 className="text-sm font-semibold text-white mb-3">
+                {blockTitles.currentValues ?? "Текущие величины"}
+              </h3>
+              <div className="grid grid-cols-2 gap-2">
+                {manifest.currentValues.map(item => {
+                  const raw = currentState[item.key] ?? 0;
+                  const formatted =
+                    item.decimals !== undefined
+                      ? raw.toFixed(item.decimals)
+                      : String(raw);
+                  return (
+                    <div
+                      key={item.key}
+                      className="bg-[#1a1f22] border border-[#37474f] rounded-lg p-2"
+                    >
+                      <p className="text-[10px] text-[#798389] mb-0.5">
+                        {item.label}
+                        {item.unit ? `, ${item.unit}` : ""}
+                      </p>
+                      <p className="text-base font-mono font-semibold text-[#2eff8c]">
+                        {formatted}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )}
         </div>
-      )}
+      </div>
+
+      {/* Graphs & Measurements */}
+      <div
+        className={`grid gap-4 ${
+          manifest.wrapper.hasGraphs && manifest.graphs.length > 0
+            ? "grid-cols-1 xl:grid-cols-3"
+            : "grid-cols-1"
+        }`}
+      >
+        {/* Graphs — main focus, 2/3 width */}
+        {manifest.wrapper.hasGraphs && manifest.graphs.length > 0 && (
+          <div className="xl:col-span-2 space-y-4">
+            {manifest.graphs.map(graph => (
+              <GraphCard key={graph.title} title={graph.title}>
+                <ResponsiveContainer width="100%" height={260}>
+                  {renderChart(graph, measurements)}
+                </ResponsiveContainer>
+              </GraphCard>
+            ))}
+          </div>
+        )}
+
+        {/* Measurements — compact sidebar, 1/3 width */}
+        <div className="bg-[#1a1f22] border border-[#37474f] rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Ruler size={16} className="text-[#2eff8c]" />
+              <h4 className="text-sm font-semibold text-white">
+                {blockTitles.measurements ?? "Измерения"}
+              </h4>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#2a3237] text-[#96a3ab]">
+                {measurements.length}
+              </span>
+            </div>
+            {measurements.length > 0 && (
+              <Button
+                onClick={handleClearMeasurements}
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-400"
+              >
+                <Eraser size={14} className="mr-1" />
+                Очистить
+              </Button>
+            )}
+          </div>
+          <ResultsTable
+            headers={headers}
+            data={measurements}
+            onDelete={handleDeleteMeasurement}
+          />
+        </div>
+      </div>
     </div>
   );
 }
@@ -429,9 +426,100 @@ function GraphCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-[#1a1f22] border border-[#37474f] rounded-2xl p-6">
-      <h4 className="text-sm font-semibold text-white mb-4">{title}</h4>
+    <div className="bg-[#1a1f22] border border-[#37474f] rounded-xl p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <TrendingUp size={16} className="text-[#2eff8c]" />
+        <h4 className="text-sm font-semibold text-white">{title}</h4>
+      </div>
       {children}
     </div>
+  );
+}
+
+function renderChart(graph: GraphConfig, data: MeasurementRow[]) {
+  const isEmpty = data.length === 0;
+  const emptyData = [{ [graph.xKey]: 0, [graph.yKey]: 0 }];
+  const chartData = isEmpty ? emptyData : data;
+  const defaultDomain: [number, number] = [0, 1];
+
+  if (graph.type === "scatter") {
+    return (
+      <ScatterChart data={chartData}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
+        <XAxis
+          type="number"
+          dataKey={graph.xKey}
+          name={graph.xLabel ?? graph.xKey}
+          stroke="#798389"
+          fontSize={11}
+          tickLine={false}
+          domain={isEmpty ? defaultDomain : ["auto", "auto"]}
+        />
+        <YAxis
+          type="number"
+          dataKey={graph.yKey}
+          name={graph.yLabel ?? graph.yKey}
+          stroke="#798389"
+          fontSize={11}
+          tickLine={false}
+          domain={isEmpty ? defaultDomain : ["auto", "auto"]}
+        />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: "#1a1f22",
+            border: "1px solid #37474f",
+            borderRadius: "8px",
+            color: "#fff",
+          }}
+        />
+        {!isEmpty && (
+          <Scatter
+            name={`${graph.yKey}(${graph.xKey})`}
+            data={data}
+            fill="#2eff8c"
+          />
+        )}
+      </ScatterChart>
+    );
+  }
+
+  return (
+    <LineChart data={chartData}>
+      <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
+      <XAxis
+        type="number"
+        dataKey={graph.xKey}
+        stroke="#798389"
+        fontSize={11}
+        tickLine={false}
+        domain={isEmpty ? defaultDomain : ["auto", "auto"]}
+      />
+      <YAxis
+        type="number"
+        dataKey={graph.yKey}
+        stroke="#798389"
+        fontSize={11}
+        tickLine={false}
+        domain={isEmpty ? defaultDomain : ["auto", "auto"]}
+      />
+      <Tooltip
+        contentStyle={{
+          backgroundColor: "#1a1f22",
+          border: "1px solid #37474f",
+          borderRadius: "8px",
+          color: "#fff",
+        }}
+      />
+      {!isEmpty && (
+        <Line
+          type="monotone"
+          dataKey={graph.yKey}
+          stroke="#2eff8c"
+          strokeWidth={2}
+          dot={{ r: 3, fill: "#2eff8c" }}
+          name={`${graph.yKey}(${graph.xKey})`}
+        />
+      )}
+    </LineChart>
   );
 }

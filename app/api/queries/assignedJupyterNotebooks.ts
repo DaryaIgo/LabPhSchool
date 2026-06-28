@@ -99,7 +99,9 @@ export async function getAssignedJupyterNotebookById(id: number) {
   return enriched[0];
 }
 
-export async function getAssignedJupyterNotebooksByStudent(localUserId: number) {
+export async function getAssignedJupyterNotebooksByStudent(
+  localUserId: number
+) {
   const learningDb = getLearningDb();
 
   const rows = await learningDb

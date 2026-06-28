@@ -19,9 +19,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         info: <InfoIcon className="size-4 text-[#01acff]" />,
         warning: <TriangleAlertIcon className="size-4 text-[#ffc832]" />,
         error: <OctagonXIcon className="size-4 text-[#ff6b6b]" />,
-        loading: (
-          <Loader2Icon className="size-4 animate-spin text-[#01acff]" />
-        ),
+        loading: <Loader2Icon className="size-4 animate-spin text-[#01acff]" />,
       }}
       toastOptions={{
         classNames: {
@@ -37,10 +35,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
             "group-[.toast]:text-[#798389] group-[.toast]:hover:text-white",
           success:
             "group-[.toast]:border-l-4 group-[.toast]:border-l-[#2eff8c]",
-          error:
-            "group-[.toast]:border-l-4 group-[.toast]:border-l-[#ff6b6b]",
-          info:
-            "group-[.toast]:border-l-4 group-[.toast]:border-l-[#01acff]",
+          error: "group-[.toast]:border-l-4 group-[.toast]:border-l-[#ff6b6b]",
+          info: "group-[.toast]:border-l-4 group-[.toast]:border-l-[#01acff]",
           warning:
             "group-[.toast]:border-l-4 group-[.toast]:border-l-[#ffc832]",
         },

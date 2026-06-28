@@ -45,56 +45,98 @@ export type ControlItem =
 
 interface LabControlsProps {
   controls: ControlItem[];
+  compact?: boolean;
 }
 
-export default function LabControls({ controls }: LabControlsProps) {
+export default function LabControls({ controls, compact }: LabControlsProps) {
   return (
-    <div className="flex flex-wrap gap-4 items-end">
+    <div
+      className={
+        compact ? "flex flex-col gap-3" : "flex flex-wrap gap-4 items-end"
+      }
+    >
       {controls.map((control, index) => (
-        <ControlField key={index} control={control} />
+        <ControlField key={index} control={control} compact={compact} />
       ))}
     </div>
   );
 }
 
-function ControlField({ control }: { control: ControlItem }) {
+function ControlField({
+  control,
+  compact,
+}: {
+  control: ControlItem;
+  compact?: boolean;
+}) {
   const id = useId();
 
   switch (control.type) {
     case "slider": {
       return (
-        <div className="flex flex-col gap-1.5 min-w-[200px] flex-none">
-          <label
-            htmlFor={id}
-            className="text-[#c8cdd1] text-sm font-medium truncate"
-            title={`${control.label}${control.unit ? `, ${control.unit}` : ""}`}
+        <div
+          className={
+            compact
+              ? "flex flex-col gap-1 w-full"
+              : "flex flex-col gap-1.5 min-w-[200px] flex-none"
+          }
+        >
+          <div
+            className={
+              compact
+                ? "flex items-center justify-between gap-2"
+                : "flex flex-col gap-1.5"
+            }
           >
-            {control.label}
-            {control.unit ? `, ${control.unit}` : ""}
-          </label>
-          <div className="flex items-center gap-2">
-            <input
-              id={id}
-              type="range"
-              min={control.min}
-              max={control.max}
-              step={control.step}
-              value={control.value}
-              onChange={e => control.onChange(parseFloat(e.target.value))}
-              className="flex-1 h-2 bg-[#37474f] rounded-lg appearance-none cursor-pointer accent-[#2eff8c] min-w-0"
-            />
-            <span className="text-[#2eff8c] text-sm w-[68px] shrink-0 text-right font-mono font-semibold">
+            <label
+              htmlFor={id}
+              className={`text-[#c8cdd1] font-medium truncate ${
+                compact ? "text-xs" : "text-sm"
+              }`}
+              title={`${control.label}${
+                control.unit ? `, ${control.unit}` : ""
+              }`}
+            >
+              {control.label}
+              {control.unit ? `, ${control.unit}` : ""}
+            </label>
+            <span
+              className={`text-[#2eff8c] font-mono font-semibold shrink-0 ${
+                compact ? "text-xs" : "text-sm w-[68px] text-right"
+              }`}
+            >
               {control.value}
               {control.unit ? ` ${control.unit}` : ""}
             </span>
           </div>
+          <input
+            id={id}
+            type="range"
+            min={control.min}
+            max={control.max}
+            step={control.step}
+            value={control.value}
+            onChange={e => control.onChange(parseFloat(e.target.value))}
+            className="w-full h-2 bg-[#37474f] rounded-lg appearance-none cursor-pointer accent-[#2eff8c] min-w-0"
+          />
         </div>
       );
     }
     case "number": {
       return (
-        <div className="flex flex-col gap-1.5 min-w-[120px]">
-          <label htmlFor={id} className="text-[#c8cdd1] text-sm font-medium">
+        <div
+          className={
+            compact
+              ? "flex flex-col gap-1 w-full"
+              : "flex flex-col gap-1.5 min-w-[120px]"
+          }
+        >
+          <label
+            htmlFor={id}
+            className={`text-[#c8cdd1] font-medium ${
+              compact ? "text-xs" : "text-sm"
+            }`}
+          >
             {control.label}
             {control.unit ? `, ${control.unit}` : ""}
           </label>
@@ -106,22 +148,37 @@ function ControlField({ control }: { control: ControlItem }) {
             step={control.step ?? 1}
             value={control.value}
             onChange={e => control.onChange(parseFloat(e.target.value) || 0)}
-            className="bg-[#1a1f22] border border-[#37474f] text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#2eff8c] transition-colors"
+            className={`bg-[#1a1f22] border border-[#37474f] text-white rounded-lg px-3 focus:outline-none focus:border-[#2eff8c] transition-colors ${
+              compact ? "text-xs py-1.5" : "text-sm py-2"
+            }`}
           />
         </div>
       );
     }
     case "select": {
       return (
-        <div className="flex flex-col gap-1.5 min-w-[160px]">
-          <label htmlFor={id} className="text-[#c8cdd1] text-sm font-medium">
+        <div
+          className={
+            compact
+              ? "flex flex-col gap-1 w-full"
+              : "flex flex-col gap-1.5 min-w-[160px]"
+          }
+        >
+          <label
+            htmlFor={id}
+            className={`text-[#c8cdd1] font-medium ${
+              compact ? "text-xs" : "text-sm"
+            }`}
+          >
             {control.label}
           </label>
           <select
             id={id}
             value={control.value}
             onChange={e => control.onChange(e.target.value)}
-            className="bg-[#1a1f22] border border-[#37474f] text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#2eff8c] transition-colors"
+            className={`bg-[#1a1f22] border border-[#37474f] text-white rounded-lg px-3 focus:outline-none focus:border-[#2eff8c] transition-colors ${
+              compact ? "text-xs py-1.5" : "text-sm py-2"
+            }`}
           >
             {control.options.map(opt => (
               <option key={opt.value} value={opt.value}>
@@ -142,9 +199,9 @@ function ControlField({ control }: { control: ControlItem }) {
       return (
         <button
           onClick={control.onClick}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            btnClasses[control.variant ?? "primary"]
-          }`}
+          className={`rounded-lg font-medium transition-colors ${
+            compact ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-sm"
+          } ${btnClasses[control.variant ?? "primary"]}`}
         >
           {control.label}
         </button>

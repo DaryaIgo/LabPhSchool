@@ -38,7 +38,10 @@ function NodeContent({
   topicTitle?: string;
 }) {
   const wordCount = node.content
-    ? node.content.replace(/[#*_`[\]\n\r]/g, " ").split(/\s+/).filter(Boolean).length
+    ? node.content
+        .replace(/[#*_`[\]\n\r]/g, " ")
+        .split(/\s+/)
+        .filter(Boolean).length
     : 0;
   const readTime = Math.max(1, Math.ceil(wordCount / 200));
 
@@ -251,7 +254,8 @@ export default function TopicOrbitView({
   const subtopics = topic.children;
 
   const orbitItems: SubtopicOrbitItem[] = useMemo(() => {
-    if (subtopics.length === 0 || orbitWidth === 0 || orbitHeight === 0) return [];
+    if (subtopics.length === 0 || orbitWidth === 0 || orbitHeight === 0)
+      return [];
 
     const minDim = Math.min(orbitWidth, orbitHeight);
     // Base radius scales with viewport; add a little extra when there are many nodes
@@ -541,7 +545,8 @@ export default function TopicOrbitView({
                         <div
                           className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                           style={{
-                            boxShadow: "0 0 48px rgba(255,255,255,0.25), inset 0 0 24px rgba(255,255,255,0.15)",
+                            boxShadow:
+                              "0 0 48px rgba(255,255,255,0.25), inset 0 0 24px rgba(255,255,255,0.15)",
                           }}
                         />
 

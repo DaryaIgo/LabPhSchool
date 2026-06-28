@@ -10,12 +10,7 @@ import {
   ArrowRight,
   Sparkles,
 } from "lucide-react";
-import {
-  useState,
-  useEffect,
-  useRef,
-  type ReactNode,
-} from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 
 /* ---------- Hero Globe Canvas ---------- */
 function GlobeCanvas() {
@@ -351,7 +346,8 @@ class Rocket {
     const MIN_SPEED = 0.5;
     const MAX_SPEED = 5.0;
     const clampedSpeed = Math.max(MIN_SPEED, Math.min(MAX_SPEED, speed));
-    const scaleFactor = 2 - (clampedSpeed - MIN_SPEED) / (MAX_SPEED - MIN_SPEED);
+    const scaleFactor =
+      2 - (clampedSpeed - MIN_SPEED) / (MAX_SPEED - MIN_SPEED);
     this.size = (20 + Math.random() * 8) * scaleFactor;
 
     const angleToTarget = Math.atan2(targetY - this.y, targetX - this.x);
@@ -366,7 +362,7 @@ class Rocket {
 
   static pickEmoji(): string {
     const r = Math.random();
-    if (r < 0.70) return "🚀";
+    if (r < 0.7) return "🚀";
     const others = ["⭐", "👨‍🚀", "👽", "🪐", "🌟"];
     return others[Math.floor(Math.random() * others.length)];
   }
@@ -458,7 +454,7 @@ function RocketCanvas() {
     const rockets: Rocket[] = [];
     const popups: FormulaPopup[] = [];
     let spawnTimer = 0;
-    const spawnInterval = 150 + Math.floor(Math.random() * 108); // 
+    const spawnInterval = 150 + Math.floor(Math.random() * 108); //
 
     const loop = () => {
       ctx.clearRect(0, 0, W, H);
@@ -504,10 +500,7 @@ function RocketCanvas() {
   }, []);
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="absolute inset-0 w-full h-full z-10"
-    />
+    <canvas ref={canvasRef} className="absolute inset-0 w-full h-full z-10" />
   );
 }
 
@@ -529,7 +522,6 @@ export default function Home() {
             </h1>
           </div>
         </div>
-
       </section>
 
       {/* Transition dark → light */}
@@ -575,7 +567,9 @@ export default function Home() {
                   <FloatingTag
                     key={tag}
                     delay={i * 0.5}
-                    className={i % 3 === 1 ? "mt-2" : i % 3 === 2 ? "-mt-1" : ""}
+                    className={
+                      i % 3 === 1 ? "mt-2" : i % 3 === 2 ? "-mt-1" : ""
+                    }
                   >
                     {tag}
                   </FloatingTag>
@@ -607,9 +601,9 @@ export default function Home() {
                 </p>
                 <p>
                   Я окончила СПбПУ (Политех Петра Великого) с отличием. Знаю
-                  теорию не только из учебников, но и из инженерной практики —
-                  и именно поэтому умею объяснять физику языком, близким
-                  реальному миру.
+                  теорию не только из учебников, но и из инженерной практики — и
+                  именно поэтому умею объяснять физику языком, близким реальному
+                  миру.
                 </p>
                 <p>
                   На занятиях мы используем интерактивные симуляции PhET,
@@ -618,8 +612,6 @@ export default function Home() {
                   устроена природа.
                 </p>
               </div>
-
-
             </div>
           </div>
         </div>
@@ -682,10 +674,7 @@ export default function Home() {
                   key={card.to}
                   className="group bg-[#2a3237] border border-[#434e54] rounded-3xl transition-all duration-300 hover:border-[#2eff8c]/50 hover:-translate-y-2 hover:shadow-2xl"
                 >
-                  <Link
-                    to={card.to}
-                    className="block p-8 h-full flex flex-col"
-                  >
+                  <Link to={card.to} className="block p-8 h-full flex flex-col">
                     <div
                       className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500"
                       style={{ backgroundColor: card.color }}

@@ -129,15 +129,32 @@
 
   .mesh-gradient-light {
     background:
-      radial-gradient(circle at 15% 15%, rgba(5, 150, 105, 0.10) 0%, transparent 55%),
-      radial-gradient(circle at 85% 85%, rgba(2, 132, 199, 0.10) 0%, transparent 55%),
-      radial-gradient(circle at 50% 50%, rgba(202, 138, 4, 0.05) 0%, transparent 50%),
+      radial-gradient(
+        circle at 15% 15%,
+        rgba(5, 150, 105, 0.1) 0%,
+        transparent 55%
+      ),
+      radial-gradient(
+        circle at 85% 85%,
+        rgba(2, 132, 199, 0.1) 0%,
+        transparent 55%
+      ),
+      radial-gradient(
+        circle at 50% 50%,
+        rgba(202, 138, 4, 0.05) 0%,
+        transparent 50%
+      ),
       linear-gradient(165deg, #eef1f3 0%, #e4e9ec 100%);
   }
 
   .text-gradient-emerald {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, #047857 0%, #0d9488 50%, #0891b2 100%);
+    background-image: linear-gradient(
+      135deg,
+      #047857 0%,
+      #0d9488 50%,
+      #0891b2 100%
+    );
   }
 
   .text-gradient-lime {
@@ -158,7 +175,8 @@
 }
 
 @keyframes tagFloat {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate(0, 0);
   }
   20% {
@@ -308,7 +326,8 @@
 }
 
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
@@ -321,7 +340,8 @@
 }
 
 @keyframes snakeFloat {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate(0, 0);
   }
   20% {
@@ -362,7 +382,8 @@
 }
 
 @keyframes nebula-drift {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate(0, 0) scale(1);
   }
   50% {
@@ -371,7 +392,8 @@
 }
 
 @keyframes nebula-drift-slow {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate(0, 0) scale(1);
   }
   50% {
@@ -380,7 +402,8 @@
 }
 
 @keyframes nebula-pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.15;
   }
   50% {
@@ -412,7 +435,9 @@
 
 .rocket-cursor,
 .rocket-cursor * {
-  cursor: url("/rocket-cursor.svg") 24 8, auto !important;
+  cursor:
+    url("/rocket-cursor.svg") 24 8,
+    auto !important;
 }
 
 .rocket-cursor .reader-cursor,

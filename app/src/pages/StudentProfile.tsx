@@ -77,7 +77,12 @@ const TABS: TabDef[] = [
   { id: "main", label: "Главная", icon: Home, badgeType: null },
   { id: "tasks", label: "Мои Задачи", icon: FileText, badgeType: "problem" },
   { id: "labs", label: "Мои Лабораторные", icon: Beaker, badgeType: "lab" },
-  { id: "notebooks", label: "Мои Тетради", icon: NotebookPen, badgeType: "jupyter_notebook" },
+  {
+    id: "notebooks",
+    label: "Мои Тетради",
+    icon: NotebookPen,
+    badgeType: "jupyter_notebook",
+  },
 ];
 
 const GRADE_CONFIG: Record<
@@ -386,7 +391,10 @@ export default function StudentProfile() {
                     <div className="space-y-4">
                       {currentTopics.map((currentTopic, index) => (
                         <Card
-                          key={currentTopic.subtopic?.id ?? `current-topic-${index}`}
+                          key={
+                            currentTopic.subtopic?.id ??
+                            `current-topic-${index}`
+                          }
                           className="bg-[#2a3237] border-[#434e54] overflow-hidden"
                         >
                           <CardContent className="p-0">
@@ -401,7 +409,8 @@ export default function StudentProfile() {
                                   <GraduationCap
                                     size={24}
                                     style={{
-                                      color: currentTopic.topic?.color ?? "#2eff8c",
+                                      color:
+                                        currentTopic.topic?.color ?? "#2eff8c",
                                     }}
                                   />
                                 </div>
@@ -420,7 +429,8 @@ export default function StudentProfile() {
                                     {currentTopic.subtopic?.title}
                                   </h3>
                                   <p className="text-sm text-[#798389] mt-1">
-                                    {currentTopic.subtopic?.content ?? "Нет описания"}
+                                    {currentTopic.subtopic?.content ??
+                                      "Нет описания"}
                                   </p>
 
                                   <div className="mt-4 flex flex-wrap gap-2">
@@ -453,9 +463,13 @@ export default function StudentProfile() {
                     </div>
                   ) : (
                     <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-8 text-center">
-                      <BookOpen size={32} className="text-[#798389] mx-auto mb-3" />
+                      <BookOpen
+                        size={32}
+                        className="text-[#798389] mx-auto mb-3"
+                      />
                       <p className="text-[#c8cdd1]">
-                        У вас пока нет активной темы. Обратитесь к преподавателю.
+                        У вас пока нет активной темы. Обратитесь к
+                        преподавателю.
                       </p>
                     </div>
                   )}
@@ -495,7 +509,8 @@ export default function StudentProfile() {
                                 <div
                                   className="w-3 h-3 rounded-full shrink-0"
                                   style={{
-                                    backgroundColor: topic.topicColor ?? "#2eff8c",
+                                    backgroundColor:
+                                      topic.topicColor ?? "#2eff8c",
                                   }}
                                 />
                                 <div>
@@ -536,7 +551,8 @@ export default function StudentProfile() {
                                               )
                                             : 0
                                         }%`,
-                                        backgroundColor: topic.topicColor ?? "#2eff8c",
+                                        backgroundColor:
+                                          topic.topicColor ?? "#2eff8c",
                                       }}
                                     />
                                   </div>
@@ -546,13 +562,19 @@ export default function StudentProfile() {
                                     STATUS_CONFIG[topic.enrollmentStatus]?.color
                                   }
                                 >
-                                  {STATUS_CONFIG[topic.enrollmentStatus]?.label ??
-                                    topic.enrollmentStatus}
+                                  {STATUS_CONFIG[topic.enrollmentStatus]
+                                    ?.label ?? topic.enrollmentStatus}
                                 </Badge>
                                 {expandedTopic === topic.topicNodeId ? (
-                                  <ChevronUp size={16} className="text-[#798389]" />
+                                  <ChevronUp
+                                    size={16}
+                                    className="text-[#798389]"
+                                  />
                                 ) : (
-                                  <ChevronDown size={16} className="text-[#798389]" />
+                                  <ChevronDown
+                                    size={16}
+                                    className="text-[#798389]"
+                                  />
                                 )}
                               </div>
                             </button>
@@ -590,7 +612,9 @@ export default function StudentProfile() {
                                             </Badge>
                                           </div>
                                           {sub.comment && (
-                                            <SubtopicComment text={sub.comment} />
+                                            <SubtopicComment
+                                              text={sub.comment}
+                                            />
                                           )}
                                           {sub.jupyterUrl && (
                                             <a
@@ -670,7 +694,10 @@ export default function StudentProfile() {
                     </div>
                   ) : (
                     <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-8 text-center">
-                      <Award size={32} className="text-[#798389] mx-auto mb-3" />
+                      <Award
+                        size={32}
+                        className="text-[#798389] mx-auto mb-3"
+                      />
                       <p className="text-[#c8cdd1]">
                         У вас пока нет открытых тем. Обратитесь к преподавателю.
                       </p>
@@ -702,7 +729,10 @@ export default function StudentProfile() {
                     </div>
                   ) : (
                     <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-8 text-center">
-                      <Clock size={32} className="text-[#798389] mx-auto mb-3" />
+                      <Clock
+                        size={32}
+                        className="text-[#798389] mx-auto mb-3"
+                      />
                       <p className="text-[#c8cdd1]">
                         Пока нет выполненных заданий.
                       </p>

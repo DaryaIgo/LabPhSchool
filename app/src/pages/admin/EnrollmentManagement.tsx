@@ -381,7 +381,6 @@ function AssignedProblemsManager({
               </span>
             </ToggleGroupItem>
           </ToggleGroup>
-          
         </div>
       </div>
 
@@ -1044,7 +1043,9 @@ function AssignedJupyterNotebooksManager({
   const assignMutation = trpc.enrollment.assignJupyterNotebook.useMutation({
     onSuccess: () => {
       toast("Jupyter-ноутбук назначен");
-      utils.enrollment.listAssignedJupyterNotebooks.invalidate({ enrollmentId });
+      utils.enrollment.listAssignedJupyterNotebooks.invalidate({
+        enrollmentId,
+      });
       utils.student.getMyJupyterNotebooks.invalidate();
       setAddDialogOpen(false);
       setSelectedNotebookId(null);
@@ -1055,19 +1056,24 @@ function AssignedJupyterNotebooksManager({
   const unassignMutation = trpc.enrollment.unassignJupyterNotebook.useMutation({
     onSuccess: () => {
       toast("Назначение удалено");
-      utils.enrollment.listAssignedJupyterNotebooks.invalidate({ enrollmentId });
+      utils.enrollment.listAssignedJupyterNotebooks.invalidate({
+        enrollmentId,
+      });
       utils.student.getMyJupyterNotebooks.invalidate();
     },
     onError: err => toast(err.message),
   });
 
-  const updateMutation = trpc.enrollment.updateAssignedJupyterNotebook.useMutation({
-    onSuccess: () => {
-      utils.enrollment.listAssignedJupyterNotebooks.invalidate({ enrollmentId });
-      utils.student.getMyJupyterNotebooks.invalidate();
-    },
-    onError: err => toast(err.message),
-  });
+  const updateMutation =
+    trpc.enrollment.updateAssignedJupyterNotebook.useMutation({
+      onSuccess: () => {
+        utils.enrollment.listAssignedJupyterNotebooks.invalidate({
+          enrollmentId,
+        });
+        utils.student.getMyJupyterNotebooks.invalidate();
+      },
+      onError: err => toast(err.message),
+    });
 
   const availableNotebooks =
     allNotebooks?.filter(
@@ -1432,7 +1438,6 @@ function AssignedLabWorksManager({
               </span>
             </ToggleGroupItem>
           </ToggleGroup>
-          
         </div>
       </div>
 

@@ -133,79 +133,82 @@ export default function LabWorkPage() {
             className="max-w-5xl mx-auto space-y-6 animate-fadeIn"
           >
             {visibleTab === "theory" && (
-              <div className="space-y-6">
-                <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <Target size={20} className="text-[#2eff8c]" />
-                    <h3 className="text-lg font-bold text-white">
-                      Цель работы
-                    </h3>
-                  </div>
-                  <div className="prose prose-invert prose-sm max-w-none text-[#c8cdd1] leading-relaxed">
-                    <MarkdownRenderer content={labWork.goal || ""} />
-                  </div>
-                </div>
-
-                <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <BookOpen size={20} className="text-[#2eff8c]" />
-                    <h3 className="text-lg font-bold text-white">
-                      Теоретические сведения
-                    </h3>
-                  </div>
-                  {(() => {
-                    const theoryContent =
-                      (labWork.theory || labWork.topicNodeContent) ?? "";
-                    const tabs = parseTheoryTabs(theoryContent);
-                    if (tabs) {
-                      return (
-                        <Tabs defaultValue="0">
-                          <TabsList>
-                            {tabs.map((tab, i) => (
-                              <TabsTrigger key={i} value={String(i)}>
-                                {tab.label}
-                              </TabsTrigger>
-                            ))}
-                          </TabsList>
-                          {tabs.map((tab, i) => (
-                            <TabsContent
-                              key={i}
-                              value={String(i)}
-                              className="mt-4"
-                            >
-                              <p className="text-white font-semibold mb-3">
-                                {tab.title}
-                              </p>
-                              <MarkdownRenderer content={tab.content} />
-                            </TabsContent>
-                          ))}
-                        </Tabs>
-                      );
-                    }
-                    return (
-                      <div className="prose prose-invert prose-sm max-w-none text-[#c8cdd1] leading-relaxed">
-                        <MarkdownRenderer content={theoryContent} />
+              <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-5">
+                <div className="divide-y divide-[#434e54]">
+                  {labWork.goal && (
+                    <div className="py-4 first:pt-0">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Target size={16} className="text-[#2eff8c]" />
+                        <h3 className="text-base font-semibold text-white">
+                          Цель работы
+                        </h3>
                       </div>
-                    );
-                  })()}
-                </div>
+                      <MarkdownRenderer content={labWork.goal} compact />
+                    </div>
+                  )}
 
-                <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <Wrench size={20} className="text-[#2eff8c]" />
-                    <h3 className="text-lg font-bold text-white">
-                      Оборудование
-                    </h3>
-                  </div>
+                  {(labWork.theory || labWork.topicNodeContent) && (
+                    <div className="py-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <BookOpen size={16} className="text-[#2eff8c]" />
+                        <h3 className="text-base font-semibold text-white">
+                          Теоретические сведения
+                        </h3>
+                      </div>
+                      {(() => {
+                        const theoryContent =
+                          (labWork.theory || labWork.topicNodeContent) ?? "";
+                        const tabs = parseTheoryTabs(theoryContent);
+                        if (tabs) {
+                          return (
+                            <Tabs defaultValue="0">
+                              <TabsList>
+                                {tabs.map((tab, i) => (
+                                  <TabsTrigger key={i} value={String(i)}>
+                                    {tab.label}
+                                  </TabsTrigger>
+                                ))}
+                              </TabsList>
+                              {tabs.map((tab, i) => (
+                                <TabsContent
+                                  key={i}
+                                  value={String(i)}
+                                  className="mt-3"
+                                >
+                                  <p className="text-sm text-white font-semibold mb-2">
+                                    {tab.title}
+                                  </p>
+                                  <MarkdownRenderer
+                                    content={tab.content}
+                                    extraCompact
+                                  />
+                                </TabsContent>
+                              ))}
+                            </Tabs>
+                          );
+                        }
+                        return (
+                          <MarkdownRenderer content={theoryContent} compact />
+                        );
+                      })()}
+                    </div>
+                  )}
+
                   {labWork.equipment && (
-                    <div className="prose prose-invert prose-sm max-w-none text-[#c8cdd1]">
+                    <div className="py-4 last:pb-0">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Wrench size={16} className="text-[#2eff8c]" />
+                        <h3 className="text-base font-semibold text-white">
+                          Оборудование
+                        </h3>
+                      </div>
                       {labWork.equipment.trim().startsWith("[") ? (
-                        <ul className="space-y-2">
+                        <ul className="space-y-2 text-sm">
                           {JSON.parse(labWork.equipment).map(
                             (item: string, i: number) => (
                               <li
                                 key={i}
-                                className="flex items-center gap-2 text-[#c8cdd1]"
+                                className="flex items-center gap-2 text-[#c8cdd1] text-sm"
                               >
                                 <span className="w-1.5 h-1.5 rounded-full bg-[#2eff8c]" />
                                 {item}
@@ -214,7 +217,7 @@ export default function LabWorkPage() {
                           )}
                         </ul>
                       ) : (
-                        <MarkdownRenderer content={labWork.equipment} />
+                        <MarkdownRenderer content={labWork.equipment} compact />
                       )}
                     </div>
                   )}
@@ -225,8 +228,8 @@ export default function LabWorkPage() {
             {visibleTab === "experiment" && (
               <div className="space-y-6">
                 {labWork.instruction && (
-                  <div className="bg-[#1a1f22] border border-[#37474f] rounded-xl p-4 text-sm text-[#c8cdd1]">
-                    <p className="font-medium text-white mb-2">
+                  <div className="bg-[#1a1f22] border border-[#37474f] rounded-xl p-4 text-xs text-[#c8cdd1]">
+                    <p className="text-xs font-medium text-white mb-2">
                       Пошаговая инструкция:
                     </p>
                     {(() => {
@@ -247,19 +250,23 @@ export default function LabWorkPage() {
                                 value={String(i)}
                                 className="mt-3"
                               >
-                                <p className="text-white font-medium mb-2">
+                                <p className="text-xs text-white font-medium mb-2">
                                   {tab.title}
                                 </p>
-                                <MarkdownRenderer content={tab.content} />
+                                <MarkdownRenderer
+                                  content={tab.content}
+                                  extraCompact
+                                />
                               </TabsContent>
                             ))}
                           </Tabs>
                         );
                       }
                       return (
-                        <div className="prose prose-invert prose-sm max-w-none text-[#c8cdd1]">
-                          <MarkdownRenderer content={labWork.instruction} />
-                        </div>
+                        <MarkdownRenderer
+                          content={labWork.instruction}
+                          extraCompact
+                        />
                       );
                     })()}
                   </div>

@@ -1,7 +1,4 @@
-import type {
-  MeasurementRow,
-  SimulationManifest,
-} from "./types";
+import type { MeasurementRow, SimulationManifest } from "./types";
 
 export const uniformLinearMotionManifest: SimulationManifest = {
   slug: "uniform-linear-motion",
@@ -12,7 +9,7 @@ export const uniformLinearMotionManifest: SimulationManifest = {
       key: "speed",
       label: "Скорость",
       paramType: "slider",
-      min: 0,
+      min: -20,
       max: 20,
       step: 0.5,
       defaultValue: 5,
@@ -70,14 +67,6 @@ export const uniformLinearMotionManifest: SimulationManifest = {
       yKey: "x",
       xLabel: "t, с",
       yLabel: "x, м",
-    },
-    {
-      title: "Зависимость пройденного пути от времени s(t)",
-      type: "line",
-      xKey: "time",
-      yKey: "s",
-      xLabel: "t, с",
-      yLabel: "s, м",
     },
     {
       title: "Зависимость скорости от времени v(t)",

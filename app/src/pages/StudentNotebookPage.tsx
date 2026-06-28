@@ -33,21 +33,21 @@ export default function StudentNotebookPage() {
   const id = Number(assignmentId);
   const enabled = isAuthenticated && !Number.isNaN(id) && id > 0;
 
-  const { data, isLoading } = trpc.student.getAssignedJupyterNotebookById.useQuery(
-    { id },
-    { enabled }
-  );
+  const { data, isLoading } =
+    trpc.student.getAssignedJupyterNotebookById.useQuery({ id }, { enabled });
 
   const utils = trpc.useUtils();
 
-  const submitMutation = trpc.student.submitJupyterNotebookSolution.useMutation({
-    onSuccess: () => {
-      toast.success("Работа отправлена на проверку");
-      utils.student.getAssignedJupyterNotebookById.invalidate({ id });
-      utils.student.getMyJupyterNotebooks.invalidate();
-    },
-    onError: err => toast.error(err.message),
-  });
+  const submitMutation = trpc.student.submitJupyterNotebookSolution.useMutation(
+    {
+      onSuccess: () => {
+        toast.success("Работа отправлена на проверку");
+        utils.student.getAssignedJupyterNotebookById.invalidate({ id });
+        utils.student.getMyJupyterNotebooks.invalidate();
+      },
+      onError: err => toast.error(err.message),
+    }
+  );
 
   const handleDownload = () => {
     if (!data?.notebookFilePath) return;
@@ -61,7 +61,11 @@ export default function StudentNotebookPage() {
 
   const handleOpenColab = () => {
     handleDownload();
-    window.open("https://colab.research.google.com", "_blank", "noopener,noreferrer");
+    window.open(
+      "https://colab.research.google.com",
+      "_blank",
+      "noopener,noreferrer"
+    );
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -113,7 +117,8 @@ export default function StudentNotebookPage() {
     );
   }
 
-  const isSubmitted = data.status === "submitted" || data.status === "completed";
+  const isSubmitted =
+    data.status === "submitted" || data.status === "completed";
 
   return (
     <div className="min-h-screen bg-[#262e33] pt-24 pb-12">
@@ -154,10 +159,10 @@ export default function StudentNotebookPage() {
           <CardContent className="p-6 space-y-5">
             <h2 className="text-lg font-semibold text-white">Файл ноутбука</h2>
             <p className="text-sm text-[#798389]">
-              Скачайте ноутбук, затем откройте его в своём Google Colab, выполните
-              задание и вставьте ссылку на готовую работу ниже. Если ссылку
-              прикрепить невозможно, отправьте работу без неё — преподаватель
-              проверит выполнение отдельно.
+              Скачайте ноутбук, затем откройте его в своём Google Colab,
+              выполните задание и вставьте ссылку на готовую работу ниже. Если
+              ссылку прикрепить невозможно, отправьте работу без неё —
+              преподаватель проверит выполнение отдельно.
             </p>
             <div className="flex flex-wrap items-center gap-3">
               <Button
@@ -283,9 +288,7 @@ export default function StudentNotebookPage() {
                     className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70]"
                   >
                     <Send size={16} className="mr-2" />
-                    {submitMutation.isPending
-                      ? "Отправка..."
-                      : "Отправить"}
+                    {submitMutation.isPending ? "Отправка..." : "Отправить"}
                   </Button>
                 </div>
               </form>

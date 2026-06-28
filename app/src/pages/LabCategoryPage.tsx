@@ -6,12 +6,36 @@ import { ArrowLeft } from "lucide-react";
 const LEGACY_CATEGORY_SLUGS = new Set(["electricity", "magnetism"]);
 
 const LAB_THEMES = [
-  { bg: "bg-[#0ea5e9]/10", border: "border-[#0ea5e9]/30", text: "text-[#7dd3fc]" },
-  { bg: "bg-[#22c55e]/10", border: "border-[#22c55e]/30", text: "text-[#86efac]" },
-  { bg: "bg-[#f59e0b]/10", border: "border-[#f59e0b]/30", text: "text-[#fcd34d]" },
-  { bg: "bg-[#f43f5e]/10", border: "border-[#f43f5e]/30", text: "text-[#fda4af]" },
-  { bg: "bg-[#8b5cf6]/10", border: "border-[#8b5cf6]/30", text: "text-[#c4b5fd]" },
-  { bg: "bg-[#ec4899]/10", border: "border-[#ec4899]/30", text: "text-[#f9a8d4]" },
+  {
+    bg: "bg-[#0ea5e9]/10",
+    border: "border-[#0ea5e9]/30",
+    text: "text-[#7dd3fc]",
+  },
+  {
+    bg: "bg-[#22c55e]/10",
+    border: "border-[#22c55e]/30",
+    text: "text-[#86efac]",
+  },
+  {
+    bg: "bg-[#f59e0b]/10",
+    border: "border-[#f59e0b]/30",
+    text: "text-[#fcd34d]",
+  },
+  {
+    bg: "bg-[#f43f5e]/10",
+    border: "border-[#f43f5e]/30",
+    text: "text-[#fda4af]",
+  },
+  {
+    bg: "bg-[#8b5cf6]/10",
+    border: "border-[#8b5cf6]/30",
+    text: "text-[#c4b5fd]",
+  },
+  {
+    bg: "bg-[#ec4899]/10",
+    border: "border-[#ec4899]/30",
+    text: "text-[#f9a8d4]",
+  },
 ];
 
 export default function LabCategoryPage() {

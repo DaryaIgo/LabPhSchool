@@ -231,17 +231,26 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
         <CompactCard title="Курс" icon={BookOpen}>
           <CompactStat value={stats?.content.topics ?? "—"} label="тем" />
-          <CompactStat value={stats?.content.subtopics ?? "—"} label="разделов" />
+          <CompactStat
+            value={stats?.content.subtopics ?? "—"}
+            label="разделов"
+          />
         </CompactCard>
         <CompactCard title="Лабораторные" icon={FlaskConical}>
-          <CompactStat value={stats?.content.simulations ?? "—"} label="симуляций" />
+          <CompactStat
+            value={stats?.content.simulations ?? "—"}
+            label="симуляций"
+          />
           <CompactStat value={stats?.content.labWorks ?? "—"} label="работ" />
         </CompactCard>
         <CompactCard title="Задачи" icon={ClipboardList}>
           <CompactStat value={stats?.content.problems ?? "—"} label="задач" />
         </CompactCard>
         <CompactCard title="Jupyter" icon={NotebookPen}>
-          <CompactStat value={stats?.content.notebooks ?? "—"} label="ноутбуков" />
+          <CompactStat
+            value={stats?.content.notebooks ?? "—"}
+            label="ноутбуков"
+          />
         </CompactCard>
       </div>
 

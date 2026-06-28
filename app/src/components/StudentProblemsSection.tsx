@@ -3,18 +3,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
-import {
-  Clock,
-  CheckCircle2,
-  Trophy,
-  FileText,
-  Send,
-} from "lucide-react";
+import { Clock, CheckCircle2, Trophy, FileText, Send } from "lucide-react";
 
-const DIFFICULTY_CONFIG: Record<
-  string,
-  { label: string; color: string }
-> = {
+const DIFFICULTY_CONFIG: Record<string, { label: string; color: string }> = {
   easy: { label: "Лёгкая", color: "bg-[#2eff8c]/20 text-[#2eff8c]" },
   medium: { label: "Средняя", color: "bg-[#ffcb3d]/20 text-[#ffcb3d]" },
   hard: { label: "Сложная", color: "bg-[#ff6b6b]/20 text-[#ff6b6b]" },
@@ -187,7 +178,9 @@ function ActiveProblemCard({
           {problem.problemTitle}
         </h4>
         <div className="flex items-center gap-2 mt-1">
-          <Badge className={`${difficultyConfig.color} text-[10px] px-1.5 py-0`}>
+          <Badge
+            className={`${difficultyConfig.color} text-[10px] px-1.5 py-0`}
+          >
             {difficultyConfig.label}
           </Badge>
           <p className="text-[10px] text-[#798389]">

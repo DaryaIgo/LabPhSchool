@@ -306,4 +306,5 @@ export const assignedJupyterNotebooks = mysqlTable(
   })
 );
 
-export type AssignedJupyterNotebook = typeof assignedJupyterNotebooks.$inferSelect;
+export type AssignedJupyterNotebook =
+  typeof assignedJupyterNotebooks.$inferSelect;
