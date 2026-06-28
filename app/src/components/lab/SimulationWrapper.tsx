@@ -19,6 +19,7 @@ import type {
   RegisteredSimulation,
   GraphConfig,
 } from "@/components/lab/simulations/types";
+import { prepareChartData } from "@/components/lab/simulations/graph-utils";
 import {
   LineChart,
   Line,
@@ -375,7 +376,7 @@ function OwnSimulationView({
           <div className="xl:col-span-2 space-y-4">
             {manifest.graphs.map(graph => (
               <GraphCard key={graph.title} title={graph.title}>
-                <ResponsiveContainer width="100%" height={260}>
+                <ResponsiveContainer width="100%" height={280}>
                   {renderChart(graph, measurements)}
                 </ResponsiveContainer>
               </GraphCard>
@@ -438,8 +439,8 @@ function GraphCard({
 
 function renderChart(graph: GraphConfig, data: MeasurementRow[]) {
   const isEmpty = data.length === 0;
-  const emptyData = [{ [graph.xKey]: 0, [graph.yKey]: 0 }];
-  const chartData = isEmpty ? emptyData : data;
+  const emptyData = [{ x: 0, y: 0 }];
+  const chartData = isEmpty ? emptyData : prepareChartData(graph, data);
   const defaultDomain: [number, number] = [0, 1];
 
   if (graph.type === "scatter") {
@@ -448,8 +449,7 @@ function renderChart(graph: GraphConfig, data: MeasurementRow[]) {
         <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
         <XAxis
           type="number"
-          dataKey={graph.xKey}
-          name={graph.xLabel ?? graph.xKey}
+          dataKey="x"
           stroke="#798389"
           fontSize={11}
           tickLine={false}
@@ -457,8 +457,7 @@ function renderChart(graph: GraphConfig, data: MeasurementRow[]) {
         />
         <YAxis
           type="number"
-          dataKey={graph.yKey}
-          name={graph.yLabel ?? graph.yKey}
+          dataKey="y"
           stroke="#798389"
           fontSize={11}
           tickLine={false}
@@ -475,7 +474,7 @@ function renderChart(graph: GraphConfig, data: MeasurementRow[]) {
         {!isEmpty && (
           <Scatter
             name={`${graph.yKey}(${graph.xKey})`}
-            data={data}
+            data={chartData}
             fill="#2eff8c"
           />
         )}
@@ -488,7 +487,7 @@ function renderChart(graph: GraphConfig, data: MeasurementRow[]) {
       <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
       <XAxis
         type="number"
-        dataKey={graph.xKey}
+        dataKey="x"
         stroke="#798389"
         fontSize={11}
         tickLine={false}
@@ -496,7 +495,7 @@ function renderChart(graph: GraphConfig, data: MeasurementRow[]) {
       />
       <YAxis
         type="number"
-        dataKey={graph.yKey}
+        dataKey="y"
         stroke="#798389"
         fontSize={11}
         tickLine={false}
@@ -512,8 +511,8 @@ function renderChart(graph: GraphConfig, data: MeasurementRow[]) {
       />
       {!isEmpty && (
         <Line
-          type="monotone"
-          dataKey={graph.yKey}
+          type="linear"
+          dataKey="y"
           stroke="#2eff8c"
           strokeWidth={2}
           dot={{ r: 3, fill: "#2eff8c" }}

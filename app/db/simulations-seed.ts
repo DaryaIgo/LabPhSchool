@@ -98,6 +98,16 @@ const simulationData: SimulationSeed[] = [
         defaultValue: "5",
         unit: "с",
       },
+      {
+        key: "startX",
+        label: "Начальная координата",
+        paramType: "slider",
+        min: "0",
+        max: "50",
+        step: "1",
+        defaultValue: "0",
+        unit: "м",
+      },
     ],
   },
   {

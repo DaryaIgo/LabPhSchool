@@ -24,8 +24,10 @@ export default function UniformLinearMotion({
       ctx.fillStyle = "#1a1f22";
       ctx.fillRect(0, 0, w, h);
 
-      // Current animation time
-      let currentTime = time;
+      // Current animation time: when not running the car stays at the start
+      // position (x0), so the user can tune parameters without the car jumping
+      // to the end of the path.
+      let currentTime = 0;
       if (isRunning) {
         const animDuration = Math.max(time * 1000, 1000);
         const elapsed = Date.now() - startTimeRef.current;
@@ -37,13 +39,16 @@ export default function UniformLinearMotion({
       const x = startX + s;
       const finalX = startX + speed * time;
 
-      // Visible x-range based on the whole animation path
-      const minX = Math.min(startX, finalX);
-      const maxX = Math.max(startX, finalX);
-      const range = Math.max(maxX - minX, 0.001);
-      const padding = Math.max(range * 0.12, 1);
-      const viewMin = minX - padding;
-      const viewMax = maxX + padding;
+      // Visible x-range: at least ±25 m around the start position, expanded
+      // further if the full animation path goes beyond that.
+      const minPathX = Math.min(startX, finalX);
+      const maxPathX = Math.max(startX, finalX);
+      const minViewX = Math.min(startX - 25, minPathX);
+      const maxViewX = Math.max(startX + 25, maxPathX);
+      const range = Math.max(maxViewX - minViewX, 0.001);
+      const padding = Math.max(range * 0.08, 1);
+      const viewMin = minViewX - padding;
+      const viewMax = maxViewX + padding;
       const viewRange = viewMax - viewMin;
 
       // Track geometry

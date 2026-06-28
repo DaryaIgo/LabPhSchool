@@ -10,6 +10,7 @@ export default function UniformlyAcceleratedMotion({
   const v0 = Number(params.v0 || 0);
   const angleDeg = Number(params.angle || 10);
   const time = Number(params.time || 5);
+  const startX = Number(params.startX || 0);
 
   const angleRad = (angleDeg * Math.PI) / 180;
   const a = 9.8 * Math.sin(angleRad);
@@ -29,8 +30,9 @@ export default function UniformlyAcceleratedMotion({
       ctx.fillStyle = "#1a1f22";
       ctx.fillRect(0, 0, w, h);
 
-      // Current animation time
-      let currentTime = time;
+      // Current animation time: when not running the object stays at the
+      // start position (x0).
+      let currentTime = 0;
       if (isRunning) {
         const animDuration = Math.max(time * 1000, 1000);
         const elapsed = Date.now() - startTimeRef.current;
@@ -38,24 +40,34 @@ export default function UniformlyAcceleratedMotion({
         currentTime = time * progress;
       }
 
-      const s = v0 * currentTime + 0.5 * a * currentTime * currentTime;
+      const displacement =
+        v0 * currentTime + 0.5 * a * currentTime * currentTime;
+      const x = startX + displacement;
       const v = v0 + a * currentTime;
 
-      // Visible x-range based on the whole animation path
-      const finalS = v0 * time + 0.5 * a * time * time;
-      const positions = [0, finalS];
+      // Full animation path to compute the visible range
+      const finalDisplacement = v0 * time + 0.5 * a * time * time;
+      const finalX = startX + finalDisplacement;
+      const positions = [startX, finalX];
       if (Math.abs(a) > 0.001) {
         const tTurn = -v0 / a;
         if (tTurn > 0 && tTurn < time) {
-          positions.push(v0 * tTurn + 0.5 * a * tTurn * tTurn);
+          positions.push(
+            startX + v0 * tTurn + 0.5 * a * tTurn * tTurn
+          );
         }
       }
-      const minS = Math.min(...positions);
-      const maxS = Math.max(...positions);
-      const range = Math.max(maxS - minS, 0.001);
-      const padding = Math.max(range * 0.12, 1);
-      const viewMin = minS - padding;
-      const viewMax = maxS + padding;
+
+      // Visible x-range: at least ±25 m around the start position, expanded
+      // further if the full animation path goes beyond that.
+      const minPathX = Math.min(...positions);
+      const maxPathX = Math.max(...positions);
+      const minViewX = Math.min(startX - 25, minPathX);
+      const maxViewX = Math.max(startX + 25, maxPathX);
+      const range = Math.max(maxViewX - minViewX, 0.001);
+      const padding = Math.max(range * 0.08, 1);
+      const viewMin = minViewX - padding;
+      const viewMax = maxViewX + padding;
       const viewRange = viewMax - viewMin;
 
       // Track geometry
@@ -134,7 +146,7 @@ export default function UniformlyAcceleratedMotion({
       }
 
       // Draw car
-      const carX = Math.min(Math.max(posToX(s), trackLeft), trackRight);
+      const carX = Math.min(Math.max(posToX(x), trackLeft), trackRight);
       const carY = trackY - 12;
       const carWidth = 44;
       const carHeight = 22;
@@ -273,12 +285,12 @@ export default function UniformlyAcceleratedMotion({
       // Formulas
       ctx.fillStyle = "#96a3ab";
       ctx.font = "11px sans-serif";
-      ctx.fillText("s = v₀t + at²/2          v = v₀ + at", w / 2, 42);
+      ctx.fillText("x = x₀ + v₀t + at²/2          v = v₀ + at", w / 2, 42);
 
       if (onStateChange) {
         const state: Record<string, number> = {
           time: currentTime,
-          s,
+          x,
           v,
           a,
         };
@@ -289,7 +301,7 @@ export default function UniformlyAcceleratedMotion({
         onStateChange(state);
       }
     };
-  }, [v0, a, time, isRunning, onStateChange]);
+  }, [v0, a, time, startX, isRunning, onStateChange]);
 
   return (
     <SimulationCanvas

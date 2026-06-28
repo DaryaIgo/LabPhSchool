@@ -53,7 +53,7 @@ export const uniformLinearMotionManifest: SimulationManifest = {
     { key: "v", label: "v", unit: "м/с", decimals: 1 },
   ],
   measurements: [
-    { key: "speed", label: "v", unit: "м/с", decimals: 1 },
+    { key: "v", label: "v", unit: "м/с", decimals: 1 },
     { key: "time", label: "t", unit: "с", decimals: 1 },
     { key: "startX", label: "x₀", unit: "м", decimals: 0 },
     { key: "s", label: "s", unit: "м", decimals: 1 },
@@ -90,7 +90,7 @@ export function computeUniformLinearMotionMeasurement(
   const x = startX + s;
 
   return {
-    speed,
+    v: speed,
     time: time.toFixed(1),
     startX,
     s: s.toFixed(1),
