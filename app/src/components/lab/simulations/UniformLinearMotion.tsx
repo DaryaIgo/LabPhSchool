@@ -1,20 +1,15 @@
 import { useMemo, useRef, useEffect } from "react";
 import SimulationCanvas from "@/components/lab/SimulationCanvas";
-
-interface Props {
-  params: Record<string, number | string>;
-  isRunning?: boolean;
-  onStateChange?: (state: Record<string, number>) => void;
-}
+import type { SimComponentProps } from "./types";
 
 export default function UniformLinearMotion({
   params,
   isRunning,
   onStateChange,
-}: Props) {
-  const speed = Number(params["speed"] || 5);
-  const time = Number(params["time"] || 10);
-  const startX = Number(params["startX"] || 0);
+}: SimComponentProps) {
+  const speed = Number(params.speed || 5);
+  const time = Number(params.time || 10);
+  const startX = Number(params.startX || 0);
 
   const startTimeRef = useRef<number>(0);
 
@@ -99,34 +94,6 @@ export default function UniformLinearMotion({
       ctx.lineTo(clampedX + 40, bodyY + 5);
       ctx.stroke();
 
-      // Info panel
-      ctx.fillStyle = "#3c474f";
-      ctx.beginPath();
-      ctx.roundRect(480, 80, 200, 180, 8);
-      ctx.fill();
-
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "14px sans-serif";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "top";
-      ctx.fillText("Показания:", 495, 95);
-
-      ctx.fillStyle = "#96a3ab";
-      ctx.font = "12px sans-serif";
-      ctx.fillText(`Скорость: ${speed} м/с`, 495, 125);
-      ctx.fillText(`Время: ${time} с`, 495, 150);
-      ctx.fillText(`Нач. коорд.: ${startX} м`, 495, 175);
-
-      ctx.fillStyle = "#2eff8c";
-      ctx.font = "13px sans-serif";
-      ctx.fillText(`t = ${currentTime.toFixed(1)} с`, 495, 205);
-      ctx.fillText(`s = ${(speed * currentTime).toFixed(1)} м`, 495, 230);
-      ctx.fillText(
-        `x = ${(startX + speed * currentTime).toFixed(1)} м`,
-        495,
-        255
-      );
-
       // Title
       ctx.fillStyle = "#ffffff";
       ctx.font = "16px sans-serif";
@@ -144,6 +111,7 @@ export default function UniformLinearMotion({
           time: currentTime,
           s: speed * currentTime,
           x: startX + speed * currentTime,
+          v: speed,
         });
       }
     };

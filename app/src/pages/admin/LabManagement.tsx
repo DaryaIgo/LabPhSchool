@@ -17,9 +17,7 @@ import {
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -47,15 +45,10 @@ import type {
   LabSubcategory,
   LabWork,
   Simulation,
-  SimulationKind,
   SimulationParamConfig,
 } from "@db/schema";
 import { LAB_CATEGORY_ICON_KEYS } from "@contracts/constants";
 
-const SIMULATION_KIND_LABELS: Record<SimulationKind, string> = {
-  own: "Наши симуляции",
-  external: "Сторонние симуляции",
-};
 
 type CategoryIconKey = (typeof LAB_CATEGORY_ICON_KEYS)[number];
 
@@ -120,6 +113,7 @@ const initialLabWorkForm = {
   equipment: "",
   instruction: "",
   simulationSlug: null as string | null,
+  cardType: "own" as "own" | "external",
   status: "draft" as "draft" | "published",
 };
 
@@ -200,7 +194,7 @@ export default function LabManagement() {
         slug: lab.slug,
         order: lab.order,
         children: [],
-        data: lab,
+        data: { ...lab, cardType: lab.cardType ?? "own" },
       };
       const parent =
         subMap.get(lab.subcategoryId ?? -1) ?? catMap.get(lab.categoryId);
@@ -244,6 +238,7 @@ export default function LabManagement() {
       equipment: lab.equipment ?? "",
       instruction: lab.instruction ?? "",
       simulationSlug: lab.simulationSlug ?? null,
+      cardType: (lab.cardType as "own" | "external") ?? "own",
       status: (lab.status as "draft" | "published") ?? "draft",
     });
   }, []);
@@ -1030,6 +1025,11 @@ function LabWorkEditor({
     [simulations, form.simulationSlug]
   );
 
+  const availableSimulations = useMemo(
+    () => simulations.filter(s => s.kind === form.cardType),
+    [simulations, form.cardType]
+  );
+
   const availableSubcategories = subcategories.filter(
     s => s.categoryId === form.categoryId
   );
@@ -1228,6 +1228,32 @@ function LabWorkEditor({
               </SelectContent>
             </Select>
           </div>
+
+          <div>
+            <Label className="text-xs text-[#798389]">Тип карточки</Label>
+            <Select
+              value={form.cardType}
+              onValueChange={v =>
+                onChange({
+                  ...form,
+                  cardType: v as "own" | "external",
+                  simulationSlug: null,
+                })
+              }
+            >
+              <SelectTrigger className="bg-[#1e2529] border-[#37474f] mt-1 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#1a1f22] border-[#37474f]">
+                <SelectItem value="own" className="text-white">
+                  Наша симуляция (с обвязкой)
+                </SelectItem>
+                <SelectItem value="external" className="text-white">
+                  Встраиваемая симуляция (PhET/iframe)
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </TabsContent>
 
         {/* Theory */}
@@ -1300,6 +1326,15 @@ function LabWorkEditor({
 
         {/* Simulation */}
         <TabsContent value="simulation" className="space-y-4 pt-4">
+          <div className="bg-[#1a1f22] border border-[#37474f] rounded-xl p-4 text-sm text-[#c8cdd1]">
+            Тип карточки: {" "}
+            <span className="text-white font-medium">
+              {form.cardType === "own"
+                ? "Наша симуляция (с обвязкой)"
+                : "Встраиваемая симуляция (PhET/iframe)"}
+            </span>
+          </div>
+
           <div>
             <Label className="text-xs text-[#798389]">Выберите симуляцию</Label>
             <Select
@@ -1315,33 +1350,24 @@ function LabWorkEditor({
                 <SelectItem value="none" className="text-white">
                   Без симуляции
                 </SelectItem>
-                {(
-                  ["own", "external"] as SimulationKind[]
-                ).map(kind => {
-                  const groupSims = simulations
-                    .filter(s => s.kind === kind)
-                    .sort((a, b) => a.title.localeCompare(b.title));
-                  if (groupSims.length === 0) return null;
-                  return (
-                    <SelectGroup key={kind}>
-                      <SelectLabel className="text-[#798389]">
-                        {SIMULATION_KIND_LABELS[kind]}
-                      </SelectLabel>
-                      {groupSims.map(sim => (
-                        <SelectItem
-                          key={sim.id}
-                          value={sim.slug}
-                          className="text-white"
-                        >
-                          {sim.title}{" "}
-                          <span className="text-[#798389]">
-                            ({sim.category})
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  );
-                })}
+                {availableSimulations.length === 0 ? (
+                  <div className="px-2 py-1.5 text-xs text-[#798389]">
+                    Нет доступных симуляций выбранного типа
+                  </div>
+                ) : (
+                  availableSimulations
+                    .sort((a, b) => a.title.localeCompare(b.title))
+                    .map(sim => (
+                      <SelectItem
+                        key={sim.id}
+                        value={sim.slug}
+                        className="text-white"
+                      >
+                        {sim.title}{" "}
+                        <span className="text-[#798389]">({sim.category})</span>
+                      </SelectItem>
+                    ))
+                )}
               </SelectContent>
             </Select>
           </div>

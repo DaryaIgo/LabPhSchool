@@ -122,6 +122,7 @@ export const virtualLabRouter = createRouter({
           instruction: labWorks.instruction,
           conclusionTemplate: labWorks.conclusionTemplate,
           simulationSlug: labWorks.simulationSlug,
+          cardType: labWorks.cardType,
           status: labWorks.status,
           categoryTitle: labCategories.title,
           subcategoryTitle: labSubcategories.title,
@@ -165,6 +166,7 @@ export const virtualLabRouter = createRouter({
           instruction: labWorks.instruction,
           conclusionTemplate: labWorks.conclusionTemplate,
           simulationSlug: labWorks.simulationSlug,
+          cardType: labWorks.cardType,
           status: labWorks.status,
           categoryTitle: labCategories.title,
           subcategoryTitle: labSubcategories.title,
@@ -592,6 +594,7 @@ export const virtualLabRouter = createRouter({
         instruction: labWorks.instruction,
         conclusionTemplate: labWorks.conclusionTemplate,
         simulationSlug: labWorks.simulationSlug,
+        cardType: labWorks.cardType,
         status: labWorks.status,
         categoryTitle: labCategories.title,
         subcategoryTitle: labSubcategories.title,
@@ -623,6 +626,7 @@ export const virtualLabRouter = createRouter({
         instruction: z.string().max(50000).optional(),
         conclusionTemplate: z.string().max(5000).optional(),
         simulationSlug: z.string().max(255).optional(),
+        cardType: z.enum(["own", "external"]).optional(),
         status: z.enum(["draft", "published"]).optional(),
       })
     )
@@ -640,6 +644,7 @@ export const virtualLabRouter = createRouter({
         instruction: input.instruction ?? null,
         conclusionTemplate: input.conclusionTemplate ?? null,
         simulationSlug: input.simulationSlug ?? null,
+        cardType: input.cardType ?? "own",
         status: input.status ?? "draft",
       });
       const id = Number(result[0].insertId);
@@ -668,6 +673,7 @@ export const virtualLabRouter = createRouter({
         instruction: z.string().max(50000).optional(),
         conclusionTemplate: z.string().max(5000).optional(),
         simulationSlug: z.string().max(255).optional().nullable(),
+        cardType: z.enum(["own", "external"]).optional().nullable(),
         status: z.enum(["draft", "published"]).optional(),
       })
     )
@@ -690,6 +696,7 @@ export const virtualLabRouter = createRouter({
         updateData.conclusionTemplate = data.conclusionTemplate;
       if (data.simulationSlug !== undefined)
         updateData.simulationSlug = data.simulationSlug;
+      if (data.cardType !== undefined) updateData.cardType = data.cardType;
       if (data.status !== undefined) updateData.status = data.status;
 
       await db.update(labWorks).set(updateData).where(eq(labWorks.id, id));

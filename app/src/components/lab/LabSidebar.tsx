@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { BookOpen, Play, TrendingUp, CheckCircle2 } from "lucide-react";
+import { BookOpen, Play, CheckCircle2 } from "lucide-react";
 
 const allNavItems = [
   { id: "theory", icon: BookOpen, label: "Теория", color: "#2eff8c" },
   { id: "experiment", icon: Play, label: "Эксперимент", color: "#01acff" },
-  { id: "graphs", icon: TrendingUp, label: "Графики", color: "#ffc832" },
   { id: "conclusion", icon: CheckCircle2, label: "Вывод", color: "#ff7043" },
 ];
 

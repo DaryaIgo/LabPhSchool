@@ -1,20 +1,15 @@
 import { useMemo, useRef, useEffect } from "react";
 import SimulationCanvas from "@/components/lab/SimulationCanvas";
-
-interface Props {
-  params: Record<string, number | string>;
-  isRunning?: boolean;
-  onStateChange?: (state: Record<string, number>) => void;
-}
+import type { SimComponentProps } from "./types";
 
 export default function UniformlyAcceleratedMotion({
   params,
   isRunning,
   onStateChange,
-}: Props) {
-  const v0 = Number(params["v0"] || 0);
-  const angleDeg = Number(params["angle"] || 10);
-  const time = Number(params["time"] || 5);
+}: SimComponentProps) {
+  const v0 = Number(params.v0 || 0);
+  const angleDeg = Number(params.angle || 10);
+  const time = Number(params.time || 5);
 
   const angleRad = (angleDeg * Math.PI) / 180;
   const a = 9.8 * Math.sin(angleRad);
@@ -148,30 +143,6 @@ export default function UniformlyAcceleratedMotion({
           (arrowStartY + arrowEndY) / 2 - 6
         );
       }
-
-      // Info panel
-      ctx.fillStyle = "#3c474f";
-      ctx.beginPath();
-      ctx.roundRect(480, 80, 200, 180, 8);
-      ctx.fill();
-
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "14px sans-serif";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "top";
-      ctx.fillText("Показания:", 495, 95);
-
-      ctx.fillStyle = "#96a3ab";
-      ctx.font = "12px sans-serif";
-      ctx.fillText(`Нач. скорость: ${v0} м/с`, 495, 125);
-      ctx.fillText(`Угол наклона: ${angleDeg}°`, 495, 150);
-      ctx.fillText(`Ускорение: ${a.toFixed(2)} м/с²`, 495, 175);
-
-      ctx.fillStyle = "#2eff8c";
-      ctx.font = "13px sans-serif";
-      ctx.fillText(`t = ${currentTime.toFixed(1)} с`, 495, 205);
-      ctx.fillText(`Путь: s = ${s.toFixed(1)} м`, 495, 230);
-      ctx.fillText(`Скорость: v = ${v.toFixed(1)} м/с`, 495, 255);
 
       // Title
       ctx.fillStyle = "#ffffff";

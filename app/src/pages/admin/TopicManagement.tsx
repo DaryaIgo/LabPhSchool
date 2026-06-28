@@ -533,7 +533,7 @@ export default function TopicManagement() {
       parentId: form.parentId ?? undefined,
       markdown: importMd,
     });
-  }, [importMd, selectedId, importMutation]);
+  }, [importMd, form.parentId, importMutation]);
 
   const handleExport = useCallback(async () => {
     if (!selectedId) return;

@@ -4,6 +4,7 @@ import {
   type SimulationKind,
   type SimulationParamConfig,
 } from "./schema/labs";
+import { inArray, not } from "drizzle-orm";
 
 type SimulationSeed = {
   slug: string;
@@ -17,8 +18,7 @@ type SimulationSeed = {
 };
 
 const simulationData: SimulationSeed[] = [
-  // Mechanics
-  {
+{
     slug: "uniform-linear-motion",
     title: "Равномерное прямолинейное движение",
     description:
@@ -59,7 +59,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-  {
+{
     slug: "uniformly-accelerated-motion",
     title: "Равноускоренное прямолинейное движение",
     description:
@@ -100,127 +100,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-  {
-    slug: "free-fall-g",
-    title: "Определение ускорения свободного падения",
-    description:
-      "Два метода измерения g: свободное падение и математический маятник.",
-    category: "mechanics",
-    isDynamic: true,
-    componentRef: "free-fall-g",
-    params: [
-      {
-        key: "method",
-        label: "Способ измерения",
-        paramType: "select",
-        defaultValue: "pendulum",
-        options: JSON.stringify([
-          { value: "pendulum", label: "Маятник" },
-          { value: "fall", label: "Свободное падение" },
-        ]),
-      },
-      {
-        key: "length",
-        label: "Длина нити",
-        paramType: "slider",
-        min: "0.1",
-        max: "1.0",
-        step: "0.05",
-        defaultValue: "0.5",
-        unit: "м",
-      },
-      {
-        key: "oscillations",
-        label: "Число колебаний",
-        paramType: "slider",
-        min: "5",
-        max: "50",
-        step: "1",
-        defaultValue: "20",
-      },
-      {
-        key: "measuredTime",
-        label: "Измеренное время",
-        paramType: "slider",
-        min: "5",
-        max: "60",
-        step: "0.1",
-        defaultValue: "28.3",
-        unit: "с",
-      },
-      {
-        key: "height",
-        label: "Высота падения",
-        paramType: "slider",
-        min: "0.5",
-        max: "10",
-        step: "0.1",
-        defaultValue: "2.0",
-        unit: "м",
-      },
-      {
-        key: "fallTime",
-        label: "Время падения",
-        paramType: "slider",
-        min: "0.1",
-        max: "2.0",
-        step: "0.01",
-        defaultValue: "0.64",
-        unit: "с",
-      },
-      {
-        key: "trials",
-        label: "Число измерений",
-        paramType: "slider",
-        min: "1",
-        max: "20",
-        step: "1",
-        defaultValue: "5",
-      },
-    ],
-  },
-  {
-    slug: "circular-motion",
-    title: "Движение по окружности",
-    description:
-      "Исследование центростремительного ускорения и силы при движении по окружности.",
-    category: "mechanics",
-    isDynamic: true,
-    componentRef: "circular-motion",
-    params: [
-      {
-        key: "radius",
-        label: "Радиус",
-        paramType: "slider",
-        min: "0.1",
-        max: "1.5",
-        step: "0.05",
-        defaultValue: "0.5",
-        unit: "м",
-      },
-      {
-        key: "period",
-        label: "Период обращения",
-        paramType: "slider",
-        min: "0.2",
-        max: "3",
-        step: "0.1",
-        defaultValue: "1",
-        unit: "с",
-      },
-      {
-        key: "mass",
-        label: "Масса тела",
-        paramType: "slider",
-        min: "0.05",
-        max: "1.0",
-        step: "0.05",
-        defaultValue: "0.2",
-        unit: "кг",
-      },
-    ],
-  },
-  {
+{
     slug: "projectile-motion",
     title: "Движение тела, брошенного под углом",
     description: "Интерактивная PhET-симуляция баллистического движения.",
@@ -229,324 +109,7 @@ const simulationData: SimulationSeed[] = [
     componentRef: "projectile-motion",
     params: [],
   },
-  {
-    slug: "balancing-act",
-    title: "Уравновешивание сил",
-    description:
-      "Симуляция равновесия тел на качелях с изменением масс и расстояний.",
-    category: "mechanics",
-    componentRef: "balancing-act",
-    params: [
-      {
-        key: "leftMass",
-        label: "Масса слева",
-        paramType: "slider",
-        min: "10",
-        max: "500",
-        step: "10",
-        defaultValue: "100",
-        unit: "г",
-      },
-      {
-        key: "leftDistance",
-        label: "Расстояние слева",
-        paramType: "slider",
-        min: "5",
-        max: "25",
-        step: "1",
-        defaultValue: "20",
-        unit: "см",
-      },
-      {
-        key: "rightMass",
-        label: "Масса справа",
-        paramType: "slider",
-        min: "10",
-        max: "500",
-        step: "10",
-        defaultValue: "100",
-        unit: "г",
-      },
-      {
-        key: "rightDistance",
-        label: "Расстояние справа",
-        paramType: "slider",
-        min: "5",
-        max: "25",
-        step: "1",
-        defaultValue: "20",
-        unit: "см",
-      },
-    ],
-  },
-
-  // Density & buoyancy (fluid / hydrostatics)
-  {
-    slug: "density-measurement",
-    title: "Измерение плотности твёрдого тела",
-    description: "Визуализация определения плотности тела по массе и объёму.",
-    category: "fluid-mechanics",
-    componentRef: "density-measurement",
-    params: [
-      {
-        key: "mass",
-        label: "Масса тела",
-        paramType: "slider",
-        min: "10",
-        max: "500",
-        step: "10",
-        defaultValue: "200",
-        unit: "г",
-      },
-      {
-        key: "volume",
-        label: "Объём тела",
-        paramType: "slider",
-        min: "5",
-        max: "200",
-        step: "5",
-        defaultValue: "50",
-        unit: "см³",
-      },
-      {
-        key: "liquidDensity",
-        label: "Плотность жидкости",
-        paramType: "slider",
-        min: "600",
-        max: "1400",
-        step: "10",
-        defaultValue: "1000",
-        unit: "кг/м³",
-      },
-    ],
-  },
-  {
-    slug: "archimedes-force",
-    title: "Сила Архимеда",
-    description:
-      "Наглядная демонстрация выталкивающей силы для погружённого тела.",
-    category: "fluid-mechanics",
-    componentRef: "archimedes-force",
-    params: [
-      {
-        key: "bodyVolume",
-        label: "Объём тела",
-        paramType: "slider",
-        min: "10",
-        max: "300",
-        step: "10",
-        defaultValue: "100",
-        unit: "см³",
-      },
-      {
-        key: "immersionLevel",
-        label: "Уровень погружения",
-        paramType: "slider",
-        min: "0",
-        max: "100",
-        step: "1",
-        defaultValue: "50",
-        unit: "%",
-      },
-      {
-        key: "liquidDensity",
-        label: "Плотность жидкости",
-        paramType: "slider",
-        min: "600",
-        max: "1400",
-        step: "10",
-        defaultValue: "1000",
-        unit: "кг/м³",
-      },
-    ],
-  },
-  {
-    slug: "archimedes-force-vs-volume",
-    title: "Зависимость силы Архимеда от объёма",
-    description:
-      "Исследование, как выталкивающая сила зависит от объёма погружённой части тела.",
-    category: "fluid-mechanics",
-    componentRef: "archimedes-force-vs-volume",
-    params: [
-      {
-        key: "bodyVolume",
-        label: "Объём тела",
-        paramType: "slider",
-        min: "10",
-        max: "300",
-        step: "10",
-        defaultValue: "100",
-        unit: "см³",
-      },
-      {
-        key: "immersionLevel",
-        label: "Уровень погружения",
-        paramType: "slider",
-        min: "0",
-        max: "100",
-        step: "1",
-        defaultValue: "50",
-        unit: "%",
-      },
-      {
-        key: "liquidDensity",
-        label: "Плотность жидкости",
-        paramType: "slider",
-        min: "600",
-        max: "1400",
-        step: "10",
-        defaultValue: "1000",
-        unit: "кг/м³",
-      },
-    ],
-  },
-  {
-    slug: "archimedes-force-vs-density",
-    title: "Зависимость силы Архимеда от плотности жидкости",
-    description: "Сравнение выталкивающей силы в жидкостях разной плотности.",
-    category: "fluid-mechanics",
-    componentRef: "archimedes-force-vs-density",
-    params: [
-      {
-        key: "bodyVolume",
-        label: "Объём тела",
-        paramType: "slider",
-        min: "10",
-        max: "300",
-        step: "10",
-        defaultValue: "100",
-        unit: "см³",
-      },
-      {
-        key: "liquidDensity",
-        label: "Плотность жидкости",
-        paramType: "slider",
-        min: "600",
-        max: "1400",
-        step: "10",
-        defaultValue: "1000",
-        unit: "кг/м³",
-      },
-    ],
-  },
-  {
-    slug: "buoyancy-independence",
-    title: "Зависимость выталкивающей силы от глубины",
-    description: "Проверка независимости силы Архимеда от глубины погружения.",
-    category: "fluid-mechanics",
-    componentRef: "buoyancy-independence",
-    params: [
-      {
-        key: "bodyVolume",
-        label: "Объём тел",
-        paramType: "slider",
-        min: "10",
-        max: "300",
-        step: "10",
-        defaultValue: "100",
-        unit: "см³",
-      },
-      {
-        key: "material1",
-        label: "Плотность материала 1",
-        paramType: "slider",
-        min: "500",
-        max: "12000",
-        step: "100",
-        defaultValue: "2700",
-        unit: "кг/м³",
-      },
-      {
-        key: "material2",
-        label: "Плотность материала 2",
-        paramType: "slider",
-        min: "500",
-        max: "12000",
-        step: "100",
-        defaultValue: "7800",
-        unit: "кг/м³",
-      },
-    ],
-  },
-  {
-    slug: "floating-conditions",
-    title: "Условия плавания тел",
-    description: "Моделирование плавания, тонущия и всплывания тел в жидкости.",
-    category: "fluid-mechanics",
-    componentRef: "floating-conditions",
-    params: [
-      {
-        key: "bodyVolume",
-        label: "Объём тела",
-        paramType: "slider",
-        min: "10",
-        max: "300",
-        step: "10",
-        defaultValue: "100",
-        unit: "см³",
-      },
-      {
-        key: "bodyDensity",
-        label: "Плотность тела",
-        paramType: "slider",
-        min: "600",
-        max: "1400",
-        step: "10",
-        defaultValue: "800",
-        unit: "кг/м³",
-      },
-      {
-        key: "liquidDensity",
-        label: "Плотность жидкости",
-        paramType: "slider",
-        min: "600",
-        max: "1400",
-        step: "10",
-        defaultValue: "1000",
-        unit: "кг/м³",
-      },
-    ],
-  },
-  {
-    slug: "liquid-density-measurement",
-    title: "Измерение плотности жидкости",
-    description: "Определение плотности жидкости с помощью ареометра.",
-    category: "fluid-mechanics",
-    componentRef: "liquid-density-measurement",
-    params: [
-      {
-        key: "bodyVolume",
-        label: "Объём тела",
-        paramType: "slider",
-        min: "10",
-        max: "300",
-        step: "10",
-        defaultValue: "100",
-        unit: "см³",
-      },
-      {
-        key: "weightInAir",
-        label: "Вес в воздухе",
-        paramType: "slider",
-        min: "0.1",
-        max: "5.0",
-        step: "0.05",
-        defaultValue: "2.0",
-        unit: "Н",
-      },
-      {
-        key: "weightInLiquid",
-        label: "Вес в жидкости",
-        paramType: "slider",
-        min: "0.05",
-        max: "5.0",
-        step: "0.05",
-        defaultValue: "1.5",
-        unit: "Н",
-      },
-    ],
-  },
-  {
+{
     slug: "under-pressure-phet",
     title: "Давление в жидкости (PhET)",
     description: "Интерактивная симуляция давления в жидкости и на тело.",
@@ -555,7 +118,7 @@ const simulationData: SimulationSeed[] = [
     componentRef: "under-pressure-phet",
     params: [],
   },
-  {
+{
     slug: "buoyancy-phet",
     title: "Плавучесть (PhET)",
     description: "PhET-симуляция плавучести и силы Архимеда.",
@@ -564,7 +127,7 @@ const simulationData: SimulationSeed[] = [
     componentRef: "buoyancy-phet",
     params: [],
   },
-  {
+{
     slug: "buoyancy-basics-phet",
     title: "Основы плавучести (PhET)",
     description: "Упрощённая PhET-симуляция для изучения условий плавания.",
@@ -573,570 +136,7 @@ const simulationData: SimulationSeed[] = [
     componentRef: "buoyancy-basics-phet",
     params: [],
   },
-  {
-    slug: "surface-tension",
-    title: "Поверхностное натяжение",
-    description: "Моделирование поверхностного натяжения жидкости.",
-    category: "fluid-mechanics",
-    componentRef: "surface-tension",
-    params: [
-      {
-        key: "liquid",
-        label: "Жидкость",
-        paramType: "select",
-        defaultValue: "water",
-        options: JSON.stringify([
-          { value: "water", label: "Вода" },
-          { value: "alcohol", label: "Спирт" },
-          { value: "glycerol", label: "Глицерин" },
-        ]),
-      },
-      {
-        key: "dropCount",
-        label: "Число капель",
-        paramType: "slider",
-        min: "1",
-        max: "100",
-        step: "1",
-        defaultValue: "20",
-      },
-      {
-        key: "totalMass",
-        label: "Масса жидкости",
-        paramType: "slider",
-        min: "0.5",
-        max: "50",
-        step: "0.5",
-        defaultValue: "5",
-        unit: "г",
-      },
-      {
-        key: "radius",
-        label: "Радиус отверстия капельницы",
-        paramType: "slider",
-        min: "0.1",
-        max: "5.0",
-        step: "0.1",
-        defaultValue: "1.5",
-        unit: "мм",
-      },
-    ],
-  },
-
-  // Electrodynamics
-  {
-    slug: "electric-work-measurement",
-    title: "Измерение работы электрического тока",
-    description:
-      "Электрическая цепь с батареей, резистором, амперметром и вольтметром.",
-    category: "electrodynamics",
-    componentRef: "electric-work-measurement",
-    params: [
-      {
-        key: "voltage",
-        label: "Напряжение",
-        paramType: "slider",
-        min: "1",
-        max: "24",
-        step: "0.5",
-        defaultValue: "6",
-        unit: "В",
-      },
-      {
-        key: "resistance",
-        label: "Сопротивление",
-        paramType: "slider",
-        min: "1",
-        max: "100",
-        step: "1",
-        defaultValue: "10",
-        unit: "Ом",
-      },
-      {
-        key: "time",
-        label: "Время",
-        paramType: "slider",
-        min: "1",
-        max: "600",
-        step: "5",
-        defaultValue: "60",
-        unit: "с",
-      },
-    ],
-  },
-
-  // Optics
-  {
-    slug: "light-reflection",
-    title: "Закон отражения света",
-    description: "Интерактивная симуляция отражения луча от плоского зеркала.",
-    category: "optics",
-    componentRef: "light-reflection",
-    params: [
-      {
-        key: "incidentAngle",
-        label: "Угол падения",
-        paramType: "slider",
-        min: "0",
-        max: "89",
-        step: "1",
-        defaultValue: "30",
-        unit: "°",
-      },
-    ],
-  },
-  {
-    slug: "light-refraction",
-    title: "Закон преломления света",
-    description: "Визуализация преломления света на границе двух сред.",
-    category: "optics",
-    componentRef: "light-refraction",
-    params: [
-      {
-        key: "incidentAngle",
-        label: "Угол падения",
-        paramType: "slider",
-        min: "0",
-        max: "89",
-        step: "1",
-        defaultValue: "30",
-        unit: "°",
-      },
-      {
-        key: "medium",
-        label: "Показатель преломления среды",
-        paramType: "slider",
-        min: "1.0",
-        max: "2.5",
-        step: "0.01",
-        defaultValue: "1.5",
-      },
-    ],
-  },
-  {
-    slug: "glass-refraction-index",
-    title: "Определение показателя преломления стекла",
-    description:
-      "Измерение углов падения и преломления для расчёта показателя преломления.",
-    category: "optics",
-    componentRef: "glass-refraction-index",
-    params: [
-      {
-        key: "incidentAngle",
-        label: "Угол падения",
-        paramType: "slider",
-        min: "0",
-        max: "89",
-        step: "1",
-        defaultValue: "45",
-        unit: "°",
-      },
-      {
-        key: "nGlass",
-        label: "Показатель преломления стекла",
-        paramType: "slider",
-        min: "1.0",
-        max: "2.5",
-        step: "0.01",
-        defaultValue: "1.5",
-      },
-    ],
-  },
-  {
-    slug: "converging-lens-focus",
-    title: "Определение фокусного расстояния собирающей линзы",
-    description: "Симуляция построения изображений и нахождения фокуса.",
-    category: "optics",
-    componentRef: "converging-lens-focus",
-    params: [
-      {
-        key: "objectDistance",
-        label: "Расстояние от предмета до линзы",
-        paramType: "slider",
-        min: "5",
-        max: "80",
-        step: "1",
-        defaultValue: "30",
-        unit: "см",
-      },
-      {
-        key: "focalLength",
-        label: "Фокусное расстояние",
-        paramType: "slider",
-        min: "5",
-        max: "40",
-        step: "1",
-        defaultValue: "10",
-        unit: "см",
-      },
-    ],
-  },
-  {
-    slug: "lens-image-formation",
-    title: "Построение изображений в линзе",
-    description:
-      "Интерактивное построение изображения предмета в собирающей линзе.",
-    category: "optics",
-    componentRef: "lens-image-formation",
-    params: [
-      {
-        key: "objectDistance",
-        label: "Расстояние от предмета до линзы",
-        paramType: "slider",
-        min: "5",
-        max: "80",
-        step: "1",
-        defaultValue: "30",
-        unit: "см",
-      },
-      {
-        key: "focalLength",
-        label: "Фокусное расстояние",
-        paramType: "slider",
-        min: "5",
-        max: "40",
-        step: "1",
-        defaultValue: "10",
-        unit: "см",
-      },
-      {
-        key: "objectHeight",
-        label: "Высота предмета",
-        paramType: "slider",
-        min: "1",
-        max: "10",
-        step: "0.5",
-        defaultValue: "3",
-        unit: "см",
-      },
-    ],
-  },
-  {
-    slug: "wavelength-measurement",
-    title: "Измерение длины волны",
-    description: "Симуляция для определения длины световой волны.",
-    category: "optics",
-    componentRef: "wavelength-measurement",
-    params: [
-      {
-        key: "gratingConstant",
-        label: "Постоянная дифракционной решётки",
-        paramType: "slider",
-        min: "0.5",
-        max: "5.0",
-        step: "0.1",
-        defaultValue: "1.0",
-        unit: "мкм",
-      },
-      {
-        key: "diffractionAngle",
-        label: "Угол дифракции",
-        paramType: "slider",
-        min: "0",
-        max: "89",
-        step: "1",
-        defaultValue: "20",
-        unit: "°",
-      },
-      {
-        key: "order",
-        label: "Порядок спектра",
-        paramType: "slider",
-        min: "1",
-        max: "3",
-        step: "1",
-        defaultValue: "1",
-      },
-    ],
-  },
-  {
-    slug: "interference-diffraction",
-    title: "Интерференция и дифракция",
-    description: "Визуализация интерференционной картины и дифракции на щели.",
-    category: "optics",
-    componentRef: "interference-diffraction",
-    params: [
-      {
-        key: "slitDistance",
-        label: "Расстояние между щелями",
-        paramType: "slider",
-        min: "0.1",
-        max: "2.0",
-        step: "0.05",
-        defaultValue: "0.5",
-        unit: "мм",
-      },
-      {
-        key: "screenDistance",
-        label: "Расстояние до экрана",
-        paramType: "slider",
-        min: "0.2",
-        max: "3.0",
-        step: "0.1",
-        defaultValue: "1.0",
-        unit: "м",
-      },
-      {
-        key: "fringeSpacing",
-        label: "Ширина интерференционной полосы",
-        paramType: "slider",
-        min: "0.1",
-        max: "5.0",
-        step: "0.1",
-        defaultValue: "1.0",
-        unit: "мм",
-      },
-    ],
-  },
-  {
-    slug: "emission-spectra",
-    title: "Спектры испускания",
-    description: "Изучение линейчатых спектров атомов.",
-    category: "optics",
-    componentRef: "emission-spectra",
-    params: [
-      {
-        key: "substance",
-        label: "Вещество",
-        paramType: "select",
-        defaultValue: "hydrogen",
-        options: JSON.stringify([
-          { value: "hydrogen", label: "Водород" },
-          { value: "helium", label: "Гелий" },
-          { value: "neon", label: "Неон" },
-          { value: "sodium", label: "Натрий" },
-          { value: "mercury", label: "Ртуть" },
-          { value: "tungsten", label: "Вольфрам" },
-        ]),
-      },
-      {
-        key: "spectrumType",
-        label: "Тип спектра",
-        paramType: "select",
-        defaultValue: "line",
-        options: JSON.stringify([
-          { value: "line", label: "Линейчатый" },
-          { value: "continuous", label: "Сплошной" },
-        ]),
-      },
-    ],
-  },
-
-  // Molecular physics & thermodynamics
-  {
-    slug: "boyle-mariotte",
-    title: "Закон Бойля-Мариотта",
-    description: "Изотермический процесс: зависимость давления от объёма.",
-    category: "molecular-thermodynamics",
-    componentRef: "boyle-mariotte",
-    params: [
-      {
-        key: "temperature",
-        label: "Температура",
-        paramType: "slider",
-        min: "200",
-        max: "500",
-        step: "10",
-        defaultValue: "300",
-        unit: "К",
-      },
-      {
-        key: "volume",
-        label: "Объём",
-        paramType: "slider",
-        min: "0.5",
-        max: "5.0",
-        step: "0.1",
-        defaultValue: "2",
-        unit: "л",
-      },
-      {
-        key: "amount",
-        label: "Количество вещества",
-        paramType: "slider",
-        min: "0.01",
-        max: "0.2",
-        step: "0.01",
-        defaultValue: "0.05",
-        unit: "моль",
-      },
-    ],
-  },
-  {
-    slug: "isobaric-process",
-    title: "Изобарный процесс",
-    description:
-      "Процесс при постоянном давлении: зависимость объёма от температуры.",
-    category: "molecular-thermodynamics",
-    componentRef: "isobaric-process",
-    params: [
-      {
-        key: "pressure",
-        label: "Давление",
-        paramType: "slider",
-        min: "50",
-        max: "400",
-        step: "10",
-        defaultValue: "100",
-        unit: "кПа",
-      },
-      {
-        key: "temperature",
-        label: "Температура",
-        paramType: "slider",
-        min: "200",
-        max: "500",
-        step: "10",
-        defaultValue: "300",
-        unit: "К",
-      },
-      {
-        key: "amount",
-        label: "Количество вещества",
-        paramType: "slider",
-        min: "0.01",
-        max: "0.2",
-        step: "0.01",
-        defaultValue: "0.05",
-        unit: "моль",
-      },
-    ],
-  },
-  {
-    slug: "isochoric-process",
-    title: "Изохорный процесс",
-    description:
-      "Процесс при постоянном объёме: зависимость давления от температуры.",
-    category: "molecular-thermodynamics",
-    componentRef: "isochoric-process",
-    params: [
-      {
-        key: "volume",
-        label: "Объём",
-        paramType: "slider",
-        min: "0.5",
-        max: "5.0",
-        step: "0.1",
-        defaultValue: "1",
-        unit: "л",
-      },
-      {
-        key: "temperature",
-        label: "Температура",
-        paramType: "slider",
-        min: "200",
-        max: "500",
-        step: "10",
-        defaultValue: "300",
-        unit: "К",
-      },
-      {
-        key: "amount",
-        label: "Количество вещества",
-        paramType: "slider",
-        min: "0.01",
-        max: "0.2",
-        step: "0.01",
-        defaultValue: "0.05",
-        unit: "моль",
-      },
-    ],
-  },
-  {
-    slug: "specific-heat-capacity",
-    title: "Определение удельной теплоёмкости",
-    description:
-      "Калориметрический эксперимент для измерения теплоёмкости вещества.",
-    category: "molecular-thermodynamics",
-    componentRef: "specific-heat-capacity",
-    params: [
-      {
-        key: "material",
-        label: "Материал тела",
-        paramType: "select",
-        defaultValue: "aluminum",
-        options: JSON.stringify([
-          { value: "aluminum", label: "Алюминий" },
-          { value: "copper", label: "Медь" },
-          { value: "steel", label: "Сталь" },
-          { value: "lead", label: "Свинец" },
-        ]),
-      },
-      {
-        key: "bodyMass",
-        label: "Масса тела",
-        paramType: "slider",
-        min: "10",
-        max: "500",
-        step: "10",
-        defaultValue: "200",
-        unit: "г",
-      },
-      {
-        key: "waterMass",
-        label: "Масса воды",
-        paramType: "slider",
-        min: "10",
-        max: "500",
-        step: "10",
-        defaultValue: "200",
-        unit: "г",
-      },
-      {
-        key: "bodyTemp",
-        label: "Начальная температура тела",
-        paramType: "slider",
-        min: "20",
-        max: "150",
-        step: "5",
-        defaultValue: "100",
-        unit: "°C",
-      },
-      {
-        key: "waterTemp",
-        label: "Начальная температуры воды",
-        paramType: "slider",
-        min: "0",
-        max: "100",
-        step: "5",
-        defaultValue: "20",
-        unit: "°C",
-      },
-    ],
-  },
-  {
-    slug: "relative-humidity",
-    title: "Относительная влажность воздуха",
-    description:
-      "Определение относительной влажности по температуре и точке росы.",
-    category: "molecular-thermodynamics",
-    componentRef: "relative-humidity",
-    params: [
-      {
-        key: "dryTemp",
-        label: "Температура сухого термометра",
-        paramType: "slider",
-        min: "0",
-        max: "50",
-        step: "1",
-        defaultValue: "25",
-        unit: "°C",
-      },
-      {
-        key: "wetTemp",
-        label: "Температура влажного термометра",
-        paramType: "slider",
-        min: "0",
-        max: "50",
-        step: "1",
-        defaultValue: "20",
-        unit: "°C",
-      },
-    ],
-  },
-
-  // Исследовательские задания — переведены в сторонние симуляции (внешние iframe)
-  {
+{
     slug: "masses-and-springs",
     title: "Массы и пружины",
     description:
@@ -1154,7 +154,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-  {
+{
     slug: "wave-interference",
     title: "Интерференция волн",
     description: "Интерактивная симуляция для изучения интерференции волн.",
@@ -1171,7 +171,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-  {
+{
     slug: "sound-waves",
     title: "Звуковые волны",
     description: "Интерактивная симуляция для изучения звуковых волн.",
@@ -1188,7 +188,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-  {
+{
     slug: "states-of-matter-basics",
     title: "Состояния веществ: Основы",
     description:
@@ -1206,7 +206,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-  {
+{
     slug: "gases-intro",
     title: "Газы: Введение",
     description:
@@ -1224,7 +224,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-  {
+{
     slug: "charges-and-fields",
     title: "Заряды и поля",
     description:
@@ -1242,7 +242,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-  {
+{
     slug: "electricity-maps",
     title: "Интерактивная карта потребления и генерации электроэнергии",
     description:
@@ -1259,7 +259,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-  {
+{
     slug: "circuit-construction-kit-dc",
     title: "Электрическая цепь постоянного тока",
     description:
@@ -1277,7 +277,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-  {
+{
     slug: "magnet-and-compass",
     title: "Магнит и компас",
     description:
@@ -1295,7 +295,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-  {
+{
     slug: "faradays-law",
     title: "Закон электромагнитной индукции Фарадея",
     description:
@@ -1313,7 +313,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-  {
+{
     slug: "faradays-electromagnetic-lab",
     title: "Электромагнитная лаборатория Фарадея",
     description:
@@ -1331,7 +331,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-  {
+{
     slug: "geometric-optics",
     title: "Геометрическая оптика",
     description:
@@ -1349,7 +349,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-  {
+{
     slug: "build-an-atom",
     title: "Построй атом",
     description:
@@ -1367,7 +367,7 @@ const simulationData: SimulationSeed[] = [
       },
     ],
   },
-  {
+{
     slug: "models-of-hydrogen-atom",
     title: "Модели атома водорода",
     description:
@@ -1384,7 +384,7 @@ const simulationData: SimulationSeed[] = [
           "https://phet.colorado.edu/sims/html/models-of-the-hydrogen-atom/latest/models-of-the-hydrogen-atom_all.html",
       },
     ],
-  },
+  }
 ];
 
 async function seedSimulations() {
@@ -1416,6 +416,15 @@ async function seedSimulations() {
         },
       });
     console.log(`Upserted simulation "${sim.slug}"`);
+  }
+
+  // Remove simulations that are no longer in the seed list
+  const slugs = simulationData.map(s => s.slug);
+  if (slugs.length > 0) {
+    await db
+      .delete(simulations)
+      .where(not(inArray(simulations.slug, slugs)));
+    console.log("Removed stale simulations");
   }
 
   console.log(`Seeded ${simulationData.length} simulations`);

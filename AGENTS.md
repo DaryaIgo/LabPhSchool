@@ -80,6 +80,21 @@ app/
 │   ├── components/         # React-компоненты
 │   │   ├── Header.tsx
 │   │   ├── AuthLayout.tsx
+│   │   ├── lab/            # Компоненты лабораторных работ
+│   │   │   ├── LabControls.tsx
+│   │   │   ├── LabLayout.tsx
+│   │   │   ├── LabSidebar.tsx
+│   │   │   ├── ResultsTable.tsx
+│   │   │   ├── SimulationCanvas.tsx
+│   │   │   ├── SimulationWrapper.tsx  # обвязка «своих» симуляций
+│   │   │   └── simulations/           # реестр и компоненты симуляций
+│   │   │       ├── types.ts
+│   │   │       ├── registry.ts
+│   │   │       ├── UniformLinearMotion.tsx
+│   │   │       ├── UniformLinearMotion.manifest.ts
+│   │   │       ├── UniformlyAcceleratedMotion.tsx
+│   │   │       ├── UniformlyAcceleratedMotion.manifest.ts
+│   │   │       └── ExternalIframeSimulation.tsx
 │   │   └── ui/             # 50+ компонентов shadcn/ui
 │   ├── hooks/              # Кастомные хуки
 │   │   ├── useAuth.ts      # Хук аутентификации преподавателя
@@ -278,23 +293,57 @@ npm run db:push       # Push схемы (для разработки)
 
 - **Каталог** (`/labs`) показывает разделы физики (`lab_categories`).
 - **Категория** (`/labs/category/:slug`) группирует работы по подкатегориям (`lab_subcategories`).
-- **Карточка** (`/labs/work/:slug`) отображает теорию, выбранную симуляцию, измерения, графики и вывод.
+- **Карточка** (`/labs/work/:slug`) имеет три вкладки: **Теория**, **Эксперимент**, **Вывод**. Вкладка «Вывод» доступна только авторизованным пользователям.
+- Каждая карточка имеет **тип** (`lab_works.card_type`): `own` или `external`.
+  - `own` — используется одна из «своих» симуляций с полной обвязкой (параметры, управление, текущие величины, измерения, графики).
+  - `external` — встраивается сторонняя симуляция (PhET/iframe) без обвязки.
 
-### Реестр симуляций
+### Карточка лабораторной работы
 
-Все интерактивные симуляции зарегистрированы в таблице `simulations`:
+Страница `LabWorkPage.tsx` рендерит:
+
+- **Теория** — цель работы, теоретические сведения, оборудование.
+- **Эксперимент** — пошаговая инструкция и `SimulationWrapper`, который собирает карточку симуляции из блоков обвязки.
+- **Вывод** — текстовая панель с сохранением/отправкой прогресса.
+
+### Обвязка «своей» симуляции
+
+«Свои» (own) симуляции не встраиваются голым canvas: каждая симуляция поставляется вместе с собственной обвязкой. Обвязка рендерится компонентом `SimulationWrapper` (`src/components/lab/SimulationWrapper.tsx`) и состоит из блоков:
+
+1. **Параметры** — слайдеры/числа/селекты из манифеста симуляции.
+2. **Управление** — кнопки «Старт» и «Сброс».
+3. **Симуляция** — canvas с физической визуализацией.
+4. **Текущие величины** — карточки значений, которые симуляция передаёт через `onStateChange`.
+5. **Измерения** — таблица с кнопкой «Зафиксировать».
+6. **Графики** — строятся по накопленным измерениям (можно отключить через `hasGraphs: false`).
+
+Названия блоков задаются в манифесте симуляции (`wrapper.blockTitles`).
+
+### Реестр «своих» симуляций
+
+«Свои» симуляции регистрируются в коде:
+
+- `src/components/lab/simulations/types.ts` — общие типы (`SimulationManifest`, `SimParamConfig`, `GraphConfig` и др.).
+- `src/components/lab/simulations/registry.ts` — реестр компонентов, манифестов и функций измерений.
+- `src/components/lab/simulations/<Name>.tsx` — React-компонент визуализации (только `default export`).
+- `src/components/lab/simulations/<Name>.manifest.ts` — манифест симуляции и функция `computeXxxMeasurement`.
+- `db/simulations-seed.ts` — заполнение таблицы `simulations`.
+
+Таблица `simulations` содержит мета-информацию и параметры, используемые админкой и внешними симуляциями:
 
 | Поле | Назначение |
 |------|-----------|
-| `slug` | Уникальный идентификатор, совпадает с ключом в кодовом объекте `simComponents` |
+| `slug` | Уникальный идентификатор, совпадает с ключом в `registry.ts` |
 | `title` | Название для админки |
 | `description` | Описание |
 | `category` | Раздел физики |
-| `componentRef` | Ссылка на React-компонент (обычно совпадает со `slug`) |
-| `config` | JSON с готовыми параметрами симуляции (`SimulationParamConfig[]`) |
+| `componentRef` | Ключ в `registry.ts` (обычно совпадает со `slug`) |
+| `kind` | `own` — своя симуляция с обвязкой; `external` — iframe стороннего ресурса |
+| `isDynamic` | Нужна ли анимация (кнопка Старт/Сброс) |
+| `config` | JSON с параметрами симуляции (`SimulationParamConfig[]`) |
 | `isActive` | Видна ли симуляция в списке выбора |
 
-Список существующих симуляций заполняется скриптом `db/simulations-seed.ts`.
+Сторонние (`external`) симуляции не используют обвязку: для них `SimulationWrapper` рендерит iframe и поле заметок.
 
 ### Lab Management
 
@@ -304,13 +353,28 @@ npm run db:push       # Push схемы (для разработки)
 - лабораторными работами (`lab_works`)
 - выбором симуляции из реестра (`simulations`)
 
-Параметры симуляции задаются один раз в реестре (`simulations.config`) и не требуют настройки при подключении к работе.
+Параметры «своей» симуляции задаются в её манифесте и дублируются в `simulations.config` для отображения в админке. При подключении симуляции к работе обвязка подставляется автоматически.
 
 Теоретическая часть пишется в Markdown (редактор `@uiw/react-md-editor`) с поддержкой формул и картинок. Картинки загружаются через `/api/upload/image` и вставляются в Markdown.
 
 ### Связь работы и симуляции
 
-Поле `lab_works.simulationSlug` — soft-link на `simulations.slug`. Страница `LabWorkPage.tsx` выбирает React-компонент симуляции по `simulationSlug`, а не по `slug` лаборатории. Это позволяет переиспользовать одну симуляцию в разных работах.
+Поле `lab_works.simulationSlug` — soft-link на `simulations.slug`. Поле `lab_works.cardType` определяет, как именно отображается симуляция:
+
+- `cardType = "own"` — `LabWorkPage.tsx` через `SimulationWrapper` находит зарегистрированную симуляцию в `simulationRegistry` по `simulation.componentRef` и рендерит её вместе с обвязкой.
+- `cardType = "external"` — `SimulationWrapper` рендерит iframe стороннего ресурса и поле заметок.
+
+В `LabManagement` тип карточки выбирается отдельно, и список доступных симуляций фильтруется по этому типу.
+
+### Добавление новой «своей» симуляции
+
+1. Создать `src/components/lab/simulations/<Name>.tsx` с React-компонентом.
+2. Создать `src/components/lab/simulations/<Name>.manifest.ts` с `xxxManifest` и `computeXxxMeasurement`.
+3. Зарегистрировать симуляцию в `src/components/lab/simulations/registry.ts`.
+4. Добавить seed-запись в `db/simulations-seed.ts`.
+5. Запустить `npx tsx db/simulations-seed.ts`.
+
+Подробный формат описан в `docs/simulation-generation-prompt.md`.
 
 ---
 

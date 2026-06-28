@@ -66,6 +66,7 @@ export const labWorks = mysqlTable("lab_works", {
   instruction: text("instruction"),
   conclusionTemplate: text("conclusion_template"),
   simulationSlug: varchar("simulation_slug", { length: 255 }),
+  cardType: mysqlEnum("card_type", ["own", "external"]),
   status: mysqlEnum("status", ["draft", "published"])
     .default("draft")
     .notNull(),
