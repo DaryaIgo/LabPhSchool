@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from "react";
+import React, { useState, useMemo, useRef, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { trpc } from "@/providers/trpc";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
 import {
   TreePine,
   Plus,
@@ -61,23 +62,79 @@ function buildTree(nodes: TopicNode[]): TreeNode[] {
   return roots;
 }
 
+type DropPosition = "before" | "after" | "inside";
+
 function TreeItem({
   node,
   selectedId,
   onSelect,
   depth = 0,
+  draggable = false,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  dragOver,
 }: {
   node: TreeNode;
   selectedId: number | null;
   onSelect: (id: number) => void;
   depth?: number;
+  draggable?: boolean;
+  onDragStart?: (id: number) => void;
+  onDragOver?: (e: React.DragEvent, id: number, pos: DropPosition) => void;
+  onDrop?: (e: React.DragEvent, id: number, pos: DropPosition) => void;
+  dragOver?: { id: number; pos: DropPosition } | null;
 }) {
   const [expanded, setExpanded] = useState(true);
+  const [selfExpanded, setSelfExpanded] = useState(false);
   const hasChildren = node.children.length > 0;
+  const isOver = dragOver?.id === node.id;
+
+  const handleDragStart = (e: React.DragEvent) => {
+    e.stopPropagation();
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(node.id));
+    onDragStart?.(node.id);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!onDragOver) return;
+
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const relY = e.clientY - rect.top;
+    const threshold = 8;
+
+    let pos: DropPosition = "inside";
+    if (relY < threshold) {
+      pos = "before";
+    } else if (relY > rect.height - threshold) {
+      pos = "after";
+    }
+
+    if (pos === "inside" && hasChildren && !expanded && !selfExpanded) {
+      setSelfExpanded(true);
+      setExpanded(true);
+    }
+
+    onDragOver(e, node.id, pos);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onDrop?.(e, node.id, dragOver?.pos ?? "inside");
+  };
 
   return (
     <div>
       <button
+        draggable={draggable}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        onDragLeave={() => setSelfExpanded(false)}
         onClick={() => {
           onSelect(node.id);
           if (hasChildren) setExpanded(e => !e);
@@ -86,7 +143,17 @@ function TreeItem({
           selectedId === node.id
             ? "bg-[#2eff8c]/20 text-[#2eff8c]"
             : "text-[#c8cdd1] hover:bg-white/5"
-        }`}
+        } ${
+          isOver && dragOver?.pos === "before"
+            ? "border-t-2 border-[#2eff8c]"
+            : ""
+        } ${
+          isOver && dragOver?.pos === "after"
+            ? "border-b-2 border-[#2eff8c]"
+            : ""
+        } ${
+          isOver && dragOver?.pos === "inside" ? "bg-[#2eff8c]/10" : ""
+        } ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`}
         style={{ paddingLeft: `${depth * 16 + 8}px` }}
       >
         {hasChildren ? (
@@ -118,6 +185,11 @@ function TreeItem({
               selectedId={selectedId}
               onSelect={onSelect}
               depth={depth + 1}
+              draggable={draggable}
+              onDragStart={onDragStart}
+              onDragOver={onDragOver}
+              onDrop={onDrop}
+              dragOver={dragOver}
             />
           ))}
         </div>
@@ -134,6 +206,7 @@ const initialForm = {
   iconType: DEFAULT_CATEGORY_ICON_KEY,
   content: "",
   jupyterUrl: "",
+  parentId: null as number | null,
 };
 
 export default function TopicManagement() {
@@ -141,9 +214,9 @@ export default function TopicManagement() {
   const utils = trpc.useUtils();
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [creatingChildOf, setCreatingChildOf] = useState<number | null>(null);
   const [form, setForm] = useState({ ...initialForm });
   const [isEditing, setIsEditing] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [importMd, setImportMd] = useState("");
@@ -180,8 +253,10 @@ export default function TopicManagement() {
             (node.iconType as CategoryIconKey) ?? DEFAULT_CATEGORY_ICON_KEY,
           content: node.content || "",
           jupyterUrl: node.jupyterUrl || "",
+          parentId: node.parentId ?? null,
         });
         setIsEditing(true);
+        setIsCreating(false);
       }
     },
     [nodes]
@@ -196,8 +271,8 @@ export default function TopicManagement() {
         setSelectedId(res.id);
         lastSelectedIdRef.current = res.id;
         setIsEditing(true);
+        setIsCreating(false);
       }
-      setCreatingChildOf(null);
     },
     onError: err => toast(err.message),
   });
@@ -220,6 +295,7 @@ export default function TopicManagement() {
       lastSelectedIdRef.current = null;
       setForm({ ...initialForm });
       setIsEditing(false);
+      setIsCreating(false);
     },
     onError: err => toast(err.message),
   });
@@ -235,7 +311,17 @@ export default function TopicManagement() {
         setSelectedId(res.id);
         lastSelectedIdRef.current = res.id;
         setIsEditing(true);
+        setIsCreating(false);
       }
+    },
+    onError: err => toast(err.message),
+  });
+
+  const reorderMutation = trpc.admin.reorderTopicNodes.useMutation({
+    onSuccess: () => {
+      toast("Порядок обновлен");
+      utils.admin.listTopicNodes.invalidate();
+      utils.course.topicNodes.invalidate();
     },
     onError: err => toast(err.message),
   });
@@ -258,7 +344,7 @@ export default function TopicManagement() {
       });
     } else {
       createMutation.mutate({
-        parentId: creatingChildOf ?? undefined,
+        parentId: form.parentId ?? undefined,
         title: form.title,
         slug: form.slug,
         order: form.order,
@@ -272,7 +358,6 @@ export default function TopicManagement() {
     form,
     isEditing,
     selectedId,
-    creatingChildOf,
     updateMutation,
     createMutation,
   ]);
@@ -284,15 +369,112 @@ export default function TopicManagement() {
     }
   }, [selectedId, deleteMutation]);
 
-  const handleAddChild = useCallback(() => {
-    if (!selectedId) return;
-    setCreatingChildOf(selectedId);
-    setSelectedId(null);
+  const handleAddNew = useCallback(() => {
+    const parentId = selectedId ?? null;
     const siblingCount =
-      nodes?.filter(n => n.parentId === selectedId).length ?? 0;
-    setForm({ ...initialForm, order: siblingCount + 1 });
+      nodes?.filter(n => n.parentId === parentId).length ?? 0;
+    setSelectedId(null);
+    setForm({ ...initialForm, parentId, order: siblingCount + 1 });
     setIsEditing(false);
+    setIsCreating(true);
   }, [selectedId, nodes]);
+
+  const [dragOver, setDragOver] = useState<{ id: number; pos: DropPosition } | null>(null);
+
+  const handleDragStart = useCallback(() => {
+    setDragOver(null);
+  }, []);
+
+  const handleDragOver = useCallback(
+    (_e: React.DragEvent, id: number, pos: DropPosition) => {
+      setDragOver(prev => (prev?.id === id && prev?.pos === pos ? prev : { id, pos }));
+    },
+    []
+  );
+
+  const handleDragLeaveRoot = useCallback(() => {
+    setDragOver(null);
+  }, []);
+
+  const computeReorderUpdates = useCallback(
+    (draggedId: number, targetId: number, pos: DropPosition) => {
+      const dragged = nodes?.find(n => n.id === draggedId);
+      const target = nodes?.find(n => n.id === targetId);
+      if (!dragged || !target || !nodes) return [];
+
+      let newParentId: number | null;
+      let siblings: TopicNode[];
+
+      if (pos === "inside") {
+        newParentId = target.id;
+        siblings = nodes.filter(n => n.parentId === newParentId && n.id !== draggedId);
+      } else {
+        newParentId = target.parentId ?? null;
+        siblings = nodes.filter(
+          n => n.parentId === newParentId && n.id !== draggedId && n.id !== targetId
+        );
+      }
+
+      siblings.sort((a, b) => a.order - b.order);
+
+      const insertIndex =
+        pos === "inside"
+          ? siblings.length
+          : siblings.findIndex(n => n.id === targetId) + (pos === "after" ? 1 : 0);
+
+      const reordered = [
+        ...siblings.slice(0, insertIndex),
+        dragged,
+        ...siblings.slice(insertIndex),
+      ];
+
+      return reordered.map((n, index) => ({
+        id: n.id,
+        parentId: newParentId,
+        order: index + 1,
+      }));
+    },
+    [nodes]
+  );
+
+  const handleDrop = useCallback(
+    (_e: React.DragEvent, targetId: number, pos: DropPosition) => {
+      setDragOver(null);
+      const data = _e.dataTransfer.getData("text/plain");
+      const draggedId = Number(data);
+      if (!draggedId || draggedId === targetId) return;
+
+      const updates = computeReorderUpdates(draggedId, targetId, pos);
+      if (updates.length > 0) {
+        reorderMutation.mutate({ updates });
+      }
+    },
+    [computeReorderUpdates, reorderMutation]
+  );
+
+  const handleDropRoot = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragOver(null);
+      const data = e.dataTransfer.getData("text/plain");
+      const draggedId = Number(data);
+      if (!draggedId || !nodes) return;
+
+      const dragged = nodes.find(n => n.id === draggedId);
+      if (!dragged) return;
+
+      const roots = nodes.filter(n => n.parentId === null && n.id !== draggedId);
+      roots.sort((a, b) => a.order - b.order);
+      roots.push(dragged);
+      const updates = roots.map((n, index) => ({
+        id: n.id,
+        parentId: null as number | null,
+        order: index + 1,
+      }));
+      reorderMutation.mutate({ updates });
+    },
+    [nodes, reorderMutation]
+  );
 
   const handleImageUpload = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -344,7 +526,7 @@ export default function TopicManagement() {
       return;
     }
     importMutation.mutate({
-      parentId: selectedId ?? undefined,
+      parentId: form.parentId ?? undefined,
       markdown: importMd,
     });
   }, [importMd, selectedId, importMutation]);
@@ -400,22 +582,7 @@ export default function TopicManagement() {
             size="sm"
             variant="outline"
             className="border-[#37474f] hover:bg-[#2eff8c]/10 text-black"
-            onClick={() => {
-              setSelectedId(null);
-              setCreatingChildOf(null);
-              setForm({ ...initialForm });
-              setIsEditing(false);
-            }}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Раздел
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-[#37474f] hover:bg-[#2eff8c]/10 text-black disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={handleAddChild}
-            disabled={!selectedId}
+            onClick={handleAddNew}
           >
             <Plus className="h-4 w-4 mr-1" />
             Тема
@@ -435,7 +602,15 @@ export default function TopicManagement() {
       {/* Main */}
       <div className="flex flex-1 min-h-0">
         {/* Tree */}
-        <div className="w-80 border-r border-[#37474f] bg-[#1a1f22] overflow-y-auto p-3">
+        <div
+          className="w-80 border-r border-[#37474f] bg-[#1a1f22] overflow-y-auto p-3"
+          onDragOver={e => {
+            e.preventDefault();
+            setDragOver(null);
+          }}
+          onDrop={handleDropRoot}
+          onDragLeave={handleDragLeaveRoot}
+        >
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="animate-spin text-[#2eff8c]" size={20} />
@@ -457,8 +632,12 @@ export default function TopicManagement() {
                       loadNodeIntoForm(id);
                     }
                     setSelectedId(id);
-                    setCreatingChildOf(null);
                   }}
+                  draggable
+                  onDragStart={handleDragStart}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  dragOver={dragOver}
                 />
               ))}
             </div>
@@ -467,15 +646,11 @@ export default function TopicManagement() {
 
         {/* Editor */}
         <div className="flex-1 overflow-y-auto bg-[#262e33] p-6">
-          {isEditing || creatingChildOf !== null ? (
+          {isEditing || isCreating ? (
             <div className="max-w-4xl mx-auto space-y-5">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">
-                  {isEditing
-                    ? "Редактирование"
-                    : creatingChildOf !== null
-                      ? "Новый дочерний узел"
-                      : "Новый раздел"}
+                  {isEditing ? "Редактирование" : "Новая тема"}
                 </h2>
                 <div className="flex items-center gap-2">
                   {isEditing && (
@@ -547,22 +722,7 @@ export default function TopicManagement() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-[120px_1fr_200px] gap-4">
-                <div>
-                  <Label className="text-xs text-[#798389]">Порядок</Label>
-                  <Input
-                    type="number"
-                    value={form.order}
-                    onChange={e =>
-                      setForm(f => ({
-                        ...f,
-                        order: Number(e.target.value),
-                      }))
-                    }
-                    className="bg-[#1e2529] border-[#37474f] mt-1"
-                    min={1}
-                  />
-                </div>
+              <div className="grid grid-cols-[1fr_200px] gap-4">
                 <div>
                   <Label className="text-xs text-[#798389]">Цвет</Label>
                   <div className="flex gap-2 mt-1">

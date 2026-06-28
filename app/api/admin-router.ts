@@ -259,6 +259,39 @@ export const adminRouter = createRouter({
       return { success: true };
     }),
 
+  reorderTopicNodes: adminQuery
+    .input(
+      z.object({
+        updates: z.array(
+          z.object({
+            id: z.number().positive(),
+            parentId: z.number().positive().nullable(),
+            order: z.number().int().min(1),
+          })
+        ),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = getContentDb();
+      for (const u of input.updates) {
+        await db
+          .update(topicNodes)
+          .set({ parentId: u.parentId, order: u.order })
+          .where(eq(topicNodes.id, u.id));
+      }
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "update",
+        resource: "topic_nodes",
+        resourceId: 0,
+        details: { count: input.updates.length, source: "reorder" },
+      });
+
+      return { success: true };
+    }),
+
   deleteTopicNode: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
@@ -310,34 +343,62 @@ export const adminRouter = createRouter({
       const parsed = matter(input.markdown);
       const front = parsed.data as Record<string, unknown>;
 
-      const title = String(front.title ?? "");
-      const slug = String(front.slug ?? "");
+      const title = String(front.title ?? "").trim();
+      const slug = String(front.slug ?? "").trim();
       if (!title || !slug) {
         throw new Error("Front matter must include 'title' and 'slug'");
       }
 
+      const orderRaw = front.order ?? 1;
+      const order = Number(orderRaw);
+      if (!Number.isFinite(order) || order < 1) {
+        throw new Error(`Invalid 'order' value: ${String(orderRaw)}`);
+      }
+
       const db = getContentDb();
-      const result = await db.insert(topicNodes).values({
-        parentId: input.parentId ?? null,
-        order: Number(front.order ?? 1),
-        title,
-        slug,
-        content: parsed.content || null,
-        color: front.color ? String(front.color) : null,
-        iconType: front.iconType ? String(front.iconType) : null,
-      });
-      const id = Number(result[0].insertId);
 
-      await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
-        action: "create",
-        resource: "topic_nodes",
-        resourceId: id,
-        details: { title, slug, source: "import" },
-      });
+      const existing = await db
+        .select({ id: topicNodes.id })
+        .from(topicNodes)
+        .where(eq(topicNodes.slug, slug))
+        .limit(1);
+      if (existing.length > 0) {
+        throw new Error(`Topic with slug '${slug}' already exists`);
+      }
 
-      return { id, success: true };
+      try {
+        const result = await db.insert(topicNodes).values({
+          parentId: input.parentId ?? null,
+          order,
+          title,
+          slug,
+          content: parsed.content || null,
+          color: front.color ? String(front.color) : null,
+          iconType: front.iconType ? String(front.iconType) : null,
+          jupyterUrl: front.jupyterUrl ? String(front.jupyterUrl) : null,
+          labCategorySlug: front.labCategorySlug
+            ? String(front.labCategorySlug)
+            : null,
+        });
+        const id = Number(result[0].insertId);
+
+        await createAuditEntry({
+          actorId: ctx.localUser!.id,
+          actorType: "user",
+          action: "create",
+          resource: "topic_nodes",
+          resourceId: id,
+          details: { title, slug, source: "import" },
+        });
+
+        return { id, success: true };
+      } catch (err) {
+        console.error("importTopicNode error:", err);
+        if (err instanceof Error) {
+          throw new Error(`Import failed: ${err.message}`);
+        }
+        throw new Error("Import failed due to a database error");
+      }
     }),
 
   exportTopicNode: adminQuery
