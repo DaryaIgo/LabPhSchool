@@ -141,7 +141,7 @@ export const adminRouter = createRouter({
     return getContentDb()
       .select()
       .from(topicNodes)
-      .orderBy(asc(topicNodes.order));
+      .orderBy(asc(topicNodes.order), asc(topicNodes.id));
   }),
 
   getTopicNode: adminQuery

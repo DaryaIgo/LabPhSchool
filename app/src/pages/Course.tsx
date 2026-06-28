@@ -13,14 +13,18 @@ interface TreeNode extends TopicNode {
 }
 
 function buildTree(nodes: TopicNode[]): TreeNode[] {
+  const sorted = [...nodes].sort((a, b) => {
+    if (a.order !== b.order) return a.order - b.order;
+    return a.id - b.id;
+  });
   const map = new Map<number, TreeNode>();
   const roots: TreeNode[] = [];
 
-  for (const node of nodes) {
+  for (const node of sorted) {
     map.set(node.id, { ...node, children: [] });
   }
 
-  for (const node of nodes) {
+  for (const node of sorted) {
     const treeNode = map.get(node.id)!;
     if (node.parentId) {
       const parent = map.get(node.parentId);

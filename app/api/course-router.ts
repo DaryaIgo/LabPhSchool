@@ -14,7 +14,10 @@ export const courseRouter = createRouter({
   // ── Hierarchical Topic Nodes ──
   topicNodes: publicQuery.query(async () => {
     const db = getContentDb();
-    return db.select().from(topicNodes).orderBy(asc(topicNodes.order));
+    return db
+      .select()
+      .from(topicNodes)
+      .orderBy(asc(topicNodes.order), asc(topicNodes.id));
   }),
 
   topicNodeBySlug: publicQuery

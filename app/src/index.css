@@ -493,3 +493,23 @@
 .animate-nebulaSpin-reverse-fast {
   animation: nebulaSpinReverse 6s linear infinite;
 }
+
+/* Dust cloud twinkle animation */
+@keyframes dustTwinkle {
+  0%,
+  100% {
+    opacity: 0.08;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.45;
+    filter: brightness(1.6);
+  }
+}
+
+.animate-dustTwinkle {
+  animation-name: dustTwinkle;
+  animation-duration: 2s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}

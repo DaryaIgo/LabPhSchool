@@ -83,11 +83,14 @@ function generateNebula(count: number, size: number): Star[] {
 
 export default function NebulaLogo() {
   const size = 100;
-  const count = 140;
+  const starCount = 140;
   const cx = size / 2;
   const cy = size / 2;
   const [hovered, setHovered] = useState(false);
-  const stars = useMemo(() => generateNebula(count, size), [count, size]);
+  const stars = useMemo(
+    () => generateNebula(starCount, size),
+    [starCount, size]
+  );
 
   const inner = stars.filter(s => s.layer === "inner");
   const outer = stars.filter(s => s.layer === "outer");
@@ -107,9 +110,18 @@ export default function NebulaLogo() {
           <stop offset="70%" stopColor="#6366f1" stopOpacity="0.1" />
           <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
         </radialGradient>
+        <radialGradient id="dustCloudGradient" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.75" />
+          <stop offset="35%" stopColor="#e2e8f0" stopOpacity="0.35" />
+          <stop offset="75%" stopColor="#cbd5e1" stopOpacity="0.1" />
+          <stop offset="100%" stopColor="#94a3b8" stopOpacity="0" />
+        </radialGradient>
         <filter id="nebulaGlow" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur stdDeviation="1.6" result="blur" />
           <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+        <filter id="dustBlur" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="8" />
         </filter>
       </defs>
 
@@ -181,6 +193,17 @@ export default function NebulaLogo() {
         className="origin-center transition-all duration-700 ease-out group-hover:opacity-40 group-hover:scale-95"
         style={{ transformOrigin: "center" }}
         filter="url(#nebulaGlow)"
+      />
+
+      {/* Single wide dust cloud — invisible at rest, flickers white on hover */}
+      <circle
+        cx={cx}
+        cy={cy}
+        r={size * 0.9}
+        fill="url(#dustCloudGradient)"
+        filter="url(#dustBlur)"
+        className={`origin-center ${hovered ? "animate-dustTwinkle" : ""}`}
+        style={{ opacity: hovered ? undefined : 0, transformOrigin: "center" }}
       />
     </svg>
   );
