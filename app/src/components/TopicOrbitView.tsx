@@ -449,11 +449,11 @@ export default function TopicOrbitView({
                 role="button"
                 tabIndex={0}
                 aria-label="Закрыть"
-                className="relative flex flex-col items-center justify-center text-center w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 transition-all duration-500 hover:scale-105 cursor-pointer"
+                className="group relative flex flex-col items-center justify-center text-center w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 transition-all duration-500 hover:scale-110 cursor-pointer"
                 style={{
-                  borderColor: `${accent}60`,
-                  backgroundColor: `${accent}14`,
-                  boxShadow: `0 0 60px ${accent}20, inset 0 0 30px ${accent}10`,
+                  borderColor: `${accent}40`,
+                  backgroundColor: `${accent}10`,
+                  boxShadow: `0 0 0 transparent`,
                 }}
                 onKeyDown={e => {
                   if (e.key === "Enter" || e.key === " ") {
@@ -462,10 +462,24 @@ export default function TopicOrbitView({
                   }
                 }}
               >
+                {/* Outer glow — hover only */}
                 <div
-                  className="absolute inset-0 rounded-full opacity-60"
+                  className="absolute inset-0 rounded-full blur-xl opacity-0 transition-opacity duration-500 group-hover:opacity-70"
+                  style={{ backgroundColor: accent }}
+                />
+                {/* Rim + inset glow — hover only */}
+                <div
+                  className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                   style={{
-                    boxShadow: `0 0 80px ${accent}30`,
+                    boxShadow: `0 0 48px ${accent}45, inset 0 0 28px ${accent}22`,
+                  }}
+                />
+                {/* Surface highlight */}
+                <div
+                  className="absolute inset-0 rounded-full opacity-30 group-hover:opacity-60 transition-opacity duration-500"
+                  style={{
+                    background:
+                      "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.3) 0%, transparent 45%)",
                   }}
                 />
                 <div className="relative z-10 flex flex-col items-center gap-1">
