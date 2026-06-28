@@ -4,7 +4,7 @@ import SnakeTimeline from "@/components/SnakeTimeline";
 import { useAuth } from "@/hooks/useAuth";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { Progress } from "@/components/ui/progress";
-import { FlaskConical, Loader2, Atom } from "lucide-react";
+import { FlaskConical, Loader2 } from "lucide-react";
 
 export default function Labs() {
   const { user } = useAuth();

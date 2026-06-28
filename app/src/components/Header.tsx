@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { trpc } from "@/providers/trpc";
+import NebulaLogo from "@/components/NebulaLogo";
 import {
   Popover,
   PopoverContent,
@@ -142,12 +143,8 @@ export default function Header() {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-6">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2">
-              <div className="flex flex-col items-center leading-none">
-                <span className="font-mono-phys text-2xl font-bold neon-ph">
-                  Ph
-                </span>
-              </div>
+            <Link to="/" className="group flex items-center gap-2">
+              <NebulaLogo />
             </Link>
 
             {/* Desktop Nav */}
