@@ -260,20 +260,34 @@ export default function SnakeTimeline({
                 className={`
                   group relative flex flex-col items-center justify-center text-center
                   ${sz.node} rounded-full border-2 transition-all duration-500 ease-out
-                  hover:scale-110 hover:shadow-[0_0_30px_rgba(46,255,140,0.35)]
+                  hover:scale-110
                   ${isClickable ? "cursor-pointer" : "cursor-default"}
                   ${item.disabled ? "opacity-50" : ""}
                 `}
                 style={{
-                  borderColor: `${accent}50`,
-                  backgroundColor: `${accent}12`,
-                  boxShadow: `0 0 24px ${accent}12`,
+                  borderColor: `${accent}40`,
+                  backgroundColor: `${accent}10`,
+                  boxShadow: `0 0 0 transparent`,
                 }}
               >
+                {/* Outer glow — only on hover */}
+                <div
+                  className="absolute inset-0 rounded-full blur-xl opacity-0 transition-opacity duration-500 group-hover:opacity-70"
+                  style={{ backgroundColor: accent }}
+                />
+                {/* Rim + inset glow — only on hover */}
                 <div
                   className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                   style={{
-                    boxShadow: `0 0 48px ${accent}45, inset 0 0 20px ${accent}18`,
+                    boxShadow: `0 0 40px ${accent}45, inset 0 0 24px ${accent}18`,
+                  }}
+                />
+                {/* Surface highlight — subtle by default, stronger on hover */}
+                <div
+                  className="absolute inset-0 rounded-full opacity-30 group-hover:opacity-60 transition-opacity duration-500"
+                  style={{
+                    background:
+                      "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.3) 0%, transparent 45%)",
                   }}
                 />
                 <div className="relative z-10 flex flex-col items-center justify-center gap-1">
