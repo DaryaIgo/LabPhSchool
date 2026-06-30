@@ -548,6 +548,14 @@ export default function Home() {
                   />
                   {/* Soft grounding shadow */}
                   <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-[70%] h-6 bg-[#262e33]/15 blur-2xl rounded-full z-0" />
+
+                  {/* Soft edge blend — left and bottom so photo doesn't look cut */}
+                  <div className="absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-[#e8ebed]/80 via-[#e8ebed]/25 to-transparent z-20 pointer-events-none" />
+                  <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#e8ebed] via-[#e8ebed]/40 to-transparent z-20 pointer-events-none rounded-b-3xl" />
+
+                  {/* Subtle colored rim accent on edges */}
+                  <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-[#d8b4fe]/0 via-[#2eff8c]/40 to-[#01acff]/60 blur-[4px] z-10 pointer-events-none" />
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-[#2eff8c]/60 via-[#01acff]/40 to-[#d8b4fe]/60 blur-[4px] z-10 pointer-events-none" />
                 </div>
 
               </div>
