@@ -14,7 +14,11 @@ import type {
   ExternalDataTable,
   ExternalGraphConfig,
 } from "./external-data";
-import { createEmptyGraph, tableToMeasurementRows } from "./external-data";
+import {
+  createEmptyGraph,
+  getColumnName,
+  tableToMeasurementRows,
+} from "./external-data";
 import type { GraphConfig } from "./simulations/types";
 
 interface ExternalGraphsProps {
@@ -96,6 +100,8 @@ function GraphEditor({
         type: graph.type,
         xKey: graph.xColumnId,
         yKey: graph.yColumnId,
+        xLabel: getColumnName(selectedTable, graph.xColumnId),
+        yLabel: getColumnName(selectedTable, graph.yColumnId),
       }
     : null;
 

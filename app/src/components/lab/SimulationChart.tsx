@@ -28,6 +28,10 @@ export default function SimulationChart({
   const defaultDomain: [number, number] = [0, 1];
   const autoDomain: [string, string] = ["auto", "auto"];
 
+  const xAxisName = graph.xLabel ?? graph.xKey;
+  const yAxisName = graph.yLabel ?? graph.yKey;
+  const seriesName = `${yAxisName}(${xAxisName})`;
+
   const tooltipStyle = {
     contentStyle: {
       backgroundColor: "#1a1f22",
@@ -35,6 +39,22 @@ export default function SimulationChart({
       borderRadius: "8px",
       color: "#fff",
     },
+  };
+
+  const xAxisLabel = {
+    value: xAxisName,
+    position: "insideBottom" as const,
+    offset: -2,
+    fill: "#798389",
+    fontSize: 11,
+  };
+
+  const yAxisLabel = {
+    value: yAxisName,
+    angle: -90,
+    position: "insideLeft" as const,
+    fill: "#798389",
+    fontSize: 11,
   };
 
   if (graph.type === "scatter") {
@@ -49,6 +69,7 @@ export default function SimulationChart({
             fontSize={11}
             tickLine={false}
             domain={isEmpty ? defaultDomain : autoDomain}
+            label={xAxisLabel}
           />
           <YAxis
             type="number"
@@ -57,11 +78,12 @@ export default function SimulationChart({
             fontSize={11}
             tickLine={false}
             domain={isEmpty ? defaultDomain : autoDomain}
+            label={yAxisLabel}
           />
           <Tooltip {...tooltipStyle} />
           {!isEmpty && (
             <Scatter
-              name={`${graph.yKey}(${graph.xKey})`}
+              name={seriesName}
               data={chartData}
               fill="#2eff8c"
             />
@@ -82,6 +104,7 @@ export default function SimulationChart({
           fontSize={11}
           tickLine={false}
           domain={isEmpty ? defaultDomain : autoDomain}
+          label={xAxisLabel}
         />
         <YAxis
           type="number"
@@ -90,6 +113,7 @@ export default function SimulationChart({
           fontSize={11}
           tickLine={false}
           domain={isEmpty ? defaultDomain : autoDomain}
+          label={yAxisLabel}
         />
         <Tooltip {...tooltipStyle} />
         {!isEmpty && (
@@ -99,7 +123,7 @@ export default function SimulationChart({
             stroke="#2eff8c"
             strokeWidth={2}
             dot={{ r: 3, fill: "#2eff8c" }}
-            name={`${graph.yKey}(${graph.xKey})`}
+            name={seriesName}
           />
         )}
       </LineChart>
