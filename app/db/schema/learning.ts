@@ -309,3 +309,39 @@ export const assignedJupyterNotebooks = mysqlTable(
 
 export type AssignedJupyterNotebook =
   typeof assignedJupyterNotebooks.$inferSelect;
+
+// ═══════════════════════════════════════════════════════════════
+// Teacher-defined personal links for a student
+// ═══════════════════════════════════════════════════════════════
+
+// Soft references:
+// - localUserId -> auth.local_users.id
+// - createdBy   -> auth.users.id
+
+export const studentLinks = mysqlTable(
+  "student_links",
+  {
+    id: serial("id").primaryKey(),
+    localUserId: bigint("local_user_id", {
+      mode: "number",
+      unsigned: true,
+    }).notNull(),
+    url: varchar("url", { length: 500 }).notNull(),
+    title: varchar("title", { length: 255 }),
+    platformKey: varchar("platform_key", { length: 50 })
+      .notNull()
+      .default("other"),
+    displayOrder: int("display_order").notNull().default(1),
+    createdBy: bigint("created_by", { mode: "number", unsigned: true }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
+  },
+  table => ({
+    localUserIdx: index("student_link_local_user_idx").on(table.localUserId),
+  })
+);
+
+export type StudentLink = typeof studentLinks.$inferSelect;

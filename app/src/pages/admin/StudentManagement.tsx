@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { StudentLinksDialog } from "@/components/admin/StudentLinksDialog";
 
 import {
   GraduationCap,
@@ -47,6 +48,8 @@ import {
   ChevronLeft,
   ChevronRight,
   User,
+  Link,
+  Shield,
 } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -71,6 +74,10 @@ export default function StudentManagement() {
     name: string;
     status: string;
   } | null>(null);
+  const [linksDialogStudent, setLinksDialogStudent] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
 
   // Form states
   const [formLogin, setFormLogin] = useState("");
@@ -80,10 +87,22 @@ export default function StudentManagement() {
   const [editStatus, setEditStatus] = useState("active");
   const [editPassword, setEditPassword] = useState("");
 
-  const { data, isLoading } = trpc.student.list.useQuery(
-    { search: search || undefined, status: statusFilter, page, pageSize: 20 },
+  const { data: adminsData, isLoading: adminsLoading } = trpc.student.list.useQuery(
+    { role: "admin", pageSize: 100 },
     { enabled: !!user && user.role === "admin" }
   );
+
+  const { data: studentsData, isLoading: studentsLoading } =
+    trpc.student.list.useQuery(
+      {
+        search: search || undefined,
+        status: statusFilter,
+        role: "student",
+        page,
+        pageSize: 20,
+      },
+      { enabled: !!user && user.role === "admin" }
+    );
 
   const createMutation = trpc.student.create.useMutation({
     onSuccess: () => {
@@ -160,6 +179,143 @@ export default function StudentManagement() {
       return;
     }
     updateMutation.mutate({ id: editStudent.id, ...data });
+  }
+
+  function renderUserRow(
+    s: {
+      id: number;
+      login: string;
+      name: string;
+      status: string;
+      roleName: string;
+      createdAt: Date | null;
+    },
+    isAdmin: boolean
+  ) {
+    return (
+      <tr
+        key={s.id}
+        className="border-b border-[#37474f]/50 hover:bg-[#263238]/50"
+      >
+        <td className="p-4 font-mono text-xs text-gray-400">{s.id}</td>
+        <td className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-[#2eff8c]/10 flex items-center justify-center shrink-0">
+              <User className="h-4 w-4 text-[#2eff8c]" />
+            </div>
+            <div>
+              <div className="text-white font-semibold text-base leading-tight">
+                {s.name}
+              </div>
+              <div className="text-gray-400 text-sm leading-tight mt-0.5">
+                @{s.login}
+              </div>
+            </div>
+          </div>
+        </td>
+        <td className="p-4">
+          <Badge
+            className={
+              s.roleName === "admin"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-600 text-white"
+            }
+          >
+            {s.roleName === "admin"
+              ? "Администратор"
+              : s.roleName === "student"
+                ? "Ученик"
+                : s.roleName}
+          </Badge>
+        </td>
+        <td className="p-4">
+          <Badge className={STATUS_COLORS[s.status] ?? "bg-gray-600"}>
+            {s.status}
+          </Badge>
+        </td>
+        <td className="p-4 text-gray-400">
+          {s.createdAt
+            ? new Date(s.createdAt).toLocaleDateString()
+            : "—"}
+        </td>
+        <td className="p-4">
+          <div className="flex items-center justify-end gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setEditStudent({
+                  id: s.id,
+                  name: s.name,
+                  status: s.status,
+                });
+                setEditName(s.name);
+                setEditStatus(s.status);
+                setEditPassword("");
+              }}
+              title="Edit"
+            >
+              <Pencil className="h-4 w-4 text-[#2eff8c]" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                setLinksDialogStudent({ id: s.id, name: s.name })
+              }
+              title="Ссылки"
+            >
+              <Link className="h-4 w-4 text-sky-400" />
+            </Button>
+            {!isAdmin && (
+              <>
+                {s.status === "active" ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      suspendMutation.mutate({ id: s.id })
+                    }
+                    disabled={suspendMutation.isPending}
+                    title="Suspend"
+                  >
+                    <PauseCircle className="h-4 w-4 text-yellow-400" />
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      activateMutation.mutate({ id: s.id })
+                    }
+                    disabled={activateMutation.isPending}
+                    title="Activate"
+                  >
+                    <PlayCircle className="h-4 w-4 text-green-400" />
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (
+                      confirm(
+                        `Delete student "${s.name}"? This cannot be undone.`
+                      )
+                    ) {
+                      deleteMutation.mutate({ id: s.id });
+                    }
+                  }}
+                  title="Delete"
+                >
+                  <Trash2 className="h-4 w-4 text-red-400" />
+                </Button>
+              </>
+            )}
+          </div>
+        </td>
+      </tr>
+    );
   }
 
   if (!user || user.role !== "admin") return null;
@@ -284,10 +440,67 @@ export default function StudentManagement() {
         </Select>
       </div>
 
-      {/* Table */}
+      {/* Administrators */}
+      {adminsLoading ? (
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+            <Shield className="h-5 w-5 text-[#2eff8c]" />
+            Administrators
+          </h2>
+          <div className="p-6 space-y-3 bg-[#1e2529] rounded-xl border border-[#37474f]">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <Skeleton key={i} className="h-12 bg-[#37474f]" />
+            ))}
+          </div>
+        </div>
+      ) : adminsData && adminsData.users.length > 0 ? (
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+            <Shield className="h-5 w-5 text-[#2eff8c]" />
+            Administrators
+          </h2>
+          <Card className="bg-[#1e2529] border-[#37474f]">
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[#37474f]">
+                      <th className="text-left p-4 text-gray-400 font-medium">
+                        ID
+                      </th>
+                      <th className="text-left p-4 text-gray-400 font-medium">
+                        User
+                      </th>
+                      <th className="text-left p-4 text-gray-400 font-medium">
+                        Role
+                      </th>
+                      <th className="text-left p-4 text-gray-400 font-medium">
+                        Status
+                      </th>
+                      <th className="text-left p-4 text-gray-400 font-medium">
+                        Created
+                      </th>
+                      <th className="text-right p-4 text-gray-400 font-medium">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>{adminsData.users.map(s => renderUserRow(s, true))}</tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
+
+      {/* Students */}
+      <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+        <GraduationCap className="h-5 w-5 text-[#2eff8c]" />
+        Students
+      </h2>
       <Card className="bg-[#1e2529] border-[#37474f]">
         <CardContent className="p-0">
-          {isLoading ? (
+          {studentsLoading ? (
             <div className="p-6 space-y-3">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Skeleton key={i} className="h-12 bg-[#37474f]" />
@@ -320,7 +533,7 @@ export default function StudentManagement() {
                     </tr>
                   </thead>
                   <tbody>
-                    {data?.users.length === 0 && (
+                    {studentsData?.users.length === 0 && (
                       <tr>
                         <td
                           colSpan={6}
@@ -330,129 +543,17 @@ export default function StudentManagement() {
                         </td>
                       </tr>
                     )}
-                    {data?.users.map(s => (
-                      <tr
-                        key={s.id}
-                        className="border-b border-[#37474f]/50 hover:bg-[#263238]/50"
-                      >
-                        <td className="p-4 font-mono text-xs text-gray-400">
-                          {s.id}
-                        </td>
-                        <td className="p-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-[#2eff8c]/10 flex items-center justify-center shrink-0">
-                              <User className="h-4 w-4 text-[#2eff8c]" />
-                            </div>
-                            <div>
-                              <div className="text-white font-semibold text-base leading-tight">
-                                {s.name}
-                              </div>
-                              <div className="text-gray-400 text-sm leading-tight mt-0.5">
-                                @{s.login}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <Badge
-                            className={
-                              s.roleName === "admin"
-                                ? "bg-blue-600 text-white"
-                                : "bg-gray-600 text-white"
-                            }
-                          >
-                            {s.roleName === "admin"
-                              ? "Администратор"
-                              : s.roleName === "student"
-                                ? "Ученик"
-                                : s.roleName}
-                          </Badge>
-                        </td>
-                        <td className="p-4">
-                          <Badge
-                            className={STATUS_COLORS[s.status] ?? "bg-gray-600"}
-                          >
-                            {s.status}
-                          </Badge>
-                        </td>
-                        <td className="p-4 text-gray-400">
-                          {s.createdAt
-                            ? new Date(s.createdAt).toLocaleDateString()
-                            : "—"}
-                        </td>
-                        <td className="p-4">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setEditStudent({
-                                  id: s.id,
-                                  name: s.name,
-                                  status: s.status,
-                                });
-                                setEditName(s.name);
-                                setEditStatus(s.status);
-                                setEditPassword("");
-                              }}
-                              title="Edit"
-                            >
-                              <Pencil className="h-4 w-4 text-[#2eff8c]" />
-                            </Button>
-                            {s.status === "active" ? (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  suspendMutation.mutate({ id: s.id })
-                                }
-                                disabled={suspendMutation.isPending}
-                                title="Suspend"
-                              >
-                                <PauseCircle className="h-4 w-4 text-yellow-400" />
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  activateMutation.mutate({ id: s.id })
-                                }
-                                disabled={activateMutation.isPending}
-                                title="Activate"
-                              >
-                                <PlayCircle className="h-4 w-4 text-green-400" />
-                              </Button>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                if (
-                                  confirm(
-                                    `Delete student "${s.name}"? This cannot be undone.`
-                                  )
-                                ) {
-                                  deleteMutation.mutate({ id: s.id });
-                                }
-                              }}
-                              title="Delete"
-                            >
-                              <Trash2 className="h-4 w-4 text-red-400" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {studentsData?.users.map(s => renderUserRow(s, false))}
                   </tbody>
                 </table>
               </div>
 
               {/* Pagination */}
-              {data && data.totalPages > 1 && (
+              {studentsData && studentsData.totalPages > 1 && (
                 <div className="flex items-center justify-between p-4 border-t border-[#37474f]">
                   <p className="text-sm text-gray-400">
-                    Page {data.page} of {data.totalPages} ({data.total} total)
+                    Page {studentsData.page} of {studentsData.totalPages} (
+                    {studentsData.total} total)
                   </p>
                   <div className="flex gap-2">
                     <Button
@@ -468,9 +569,11 @@ export default function StudentManagement() {
                       variant="outline"
                       size="sm"
                       onClick={() =>
-                        setPage(p => Math.min(data.totalPages, p + 1))
+                        setPage(p =>
+                          Math.min(studentsData.totalPages, p + 1)
+                        )
                       }
-                      disabled={page >= data.totalPages}
+                      disabled={page >= studentsData.totalPages}
                       className="border-[#37474f]"
                     >
                       <ChevronRight className="h-4 w-4" />
@@ -482,6 +585,18 @@ export default function StudentManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Links Dialog */}
+      {linksDialogStudent && (
+        <StudentLinksDialog
+          studentId={linksDialogStudent.id}
+          studentName={linksDialogStudent.name}
+          open={!!linksDialogStudent}
+          onOpenChange={open => {
+            if (!open) setLinksDialogStudent(null);
+          }}
+        />
+      )}
 
       {/* Edit Dialog */}
       {editStudent && (

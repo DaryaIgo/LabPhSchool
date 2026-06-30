@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import StudentLabsSection from "@/components/StudentLabsSection";
 import StudentProblemsSection from "@/components/StudentProblemsSection";
 import StudentNotebooksSection from "@/components/StudentNotebooksSection";
+import { PlatformLinkButton } from "@/components/PlatformLinkButton";
 import {
   Dialog,
   DialogContent,
@@ -93,6 +94,11 @@ export default function StudentProfile() {
 
   const { data: profile, isLoading: profileLoading } =
     trpc.student.getProfile.useQuery(undefined, {
+      enabled: isAuthenticated && user?.role === "student",
+    });
+
+  const { data: myLinks, isLoading: linksLoading } =
+    trpc.student.getMyLinks.useQuery(undefined, {
       enabled: isAuthenticated && user?.role === "student",
     });
 
@@ -253,6 +259,29 @@ export default function StudentProfile() {
                     </p>
                   </div>
                 </div>
+
+                {linksLoading ? (
+                  <div className="mt-3 flex items-center gap-2">
+                    <Skeleton className="h-8 w-24 bg-[#37474f]" />
+                    <Skeleton className="h-8 w-24 bg-[#37474f]" />
+                  </div>
+                ) : myLinks && myLinks.length > 0 ? (
+                  <div className="mt-3">
+                    <p className="text-xs text-[#798389] mb-2">
+                      Мои ссылки
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {myLinks.map(link => (
+                        <PlatformLinkButton
+                          key={link.id}
+                          url={link.url}
+                          title={link.title}
+                          size="sm"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
 
                 {profileLoading ? (
                   <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">

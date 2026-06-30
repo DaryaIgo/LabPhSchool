@@ -10,6 +10,7 @@ import { TRPCError } from "@trpc/server";
 import { createRouter, studentQuery, adminQuery } from "./middleware";
 import {
   findLocalUserById,
+  findLocalUserWithRole,
   listLocalUsers,
   createLocalUser,
   updateLocalUser,
@@ -33,7 +34,20 @@ import {
   getAssignedJupyterNotebookById,
   updateAssignedJupyterNotebook,
 } from "./queries/assignedJupyterNotebooks";
+import {
+  listStudentLinks,
+  createStudentLink,
+  updateStudentLink,
+  deleteStudentLink,
+  getStudentLinkById,
+  getMaxDisplayOrder,
+  deleteStudentLinksByLocalUserId,
+} from "./queries/studentLinks";
 import { createAuditEntry } from "./queries/audit";
+import {
+  detectPlatform,
+  getPlatformDisplayTitle,
+} from "@contracts/platformLinks";
 import {
   eq,
   and,
@@ -234,6 +248,19 @@ export const studentRouter = createRouter({
       enrollments: enrollmentsList,
       topicProgress,
     };
+  }),
+
+  // ── Get current student's personal links ──
+  getMyLinks: studentQuery.query(async ({ ctx }) => {
+    const links = await listStudentLinks(ctx.localUser!.id);
+    return links.map(link => ({
+      id: link.id,
+      url: link.url,
+      title: link.title,
+      platformKey: link.platformKey,
+      displayOrder: link.displayOrder,
+      displayTitle: getPlatformDisplayTitle(link.url, link.title),
+    }));
   }),
 
   // ── Get learning path (roadmap) ──
@@ -614,6 +641,7 @@ export const studentRouter = createRouter({
         .object({
           status: z.enum(["active", "inactive", "suspended"]).optional(),
           search: z.string().max(100).optional(),
+          role: z.enum(["admin", "student"]).optional(),
           page: z.number().positive().default(1),
           pageSize: z.number().positive().max(100).default(50),
         })
@@ -737,6 +765,15 @@ export const studentRouter = createRouter({
   delete: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
+      const user = await findLocalUserWithRole(input.id);
+      if (user?.roleName === "admin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot delete an administrator account",
+        });
+      }
+
+      await deleteStudentLinksByLocalUserId(input.id);
       await deleteLocalUser(input.id);
 
       await createAuditEntry({
@@ -754,6 +791,14 @@ export const studentRouter = createRouter({
   suspend: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
+      const user = await findLocalUserWithRole(input.id);
+      if (user?.roleName === "admin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot suspend an administrator account",
+        });
+      }
+
       await suspendLocalUser(input.id);
 
       await createAuditEntry({
@@ -771,6 +816,14 @@ export const studentRouter = createRouter({
   activate: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
+      const user = await findLocalUserWithRole(input.id);
+      if (user?.roleName === "admin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot change status of an administrator account",
+        });
+      }
+
       await activateLocalUser(input.id);
 
       await createAuditEntry({
@@ -942,6 +995,150 @@ export const studentRouter = createRouter({
           completedAt: prog?.completedAt,
         };
       });
+    }),
+
+  // ═══════════════════════════════════════════════════════════
+  // Admin: Student Personal Links
+  // ═══════════════════════════════════════════════════════════
+
+  listLinks: adminQuery
+    .input(z.object({ localUserId: z.number().positive() }))
+    .query(async ({ ctx, input }) => {
+      const student = await findLocalUserById(input.localUserId);
+      if (!student) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Student not found" });
+      }
+
+      const links = await listStudentLinks(input.localUserId);
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "list",
+        resource: "student_links",
+        details: { localUserId: input.localUserId },
+      });
+
+      return links.map(link => ({
+        id: link.id,
+        url: link.url,
+        title: link.title,
+        platformKey: link.platformKey,
+        displayOrder: link.displayOrder,
+        displayTitle: getPlatformDisplayTitle(link.url, link.title),
+        createdAt: link.createdAt,
+        updatedAt: link.updatedAt,
+      }));
+    }),
+
+  createLink: adminQuery
+    .input(
+      z.object({
+        localUserId: z.number().positive(),
+        url: z.string().url().max(500),
+        title: z.string().max(255).optional().nullable(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const student = await findLocalUserById(input.localUserId);
+      if (!student) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Student not found" });
+      }
+
+      const platform = detectPlatform(input.url);
+      const maxOrder = await getMaxDisplayOrder(input.localUserId);
+
+      const result = await createStudentLink({
+        localUserId: input.localUserId,
+        url: input.url,
+        title: input.title,
+        platformKey: platform.key,
+        displayOrder: maxOrder + 1,
+        createdBy: ctx.localUser!.id,
+      });
+
+      const insertedId = Number(result[0].insertId);
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "create",
+        resource: "student_links",
+        resourceId: insertedId,
+        details: {
+          localUserId: input.localUserId,
+          url: input.url,
+          platformKey: platform.key,
+        },
+      });
+
+      return {
+        id: insertedId,
+        url: input.url,
+        title: input.title,
+        platformKey: platform.key,
+        displayTitle: getPlatformDisplayTitle(input.url, input.title),
+        displayOrder: maxOrder + 1,
+      };
+    }),
+
+  updateLink: adminQuery
+    .input(
+      z.object({
+        id: z.number().positive(),
+        url: z.string().url().max(500).optional(),
+        title: z.string().max(255).optional().nullable(),
+        displayOrder: z.number().int().positive().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+
+      const existing = await getStudentLinkById(id);
+      if (!existing) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Link not found",
+        });
+      }
+
+      const updateData: Parameters<typeof updateStudentLink>[1] = {};
+      if (data.url !== undefined) {
+        updateData.url = data.url;
+        updateData.platformKey = detectPlatform(data.url).key;
+      }
+      if (data.title !== undefined) updateData.title = data.title;
+      if (data.displayOrder !== undefined)
+        updateData.displayOrder = data.displayOrder;
+
+      await updateStudentLink(id, updateData);
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "update",
+        resource: "student_links",
+        resourceId: id,
+        details: { fields: Object.keys(data) },
+      });
+
+      return { success: true };
+    }),
+
+  deleteLink: adminQuery
+    .input(z.object({ id: z.number().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      await deleteStudentLink(input.id);
+
+      await createAuditEntry({
+        actorId: ctx.localUser!.id,
+        actorType: "user",
+        action: "delete",
+        resource: "student_links",
+        resourceId: input.id,
+      });
+
+      return { success: true };
     }),
 
   // ═══════════════════════════════════════════════════════════

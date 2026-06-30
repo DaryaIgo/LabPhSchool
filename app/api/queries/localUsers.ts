@@ -54,11 +54,12 @@ export async function findLocalUserWithRole(id: number) {
 export async function listLocalUsers(options?: {
   status?: "active" | "inactive" | "suspended";
   search?: string;
+  role?: string;
   page?: number;
   pageSize?: number;
 }) {
   const db = getAuthDb();
-  const { status, search, page = 1, pageSize = 50 } = options ?? {};
+  const { status, search, role, page = 1, pageSize = 50 } = options ?? {};
 
   const conditions = [];
   if (status) {
@@ -67,6 +68,9 @@ export async function listLocalUsers(options?: {
   if (search) {
     conditions.push(like(localUsers.name, `%${search}%`));
   }
+  if (role) {
+    conditions.push(eq(roles.name, role));
+  }
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
@@ -74,6 +78,7 @@ export async function listLocalUsers(options?: {
   const [totalResult] = await db
     .select({ count: count() })
     .from(localUsers)
+    .innerJoin(roles, eq(localUsers.roleId, roles.id))
     .where(whereClause);
   const total = totalResult.count;
 
