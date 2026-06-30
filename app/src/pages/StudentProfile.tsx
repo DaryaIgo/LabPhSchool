@@ -20,6 +20,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   User,
   Beaker,
   FileText,
@@ -185,161 +190,212 @@ export default function StudentProfile() {
   return (
     <div className="pt-16 min-h-screen bg-[#262e33]">
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-8">
-        {/* Header / Student Info */}
-        <section className="mb-8">
-          <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 lg:p-8 text-white">
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-              {/* Avatar */}
-              <Dialog
-                open={avatarDialogOpen}
-                onOpenChange={setAvatarDialogOpen}
-              >
-                <DialogTrigger asChild>
-                  <button className="relative group shrink-0">
-                    <div className="w-24 h-24 lg:w-28 lg:h-28 rounded-2xl overflow-hidden border-2 border-[#434e54] group-hover:border-[#2eff8c] transition-colors bg-[#1a1f22]">
-                      {user.avatar ? (
-                        <img
-                          src={`/avatars/${user.avatar}.svg`}
-                          alt="Avatar"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <User size={40} className="text-[#798389]" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
-                      <span className="text-xs text-white font-medium">
-                        Изменить
-                      </span>
-                    </div>
-                  </button>
-                </DialogTrigger>
-                <DialogContent className="bg-[#1e2529] border-[#37474f] text-white max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Выберите аватар</DialogTitle>
-                  </DialogHeader>
-                  <div className="grid grid-cols-3 gap-4 mt-4">
-                    {AVATARS.map(avatar => (
-                      <button
-                        key={avatar.id}
-                        onClick={() => {
-                          updateAvatar.mutate({ avatar: avatar.id });
-                          setAvatarDialogOpen(false);
-                        }}
-                        className={`flex flex-col items-center gap-2 p-3 rounded-xl border transition-all ${
-                          user.avatar === avatar.id
-                            ? "border-[#2eff8c] bg-[#2eff8c]/10"
-                            : "border-[#37474f] hover:border-[#2eff8c]/50"
-                        }`}
-                      >
-                        <img
-                          src={avatar.src}
-                          alt={avatar.name}
-                          className="w-14 h-14 rounded-full"
-                        />
-                        <span className="text-xs text-[#c8cdd1]">
-                          {avatar.name}
+        <div className="grid grid-cols-1 lg:grid-cols-[15rem_1fr] gap-6">
+          {/* Header / Student Info */}
+          <section className="order-1 max-w-5xl mx-auto w-full lg:col-start-2">
+            <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 lg:p-8 text-white">
+              <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                {/* Avatar */}
+                <Dialog
+                  open={avatarDialogOpen}
+                  onOpenChange={setAvatarDialogOpen}
+                >
+                  <DialogTrigger asChild>
+                    <button className="relative group shrink-0">
+                      <div className="w-24 h-24 lg:w-28 lg:h-28 rounded-2xl overflow-hidden border-2 border-[#434e54] group-hover:border-[#2eff8c] transition-colors bg-[#1a1f22]">
+                        {user.avatar ? (
+                          <img
+                            src={`/avatars/${user.avatar}.svg`}
+                            alt="Avatar"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <User size={40} className="text-[#798389]" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
+                        <span className="text-xs text-white font-medium">
+                          Изменить
                         </span>
-                      </button>
-                    ))}
-                  </div>
-                </DialogContent>
-              </Dialog>
-
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div>
-                    <h1 className="text-2xl lg:text-3xl font-bold">
-                      {user.name}
-                    </h1>
-                    <p className="text-sm text-[#798389] mt-1">
-                      Ученик · Логин: {user.login}
-                    </p>
-                  </div>
-                </div>
-
-                {linksLoading ? (
-                  <div className="mt-3 flex items-center gap-2">
-                    <Skeleton className="h-8 w-24 bg-[#37474f]" />
-                    <Skeleton className="h-8 w-24 bg-[#37474f]" />
-                  </div>
-                ) : myLinks && myLinks.length > 0 ? (
-                  <div className="mt-3">
-                    <p className="text-xs text-[#798389] mb-2">
-                      Мои ссылки
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {myLinks.map(link => (
-                        <PlatformLinkButton
-                          key={link.id}
-                          url={link.url}
-                          title={link.title}
-                          size="sm"
-                        />
+                      </div>
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="bg-[#1e2529] border-[#37474f] text-white max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Выберите аватар</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid grid-cols-3 gap-4 mt-4">
+                      {AVATARS.map(avatar => (
+                        <button
+                          key={avatar.id}
+                          onClick={() => {
+                            updateAvatar.mutate({ avatar: avatar.id });
+                            setAvatarDialogOpen(false);
+                          }}
+                          className={`flex flex-col items-center gap-2 p-3 rounded-xl border transition-all ${
+                            user.avatar === avatar.id
+                              ? "border-[#2eff8c] bg-[#2eff8c]/10"
+                              : "border-[#37474f] hover:border-[#2eff8c]/50"
+                          }`}
+                        >
+                          <img
+                            src={avatar.src}
+                            alt={avatar.name}
+                            className="w-14 h-14 rounded-full"
+                          />
+                          <span className="text-xs text-[#c8cdd1]">
+                            {avatar.name}
+                          </span>
+                        </button>
                       ))}
                     </div>
-                  </div>
-                ) : null}
+                  </DialogContent>
+                </Dialog>
 
-                {profileLoading ? (
-                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                      <Skeleton key={i} className="h-16 bg-[#37474f]" />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div className="bg-[#1e2529] rounded-xl p-3 border border-[#37474f]">
-                      <div className="text-xs text-[#798389] mb-1">
-                        Общий прогресс
-                      </div>
-                      <div className="text-xl font-bold text-[#2eff8c]">
-                        {profile?.overallProgress ?? 0}%
-                      </div>
-                    </div>
-                    <div className="bg-[#1e2529] rounded-xl p-3 border border-[#37474f]">
-                      <div className="text-xs text-[#798389] mb-1">
-                        Завершено тем
-                      </div>
-                      <div className="text-xl font-bold text-[#01acff]">
-                        {profile?.completedSubtopics ?? 0}
-                      </div>
-                    </div>
-                    <div className="bg-[#1e2529] rounded-xl p-3 border border-[#37474f]">
-                      <div className="text-xs text-[#798389] mb-1">
-                        В процессе
-                      </div>
-                      <div className="text-xl font-bold text-[#ffcb3d]">
-                        {profile?.inProgressSubtopics ?? 0}
-                      </div>
-                    </div>
-                    <div className="bg-[#1e2529] rounded-xl p-3 border border-[#37474f]">
-                      <div className="text-xs text-[#798389] mb-1">
-                        Дата начала
-                      </div>
-                      <div className="text-sm font-bold text-[#c8cdd1]">
-                        {profile?.createdAt
-                          ? new Date(profile.createdAt).toLocaleDateString(
-                              "ru-RU"
-                            )
-                          : "—"}
-                      </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                      <h1 className="text-2xl lg:text-3xl font-bold">
+                        {user.name}
+                      </h1>
+                      <p className="text-sm text-[#798389] mt-1">
+                        Ученик · Логин: {user.login}
+                      </p>
                     </div>
                   </div>
-                )}
+
+                  {linksLoading ? (
+                    <div className="mt-3 flex items-center gap-2">
+                      <Skeleton className="h-8 w-24 bg-[#37474f]" />
+                      <Skeleton className="h-8 w-24 bg-[#37474f]" />
+                    </div>
+                  ) : myLinks && myLinks.length > 0 ? (
+                    <div className="mt-3">
+                      <p className="text-xs text-[#798389] mb-2">Мои ссылки</p>
+                      <div className="flex flex-wrap gap-2">
+                        {myLinks.map(link => (
+                          <PlatformLinkButton
+                            key={link.id}
+                            url={link.url}
+                            title={link.title}
+                            size="sm"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {profileLoading ? (
+                    <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <Skeleton key={i} className="h-16 bg-[#37474f]" />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div className="bg-[#1e2529] rounded-xl p-3 border border-[#37474f]">
+                        <div className="text-xs text-[#798389] mb-1">
+                          Общий прогресс
+                        </div>
+                        <div className="text-xl font-bold text-[#2eff8c]">
+                          {profile?.overallProgress ?? 0}%
+                        </div>
+                      </div>
+                      <div className="bg-[#1e2529] rounded-xl p-3 border border-[#37474f]">
+                        <div className="text-xs text-[#798389] mb-1">
+                          Завершено тем
+                        </div>
+                        <div className="text-xl font-bold text-[#01acff]">
+                          {profile?.completedSubtopics ?? 0}
+                        </div>
+                      </div>
+                      <div className="bg-[#1e2529] rounded-xl p-3 border border-[#37474f]">
+                        <div className="text-xs text-[#798389] mb-1">
+                          В процессе
+                        </div>
+                        <div className="text-xl font-bold text-[#ffcb3d]">
+                          {profile?.inProgressSubtopics ?? 0}
+                        </div>
+                      </div>
+                      <div className="bg-[#1e2529] rounded-xl p-3 border border-[#37474f]">
+                        <div className="text-xs text-[#798389] mb-1">
+                          Дата начала
+                        </div>
+                        <div className="text-sm font-bold text-[#c8cdd1]">
+                          {profile?.createdAt
+                            ? new Date(profile.createdAt).toLocaleDateString(
+                                "ru-RU"
+                              )
+                            : "—"}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Tabs Layout */}
-        <div className="flex flex-col lg:flex-row gap-6">
           {/* Left sidebar tabs */}
-          <aside className="lg:w-64 shrink-0">
-            <nav className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-2">
-              <div className="flex lg:flex-col gap-1">
+          <aside className="order-2 lg:col-start-1 lg:row-start-2 lg:w-60 shrink-0">
+            <Collapsible
+              defaultOpen={false}
+              className="lg:hidden bg-[#2a3237] border border-[#434e54] rounded-2xl p-2"
+            >
+              <CollapsibleTrigger asChild>
+                <button className="flex items-center justify-between w-full px-4 py-3 rounded-xl text-left text-white hover:bg-[#1e2529]/50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    {(() => {
+                      const ActiveIcon =
+                        TABS.find(t => t.id === activeTab)?.icon ?? Home;
+                      return <ActiveIcon size={18} />;
+                    })()}
+                    <span className="text-sm font-medium">
+                      {TABS.find(t => t.id === activeTab)?.label}
+                    </span>
+                  </div>
+                  <ChevronDown size={18} className="text-[#798389]" />
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="flex flex-col gap-1 pt-1">
+                  {TABS.map(tab => {
+                    const Icon = tab.icon;
+                    const count = getBadgeCount(tab.badgeType);
+                    const isActive = activeTab === tab.id;
+
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => handleTabChange(tab.id)}
+                        className={`relative flex items-center justify-between gap-3 w-full px-4 py-3 rounded-xl text-left transition-all ${
+                          isActive
+                            ? "bg-[#1e2529] text-[#2eff8c] border border-[#37474f]"
+                            : "text-[#c8cdd1] hover:bg-[#1e2529]/50 hover:text-white"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon size={18} />
+                          <span className="text-sm font-medium">
+                            {tab.label}
+                          </span>
+                        </div>
+                        {count > 0 && (
+                          <span className="shrink-0 h-5 min-w-[1.25rem] px-1.5 bg-[#ff6b6b] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                            {count > 99 ? "99+" : count}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+
+            <nav className="hidden lg:block lg:sticky lg:top-1/2 lg:-translate-y-1/2 bg-[#2a3237] border border-[#434e54] rounded-2xl p-2">
+              <div className="flex flex-col gap-1">
                 {TABS.map(tab => {
                   const Icon = tab.icon;
                   const count = getBadgeCount(tab.badgeType);
@@ -372,7 +428,7 @@ export default function StudentProfile() {
           </aside>
 
           {/* Tab content */}
-          <main className="flex-1 min-w-0">
+          <main className="order-3 lg:col-start-2 min-w-0 max-w-5xl mx-auto w-full">
             {activeTab === "main" && (
               <div className="space-y-8">
                 {/* Current Topics */}
@@ -797,5 +853,3 @@ function RecentAssignmentCard({
     </div>
   );
 }
-
-
