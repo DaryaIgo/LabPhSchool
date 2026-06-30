@@ -530,10 +530,10 @@ export default function Home() {
       {/* ====== ABOUT TEACHER ====== */}
       <section className="relative overflow-hidden bg-[#e8ebed] py-24 lg:py-32">
         <div className="relative max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+          <div className="grid lg:grid-cols-[36%_1fr] gap-12 lg:gap-20 items-center">
             {/* Photo composition */}
             <div className="relative">
-              <div className="relative mx-auto w-full max-w-[260px] sm:max-w-[300px] lg:max-w-[360px]">
+              <div className="relative mx-auto w-full max-w-[200px] sm:max-w-[240px] lg:max-w-[280px]">
                 {/* Animated gradient aura behind the figure */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[115%] h-[115%] rounded-full bg-gradient-to-br from-[#d8b4fe]/45 via-[#2eff8c]/20 to-[#01acff]/30 blur-3xl animate-nebula-drift pointer-events-none" />
                 <div className="absolute top-[20%] left-[15%] w-32 h-32 rounded-full bg-[#ff9ecd]/25 blur-3xl animate-nebula-drift-slow pointer-events-none" />
@@ -552,10 +552,6 @@ export default function Home() {
                   {/* Soft edge blend — left and bottom so photo doesn't look cut */}
                   <div className="absolute inset-y-0 left-0 w-5 bg-gradient-to-r from-[#e8ebed]/40 to-transparent z-20 pointer-events-none" />
                   <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#e8ebed]/40 to-transparent z-20 pointer-events-none" />
-
-                  {/* Dark rim accent on edges */}
-                  <div className="absolute inset-y-0 left-0 w-0.5 bg-gradient-to-b from-transparent via-[#262e33]/50 to-[#262e33]/70 blur-[3px] z-10 pointer-events-none" />
-                  <div className="absolute bottom-0 left-0 w-20 h-8 bg-[radial-gradient(ellipse_at_bottom_left,_rgba(38,46,51,0.55)_0%,_transparent_70%)] blur-[3px] z-10 pointer-events-none" />
                 </div>
 
               </div>
