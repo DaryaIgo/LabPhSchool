@@ -534,46 +534,22 @@ export default function Home() {
             {/* Photo composition */}
             <div className="relative">
               <div className="relative mx-auto w-full max-w-md lg:max-w-lg">
-                {/* Gradient shadow frame */}
-                <div
-                  className="absolute inset-0 rounded-[2.5rem] rotate-3 opacity-40 blur-sm"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #2eff8c 0%, #01acff 100%)",
-                  }}
-                />
+                {/* Animated gradient aura behind the figure */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[115%] h-[115%] rounded-full bg-gradient-to-br from-[#d8b4fe]/45 via-[#2eff8c]/20 to-[#01acff]/30 blur-3xl animate-nebula-drift pointer-events-none" />
+                <div className="absolute top-[20%] left-[15%] w-40 h-40 rounded-full bg-[#ff9ecd]/25 blur-3xl animate-nebula-drift-slow pointer-events-none" />
+                <div className="absolute bottom-[20%] right-[10%] w-36 h-36 rounded-full bg-[#01acff]/20 blur-3xl animate-nebula-pulse pointer-events-none" />
 
-                {/* Main photo */}
-                <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl border-2 border-white/60 bg-white">
+                {/* Main photo without background */}
+                <div className="relative">
                   <img
                     src="/images/teacher.png"
                     alt="Дарья Дмитриевна — преподаватель физики"
-                    className="w-full h-auto object-cover"
+                    className="relative z-10 w-full h-auto drop-shadow-[0_25px_60px_rgba(38,46,51,0.25)]"
                   />
+                  {/* Soft grounding shadow */}
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-[70%] h-6 bg-[#262e33]/15 blur-2xl rounded-full z-0" />
                 </div>
 
-                {/* Floating badges */}
-              </div>
-
-              {/* Floating tags cloud under/over the photo */}
-              <div className="relative -mt-10 z-10 flex flex-wrap justify-center gap-3 max-w-md lg:max-w-lg mx-auto px-4">
-                {[
-                  "Личный кабинет",
-                  "Jupyter-ноутбуки",
-                  "Онлайн-доска",
-                  "Виртуальные лаборатории",
-                  "Индивидуальная программа",
-                ].map((tag, i) => (
-                  <FloatingTag
-                    key={tag}
-                    delay={i * 0.5}
-                    className={
-                      i % 3 === 1 ? "mt-2" : i % 3 === 2 ? "-mt-1" : ""
-                    }
-                  >
-                    {tag}
-                  </FloatingTag>
-                ))}
               </div>
             </div>
 
@@ -611,6 +587,27 @@ export default function Home() {
                   могли не заучивать формулы, а действительно понимать, как
                   устроена природа.
                 </p>
+              </div>
+
+              {/* Floating tags cloud */}
+              <div className="flex flex-wrap gap-3">
+                {[
+                  "Личный кабинет",
+                  "Jupyter-ноутбуки",
+                  "Онлайн-доска",
+                  "Виртуальные лаборатории",
+                  "Индивидуальная программа",
+                ].map((tag, i) => (
+                  <FloatingTag
+                    key={tag}
+                    delay={i * 0.5}
+                    className={
+                      i % 3 === 1 ? "mt-2" : i % 3 === 2 ? "-mt-1" : ""
+                    }
+                  >
+                    {tag}
+                  </FloatingTag>
+                ))}
               </div>
             </div>
           </div>
