@@ -503,7 +503,7 @@ export default function ProblemManagement() {
           <Button
             size="sm"
             variant="outline"
-            className="border-[#37474f] hover:bg-[#ffcb3d]/10 text-black"
+            className="border-[#37474f] hover:bg-[#ffcb3d]/10 text-white"
             onClick={() => handleCreate("category")}
           >
             <Plus className="h-4 w-4 mr-1" />
@@ -512,7 +512,7 @@ export default function ProblemManagement() {
           <Button
             size="sm"
             variant="outline"
-            className="border-[#37474f] hover:bg-[#ffcb3d]/10 text-black"
+            className="border-[#37474f] hover:bg-[#ffcb3d]/10 text-white"
             onClick={() => handleCreate("subcategory")}
           >
             <Plus className="h-4 w-4 mr-1" />
@@ -639,7 +639,7 @@ export default function ProblemManagement() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="border-[#37474f] text-black mt-auto"
+                      className="border-[#37474f] text-white mt-auto"
                       onClick={() => {
                         navigator.clipboard.writeText(markdown);
                         toast.success("Ссылка скопирована");
@@ -1257,7 +1257,7 @@ function ProblemEditor({
               <Button
                 size="sm"
                 variant="outline"
-                className="border-[#37474f] h-8 text-xs text-black"
+                className="border-[#37474f] h-8 text-xs text-white"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <ImageIcon className="h-3 w-3 mr-1" />
@@ -1266,7 +1266,7 @@ function ProblemEditor({
               <Button
                 size="sm"
                 variant="outline"
-                className="border-[#37474f] h-8 text-xs text-black"
+                className="border-[#37474f] h-8 text-xs text-white"
                 onClick={() => setGalleryOpen(true)}
               >
                 <Images className="h-3 w-3 mr-1" />

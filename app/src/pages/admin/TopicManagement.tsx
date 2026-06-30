@@ -589,7 +589,7 @@ export default function TopicManagement() {
           <Button
             size="sm"
             variant="outline"
-            className="border-[#37474f] hover:bg-[#2eff8c]/10 text-black"
+            className="border-[#37474f] hover:bg-[#2eff8c]/10 text-white"
             onClick={handleAddNew}
           >
             <Plus className="h-4 w-4 mr-1" />
@@ -598,7 +598,7 @@ export default function TopicManagement() {
           <Button
             size="sm"
             variant="outline"
-            className="border-[#37474f] hover:bg-[#2eff8c]/10 text-black"
+            className="border-[#37474f] hover:bg-[#2eff8c]/10 text-white"
             onClick={() => setImportOpen(true)}
           >
             <Upload className="h-4 w-4 mr-1" />
@@ -665,7 +665,7 @@ export default function TopicManagement() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="border-[#37474f] text-black"
+                      className="border-[#37474f] text-white"
                       onClick={handleExport}
                     >
                       <Download className="h-4 w-4 mr-1" />
@@ -782,7 +782,7 @@ export default function TopicManagement() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="border-[#37474f] h-7 text-xs text-black"
+                      className="border-[#37474f] h-7 text-xs text-white"
                       onClick={() => fileInputRef.current?.click()}
                     >
                       <ImageIcon className="h-3 w-3 mr-1" />
@@ -791,7 +791,7 @@ export default function TopicManagement() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="border-[#37474f] h-7 text-xs text-black"
+                      className="border-[#37474f] h-7 text-xs text-white"
                       onClick={() => setGalleryOpen(true)}
                     >
                       <Images className="h-3 w-3 mr-1" />
@@ -860,7 +860,7 @@ export default function TopicManagement() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="border-[#37474f] text-black mt-auto"
+                      className="border-[#37474f] text-white mt-auto"
                       onClick={() => {
                         navigator.clipboard.writeText(markdown);
                         toast("Ссылка скопирована");
@@ -895,7 +895,7 @@ export default function TopicManagement() {
               <Button
                 size="sm"
                 variant="outline"
-                className="border-[#37474f] text-black"
+                className="border-[#37474f] text-white"
                 onClick={() => importFileRef.current?.click()}
               >
                 <Upload className="h-4 w-4 mr-1" />
@@ -919,7 +919,7 @@ export default function TopicManagement() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-black"
+                className="text-white"
                 onClick={() => {
                   setImportOpen(false);
                   setImportMd("");
