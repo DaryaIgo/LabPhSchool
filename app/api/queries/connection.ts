@@ -13,6 +13,7 @@ import * as notificationsSchema from "@db/schema/notifications";
 import * as timelineSchema from "@db/schema/timeline";
 import * as auditSchema from "@db/schema/audit";
 import * as mediaSchema from "@db/schema/media";
+import * as analyticsSchema from "@db/schema/analytics";
 
 // Domain relations
 import * as authRelations from "@db/schema/relations/auth";
@@ -156,6 +157,19 @@ export function getMediaDb() {
     mediaDb = createDomainDb(env.databaseUrls.media, mediaSchema);
   }
   return mediaDb;
+}
+
+let analyticsDb:
+  | ReturnType<typeof createDomainDb<typeof analyticsSchema>>
+  | undefined;
+export function getAnalyticsDb() {
+  if (!analyticsDb) {
+    analyticsDb = createDomainDb(
+      env.databaseUrls.analytics,
+      analyticsSchema
+    );
+  }
+  return analyticsDb;
 }
 
 // ═══════════════════════════════════════════════════════════════

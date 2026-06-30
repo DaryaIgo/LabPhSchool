@@ -25,6 +25,7 @@ import {
   NotebookPen,
   History,
   Beaker,
+  BarChart3,
 } from "lucide-react";
 
 function StatCard({
@@ -313,6 +314,11 @@ export default function AdminDashboard() {
           label="Timeline"
           icon={History}
           onClick={() => navigate("/admin/timeline")}
+        />
+        <QuickAction
+          label="Аналитика"
+          icon={BarChart3}
+          onClick={() => navigate("/admin/analytics")}
         />
       </QuickActionsGroup>
 

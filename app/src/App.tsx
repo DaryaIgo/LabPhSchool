@@ -1,5 +1,6 @@
 import { Routes, Route, useLocation } from "react-router";
 import { useEffect } from "react";
+import { usePageAnalytics } from "./hooks/usePageAnalytics";
 import Header from "./components/Header";
 import Home from "./pages/Home";
 import Course from "./pages/Course";
@@ -26,6 +27,7 @@ import ResourceManagement from "./pages/admin/ResourceManagement";
 import SubmissionsReview from "./pages/admin/SubmissionsReview";
 import JupyterNotebookManagement from "./pages/admin/JupyterNotebookManagement";
 import AdminTimeline from "./pages/admin/AdminTimeline";
+import VisitAnalytics from "./pages/admin/VisitAnalytics";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -36,6 +38,7 @@ function ScrollToTop() {
 }
 
 export default function App() {
+  usePageAnalytics();
   const { pathname } = useLocation();
   const immersiveLab = pathname.startsWith("/labs/work");
 
@@ -83,6 +86,7 @@ export default function App() {
           element={<JupyterNotebookManagement />}
         />
         <Route path="/admin/timeline" element={<AdminTimeline />} />
+        <Route path="/admin/analytics" element={<VisitAnalytics />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

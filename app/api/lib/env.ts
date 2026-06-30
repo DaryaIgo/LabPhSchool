@@ -36,6 +36,7 @@ export const env = {
     timeline: optional("DATABASE_URL_TIMELINE") ?? databaseUrl,
     audit: optional("DATABASE_URL_AUDIT") ?? databaseUrl,
     media: optional("DATABASE_URL_MEDIA") ?? databaseUrl,
+    analytics: optional("DATABASE_URL_ANALYTICS") ?? databaseUrl,
   },
   ownerUnionId: process.env.OWNER_UNION_ID ?? "",
 };

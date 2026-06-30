@@ -8,3 +8,4 @@ export * from "./notifications";
 export * from "./timeline";
 export * from "./audit";
 export * from "./media";
+export * from "./analytics";
