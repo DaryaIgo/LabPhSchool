@@ -2,14 +2,13 @@
  * Enrollment Management — Admin GUI for managing student course access & progress
  */
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { trpc } from "@/providers/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import {
   Collapsible,
@@ -38,6 +37,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { toast } from "sonner";
+import MDEditor from "@uiw/react-md-editor";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../api/router";
 import {
@@ -58,6 +62,7 @@ import {
   ExternalLink,
   User,
   ClipboardList,
+  Moon,
 } from "lucide-react";
 
 type RouterOutput = inferRouterOutputs<AppRouter>;
@@ -105,6 +110,10 @@ export default function EnrollmentManagement() {
   const [selectedTopicNodeId, setSelectedTopicNodeId] = useState<number | null>(
     null
   );
+  const [moonDialogOpen, setMoonDialogOpen] = useState(false);
+  const [selectedMoonStudentId, setSelectedMoonStudentId] = useState<
+    number | null
+  >(null);
 
   const { data: students, isLoading: studentsLoading } =
     trpc.student.list.useQuery(
@@ -154,7 +163,7 @@ export default function EnrollmentManagement() {
           </h1>
         </div>
         <p className="text-sm text-slate-400">
-          Открывайте темы, управляйте прогрессом и комментариями
+          Открывайте темы, управляйте прогрессом и Луной
         </p>
       </header>
 
@@ -198,6 +207,16 @@ export default function EnrollmentManagement() {
                       }
                     }}
                     isEnrolling={enrollMutation.isPending}
+                  />
+                }
+                moonDialog={
+                  <MoonUpdateDialog
+                    student={student}
+                    open={moonDialogOpen && selectedMoonStudentId === student.id}
+                    onOpenChange={open => {
+                      setMoonDialogOpen(open);
+                      if (open) setSelectedMoonStudentId(student.id);
+                    }}
                   />
                 }
               >
@@ -479,12 +498,14 @@ function StudentCard({
   isExpanded,
   onToggle,
   enrollDialog,
+  moonDialog,
   children,
 }: {
   student: StudentUser;
   isExpanded: boolean;
   onToggle: () => void;
   enrollDialog: React.ReactNode;
+  moonDialog: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -512,7 +533,13 @@ function StudentCard({
               </p>
             </div>
           </div>
-          <div onClick={e => e.stopPropagation()}>{enrollDialog}</div>
+          <div
+            className="flex items-center gap-2"
+            onClick={e => e.stopPropagation()}
+          >
+            {moonDialog}
+            {enrollDialog}
+          </div>
         </div>
 
         {isExpanded && (
@@ -586,6 +613,110 @@ function EnrollDialog({
             {isEnrolling ? "Открываем..." : "Подтвердить"}
           </Button>
         </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function MoonUpdateDialog({
+  student,
+  open,
+  onOpenChange,
+}: {
+  student: StudentUser;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const utils = trpc.useUtils();
+  const { data, isLoading } = trpc.enrollment.getMoonComment.useQuery(
+    { studentId: student.id },
+    { enabled: open }
+  );
+
+  const [value, setValue] = useState("");
+
+  useEffect(() => {
+    if (open && data) {
+      const timer = window.setTimeout(() => setValue(data.moonComment), 0);
+      return () => window.clearTimeout(timer);
+    }
+  }, [open, data]);
+
+  // Fallback: Radix Dialog sometimes leaves overflow:hidden on body after close.
+  useEffect(() => {
+    if (!open) {
+      const timer = window.setTimeout(() => {
+        document.body.style.overflow = "";
+        document.body.style.paddingRight = "";
+        document.documentElement.style.overflow = "";
+        document.documentElement.style.paddingRight = "";
+      }, 50);
+      return () => window.clearTimeout(timer);
+    }
+  }, [open]);
+
+  const updateMutation = trpc.enrollment.updateMoonComment.useMutation({
+    onSuccess: () => {
+      toast("Луна обновлена");
+      utils.enrollment.getMoonComment.invalidate({ studentId: student.id });
+      onOpenChange(false);
+    },
+    onError: err => toast(err.message),
+  });
+
+  const mdPreviewOptions = useMemo(
+    () => ({
+      remarkPlugins: [remarkGfm, remarkMath],
+      rehypePlugins: [rehypeKatex],
+    }),
+    []
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>
+        <Button
+          size="sm"
+          variant="outline"
+          className="border-[#37474f] text-[#c8cdd1] hover:text-white hover:bg-[#263238] hover:border-[#2eff8c]"
+          onClick={e => e.stopPropagation()}
+        >
+          <Moon className="h-4 w-4 mr-1" />
+          Обновить Луну
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="bg-[#1e2529] border-[#37474f] text-white sm:max-w-2xl max-h-[90vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle>Обновить Луну для {student.name}</DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 overflow-y-auto min-h-0 mt-2">
+          {isLoading && !data ? (
+            <Skeleton className="h-64 bg-[#37474f]" />
+          ) : (
+            <div data-color-mode="dark">
+              <MDEditor
+                value={value}
+                onChange={v => setValue(v ?? "")}
+                height={400}
+                preview="live"
+                previewOptions={mdPreviewOptions}
+                textareaProps={{ placeholder: "Напишите комментарий ученику..." }}
+              />
+            </div>
+          )}
+        </div>
+        <Button
+          className="w-full bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a] mt-4"
+          disabled={updateMutation.isPending}
+          onClick={() =>
+            updateMutation.mutate({
+              studentId: student.id,
+              moonComment: value,
+            })
+          }
+        >
+          {updateMutation.isPending ? "Сохраняем..." : "Сохранить Луну"}
+        </Button>
       </DialogContent>
     </Dialog>
   );
@@ -854,10 +985,9 @@ function SubtopicProgressManager({
   return (
     <div className="bg-[#1a2024] rounded-lg border border-[#2a3338] overflow-hidden">
       <div className="overflow-x-auto">
-        <div className="min-w-[560px] pr-4">
-          <div className="grid grid-cols-[1fr_180px_64px_64px_64px_120px] gap-2 px-3 py-2 bg-[#232b2f] text-xs font-medium text-slate-400 border-b border-[#2a3338]">
+        <div className="min-w-[400px] pr-4">
+          <div className="grid grid-cols-[1fr_64px_64px_64px_120px] gap-2 px-3 py-2 bg-[#232b2f] text-xs font-medium text-slate-400 border-b border-[#2a3338]">
             <span>Подтема</span>
-            <span>Комментарий</span>
             <span className="text-center">Теория</span>
             <span className="text-center">Задача</span>
             <span className="text-center">Лаба</span>
@@ -896,27 +1026,14 @@ function SubtopicRow({
     theoryCompleted?: boolean;
     practiceCompleted?: boolean;
     labCompleted?: boolean;
-    comment?: string;
   }) => void;
   isPending: boolean;
 }) {
   return (
-    <div className="grid grid-cols-[1fr_180px_64px_64px_64px_120px] gap-2 px-3 py-2 items-center hover:bg-[#1e2529] transition-colors">
+    <div className="grid grid-cols-[1fr_64px_64px_64px_120px] gap-2 px-3 py-2 items-center hover:bg-[#1e2529] transition-colors">
       <span className="text-sm text-white truncate" title={sub.title}>
         {sub.title}
       </span>
-      <Input
-        defaultValue={sub.comment ?? ""}
-        onBlur={ev => {
-          const value = ev.target.value;
-          if (value !== (sub.comment ?? "")) {
-            onUpdate({ comment: value });
-          }
-        }}
-        placeholder="Комментарий..."
-        className="h-7 text-xs bg-[#232b2f] border-[#37474f] text-white placeholder:text-slate-600"
-        disabled={isPending}
-      />
       <CompletionToggle
         completed={sub.theoryCompleted}
         onToggle={() => onUpdate({ theoryCompleted: !sub.theoryCompleted })}

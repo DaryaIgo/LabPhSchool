@@ -39,7 +39,6 @@ export const enrollments = mysqlTable(
       .notNull(),
     startedAt: timestamp("started_at"),
     completedAt: timestamp("completed_at"),
-    comment: text("comment"),
     currentSubtopicNodeId: bigint("current_subtopic_node_id", {
       mode: "number",
       unsigned: true,
@@ -85,7 +84,6 @@ export const studentProgress = mysqlTable("student_progress", {
     .notNull(),
   startedAt: timestamp("started_at"),
   completedAt: timestamp("completed_at"),
-  comment: text("comment"),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")

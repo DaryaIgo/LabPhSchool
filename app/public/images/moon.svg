@@ -1,0 +1,21 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="moonGrad" cx="35%" cy="30%" r="85%">
+      <stop offset="0%" stop-color="#f8f9fa" />
+      <stop offset="45%" stop-color="#e2e6ea" />
+      <stop offset="80%" stop-color="#b0b8c1" />
+      <stop offset="100%" stop-color="#7f8a96" />
+    </radialGradient>
+    <filter id="moonGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <circle cx="100" cy="100" r="92" fill="url(#moonGrad)" filter="url(#moonGlow)" />
+  <circle cx="70" cy="75" r="16" fill="#9aa3ab" opacity="0.55" />
+  <circle cx="130" cy="125" r="24" fill="#9aa3ab" opacity="0.5" />
+  <circle cx="110" cy="55" r="11" fill="#9aa3ab" opacity="0.4" />
+  <circle cx="55" cy="140" r="14" fill="#9aa3ab" opacity="0.45" />
+  <circle cx="150" cy="80" r="9" fill="#9aa3ab" opacity="0.35" />
+  <ellipse cx="95" cy="160" rx="28" ry="11" fill="#8d96a0" opacity="0.3" />
+</svg>

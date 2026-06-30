@@ -43,6 +43,10 @@ export async function findLocalUserWithRole(id: number) {
       createdBy: localUsers.createdBy,
       createdAt: localUsers.createdAt,
       lastLoginAt: localUsers.lastLoginAt,
+      moonComment: localUsers.moonComment,
+      moonCommentUpdatedAt: localUsers.moonCommentUpdatedAt,
+      moonCommentReadAt: localUsers.moonCommentReadAt,
+      moonCommentFirstOpenedAt: localUsers.moonCommentFirstOpenedAt,
     })
     .from(localUsers)
     .innerJoin(roles, eq(localUsers.roleId, roles.id))
@@ -131,12 +135,29 @@ export async function updateLocalUser(
     passwordHash: string;
     status: "active" | "inactive" | "suspended";
     avatar: string | null;
+    moonComment: string | null;
+    moonCommentUpdatedAt: Date | null;
+    moonCommentReadAt: Date | null;
+    moonCommentFirstOpenedAt: Date | null;
   }>
 ) {
   return getAuthDb()
     .update(localUsers)
     .set({ ...data, updatedAt: new Date() })
     .where(eq(localUsers.id, id));
+}
+
+export async function getMoonCommentById(id: number) {
+  const rows = await getAuthDb()
+    .select({
+      moonComment: localUsers.moonComment,
+      moonCommentUpdatedAt: localUsers.moonCommentUpdatedAt,
+      moonCommentReadAt: localUsers.moonCommentReadAt,
+    })
+    .from(localUsers)
+    .where(eq(localUsers.id, id))
+    .limit(1);
+  return rows.at(0);
 }
 
 export async function updateLocalUserLastLogin(id: number) {

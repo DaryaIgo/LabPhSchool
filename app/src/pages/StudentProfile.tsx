@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import StudentLabsSection from "@/components/StudentLabsSection";
 import StudentProblemsSection from "@/components/StudentProblemsSection";
 import StudentNotebooksSection from "@/components/StudentNotebooksSection";
+import StudentMoon from "@/components/StudentMoon";
 import { PlatformLinkButton } from "@/components/PlatformLinkButton";
 import {
   Dialog,
@@ -34,7 +35,6 @@ import {
   GraduationCap,
   ExternalLink,
   Loader2,
-  MessageSquare,
 } from "lucide-react";
 
 const AVATARS = [
@@ -415,11 +415,6 @@ export default function StudentProfile() {
                                     <Badge className="bg-[#01acff]/20 text-[#01acff]">
                                       {currentTopic.topic?.title}
                                     </Badge>
-                                    {currentTopic.enrollmentComment && (
-                                      <span className="text-xs text-[#798389]">
-                                        {currentTopic.enrollmentComment}
-                                      </span>
-                                    )}
                                   </div>
                                   <h3 className="text-xl font-bold mt-2 text-white">
                                     {currentTopic.subtopic?.title}
@@ -518,11 +513,6 @@ export default function StudentProfile() {
                                       }{" "}
                                       / {topic.subtopics.length} завершено
                                     </span>
-                                    {topic.comment && (
-                                      <span className="truncate max-w-[200px]">
-                                        {topic.comment}
-                                      </span>
-                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -603,11 +593,6 @@ export default function StudentProfile() {
                                               </span>
                                             </Badge>
                                           </div>
-                                          {sub.comment && (
-                                            <SubtopicComment
-                                              text={sub.comment}
-                                            />
-                                          )}
                                           {sub.jupyterUrl && (
                                             <a
                                               href={sub.jupyterUrl}
@@ -758,6 +743,8 @@ export default function StudentProfile() {
           </main>
         </div>
       </div>
+
+      <StudentMoon />
     </div>
   );
 }
@@ -811,30 +798,4 @@ function RecentAssignmentCard({
   );
 }
 
-function SubtopicComment({ text }: { text: string }) {
-  const [expanded, setExpanded] = useState(false);
-  const limit = 100;
-  const isLong = text.length > limit;
-  const preview =
-    isLong && !expanded ? text.slice(0, limit).trimEnd() + "…" : text;
 
-  return (
-    <div className="mt-2 bg-[#2eff8c]/10 border border-[#2eff8c]/30 rounded-lg px-3 py-2">
-      <div className="flex items-start gap-2">
-        <MessageSquare size={14} className="text-[#2eff8c] shrink-0 mt-0.5" />
-        <div className="flex-1 min-w-0">
-          <p className="text-sm text-[#c8cdd1] leading-relaxed">{preview}</p>
-          {isLong && (
-            <button
-              type="button"
-              onClick={() => setExpanded(!expanded)}
-              className="text-xs text-[#2eff8c] hover:underline mt-1"
-            >
-              {expanded ? "Свернуть" : "Развернуть"}
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}

@@ -21,6 +21,7 @@ import {
 import { findLocalUserById } from "./queries/localUsers";
 import { createAuditEntry } from "./queries/audit";
 import {
+  getAuthDb,
   getContentDb,
   getLearningDb,
   getNotificationsDb,
@@ -28,6 +29,7 @@ import {
 } from "./queries/connection";
 import { topicNodes } from "@db/schema/content";
 import { eq, and, isNull, isNotNull } from "drizzle-orm";
+import { localUsers } from "@db/schema/auth";
 import { notifications } from "@db/schema/notifications";
 import {
   getAssignedLabWorksByEnrollment,
@@ -192,7 +194,6 @@ export const enrollmentRouter = createRouter({
         enrollmentId: z.number().positive(),
         status: z.enum(["active", "completed", "suspended"]).optional(),
         currentSubtopicNodeId: z.number().positive().nullable().optional(),
-        comment: z.string().max(500).optional(),
         startedAt: z.date().nullable().optional(),
         completedAt: z.date().nullable().optional(),
       })
@@ -202,7 +203,6 @@ export const enrollmentRouter = createRouter({
       await updateEnrollmentDetails(enrollmentId, {
         status: data.status,
         currentSubtopicNodeId: data.currentSubtopicNodeId,
-        comment: data.comment,
         startedAt: data.startedAt,
         completedAt: data.completedAt,
       });
@@ -214,6 +214,64 @@ export const enrollmentRouter = createRouter({
         resource: "enrollments",
         resourceId: enrollmentId,
         details: { ...data },
+      });
+
+      return { success: true };
+    }),
+
+  // ── Admin: Get student's Moon comment ──
+  getMoonComment: adminQuery
+    .input(z.object({ studentId: z.number().positive() }))
+    .query(async ({ input }) => {
+      const student = await findLocalUserById(input.studentId);
+      if (!student) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Student not found",
+        });
+      }
+
+      return {
+        moonComment: student.moonComment ?? "",
+        moonCommentUpdatedAt: student.moonCommentUpdatedAt,
+        moonCommentReadAt: student.moonCommentReadAt,
+      };
+    }),
+
+  // ── Admin: Update student's Moon comment ──
+  updateMoonComment: adminQuery
+    .input(
+      z.object({
+        studentId: z.number().positive(),
+        moonComment: z.string().max(20000),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const student = await findLocalUserById(input.studentId);
+      if (!student) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Student not found",
+        });
+      }
+
+      const authDb = getAuthDb();
+      await authDb
+        .update(localUsers)
+        .set({
+          moonComment: input.moonComment,
+          moonCommentUpdatedAt: new Date(),
+          moonCommentReadAt: null,
+        })
+        .where(eq(localUsers.id, input.studentId));
+
+      await createAuditEntry({
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
+        action: "update",
+        resource: "local_users",
+        resourceId: input.studentId,
+        details: { field: "moonComment" },
       });
 
       return { success: true };

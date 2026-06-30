@@ -96,6 +96,39 @@ export const studentRouter = createRouter({
     };
   }),
 
+  // ── Get current student's Moon comment ──
+  getMoonComment: studentQuery.query(async ({ ctx }) => {
+    const user = await findLocalUserById(ctx.localUser!.id);
+    if (!user) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Student not found" });
+    }
+
+    return {
+      moonComment: user.moonComment ?? "",
+      moonCommentUpdatedAt: user.moonCommentUpdatedAt,
+      moonCommentReadAt: user.moonCommentReadAt,
+      moonCommentFirstOpenedAt: user.moonCommentFirstOpenedAt,
+    };
+  }),
+
+  // ── Mark Moon comment as first-opened ──
+  markMoonCommentFirstOpened: studentQuery.mutation(async ({ ctx }) => {
+    await getAuthDb()
+      .update(localUsers)
+      .set({ moonCommentFirstOpenedAt: new Date() })
+      .where(eq(localUsers.id, ctx.localUser!.id));
+    return { success: true };
+  }),
+
+  // ── Mark Moon comment as read ──
+  markMoonCommentRead: studentQuery.mutation(async ({ ctx }) => {
+    await getAuthDb()
+      .update(localUsers)
+      .set({ moonCommentReadAt: new Date() })
+      .where(eq(localUsers.id, ctx.localUser!.id));
+    return { success: true };
+  }),
+
   // ── Update student avatar ──
   updateAvatar: studentQuery
     .input(
@@ -158,7 +191,6 @@ export const studentRouter = createRouter({
         status: "active" as const,
         startedAt: null as Date | null,
         completedAt: null as Date | null,
-        comment: null as string | null,
         currentSubtopicNodeId: null as number | null,
         enrolledAt: new Date(),
         expiresAt: null as Date | null,
@@ -282,7 +314,6 @@ export const studentRouter = createRouter({
         status: "active" as const,
         startedAt: null as Date | null,
         completedAt: null as Date | null,
-        comment: null as string | null,
         currentSubtopicNodeId: null as number | null,
         enrolledAt: new Date(),
         expiresAt: null as Date | null,
@@ -363,7 +394,6 @@ export const studentRouter = createRouter({
           status,
           startedAt: prog?.startedAt,
           completedAt: prog?.completedAt,
-          comment: prog?.comment,
           theoryCompleted: prog?.theoryCompleted === "completed",
           practiceCompleted: prog?.practiceCompleted === "completed",
           labCompleted: prog?.labCompleted === "completed",
@@ -379,7 +409,6 @@ export const studentRouter = createRouter({
         enrollmentStatus: enrollment.status,
         startedAt: enrollment.startedAt,
         completedAt: enrollment.completedAt,
-        comment: enrollment.comment,
         currentSubtopicNodeId: enrollment.currentSubtopicNodeId,
         subtopics: subsWithProgress,
         labs: [] as {
@@ -426,7 +455,6 @@ export const studentRouter = createRouter({
             slug: string;
             shortDesc: string | null;
           }[],
-          enrollmentComment: null,
         },
       ];
     }
@@ -434,7 +462,6 @@ export const studentRouter = createRouter({
     const currentItems: {
       subtopicNodeId: number;
       topicNodeId: number | null;
-      enrollmentComment: string | null;
     }[] = [];
 
     // 1. Current subtopics from active enrollments
@@ -443,7 +470,6 @@ export const studentRouter = createRouter({
         id: enrollments.id,
         topicNodeId: enrollments.topicNodeId,
         currentSubtopicNodeId: enrollments.currentSubtopicNodeId,
-        comment: enrollments.comment,
       })
       .from(enrollments)
       .where(
@@ -458,7 +484,6 @@ export const studentRouter = createRouter({
       currentItems.push({
         subtopicNodeId: e.currentSubtopicNodeId!,
         topicNodeId: e.topicNodeId,
-        enrollmentComment: e.comment,
       });
     }
 
@@ -483,7 +508,6 @@ export const studentRouter = createRouter({
         currentItems.push({
           subtopicNodeId: row.subtopicNodeId,
           topicNodeId: null,
-          enrollmentComment: null,
         });
         existingSubtopicNodeIds.add(row.subtopicNodeId);
       }
@@ -546,7 +570,6 @@ export const studentRouter = createRouter({
           slug: string;
           shortDesc: string | null;
         }[],
-        enrollmentComment: item.enrollmentComment,
       };
     });
   }),
@@ -698,6 +721,16 @@ export const studentRouter = createRouter({
 
       const insertedId = Number(result[0].insertId);
 
+      await getAuthDb()
+        .update(localUsers)
+        .set({
+          moonComment:
+            "Привет! 🌙\n\nРада приветствовать тебя на платформе **nebuls**!\n\nЭта Луна будет доставлять тебе важную информацию, комментарии и задания от учителя. Заглядывай сюда — здесь появляется всё самое нужное по домашней работе и учебе.",
+          moonCommentUpdatedAt: new Date(),
+          moonCommentReadAt: null,
+        })
+        .where(eq(localUsers.id, insertedId));
+
       await createAuditEntry({
         actorId: ctx.adminUser!.id,
         actorType: "admin_user",
@@ -813,7 +846,6 @@ export const studentRouter = createRouter({
         theoryCompleted: z.boolean().optional(),
         practiceCompleted: z.boolean().optional(),
         labCompleted: z.boolean().optional(),
-        comment: z.string().max(500).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -878,9 +910,6 @@ export const studentRouter = createRouter({
       if (data.labCompleted !== undefined) {
         updateData.labCompleted = data.labCompleted ? "completed" : "pending";
       }
-      if (data.comment !== undefined) {
-        updateData.comment = data.comment;
-      }
 
       if (existing) {
         await learningDb
@@ -895,7 +924,6 @@ export const studentRouter = createRouter({
           theoryCompleted: data.theoryCompleted ? "completed" : "pending",
           practiceCompleted: data.practiceCompleted ? "completed" : "pending",
           labCompleted: data.labCompleted ? "completed" : "pending",
-          comment: data.comment,
           startedAt: data.status === "in_progress" ? new Date() : undefined,
           completedAt: data.status === "completed" ? new Date() : undefined,
         });
@@ -956,7 +984,6 @@ export const studentRouter = createRouter({
           theoryCompleted: prog?.theoryCompleted === "completed",
           practiceCompleted: prog?.practiceCompleted === "completed",
           labCompleted: prog?.labCompleted === "completed",
-          comment: prog?.comment,
           startedAt: prog?.startedAt,
           completedAt: prog?.completedAt,
         };

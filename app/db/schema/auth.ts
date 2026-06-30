@@ -3,6 +3,7 @@ import {
   mysqlEnum,
   serial,
   varchar,
+  text,
   timestamp,
   bigint,
   index,
@@ -127,6 +128,10 @@ export const localUsers = mysqlTable(
       .notNull()
       .$onUpdate(() => new Date()),
     lastLoginAt: timestamp("last_login_at"),
+    moonComment: text("moon_comment"),
+    moonCommentUpdatedAt: timestamp("moon_comment_updated_at"),
+    moonCommentReadAt: timestamp("moon_comment_read_at"),
+    moonCommentFirstOpenedAt: timestamp("moon_comment_first_opened_at"),
   },
   table => ({
     statusIdx: index("local_user_status_idx").on(table.status),

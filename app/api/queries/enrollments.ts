@@ -87,7 +87,6 @@ export async function getEnrollmentsWithDetails(localUserId: number) {
       status: row.status,
       startedAt: row.startedAt,
       completedAt: row.completedAt,
-      comment: row.comment,
       currentSubtopicNodeId: row.currentSubtopicNodeId,
       enrolledAt: row.enrolledAt,
       expiresAt: row.expiresAt,
@@ -156,7 +155,6 @@ export async function updateEnrollmentDetails(
   data: {
     status?: "active" | "completed" | "suspended";
     currentSubtopicNodeId?: number | null;
-    comment?: string;
     startedAt?: Date | null;
     completedAt?: Date | null;
   }
@@ -165,7 +163,6 @@ export async function updateEnrollmentDetails(
   if (data.status !== undefined) setData.status = data.status;
   if (data.currentSubtopicNodeId !== undefined)
     setData.currentSubtopicNodeId = data.currentSubtopicNodeId;
-  if (data.comment !== undefined) setData.comment = data.comment;
   if (data.startedAt !== undefined) setData.startedAt = data.startedAt;
   if (data.completedAt !== undefined) setData.completedAt = data.completedAt;
 
