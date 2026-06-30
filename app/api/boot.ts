@@ -9,6 +9,7 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import { verifyStudentSession } from "./student-session";
 import { getAuthDb, getJupyterDb, getMediaDb } from "./queries/connection";
+import { cleanupOldAuditEntries } from "./queries/audit";
 import { cleanupExpiredSolutionImages } from "./lib/images";
 import { localUsers, roles } from "@db/schema/auth";
 import { jupyterNotebooks, jupyterNotebookAccess } from "@db/schema/jupyter";
@@ -280,6 +281,23 @@ app.all("/api/*", c => c.json({ error: "Not Found" }, 404));
 cleanupExpiredSolutionImages().catch(err => {
   console.error("Initial cleanupExpiredSolutionImages failed:", err);
 });
+
+// Clean up audit log entries older than 90 days on server start and daily
+async function runAuditCleanup() {
+  try {
+    const { deleted, cutoff } = await cleanupOldAuditEntries();
+    if (deleted > 0) {
+      console.log(
+        `Audit cleanup: removed ${deleted} entries older than ${cutoff.toISOString()}`
+      );
+    }
+  } catch (err) {
+    console.error("Audit cleanup failed:", err);
+  }
+}
+
+runAuditCleanup();
+setInterval(runAuditCleanup, 24 * 60 * 60 * 1000);
 
 if (process.env.NODE_ENV === "production") {
   serveStaticFiles(app);

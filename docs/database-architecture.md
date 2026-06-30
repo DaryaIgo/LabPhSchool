@@ -14,7 +14,7 @@
 
 | Домен | Файл схемы | Таблицы | Фабрика подключения |
 |---|---|---|---|
-| Auth / IAM | `app/db/schema/auth.ts` | `roles`, `permissions`, `role_permissions`, `users`, `local_users` | `getAuthDb()` |
+| Auth / IAM | `app/db/schema/auth.ts` | `roles`, `permissions`, `role_permissions`, `admin_users`, `local_users` | `getAuthDb()` |
 | Content | `app/db/schema/content.ts` | `topics`, `subtopics`, `topic_nodes`, `labs`, `resources` | `getContentDb()` |
 | Learning | `app/db/schema/learning.ts` | `enrollments`, `student_progress`, `lab_progress` | `getLearningDb()` |
 | Labs | `app/db/schema/labs.ts` | `lab_categories`, `lab_subcategories`, `lab_works`, `lab_blocks`, `lab_simulation_params`, `lab_analytics` | `getLabsDb()` |
@@ -31,7 +31,7 @@
 
 | Таблица | Поле | Логически ссылается на |
 |---|---|---|
-| `local_users` | `created_by` | `auth.users.id` |
+| `local_users` | `created_by` | `auth.admin_users.id` |
 | `enrollments` | `local_user_id` | `auth.local_users.id` |
 | `enrollments` | `topic_id` | `content.topics.id` |
 | `enrollments` | `current_subtopic_id` | `content.subtopics.id` |
@@ -42,9 +42,9 @@
 | `problem_types` | `subtopic_id` | `content.subtopics.id` |
 | `lab_works` | `topic_node_id` | `content.topic_nodes.id` |
 | `jupyter_notebooks` | `subtopic_id` | `content.subtopics.id` |
-| `jupyter_notebooks` | `uploaded_by` | `auth.users.id` |
+| `jupyter_notebooks` | `uploaded_by` | `auth.admin_users.id` |
 | `jupyter_notebook_access` | `local_user_id` | `auth.local_users.id` |
-| `jupyter_notebook_access` | `granted_by` | `auth.users.id` |
+| `jupyter_notebook_access` | `granted_by` | `auth.admin_users.id` |
 | `notifications` | `local_user_id` | `auth.local_users.id` |
 | `topic_nodes` | `lab_category_slug` | `labs.lab_categories.slug` |
 
@@ -80,3 +80,4 @@ npm run db:migrate
 
 - `progress`
 - `lab_results`
+- `users` (OAuth legacy)

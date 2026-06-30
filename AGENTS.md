@@ -26,7 +26,7 @@
 | Бэкенд | Hono 4, tRPC 11, Node.js 20 |
 | База данных | MySQL 8, Drizzle ORM |
 | Стили | Tailwind CSS 3.4, shadcn/ui |
-| Аутентификация | OAuth 2.0 через Kimi Platform + собственная JWT-сессия для учеников |
+| Аутентификация | Локальная JWT-сессия для администраторов и учеников |
 | Сериализация | superjson |
 | Валидация | Zod |
 | Тестирование | Vitest |
@@ -43,25 +43,26 @@ app/
 │   ├── router.ts           # Корневой tRPC-роутер
 │   ├── middleware.ts       # Процедуры tRPC (public, authed, admin, student)
 │   ├── context.ts          # Создание tRPC-контекста (аутентификация)
-│   ├── auth-router.ts      # Роутер аутентификации (me, logout, claimAdmin)
-│   ├── course-router.ts    # Публичные данные курса (темы, подтемы, лабы, ресурсы)
-│   ├── progress-router.ts  # Прогресс пользователя (OAuth)
+│   ├── unified-auth-router.ts  # Единый вход/me/logout для админов и учеников
+│   ├── course-router.ts    # Публичные данные курса
 │   ├── problem-management-router.ts  # Problem Management (admin-only)
-│   ├── admin-router.ts     # CRUD для тем, подтем, задач
-│   ├── student-router.ts   # Аутентификация и прогресс учеников
-│   ├── student-session.ts  # JWT-токены для учеников
-│   ├── kimi/               # Интеграция с Kimi Platform
-│   │   ├── auth.ts         # OAuth callback, обмен code → token
-│   │   ├── platform.ts     # API-запросы к Kimi Open
-│   │   ├── session.ts      # Подпись/верификация сессионных JWT
-│   │   └── types.ts        # Типы Kimi API
+│   ├── admin-router.ts     # CRUD для тем, подтем, задач, сабмиссий, Jupyter
+│   ├── student-router.ts   # CRUD учеников (admin) и личный кабинет (student)
+│   ├── enrollment-router.ts # Записи на курс и назначения
+│   ├── audit-router.ts     # Просмотр audit log (admin)
+│   ├── virtual-lab-router.ts # Каталог лаб и админ CRUD
+│   ├── timeline-router.ts  # Timeline entries
+│   ├── analytics-router.ts # Статистика посещений
+│   ├── admin-session.ts    # JWT cookie для admin_users
+│   ├── student-session.ts  # JWT cookie для local_users
 │   ├── queries/            # SQL-запросы через Drizzle
 │   │   ├── connection.ts   # Инициализация Drizzle
-│   │   ├── users.ts        # Запросы к таблице users
-│   │   └── students.ts     # Запросы к таблице students
+│   │   ├── adminUsers.ts   # Запросы к admin_users
+│   │   ├── localUsers.ts   # Запросы к local_users (ученики)
+│   │   └── ...
 │   └── lib/                # Утилиты бэкенда
 │       ├── env.ts          # Переменные окружения
-│       ├── cookies.ts      # Настройки сессионных cookie
+│       ├── password.ts     # bcrypt хеширование паролей
 │       └── vite.ts         # Раздача статики в production
 ├── src/                    # Фронтенд (React)
 │   ├── main.tsx            # Точка входа (StrictMode + HashRouter + TRPCProvider)
@@ -150,8 +151,7 @@ app/
 
 ```bash
 # ── Бэкенд ──
-APP_ID=                   # ID приложения Kimi
-APP_SECRET=               # Секрет для подписи JWT
+APP_SECRET=               # Секрет для подписи JWT (админы и ученики)
 
 # ── База данных ──
 DATABASE_URL=             # mysql://user:pass@host:port/db
@@ -166,17 +166,6 @@ DATABASE_URL=             # mysql://user:pass@host:port/db
 # DATABASE_URL_TIMELINE=
 # DATABASE_URL_AUDIT=
 # DATABASE_URL_MEDIA=
-
-# ── Фронтенд (доступны в браузере через Vite) ──
-VITE_KIMI_AUTH_URL=       # URL OAuth-сервера Kimi
-VITE_APP_ID=              # OAuth app ID
-
-# ── Бэкенд (Auth) ──
-KIMI_AUTH_URL=            # URL OAuth-сервера Kimi (бэкенд)
-KIMI_OPEN_URL=            # URL Kimi Open Platform
-
-# ── Админ ──
-OWNER_UNION_ID=           # Union ID создателя; получает роль admin при первом входе
 ```
 
 ### Команды
@@ -224,7 +213,17 @@ npm run db:push       # Push схемы (для разработки)
 4. Заполнить начальные данные:
    - `npx tsx db/seed.ts`
    - `npx tsx db/simulations-seed.ts`
-5. Запустить dev: `npm run dev`
+5. Создать первого администратора напрямую в БД (админы не создаются через сайт):
+   ```sql
+   INSERT INTO admin_users (login, password_hash, name, role, status)
+   VALUES ('admin', '$2a$12$...', 'Administrator', 'admin', 'active');
+   ```
+   Пароль должен быть bcrypt-хешем. Сгенерировать хеш можно в Node:
+   ```js
+   const bcrypt = require('bcryptjs');
+   console.log(await bcrypt.hash('your-password', 12));
+   ```
+6. Запустить dev: `npm run dev`
 6. Открыть http://localhost:3000
 
 > **Миграции не используются.** Проект разрабатывается только на этом локальном ПК. Локальная база данных — единственный источник правды. Когда сайт будет готов, мы просто экспортируем локальную БД в том виде, в каком она есть, и импортируем её на хост через PHPMyAdmin. Не нужно тратить время на аккуратные миграции или синхронизацию схемы: при необходимости проще пересоздать локальную базу (`db:push`) и заполнить сидами заново.
@@ -246,25 +245,28 @@ npm run db:push       # Push схемы (для разработки)
 
 ### Двойная система аутентификации
 
-1. **Преподаватели/админы** — OAuth 2.0 через Kimi Platform:
-   - Авторизация через внешний OAuth-сервер
-   - Сессия в httpOnly cookie (`kimi_sid`)
-   - Роли: `user` | `admin`
-   - Первый пользователь с `OWNER_UNION_ID` автоматически становится admin
+Аутентификация полностью локальная; OAuth/Kimi Platform больше не используется.
 
-2. **Ученики** — локальная аутентификация:
-   - Логин/пароль (SHA-256 + соль)
-   - JWT-токен сохраняется в `localStorage` (`student_token`)
-   - Передаётся в заголовке `x-student-token`
+1. **Администраторы** — таблица `admin_users`:
+   - Логин/пароль (bcrypt)
+   - Сессия в httpOnly cookie (`admin_session`)
+   - Роль: `admin`
+
+2. **Ученики** — таблица `local_users`:
+   - Логин/пароль (bcrypt)
+   - Сессия в httpOnly cookie (`student_session`)
+   - Роль: `student`
+
+Единый endpoint входа — `unifiedAuth.login`. Он сначала ищет логин в `admin_users`, затем в `local_users`, и выдаёт соответствующую cookie.
 
 ### tRPC-роутеры и middleware
 
 | Процедура | Описание |
 |-----------|----------|
 | `publicQuery` | Без авторизации |
-| `authedQuery` | Требуется OAuth-сессия (преподаватель) |
+| `authedQuery` | Любая аутентификация (admin или student) |
 | `adminQuery` | Требуется роль `admin` |
-| `studentQuery` | Требуется ученический JWT-токен |
+| `studentQuery` | Требуется роль `student` |
 
 ### База данных (MySQL + Drizzle ORM)
 
@@ -272,7 +274,7 @@ npm run db:push       # Push схемы (для разработки)
 
 | Домен | Таблицы | Подключение |
 |---|---|---|
-| `auth` | `roles`, `permissions`, `role_permissions`, `users`, `local_users` | `getAuthDb()` |
+| `auth` | `roles`, `permissions`, `role_permissions`, `admin_users`, `local_users` | `getAuthDb()` |
 | `content` | `topic_nodes`, `resources` | `getContentDb()` |
 | `learning` | `enrollments`, `student_progress`, `lab_progress` | `getLearningDb()` |
 | `labs` | `lab_categories`, `lab_subcategories`, `lab_works`, `lab_blocks`, `lab_analytics`, `simulations` | `getLabsDb()` |
@@ -455,8 +457,8 @@ npm run db:push       # Push схемы (для разработки)
 | `/admin/lab-management` | Lab Management (редактор) | Требуется admin |
 | `/resources` | Ресурсы | Публичный |
 | `/about` | О проекте | Публичный |
-| `/login` | Вход для преподавателя | Публичный |
-| `/profile` | Профиль преподавателя | Требуется OAuth |
+| `/login` | Вход для администратора | Публичный |
+| `/profile` | Профиль администратора | Требуется admin |
 | `/admin/problems` | Problem Management | Требуется admin |
 | `/student/login` | Вход для ученика | Публичный |
 | `/student/profile` | Личный кабинет ученика (дашборд) | Требуется ученик |
@@ -483,13 +485,15 @@ npm run db:push       # Push схемы (для разработки)
 
 - Компоненты React: PascalCase (`Header.tsx`, `StudentDashboard.tsx`)
 - Хуки: camelCase с префиксом `use` (`useAuth`, `useStudentAuth`)
-- Роутеры tRPC: суффикс `-router.ts` (`auth-router.ts`, `student-router.ts`)
-- Запросы к БД: суффикс `s.ts` в `queries/` (`students.ts`, `users.ts`)
+- Роутеры tRPC: суффикс `-router.ts` (`unified-auth-router.ts`, `student-router.ts`)
+- Запросы к БД: суффикс `s.ts` в `queries/` (`localUsers.ts`, `adminUsers.ts`)
 
 ### Аутентификация в tRPC
 
 - Для защиты эндпоинта используй `authedQuery`, `adminQuery` или `studentQuery` из `api/middleware.ts`
-- Никогда не доверяй `ctx.user` или `ctx.student` без middleware
+- В admin endpoints используй `ctx.adminUser`; в student endpoints — `ctx.localUser`
+- Никогда не доверяй `ctx.adminUser` или `ctx.localUser` без middleware
+- Администраторы создаются и управляются **только через БД** (`admin_users`); страница Student Management предназначена только для учеников (`local_users`)
 
 ### Работа с БД
 
@@ -514,11 +518,11 @@ npm run db:push       # Push схемы (для разработки)
 
 ## Безопасность
 
-- `APP_SECRET` используется для подписи **всех** JWT-токенов (сессии преподавателей и учеников)
+- `APP_SECRET` используется для подписи **всех** JWT-токенов (`admin_session` и `student_session`)
 - Сессионные cookie: `httpOnly`, `secure` (в production), `sameSite: "None"` (в production) / `"Lax"` (localhost)
-- Пароли учеников хешируются SHA-256 с солью `quant-salt-2026`
+- Пароли администраторов и учеников хешируются bcrypt (cost factor 12)
 - Тело запроса ограничено 50 МБ (`bodyLimit`)
-- Первый вход через OAuth автоматически создаёт пользователя; роль `admin` назначается только при совпадении `unionId` с `OWNER_UNION_ID`
+- Первый администратор создаётся вручную в БД (`admin_users`) или через вспомогательный скрипт
 
 ---
 
@@ -526,11 +530,12 @@ npm run db:push       # Push схемы (для разработки)
 
 | Файл | Назначение |
 |------|-----------|
-| `create_tables.cjs` | Создание таблиц (устаревший, используйте миграции Drizzle) |
-| `make-admin.cjs` | Назначение роли admin пользователю по unionId |
-| `seed_problems.cjs` | Сид задач кинематики |
-| `scripts/create-student-tables.mjs` | Создание таблиц для учеников |
 | `db/seed.ts` | Полный сид начальных данных (темы, подтемы, лабы, ресурсы) |
+| `db/simulations-seed.ts` | Реестр физических симуляций |
+| `db/problems-seed.ts` | Сид задач |
+| `scripts/create-student-tables.mjs` | Устаревший скрипт создания таблиц учеников |
+| `make-admin.cjs` | Устаревший скрипт для OAuth admin |
+| `create_tables.cjs` | Устаревший скрипт создания таблиц |
 
 ---
 

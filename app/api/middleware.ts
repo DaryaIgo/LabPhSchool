@@ -3,7 +3,7 @@
  *
  * Procedure hierarchy:
  *   publicQuery    → No authentication
- *   authedQuery    → Any authenticated user
+ *   authedQuery    → Any authenticated user (admin or student)
  *   adminQuery     → Admin role required
  *   studentQuery   → Student role required (active account)
  *   requirePermission(resource, action) → Fine-grained permission check
@@ -26,14 +26,14 @@ export const publicQuery = t.procedure;
 const requireAuth = t.middleware(async opts => {
   const { ctx, next } = opts;
 
-  if (!ctx.localUser) {
+  if (!ctx.adminUser && !ctx.localUser) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
       message: ErrorMessages.unauthenticated,
     });
   }
 
-  return next({ ctx: { ...ctx, localUser: ctx.localUser } });
+  return next({ ctx });
 });
 
 export const authedQuery = t.procedure.use(requireAuth);
@@ -42,23 +42,21 @@ export const authedQuery = t.procedure.use(requireAuth);
 const requireAdmin = t.middleware(async opts => {
   const { ctx, next } = opts;
 
-  // Must be authenticated
-  if (!ctx.localUser) {
+  if (!ctx.adminUser) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
       message: ErrorMessages.unauthenticated,
     });
   }
 
-  // Must have admin role
-  if (ctx.role?.name !== "admin") {
+  if (ctx.adminUser.status !== "active") {
     throw new TRPCError({
       code: "FORBIDDEN",
-      message: ErrorMessages.insufficientRole,
+      message: "Admin account is not active",
     });
   }
 
-  return next({ ctx: { ...ctx, localUser: ctx.localUser } });
+  return next({ ctx });
 });
 
 export const adminQuery = t.procedure.use(requireAuth).use(requireAdmin);
@@ -67,7 +65,6 @@ export const adminQuery = t.procedure.use(requireAuth).use(requireAdmin);
 const requireStudent = t.middleware(async opts => {
   const { ctx, next } = opts;
 
-  // Must have local user (student auth)
   if (!ctx.localUser) {
     throw new TRPCError({
       code: "FORBIDDEN",
@@ -75,7 +72,6 @@ const requireStudent = t.middleware(async opts => {
     });
   }
 
-  // Account must be active
   if (ctx.localUser.status !== "active") {
     throw new TRPCError({
       code: "FORBIDDEN",
@@ -86,7 +82,6 @@ const requireStudent = t.middleware(async opts => {
     });
   }
 
-  // Must have student role
   if (ctx.role?.name !== "student") {
     throw new TRPCError({
       code: "FORBIDDEN",
@@ -94,7 +89,7 @@ const requireStudent = t.middleware(async opts => {
     });
   }
 
-  return next({ ctx: { ...ctx, localUser: ctx.localUser } });
+  return next({ ctx });
 });
 
 export const studentQuery = t.procedure.use(requireAuth).use(requireStudent);
@@ -104,7 +99,7 @@ export function requirePermission(resource: string, action: string) {
   return t.middleware(async opts => {
     const { ctx, next } = opts;
 
-    if (!ctx.localUser) {
+    if (!ctx.adminUser && !ctx.localUser) {
       throw new TRPCError({
         code: "UNAUTHORIZED",
         message: ErrorMessages.unauthenticated,
@@ -119,6 +114,6 @@ export function requirePermission(resource: string, action: string) {
       });
     }
 
-    return next({ ctx: { ...ctx, localUser: ctx.localUser } });
+    return next({ ctx });
   });
 }

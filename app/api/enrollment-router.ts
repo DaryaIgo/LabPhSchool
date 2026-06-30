@@ -131,12 +131,12 @@ export const enrollmentRouter = createRouter({
       await createEnrollment({
         localUserId: input.studentId,
         topicNodeId: input.topicNodeId,
-        createdBy: ctx.localUser!.id,
+        createdBy: ctx.adminUser!.id,
       });
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "enroll",
         resource: "enrollments",
         details: { studentId: input.studentId, topicNodeId: input.topicNodeId },
@@ -152,8 +152,8 @@ export const enrollmentRouter = createRouter({
       await deleteEnrollment(input.enrollmentId);
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "unenroll",
         resource: "enrollments",
         resourceId: input.enrollmentId,
@@ -174,8 +174,8 @@ export const enrollmentRouter = createRouter({
       await updateEnrollmentStatus(input.enrollmentId, input.status);
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "update",
         resource: "enrollments",
         resourceId: input.enrollmentId,
@@ -208,8 +208,8 @@ export const enrollmentRouter = createRouter({
       });
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "update",
         resource: "enrollments",
         resourceId: enrollmentId,
@@ -270,7 +270,7 @@ export const enrollmentRouter = createRouter({
         localUserId: enrollment.localUserId,
         labWorkId: input.labWorkId,
         order: maxOrder + 1,
-        assignedBy: ctx.localUser!.id,
+        assignedBy: ctx.adminUser!.id,
       });
 
       const assignmentId = Number(result[0].insertId);
@@ -286,8 +286,8 @@ export const enrollmentRouter = createRouter({
       });
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "create",
         resource: "assigned_lab_works",
         resourceId: assignmentId,
@@ -307,8 +307,8 @@ export const enrollmentRouter = createRouter({
       await deleteAssignedLabWork(input.assignmentId);
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "delete",
         resource: "assigned_lab_works",
         resourceId: input.assignmentId,
@@ -342,8 +342,8 @@ export const enrollmentRouter = createRouter({
       });
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "update",
         resource: "assigned_lab_works",
         resourceId: assignmentId,
@@ -397,7 +397,7 @@ export const enrollmentRouter = createRouter({
         localUserId: enrollment.localUserId,
         problemId: input.problemId,
         order: maxOrder + 1,
-        assignedBy: ctx.localUser!.id,
+        assignedBy: ctx.adminUser!.id,
       });
 
       const assignmentId = Number(result[0].insertId);
@@ -413,8 +413,8 @@ export const enrollmentRouter = createRouter({
       });
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "create",
         resource: "assigned_problems",
         resourceId: assignmentId,
@@ -434,8 +434,8 @@ export const enrollmentRouter = createRouter({
       await deleteAssignedProblem(input.assignmentId);
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "delete",
         resource: "assigned_problems",
         resourceId: input.assignmentId,
@@ -469,8 +469,8 @@ export const enrollmentRouter = createRouter({
       });
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "update",
         resource: "assigned_problems",
         resourceId: assignmentId,
@@ -524,7 +524,7 @@ export const enrollmentRouter = createRouter({
         localUserId: enrollment.localUserId,
         notebookId: input.notebookId,
         order: maxOrder + 1,
-        assignedBy: ctx.localUser!.id,
+        assignedBy: ctx.adminUser!.id,
       });
 
       const assignmentId = Number(result[0].insertId);
@@ -547,7 +547,7 @@ export const enrollmentRouter = createRouter({
         await jupyterDb.insert(jupyterNotebookAccess).values({
           notebookId: input.notebookId,
           localUserId: enrollment.localUserId,
-          grantedBy: ctx.localUser!.id,
+          grantedBy: ctx.adminUser!.id,
         });
       }
 
@@ -567,8 +567,8 @@ export const enrollmentRouter = createRouter({
       });
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "create",
         resource: "assigned_jupyter_notebooks",
         resourceId: assignmentId,
@@ -621,8 +621,8 @@ export const enrollmentRouter = createRouter({
       }
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "delete",
         resource: "assigned_jupyter_notebooks",
         resourceId: input.assignmentId,
@@ -656,8 +656,8 @@ export const enrollmentRouter = createRouter({
       });
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "update",
         resource: "assigned_jupyter_notebooks",
         resourceId: assignmentId,

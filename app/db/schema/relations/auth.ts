@@ -3,7 +3,6 @@ import {
   roles,
   permissions,
   rolePermissions,
-  users,
   localUsers,
 } from "../auth";
 
@@ -29,21 +28,9 @@ export const rolePermissionsRelations = relations(
   })
 );
 
-export const usersRelations = relations(users, ({ one }) => ({
-  role: one(roles, {
-    fields: [users.roleId],
-    references: [roles.id],
-  }),
-}));
-
 export const localUsersRelations = relations(localUsers, ({ one }) => ({
   role: one(roles, {
     fields: [localUsers.roleId],
     references: [roles.id],
-  }),
-  // createdBy is a soft reference inside the auth domain.
-  creator: one(users, {
-    fields: [localUsers.createdBy],
-    references: [users.id],
   }),
 }));

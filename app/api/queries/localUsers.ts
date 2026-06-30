@@ -115,7 +115,10 @@ export async function listLocalUsers(options?: {
 // ── CREATE ──
 
 export async function createLocalUser(data: InsertLocalUser) {
-  const result = await getAuthDb().insert(localUsers).values(data);
+  // local_users is reserved for students; force student role.
+  const result = await getAuthDb()
+    .insert(localUsers)
+    .values({ ...data, roleId: 2 });
   return result;
 }
 

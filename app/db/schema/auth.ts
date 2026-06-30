@@ -3,7 +3,6 @@ import {
   mysqlEnum,
   serial,
   varchar,
-  text,
   timestamp,
   bigint,
   index,
@@ -13,6 +12,10 @@ import {
 // ═══════════════════════════════════════════════════════════════
 // Auth / Identity & Access Management
 // ═══════════════════════════════════════════════════════════════
+
+// NOTE: OAuth users table was removed. All authentication is now local:
+// - admin_users  → administrators/teachers
+// - local_users  → students
 
 export const roles = mysqlTable("roles", {
   id: serial("id").primaryKey(),
@@ -65,26 +68,40 @@ export const rolePermissions = mysqlTable(
 
 export type RolePermission = typeof rolePermissions.$inferSelect;
 
-export const users = mysqlTable("users", {
-  id: serial("id").primaryKey(),
-  unionId: varchar("union_id", { length: 255 }).notNull().unique(),
-  name: varchar("name", { length: 255 }),
-  email: varchar("email", { length: 320 }),
-  avatar: text("avatar"),
-  roleId: bigint("role_id", { mode: "number", unsigned: true })
-    .notNull()
-    .references(() => roles.id)
-    .default(1),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .notNull()
-    .$onUpdate(() => new Date()),
-  lastSignInAt: timestamp("last_sign_in_at").defaultNow().notNull(),
-});
+// ═══════════════════════════════════════════════════════════════
+// Local administrators / teachers
+// ═══════════════════════════════════════════════════════════════
 
-export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
+export const adminUsers = mysqlTable(
+  "admin_users",
+  {
+    id: serial("id").primaryKey(),
+    login: varchar("login", { length: 100 }).notNull().unique(),
+    passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+    name: varchar("name", { length: 255 }).notNull(),
+    role: varchar("role", { length: 50 }).notNull().default("admin"),
+    status: mysqlEnum("status", ["active", "inactive", "suspended"])
+      .default("active")
+      .notNull(),
+    avatar: varchar("avatar", { length: 50 }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
+    lastLoginAt: timestamp("last_login_at"),
+  },
+  table => ({
+    statusIdx: index("admin_user_status_idx").on(table.status),
+  })
+);
+
+export type AdminUser = typeof adminUsers.$inferSelect;
+export type InsertAdminUser = typeof adminUsers.$inferInsert;
+
+// ═══════════════════════════════════════════════════════════════
+// Local students
+// ═══════════════════════════════════════════════════════════════
 
 export const localUsers = mysqlTable(
   "local_users",
@@ -97,8 +114,8 @@ export const localUsers = mysqlTable(
       .notNull()
       .references(() => roles.id)
       .default(2),
-    // Soft reference to users.id (auth domain). Kept as plain bigint to avoid
-    // coupling if auth/user tables ever move to a separate database.
+    // Soft reference to admin_users.id (auth domain). Kept as plain bigint to avoid
+    // coupling if auth tables ever move to a separate database.
     createdBy: bigint("created_by", { mode: "number", unsigned: true }),
     status: mysqlEnum("status", ["active", "inactive", "suspended"])
       .default("active")

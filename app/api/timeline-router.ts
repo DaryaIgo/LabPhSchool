@@ -58,8 +58,8 @@ export const timelineRouter = createRouter({
       const id = Number(result[0].insertId);
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "create",
         resource: "timeline_entries",
         resourceId: id,
@@ -108,8 +108,8 @@ export const timelineRouter = createRouter({
         .where(eq(timelineEntries.id, id));
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "update",
         resource: "timeline_entries",
         resourceId: id,
@@ -127,8 +127,8 @@ export const timelineRouter = createRouter({
         .where(eq(timelineEntries.id, input.id));
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "delete",
         resource: "timeline_entries",
         resourceId: input.id,

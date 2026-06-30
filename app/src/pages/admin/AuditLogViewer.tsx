@@ -203,12 +203,12 @@ export default function AuditLogViewer() {
                             <Badge
                               variant="outline"
                               className={`text-xs ${
-                                entry.actorType === "user"
+                                entry.actorType === "admin_user"
                                   ? "border-blue-500 text-blue-400"
                                   : "border-green-500 text-green-400"
                               }`}
                             >
-                              {entry.actorType === "user" ? "A" : "S"}
+                              {entry.actorType === "admin_user" ? "A" : "S"}
                             </Badge>
                             <span className="font-mono text-xs">
                               #{entry.actorId}

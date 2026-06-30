@@ -1,8 +1,7 @@
 /**
  * Unified Authentication Router
  *
- * Single login endpoint that handles both student (password) and
- * admin (OAuth redirect) authentication flows.
+ * Single login endpoint for both admin and student local authentication.
  */
 
 import { z } from "zod";
@@ -12,25 +11,26 @@ import {
   findLocalUserByLogin,
   updateLocalUserLastLogin,
 } from "./queries/localUsers";
+import {
+  findAdminUserByLogin,
+  updateAdminUserLastLogin,
+} from "./queries/adminUsers";
 import { comparePassword } from "./lib/password";
 import { getStudentSetCookie, getStudentClearCookie } from "./student-session";
+import { getAdminSetCookie, getAdminClearCookie } from "./admin-session";
 import { getRoleWithPermissions } from "./queries/roles";
 import { createAuditEntry } from "./queries/audit";
-import * as cookie from "cookie";
-import { Session } from "@contracts/constants";
-import { getSessionCookieOptions } from "./lib/cookies";
 
 export const unifiedAuthRouter = createRouter({
   /**
    * Unified login — accepts credentials and returns JWT in HttpOnly cookie.
-   * For students: { login, password, type: "student" }
+   * { login, password, type: "student" | "admin" }
    */
   login: publicQuery
     .input(
       z.object({
         login: z.string().min(1).max(100),
         password: z.string().min(1).max(128),
-        type: z.enum(["student"]).default("student"),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -40,7 +40,80 @@ export const unifiedAuthRouter = createRouter({
         "unknown";
       const userAgent = ctx.req.headers.get("user-agent") ?? "unknown";
 
-      // Find student by login
+      // Try admin login first, then student login.
+      const adminUser = await findAdminUserByLogin(input.login);
+      if (adminUser) {
+        if (adminUser.status === "suspended") {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Account suspended.",
+          });
+        }
+        if (adminUser.status === "inactive") {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Account is inactive.",
+          });
+        }
+
+        const passwordValid = await comparePassword(
+          input.password,
+          adminUser.passwordHash
+        );
+        if (!passwordValid) {
+          await createAuditEntry({
+            actorId: adminUser.id,
+            actorType: "admin_user",
+            action: "login",
+            resource: "auth",
+            details: { login: input.login, reason: "invalid_password" },
+            ipAddress,
+            userAgent,
+            success: false,
+            errorMessage: "Invalid login or password",
+          });
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Invalid login or password",
+          });
+        }
+
+        await updateAdminUserLastLogin(adminUser.id);
+
+        const cookieStr = await getAdminSetCookie(
+          {
+            adminUserId: adminUser.id,
+            login: adminUser.login,
+            type: "admin",
+          },
+          ctx.req.headers
+        );
+        ctx.resHeaders.append("set-cookie", cookieStr);
+
+        await createAuditEntry({
+          actorId: adminUser.id,
+          actorType: "admin_user",
+          action: "login",
+          resource: "auth",
+          details: { login: input.login },
+          ipAddress,
+          userAgent,
+          success: true,
+        });
+
+        return {
+          success: true,
+          user: {
+            id: adminUser.id,
+            login: adminUser.login,
+            name: adminUser.name,
+            role: adminUser.role,
+            type: "admin" as const,
+          },
+        };
+      }
+
+      // Student login
       const localUser = await findLocalUserByLogin(input.login);
       if (!localUser) {
         await createAuditEntry({
@@ -60,7 +133,6 @@ export const unifiedAuthRouter = createRouter({
         });
       }
 
-      // Check account status
       if (localUser.status === "suspended") {
         await createAuditEntry({
           actorId: localUser.id,
@@ -97,7 +169,6 @@ export const unifiedAuthRouter = createRouter({
         });
       }
 
-      // Verify password with bcrypt (timing-safe)
       const passwordValid = await comparePassword(
         input.password,
         localUser.passwordHash
@@ -120,20 +191,15 @@ export const unifiedAuthRouter = createRouter({
         });
       }
 
-      // Load role with permissions
       const role = await getRoleWithPermissions(localUser.roleId);
-
-      // Update last login
       await updateLocalUserLastLogin(localUser.id);
 
-      // Set HttpOnly cookie
       const cookieStr = await getStudentSetCookie(
         { localUserId: localUser.id, login: localUser.login, type: "student" },
         ctx.req.headers
       );
       ctx.resHeaders.append("set-cookie", cookieStr);
 
-      // Audit log
       await createAuditEntry({
         actorId: localUser.id,
         actorType: "local_user",
@@ -147,19 +213,33 @@ export const unifiedAuthRouter = createRouter({
 
       return {
         success: true,
-        student: {
+        user: {
           id: localUser.id,
           login: localUser.login,
           name: localUser.name,
           role: role?.name ?? "student",
+          type: "student" as const,
         },
       };
     }),
 
   /**
-   * Get current authenticated actor (OAuth user or local student).
+   * Get current authenticated actor (admin or student).
    */
   me: publicQuery.query(async ({ ctx }) => {
+    if (ctx.adminUser) {
+      return {
+        type: "admin" as const,
+        id: ctx.adminUser.id,
+        login: ctx.adminUser.login,
+        name: ctx.adminUser.name,
+        role: ctx.adminUser.role,
+        status: ctx.adminUser.status,
+        permissions: [],
+        avatar: ctx.adminUser.avatar ?? null,
+      };
+    }
+
     if (ctx.localUser) {
       return {
         type: "student" as const,
@@ -180,26 +260,8 @@ export const unifiedAuthRouter = createRouter({
    * Logout — clears all session cookies.
    */
   logout: publicQuery.mutation(async ({ ctx }) => {
-    // Clear student session cookie
-    const studentClearCookie = getStudentClearCookie(ctx.req.headers);
-    ctx.resHeaders.append("set-cookie", studentClearCookie);
-
-    // Clear OAuth session cookie if present
-    const cookies = cookie.parse(ctx.req.headers.get("cookie") || "");
-    if (cookies[Session.cookieName]) {
-      const opts = getSessionCookieOptions(ctx.req.headers);
-      ctx.resHeaders.append(
-        "set-cookie",
-        cookie.serialize(Session.cookieName, "", {
-          httpOnly: opts.httpOnly,
-          path: opts.path,
-          sameSite: opts.sameSite?.toLowerCase() as "lax" | "none",
-          secure: opts.secure,
-          maxAge: 0,
-        })
-      );
-    }
-
+    ctx.resHeaders.append("set-cookie", getStudentClearCookie(ctx.req.headers));
+    ctx.resHeaders.append("set-cookie", getAdminClearCookie(ctx.req.headers));
     return { success: true };
   }),
 });

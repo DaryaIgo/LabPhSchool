@@ -10,7 +10,6 @@ import { TRPCError } from "@trpc/server";
 import { createRouter, studentQuery, adminQuery } from "./middleware";
 import {
   findLocalUserById,
-  findLocalUserWithRole,
   listLocalUsers,
   createLocalUser,
   updateLocalUser,
@@ -641,21 +640,12 @@ export const studentRouter = createRouter({
         .object({
           status: z.enum(["active", "inactive", "suspended"]).optional(),
           search: z.string().max(100).optional(),
-          role: z.enum(["admin", "student"]).optional(),
           page: z.number().positive().default(1),
           pageSize: z.number().positive().max(100).default(50),
         })
         .optional()
     )
-    .query(async ({ ctx, input }) => {
-      await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
-        action: "list",
-        resource: "users",
-        details: { filter: input },
-      });
-
+    .query(async ({ input }) => {
       return listLocalUsers(input ?? {});
     }),
 
@@ -703,14 +693,14 @@ export const studentRouter = createRouter({
         login: input.login,
         passwordHash,
         name: input.name,
-        createdBy: ctx.localUser!.id,
+        createdBy: ctx.adminUser!.id,
       });
 
       const insertedId = Number(result[0].insertId);
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "create",
         resource: "users",
         resourceId: insertedId,
@@ -750,8 +740,8 @@ export const studentRouter = createRouter({
       await updateLocalUser(id, updateData);
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "update",
         resource: "users",
         resourceId: id,
@@ -765,20 +755,12 @@ export const studentRouter = createRouter({
   delete: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
-      const user = await findLocalUserWithRole(input.id);
-      if (user?.roleName === "admin") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Cannot delete an administrator account",
-        });
-      }
-
       await deleteStudentLinksByLocalUserId(input.id);
       await deleteLocalUser(input.id);
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "delete",
         resource: "users",
         resourceId: input.id,
@@ -791,19 +773,11 @@ export const studentRouter = createRouter({
   suspend: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
-      const user = await findLocalUserWithRole(input.id);
-      if (user?.roleName === "admin") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Cannot suspend an administrator account",
-        });
-      }
-
       await suspendLocalUser(input.id);
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "suspend",
         resource: "users",
         resourceId: input.id,
@@ -816,19 +790,11 @@ export const studentRouter = createRouter({
   activate: adminQuery
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
-      const user = await findLocalUserWithRole(input.id);
-      if (user?.roleName === "admin") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Cannot change status of an administrator account",
-        });
-      }
-
       await activateLocalUser(input.id);
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "activate",
         resource: "users",
         resourceId: input.id,
@@ -936,8 +902,8 @@ export const studentRouter = createRouter({
       }
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "update",
         resource: "student_progress",
         details: { studentId, subtopicNodeId, ...data },
@@ -1003,21 +969,13 @@ export const studentRouter = createRouter({
 
   listLinks: adminQuery
     .input(z.object({ localUserId: z.number().positive() }))
-    .query(async ({ ctx, input }) => {
+    .query(async ({ input }) => {
       const student = await findLocalUserById(input.localUserId);
       if (!student) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Student not found" });
       }
 
       const links = await listStudentLinks(input.localUserId);
-
-      await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
-        action: "list",
-        resource: "student_links",
-        details: { localUserId: input.localUserId },
-      });
 
       return links.map(link => ({
         id: link.id,
@@ -1054,14 +1012,14 @@ export const studentRouter = createRouter({
         title: input.title,
         platformKey: platform.key,
         displayOrder: maxOrder + 1,
-        createdBy: ctx.localUser!.id,
+        createdBy: ctx.adminUser!.id,
       });
 
       const insertedId = Number(result[0].insertId);
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "create",
         resource: "student_links",
         resourceId: insertedId,
@@ -1114,8 +1072,8 @@ export const studentRouter = createRouter({
       await updateStudentLink(id, updateData);
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "update",
         resource: "student_links",
         resourceId: id,
@@ -1131,8 +1089,8 @@ export const studentRouter = createRouter({
       await deleteStudentLink(input.id);
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "delete",
         resource: "student_links",
         resourceId: input.id,

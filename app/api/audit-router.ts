@@ -18,7 +18,7 @@ export const auditRouter = createRouter({
       z
         .object({
           actorId: z.number().positive().optional(),
-          actorType: z.enum(["user", "local_user"]).optional(),
+          actorType: z.enum(["admin_user", "local_user"]).optional(),
           resource: z.string().max(50).optional(),
           action: z.string().max(50).optional(),
           page: z.number().positive().default(1),

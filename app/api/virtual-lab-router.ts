@@ -408,8 +408,8 @@ export const virtualLabRouter = createRouter({
       });
       const id = Number(result[0].insertId);
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "create",
         resource: "lab_categories",
         resourceId: id,
@@ -449,8 +449,8 @@ export const virtualLabRouter = createRouter({
         .set(updateData)
         .where(eq(labCategories.id, id));
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "update",
         resource: "lab_categories",
         resourceId: id,
@@ -466,8 +466,8 @@ export const virtualLabRouter = createRouter({
         .delete(labCategories)
         .where(eq(labCategories.id, input.id));
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "delete",
         resource: "lab_categories",
         resourceId: input.id,
@@ -517,8 +517,8 @@ export const virtualLabRouter = createRouter({
       });
       const id = Number(result[0].insertId);
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "create",
         resource: "lab_subcategories",
         resourceId: id,
@@ -552,8 +552,8 @@ export const virtualLabRouter = createRouter({
         .set(updateData)
         .where(eq(labSubcategories.id, id));
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "update",
         resource: "lab_subcategories",
         resourceId: id,
@@ -569,8 +569,8 @@ export const virtualLabRouter = createRouter({
         .delete(labSubcategories)
         .where(eq(labSubcategories.id, input.id));
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "delete",
         resource: "lab_subcategories",
         resourceId: input.id,
@@ -653,8 +653,8 @@ export const virtualLabRouter = createRouter({
       });
       const id = Number(result[0].insertId);
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "create",
         resource: "lab_works",
         resourceId: id,
@@ -705,8 +705,8 @@ export const virtualLabRouter = createRouter({
 
       await db.update(labWorks).set(updateData).where(eq(labWorks.id, id));
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "update",
         resource: "lab_works",
         resourceId: id,
@@ -720,8 +720,8 @@ export const virtualLabRouter = createRouter({
     .mutation(async ({ ctx, input }) => {
       await getLabsDb().delete(labWorks).where(eq(labWorks.id, input.id));
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "delete",
         resource: "lab_works",
         resourceId: input.id,
@@ -776,8 +776,8 @@ export const virtualLabRouter = createRouter({
       });
       const id = Number(result[0].insertId);
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "create",
         resource: "lab_blocks",
         resourceId: id,
@@ -821,8 +821,8 @@ export const virtualLabRouter = createRouter({
 
       await db.update(labBlocks).set(updateData).where(eq(labBlocks.id, id));
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "update",
         resource: "lab_blocks",
         resourceId: id,
@@ -836,8 +836,8 @@ export const virtualLabRouter = createRouter({
     .mutation(async ({ ctx, input }) => {
       await getLabsDb().delete(labBlocks).where(eq(labBlocks.id, input.id));
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "delete",
         resource: "lab_blocks",
         resourceId: input.id,
@@ -915,8 +915,8 @@ export const virtualLabRouter = createRouter({
       });
       const id = Number(result[0].insertId);
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "create",
         resource: "simulations",
         resourceId: id,
@@ -977,8 +977,8 @@ export const virtualLabRouter = createRouter({
         .set(updateData)
         .where(eq(simulations.id, id));
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "update",
         resource: "simulations",
         resourceId: id,
@@ -992,8 +992,8 @@ export const virtualLabRouter = createRouter({
     .mutation(async ({ ctx, input }) => {
       await getLabsDb().delete(simulations).where(eq(simulations.id, input.id));
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "delete",
         resource: "simulations",
         resourceId: input.id,

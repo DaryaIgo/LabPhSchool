@@ -199,8 +199,8 @@ export const adminRouter = createRouter({
       });
       const id = Number(result[0].insertId);
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "create",
         resource: "topic_nodes",
         resourceId: id,
@@ -252,8 +252,8 @@ export const adminRouter = createRouter({
       await db.update(topicNodes).set(updateData).where(eq(topicNodes.id, id));
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "update",
         resource: "topic_nodes",
         resourceId: id,
@@ -285,8 +285,8 @@ export const adminRouter = createRouter({
       }
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "update",
         resource: "topic_nodes",
         resourceId: 0,
@@ -324,8 +324,8 @@ export const adminRouter = createRouter({
       }
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "delete",
         resource: "topic_nodes",
         resourceId: input.id,
@@ -387,8 +387,8 @@ export const adminRouter = createRouter({
         const id = Number(result[0].insertId);
 
         await createAuditEntry({
-          actorId: ctx.localUser!.id,
-          actorType: "user",
+          actorId: ctx.adminUser!.id,
+          actorType: "admin_user",
           action: "create",
           resource: "topic_nodes",
           resourceId: id,
@@ -463,8 +463,8 @@ export const adminRouter = createRouter({
       const id = Number(result[0].insertId);
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "create",
         resource: "resources",
         resourceId: id,
@@ -499,8 +499,8 @@ export const adminRouter = createRouter({
       await db.update(resources).set(updateData).where(eq(resources.id, id));
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "update",
         resource: "resources",
         resourceId: id,
@@ -516,8 +516,8 @@ export const adminRouter = createRouter({
       await getContentDb().delete(resources).where(eq(resources.id, input.id));
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "delete",
         resource: "resources",
         resourceId: input.id,
@@ -979,8 +979,8 @@ export const adminRouter = createRouter({
         }
 
         await createAuditEntry({
-          actorId: ctx.localUser!.id,
-          actorType: "user",
+          actorId: ctx.adminUser!.id,
+          actorType: "admin_user",
           action: "grade",
           resource: "lab_progress",
           resourceId: input.id,
@@ -1014,8 +1014,8 @@ export const adminRouter = createRouter({
           .where(eq(assignedProblems.id, input.id));
 
         await createAuditEntry({
-          actorId: ctx.localUser!.id,
-          actorType: "user",
+          actorId: ctx.adminUser!.id,
+          actorType: "admin_user",
           action: "grade",
           resource: "assigned_problems",
           resourceId: input.id,
@@ -1032,8 +1032,8 @@ export const adminRouter = createRouter({
         .where(eq(assignedJupyterNotebooks.id, input.id));
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "grade",
         resource: "assigned_jupyter_notebooks",
         resourceId: input.id,
@@ -1101,14 +1101,14 @@ export const adminRouter = createRouter({
         title: input.title,
         filename: input.filename,
         filePath: input.filePath,
-        uploadedBy: ctx.localUser!.id,
+        uploadedBy: ctx.adminUser!.id,
       });
 
       const id = Number(result[0].insertId);
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "create",
         resource: "jupyter_notebooks",
         resourceId: id,
@@ -1132,8 +1132,8 @@ export const adminRouter = createRouter({
         .where(eq(jupyterNotebooks.id, input.id));
 
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "delete",
         resource: "jupyter_notebooks",
         resourceId: input.id,

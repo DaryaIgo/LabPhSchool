@@ -46,7 +46,7 @@ export const enrollments = mysqlTable(
     }),
     enrolledAt: timestamp("enrolled_at").defaultNow().notNull(),
     expiresAt: timestamp("expires_at"),
-    // Soft reference to users.id (auth domain).
+    // Soft reference to auth.admin_users.id (auth domain).
     createdBy: bigint("created_by", { mode: "number", unsigned: true }),
   },
   table => ({
@@ -139,7 +139,7 @@ export type LabProgress = typeof labProgress.$inferSelect;
 // - enrollmentId -> learning.enrollments.id
 // - localUserId  -> auth.local_users.id
 // - labWorkId    -> labs.lab_works.id
-// - assignedBy   -> auth.users.id
+// - assignedBy   -> auth.admin_users.id
 
 export const assignedLabWorks = mysqlTable(
   "assigned_lab_works",
@@ -197,7 +197,7 @@ export type AssignedLabWork = typeof assignedLabWorks.$inferSelect;
 // - enrollmentId -> learning.enrollments.id
 // - localUserId  -> auth.local_users.id
 // - problemId    -> problems.problems.id
-// - assignedBy   -> auth.local_users.id
+// - assignedBy   -> auth.admin_users.id
 
 export const assignedProblems = mysqlTable(
   "assigned_problems",
@@ -258,7 +258,7 @@ export type AssignedProblem = typeof assignedProblems.$inferSelect;
 // - enrollmentId -> learning.enrollments.id
 // - localUserId  -> auth.local_users.id
 // - notebookId   -> jupyter.jupyter_notebooks.id
-// - assignedBy   -> auth.users.id
+// - assignedBy   -> auth.admin_users.id
 
 export const assignedJupyterNotebooks = mysqlTable(
   "assigned_jupyter_notebooks",
@@ -316,7 +316,7 @@ export type AssignedJupyterNotebook =
 
 // Soft references:
 // - localUserId -> auth.local_users.id
-// - createdBy   -> auth.users.id
+// - createdBy   -> auth.admin_users.id
 
 export const studentLinks = mysqlTable(
   "student_links",

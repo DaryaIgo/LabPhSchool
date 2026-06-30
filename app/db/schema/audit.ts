@@ -20,7 +20,7 @@ export const auditLog = mysqlTable(
     id: serial("id").primaryKey(),
     // Polymorphic soft reference to an actor in the auth domain.
     actorId: bigint("actor_id", { mode: "number", unsigned: true }).notNull(),
-    actorType: mysqlEnum("actor_type", ["user", "local_user"]).notNull(),
+    actorType: mysqlEnum("actor_type", ["admin_user", "local_user"]).notNull(),
     action: varchar("action", { length: 50 }).notNull(),
     resource: varchar("resource", { length: 50 }).notNull(),
     // Polymorphic soft reference to a resource in another domain.

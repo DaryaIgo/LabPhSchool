@@ -7,7 +7,7 @@ export type AuthUser = {
   id: number;
   name: string;
   role: string;
-  type: "user" | "student";
+  type: "admin" | "student";
   email?: string | null;
   avatar?: string | null;
   login?: string;

@@ -53,8 +53,8 @@ export const problemManagementRouter = createRouter({
       });
       const id = Number(result[0].insertId);
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "create",
         resource: "problem_categories",
         resourceId: id,
@@ -88,8 +88,8 @@ export const problemManagementRouter = createRouter({
         .set(updateData)
         .where(eq(problemCategories.id, id));
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "update",
         resource: "problem_categories",
         resourceId: id,
@@ -105,8 +105,8 @@ export const problemManagementRouter = createRouter({
         .delete(problemCategories)
         .where(eq(problemCategories.id, input.id));
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "delete",
         resource: "problem_categories",
         resourceId: input.id,
@@ -160,8 +160,8 @@ export const problemManagementRouter = createRouter({
       });
       const id = Number(result[0].insertId);
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "create",
         resource: "problem_subcategories",
         resourceId: id,
@@ -196,8 +196,8 @@ export const problemManagementRouter = createRouter({
         .set(updateData)
         .where(eq(problemSubcategories.id, id));
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "update",
         resource: "problem_subcategories",
         resourceId: id,
@@ -213,8 +213,8 @@ export const problemManagementRouter = createRouter({
         .delete(problemSubcategories)
         .where(eq(problemSubcategories.id, input.id));
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "delete",
         resource: "problem_subcategories",
         resourceId: input.id,
@@ -333,8 +333,8 @@ export const problemManagementRouter = createRouter({
       });
       const id = Number(result[0].insertId);
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "create",
         resource: "problems",
         resourceId: id,
@@ -379,8 +379,8 @@ export const problemManagementRouter = createRouter({
 
       await db.update(problems).set(updateData).where(eq(problems.id, id));
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "update",
         resource: "problems",
         resourceId: id,
@@ -394,8 +394,8 @@ export const problemManagementRouter = createRouter({
     .mutation(async ({ ctx, input }) => {
       await getProblemsDb().delete(problems).where(eq(problems.id, input.id));
       await createAuditEntry({
-        actorId: ctx.localUser!.id,
-        actorType: "user",
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
         action: "delete",
         resource: "problems",
         resourceId: input.id,

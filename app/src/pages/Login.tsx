@@ -28,7 +28,7 @@ export default function Login() {
       setError("Введите логин и пароль");
       return;
     }
-    loginMutation.mutate({ login: login.trim(), password, type: "student" });
+    loginMutation.mutate({ login: login.trim(), password });
   }
 
   return (

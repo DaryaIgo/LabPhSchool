@@ -21,7 +21,7 @@ export const jupyterNotebooks = mysqlTable("jupyter_notebooks", {
   title: varchar("title", { length: 255 }).notNull(),
   filename: varchar("filename", { length: 255 }).notNull(),
   filePath: varchar("file_path", { length: 500 }).notNull(),
-  // Soft reference to users.id (auth domain).
+  // Soft reference to auth.admin_users.id (auth domain).
   uploadedBy: bigint("uploaded_by", { mode: "number", unsigned: true }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -40,7 +40,7 @@ export const jupyterNotebookAccess = mysqlTable(
       mode: "number",
       unsigned: true,
     }).notNull(),
-    // Soft reference to users.id (auth domain).
+    // Soft reference to auth.admin_users.id (auth domain).
     grantedBy: bigint("granted_by", { mode: "number", unsigned: true }),
     grantedAt: timestamp("granted_at").defaultNow().notNull(),
   },
