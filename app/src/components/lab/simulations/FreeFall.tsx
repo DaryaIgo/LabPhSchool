@@ -94,7 +94,11 @@ export default function FreeFall({
       ctx.textAlign = "right";
       ctx.textBaseline = "middle";
 
-      for (let heightVal = 0; heightVal <= viewMaxH + tickStep / 2; heightVal += tickStep) {
+      for (
+        let heightVal = 0;
+        heightVal <= viewMaxH + tickStep / 2;
+        heightVal += tickStep
+      ) {
         const py = groundY - heightVal * scale;
         if (py < topY - 10 || py > groundY + 5) continue;
 
@@ -109,7 +113,11 @@ export default function FreeFall({
         ctx.fillText(label, rulerX - 12, py);
 
         const minorStep = tickStep / 5;
-        for (let mh = heightVal + minorStep; mh < heightVal + tickStep; mh += minorStep) {
+        for (
+          let mh = heightVal + minorStep;
+          mh < heightVal + tickStep;
+          mh += minorStep
+        ) {
           const mpy = groundY - mh * scale;
           if (mpy < topY || mpy > groundY) continue;
           ctx.strokeStyle = "#788389";

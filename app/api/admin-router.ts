@@ -44,6 +44,10 @@ import {
   findAssignedLabWorkByProgress,
   updateAssignedLabWork,
 } from "./queries/assignedLabWorks";
+import {
+  cleanupExpiredSolutionImages,
+  getSolutionImageDeleteAt,
+} from "./lib/images";
 
 export const adminRouter = createRouter({
   // ═══════════════════════════════════════════════════════════
@@ -555,6 +559,14 @@ export const adminRouter = createRouter({
       const studentId = input?.studentId;
       const search = input?.search?.toLowerCase();
 
+      // Clean up solution images whose retention period has expired
+      await cleanupExpiredSolutionImages().catch(err => {
+        console.error(
+          "cleanupExpiredSolutionImages failed in getSubmissions:",
+          err
+        );
+      });
+
       // Fetch lab submissions
       const labConditions = [
         eq(labProgress.status, status as "submitted" | "completed"),
@@ -867,6 +879,15 @@ export const adminRouter = createRouter({
         throw new Error("Submission not found");
       }
 
+      await cleanupExpiredSolutionImages({
+        assignedProblemId: assignment.id,
+      }).catch(err => {
+        console.error(
+          "cleanupExpiredSolutionImages failed in getSubmissionById:",
+          err
+        );
+      });
+
       const [student] = await authDb
         .select()
         .from(localUsers)
@@ -983,6 +1004,10 @@ export const adminRouter = createRouter({
       }
 
       if (input.type === "problem") {
+        if (input.status === "completed") {
+          updateData.solutionImageDeleteAt = getSolutionImageDeleteAt();
+        }
+
         await learningDb
           .update(assignedProblems)
           .set(updateData)

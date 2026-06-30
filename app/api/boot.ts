@@ -9,6 +9,7 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import { verifyStudentSession } from "./student-session";
 import { getAuthDb, getJupyterDb, getMediaDb } from "./queries/connection";
+import { cleanupExpiredSolutionImages } from "./lib/images";
 import { localUsers, roles } from "@db/schema/auth";
 import { jupyterNotebooks, jupyterNotebookAccess } from "@db/schema/jupyter";
 import { images } from "@db/schema/media";
@@ -72,6 +73,11 @@ app.get("/uploads/:id/:filename", async c => {
     }
 
     const db = getMediaDb();
+
+    await cleanupExpiredSolutionImages({ imageId: id }).catch(err => {
+      console.error("cleanupExpiredSolutionImages failed in image serve:", err);
+    });
+
     const [image] = await db
       .select()
       .from(images)
@@ -269,6 +275,11 @@ app.use("/api/trpc/*", async c => {
   });
 });
 app.all("/api/*", c => c.json({ error: "Not Found" }, 404));
+
+// Clean up expired solution images on server start
+cleanupExpiredSolutionImages().catch(err => {
+  console.error("Initial cleanupExpiredSolutionImages failed:", err);
+});
 
 if (process.env.NODE_ENV === "production") {
   serveStaticFiles(app);

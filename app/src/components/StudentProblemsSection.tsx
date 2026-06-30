@@ -3,47 +3,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
-import { Clock, CheckCircle2, Trophy, FileText, Send } from "lucide-react";
+import { Clock, CheckCircle2, FileText, Send } from "lucide-react";
+import { getGradeVisuals } from "@/lib/grade-visuals";
+import { GradeIcon } from "@/components/GradeIcon";
 
 const DIFFICULTY_CONFIG: Record<string, { label: string; color: string }> = {
   easy: { label: "Лёгкая", color: "bg-[#2eff8c]/20 text-[#2eff8c]" },
   medium: { label: "Средняя", color: "bg-[#ffcb3d]/20 text-[#ffcb3d]" },
   hard: { label: "Сложная", color: "bg-[#ff6b6b]/20 text-[#ff6b6b]" },
-};
-
-const GRADE_CONFIG: Record<
-  number,
-  {
-    label: string;
-    textColor: string;
-    trophyColor: string;
-  }
-> = {
-  5: {
-    label: "Отлично",
-    textColor: "text-emerald-400",
-    trophyColor: "#ffd700",
-  },
-  4: {
-    label: "Хорошо",
-    textColor: "text-sky-400",
-    trophyColor: "#c0c0c0",
-  },
-  3: {
-    label: "Удовлетворительно",
-    textColor: "text-amber-400",
-    trophyColor: "#cd7f32",
-  },
-  2: {
-    label: "Неудовлетворительно",
-    textColor: "text-rose-400",
-    trophyColor: "#94a3b8",
-  },
-  1: {
-    label: "Плохо",
-    textColor: "text-red-400",
-    trophyColor: "#64748b",
-  },
 };
 
 export default function StudentProblemsSection() {
@@ -234,14 +201,18 @@ function ArchivedProblemCard({
   };
   number: number;
 }) {
-  const grade = problem.grade ?? undefined;
-  const gradeConfig = grade ? GRADE_CONFIG[grade] : null;
-  const glowColor = gradeConfig?.trophyColor ?? "#2eff8c";
+  const gradeVisuals = getGradeVisuals(problem.grade);
 
   return (
     <div
-      className="relative flex items-center gap-2 px-3 py-2 bg-[#232b2f] rounded-lg border border-[#37474f] lab-glow transition-colors"
-      style={{ "--glow-color": glowColor } as React.CSSProperties}
+      className={`relative flex items-center gap-2 px-3 py-2 bg-[#232b2f] rounded-lg border border-[#37474f] transition-colors ${
+        gradeVisuals?.hasGlow ? "lab-glow" : ""
+      }`}
+      style={
+        {
+          "--glow-color": gradeVisuals?.glowColor ?? "transparent",
+        } as React.CSSProperties
+      }
     >
       <span className="text-[10px] font-medium text-[#798389] w-4 shrink-0">
         {number}.
@@ -256,17 +227,9 @@ function ArchivedProblemCard({
           </p>
         )}
       </div>
-      {gradeConfig && (
-        <div className="shrink-0 flex flex-col items-center">
-          <Trophy
-            size={16}
-            style={{ color: gradeConfig.trophyColor }}
-            fill={gradeConfig.trophyColor}
-            fillOpacity={0.15}
-          />
-          <span className={`text-[10px] font-bold ${gradeConfig.textColor}`}>
-            {grade}
-          </span>
+      {gradeVisuals && (
+        <div className="shrink-0 flex items-center">
+          <GradeIcon grade={problem.grade} size={18} />
         </div>
       )}
     </div>

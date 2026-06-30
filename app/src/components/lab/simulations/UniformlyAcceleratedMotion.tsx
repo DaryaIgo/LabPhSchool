@@ -54,9 +54,7 @@ export default function UniformlyAcceleratedMotion({
       if (Math.abs(a) > 0.001) {
         const tTurn = -v0 / a;
         if (tTurn > 0 && tTurn < time) {
-          positions.push(
-            startX + v0 * tTurn + 0.5 * a * tTurn * tTurn
-          );
+          positions.push(startX + v0 * tTurn + 0.5 * a * tTurn * tTurn);
         }
       }
 

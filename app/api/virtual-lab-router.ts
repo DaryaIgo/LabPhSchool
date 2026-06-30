@@ -890,9 +890,7 @@ export const virtualLabRouter = createRouter({
               step: z.string().optional(),
               defaultValue: z.string().optional(),
               options: z
-                .array(
-                  z.object({ value: z.string(), label: z.string() })
-                )
+                .array(z.object({ value: z.string(), label: z.string() }))
                 .optional(),
               unit: z.string().optional(),
             })
@@ -949,9 +947,7 @@ export const virtualLabRouter = createRouter({
               step: z.string().optional(),
               defaultValue: z.string().optional(),
               options: z
-                .array(
-                  z.object({ value: z.string(), label: z.string() })
-                )
+                .array(z.object({ value: z.string(), label: z.string() }))
                 .optional(),
               unit: z.string().optional(),
             })

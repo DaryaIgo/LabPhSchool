@@ -314,28 +314,26 @@ function AssignedProblemsManager({
                 <DialogTitle>Назначить задачу</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 mt-2">
-                <Select
+                <select
                   value={selectedProblemId?.toString() ?? ""}
-                  onValueChange={v => setSelectedProblemId(Number(v))}
+                  onChange={e => setSelectedProblemId(Number(e.target.value))}
+                  className="w-full bg-[#263238] border border-[#37474f] text-white rounded-md px-3 py-2 pr-10 text-sm focus:outline-none focus:border-[#2eff8c] appearance-none"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 0.75rem center",
+                  }}
                 >
-                  <SelectTrigger className="bg-[#263238] border-[#37474f]">
-                    <SelectValue placeholder="Выберите задачу..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#1e2529] border-[#37474f] max-h-80">
-                    {availableProblems.map(p => (
-                      <SelectItem
-                        key={p.id}
-                        value={p.id.toString()}
-                        className="text-white"
-                      >
-                        <span className="truncate">{p.title}</span>
-                        <span className="ml-2 text-xs text-slate-500">
-                          {p.categoryTitle ?? "Без категории"}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <option value="" disabled>
+                    Выберите задачу...
+                  </option>
+                  {availableProblems.map(p => (
+                    <option key={p.id} value={p.id.toString()}>
+                      {p.title}
+                      {p.categoryTitle ? ` (${p.categoryTitle})` : ""}
+                    </option>
+                  ))}
+                </select>
                 <Button
                   className="w-full bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
                   disabled={!selectedProblemId || assignMutation.isPending}
@@ -1114,28 +1112,26 @@ function AssignedJupyterNotebooksManager({
                 <DialogTitle>Назначить Jupyter-ноутбук</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 mt-2">
-                <Select
+                <select
                   value={selectedNotebookId?.toString() ?? ""}
-                  onValueChange={v => setSelectedNotebookId(Number(v))}
+                  onChange={e => setSelectedNotebookId(Number(e.target.value))}
+                  className="w-full bg-[#263238] border border-[#37474f] text-white rounded-md px-3 py-2 pr-10 text-sm focus:outline-none focus:border-[#2eff8c] appearance-none"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 0.75rem center",
+                  }}
                 >
-                  <SelectTrigger className="bg-[#263238] border-[#37474f]">
-                    <SelectValue placeholder="Выберите ноутбук..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#1e2529] border-[#37474f] max-h-80">
-                    {availableNotebooks.map(n => (
-                      <SelectItem
-                        key={n.id}
-                        value={n.id.toString()}
-                        className="text-white"
-                      >
-                        <span className="truncate">{n.title}</span>
-                        <span className="ml-2 text-xs text-slate-500">
-                          {n.subtopicTitle ?? "Без подтемы"}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <option value="" disabled>
+                    Выберите ноутбук...
+                  </option>
+                  {availableNotebooks.map(n => (
+                    <option key={n.id} value={n.id.toString()}>
+                      {n.title}
+                      {n.subtopicTitle ? ` (${n.subtopicTitle})` : ""}
+                    </option>
+                  ))}
+                </select>
                 <Button
                   className="w-full bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
                   disabled={!selectedNotebookId || assignMutation.isPending}
@@ -1371,28 +1367,26 @@ function AssignedLabWorksManager({
                 <DialogTitle>Назначить лабораторную работу</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 mt-2">
-                <Select
+                <select
                   value={selectedLabWorkId?.toString() ?? ""}
-                  onValueChange={v => setSelectedLabWorkId(Number(v))}
+                  onChange={e => setSelectedLabWorkId(Number(e.target.value))}
+                  className="w-full bg-[#263238] border border-[#37474f] text-white rounded-md px-3 py-2 pr-10 text-sm focus:outline-none focus:border-[#2eff8c] appearance-none"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 0.75rem center",
+                  }}
                 >
-                  <SelectTrigger className="bg-[#263238] border-[#37474f]">
-                    <SelectValue placeholder="Выберите лабораторную работу..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#1e2529] border-[#37474f] max-h-80">
-                    {availableLabWorks.map(lw => (
-                      <SelectItem
-                        key={lw.id}
-                        value={lw.id.toString()}
-                        className="text-white"
-                      >
-                        <span className="truncate">{lw.title}</span>
-                        <span className="ml-2 text-xs text-slate-500">
-                          {lw.categoryTitle ?? "Без категории"}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <option value="" disabled>
+                    Выберите лабораторную работу...
+                  </option>
+                  {availableLabWorks.map(lw => (
+                    <option key={lw.id} value={lw.id.toString()}>
+                      {lw.title}
+                      {lw.categoryTitle ? ` (${lw.categoryTitle})` : ""}
+                    </option>
+                  ))}
+                </select>
                 <Button
                   className="w-full bg-[#2eff8c] text-[#0d1117] hover:bg-[#26d97a]"
                   disabled={!selectedLabWorkId || assignMutation.isPending}

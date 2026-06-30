@@ -170,7 +170,7 @@ export default function SubmissionsReview() {
     onError: err => toast.error(err.message),
   });
 
-  const handleGrade = () => {
+  const handleMarkReviewed = () => {
     if (!selectedSubmission) return;
     gradeMutation.mutate({
       type: selectedSubmission.type,
@@ -180,6 +180,24 @@ export default function SubmissionsReview() {
       status: "completed",
     });
   };
+
+  const handleSaveChanges = () => {
+    if (!selectedSubmission) return;
+    gradeMutation.mutate({
+      type: selectedSubmission.type,
+      id: selectedSubmission.id,
+      grade: grade ? Number(grade) : undefined,
+      teacherComment: comment || undefined,
+    });
+  };
+
+  const isAlreadyReviewed = selectedSubmission?.status === "completed";
+  const reviewAction = isAlreadyReviewed
+    ? handleSaveChanges
+    : handleMarkReviewed;
+  const reviewButtonText = isAlreadyReviewed
+    ? "Сохранить изменения"
+    : "Проверено";
 
   const handleOpenDetail = (submission: SubmissionItem) => {
     setSelectedSubmission(submission);
@@ -633,16 +651,16 @@ export default function SubmissionsReview() {
               {/* Grade Form */}
               <div className="border-t border-[#37474f] pt-4 space-y-4">
                 <h4 className="text-sm font-semibold text-white">
-                  Оценка работы
+                  Оценка и комментарий
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label className="text-xs text-gray-400 mb-2 block">
-                      Оценка (1–5)
+                      Оценка (1–5, необязательно)
                     </Label>
                     <Select value={grade} onValueChange={setGrade}>
                       <SelectTrigger className="bg-[#0d1117] border-[#37474f] text-white">
-                        <SelectValue placeholder="Выберите оценку" />
+                        <SelectValue placeholder="Без оценки" />
                       </SelectTrigger>
                       <SelectContent className="bg-[#1e2529] border-[#37474f]">
                         {[1, 2, 3, 4, 5].map(n => (
@@ -668,14 +686,14 @@ export default function SubmissionsReview() {
                 </div>
                 <div className="flex gap-3">
                   <Button
-                    onClick={handleGrade}
+                    onClick={reviewAction}
                     disabled={gradeMutation.isPending}
                     className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70]"
                   >
                     <CheckCircle2 className="h-4 w-4 mr-2" />
                     {gradeMutation.isPending
                       ? "Сохранение..."
-                      : "Сохранить оценку"}
+                      : reviewButtonText}
                   </Button>
                   <Button
                     variant="outline"

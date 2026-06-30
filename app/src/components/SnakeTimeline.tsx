@@ -255,7 +255,9 @@ export default function SnakeTimeline({
         aria-hidden="true"
       />
 
-      <div className={`relative z-10 grid ${gridColsClass} gap-y-8 sm:gap-y-12`}>
+      <div
+        className={`relative z-10 grid ${gridColsClass} gap-y-8 sm:gap-y-12`}
+      >
         {rows.map((row, rowIndex) =>
           row.map((item, index) => {
             const accent = item.color || DEFAULT_ACCENT;

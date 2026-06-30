@@ -1129,7 +1129,9 @@ export const studentRouter = createRouter({
   // ── Get my assigned lab works (active + archived) ──
   getMyAssignedLabWorks: studentQuery.query(async ({ ctx }) => {
     const rows = await getAssignedLabWorksByStudent(ctx.localUser!.id);
-    const active = rows.filter(r => r.status === "assigned");
+    const active = rows.filter(
+      r => r.status === "assigned" || r.status === "submitted"
+    );
     const archived = rows.filter(r => r.status === "completed");
     return { active, archived };
   }),

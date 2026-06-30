@@ -2,49 +2,9 @@ import { trpc } from "@/providers/trpc";
 import { Link } from "react-router";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import {
-  Beaker,
-  Trophy,
-  Clock,
-  CheckCircle2,
-  ArrowRight,
-  Send,
-} from "lucide-react";
-
-const GRADE_CONFIG: Record<
-  number,
-  {
-    label: string;
-    textColor: string;
-    trophyColor: string;
-  }
-> = {
-  5: {
-    label: "Отлично",
-    textColor: "text-emerald-400",
-    trophyColor: "#ffd700",
-  },
-  4: {
-    label: "Хорошо",
-    textColor: "text-sky-400",
-    trophyColor: "#c0c0c0",
-  },
-  3: {
-    label: "Удовлетворительно",
-    textColor: "text-amber-400",
-    trophyColor: "#cd7f32",
-  },
-  2: {
-    label: "Неудовлетворительно",
-    textColor: "text-rose-400",
-    trophyColor: "#94a3b8",
-  },
-  1: {
-    label: "Плохо",
-    textColor: "text-red-400",
-    trophyColor: "#64748b",
-  },
-};
+import { Beaker, Clock, CheckCircle2, ArrowRight, Send } from "lucide-react";
+import { getGradeVisuals } from "@/lib/grade-visuals";
+import { GradeIcon } from "@/components/GradeIcon";
 
 export default function StudentLabsSection() {
   const { data, isLoading } = trpc.student.getMyAssignedLabWorks.useQuery();
@@ -72,20 +32,6 @@ export default function StudentLabsSection() {
 
   return (
     <section className="mb-8">
-      <style>{`
-        @keyframes labGlow {
-          0%, 100% {
-            box-shadow: 0 0 3px var(--glow-color), 0 0 6px var(--glow-color);
-          }
-          50% {
-            box-shadow: 0 0 8px var(--glow-color), 0 0 14px var(--glow-color);
-          }
-        }
-        .lab-glow {
-          animation: labGlow 2.2s ease-in-out infinite;
-        }
-      `}</style>
-
       <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-white">
         <Beaker size={18} className="text-[#2eff8c]" />
         Мои лабораторные
@@ -214,14 +160,18 @@ function ArchivedLabCard({
   };
   number: number;
 }) {
-  const grade = lab.grade ?? undefined;
-  const gradeConfig = grade ? GRADE_CONFIG[grade] : null;
-  const glowColor = gradeConfig?.trophyColor ?? "#2eff8c";
+  const gradeVisuals = getGradeVisuals(lab.grade);
 
   return (
     <div
-      className="relative flex items-center gap-2 px-3 py-2 bg-[#232b2f] rounded-lg border border-[#37474f] lab-glow transition-colors"
-      style={{ "--glow-color": glowColor } as React.CSSProperties}
+      className={`relative flex items-center gap-2 px-3 py-2 bg-[#232b2f] rounded-lg border border-[#37474f] transition-colors ${
+        gradeVisuals?.hasGlow ? "lab-glow" : ""
+      }`}
+      style={
+        {
+          "--glow-color": gradeVisuals?.glowColor ?? "transparent",
+        } as React.CSSProperties
+      }
     >
       <span className="text-[10px] font-medium text-[#798389] w-4 shrink-0">
         {number}.
@@ -239,17 +189,9 @@ function ArchivedLabCard({
           </p>
         )}
       </div>
-      {gradeConfig && (
-        <div className="shrink-0 flex flex-col items-center">
-          <Trophy
-            size={16}
-            style={{ color: gradeConfig.trophyColor }}
-            fill={gradeConfig.trophyColor}
-            fillOpacity={0.15}
-          />
-          <span className={`text-[10px] font-bold ${gradeConfig.textColor}`}>
-            {grade}
-          </span>
+      {gradeVisuals && (
+        <div className="shrink-0 flex items-center">
+          <GradeIcon grade={lab.grade} size={18} />
         </div>
       )}
     </div>

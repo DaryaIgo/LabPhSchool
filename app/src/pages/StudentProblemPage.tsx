@@ -19,6 +19,8 @@ import {
   Clock,
   ImageIcon,
 } from "lucide-react";
+import { getGradeVisuals } from "@/lib/grade-visuals";
+import { GradeIcon } from "@/components/GradeIcon";
 
 export default function StudentProblemPage() {
   const { assignmentId } = useParams<{ assignmentId: string }>();
@@ -196,12 +198,10 @@ export default function StudentProblemPage() {
                 </div>
               )}
 
-              {data.grade && (
+              {getGradeVisuals(data.grade) && (
                 <div className="flex items-center gap-3 p-4 bg-[#1e2529] rounded-lg border border-[#37474f]">
                   <span className="text-[#798389]">Оценка:</span>
-                  <span className="text-2xl font-bold text-[#ffc832]">
-                    {data.grade}
-                  </span>
+                  <GradeIcon grade={data.grade} size={24} />
                 </div>
               )}
 

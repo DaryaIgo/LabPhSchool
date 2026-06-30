@@ -222,6 +222,7 @@ export const assignedProblems = mysqlTable(
     grade: int("grade"),
     studentAnswer: text("student_answer"),
     solutionImageUrl: varchar("solution_image_url", { length: 500 }),
+    solutionImageDeleteAt: timestamp("solution_image_delete_at"),
     submittedAt: timestamp("submitted_at"),
     teacherComment: text("teacher_comment"),
     assignedBy: bigint("assigned_by", { mode: "number", unsigned: true }),

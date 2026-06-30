@@ -10,32 +10,10 @@ import {
   Download,
   ExternalLink,
   Send,
-  Trophy,
   Link2,
 } from "lucide-react";
-
-const GRADE_CONFIG: Record<
-  number,
-  { label: string; textColor: string; trophyColor: string }
-> = {
-  5: {
-    label: "Отлично",
-    textColor: "text-emerald-400",
-    trophyColor: "#ffd700",
-  },
-  4: { label: "Хорошо", textColor: "text-sky-400", trophyColor: "#c0c0c0" },
-  3: {
-    label: "Удовлетворительно",
-    textColor: "text-amber-400",
-    trophyColor: "#cd7f32",
-  },
-  2: {
-    label: "Неудовлетворительно",
-    textColor: "text-rose-400",
-    trophyColor: "#94a3b8",
-  },
-  1: { label: "Плохо", textColor: "text-red-400", trophyColor: "#64748b" },
-};
+import { getGradeVisuals } from "@/lib/grade-visuals";
+import { GradeIcon } from "@/components/GradeIcon";
 
 export default function StudentNotebooksSection() {
   const { data, isLoading } = trpc.student.getMyJupyterNotebooks.useQuery();
@@ -96,7 +74,7 @@ export default function StudentNotebooksSection() {
           Назначенные
         </h3>
         {assigned.length > 0 ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             {assigned.map(nb => (
               <ActiveNotebookCard
                 key={nb.id}
@@ -125,7 +103,7 @@ export default function StudentNotebooksSection() {
             <Send size={14} className="text-[#ffc832]" />
             На проверке
           </h3>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             {submitted.map(nb => (
               <ActiveNotebookCard
                 key={nb.id}
@@ -233,10 +211,10 @@ function ActiveNotebookCard({
     <div className="flex items-center gap-3 px-3 py-2.5 bg-[#2a3237] border border-[#434e54] hover:border-[#2eff8c]/50 rounded-xl transition-colors">
       <NotebookPen size={18} className="text-[#2eff8c] shrink-0 mt-0.5" />
       <div className="flex-1 min-w-0">
-        <h3 className="text-sm font-semibold text-[#c8cdd1] truncate">
+        <h3 className="text-sm font-semibold text-[#c8cdd1] break-words whitespace-normal">
           {notebook.notebookTitle}
         </h3>
-        <p className="text-[10px] text-[#798389] truncate">
+        <p className="text-[10px] text-[#798389] break-words whitespace-normal">
           {notebook.subtopicTitle}
         </p>
         <div className="flex items-center gap-2 mt-1.5 flex-wrap">
@@ -314,14 +292,18 @@ function ArchivedNotebookCard({
   };
   onDownload: () => void;
 }) {
-  const grade = notebook.grade ?? undefined;
-  const gradeConfig = grade ? GRADE_CONFIG[grade] : null;
-  const glowColor = gradeConfig?.trophyColor ?? "#2eff8c";
+  const gradeVisuals = getGradeVisuals(notebook.grade);
 
   return (
     <div
-      className="relative flex items-center gap-2 px-3 py-2 bg-[#232b2f] rounded-lg border border-[#37474f] lab-glow transition-colors"
-      style={{ "--glow-color": glowColor } as React.CSSProperties}
+      className={`relative flex items-center gap-2 px-3 py-2 bg-[#232b2f] rounded-lg border border-[#37474f] transition-colors ${
+        gradeVisuals?.hasGlow ? "lab-glow" : ""
+      }`}
+      style={
+        {
+          "--glow-color": gradeVisuals?.glowColor ?? "transparent",
+        } as React.CSSProperties
+      }
     >
       <NotebookPen size={16} className="text-[#2eff8c] shrink-0" />
       <div className="flex-1 min-w-0">
@@ -357,17 +339,9 @@ function ArchivedNotebookCard({
             <Link2 size={12} />
           </a>
         )}
-        {gradeConfig && (
-          <div className="flex flex-col items-center">
-            <Trophy
-              size={14}
-              style={{ color: gradeConfig.trophyColor }}
-              fill={gradeConfig.trophyColor}
-              fillOpacity={0.15}
-            />
-            <span className={`text-[10px] font-bold ${gradeConfig.textColor}`}>
-              {grade}
-            </span>
+        {gradeVisuals && (
+          <div className="flex items-center">
+            <GradeIcon grade={notebook.grade} size={18} />
           </div>
         )}
       </div>

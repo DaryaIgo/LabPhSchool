@@ -62,15 +62,8 @@ export default function InteractiveTetheredBall({
     const ballEl = ballRef.current;
     if (!container || !ballEl) return;
 
-    const {
-      Engine,
-      Runner,
-      Bodies,
-      Composite,
-      Constraint,
-      Body,
-      Events,
-    } = Matter;
+    const { Engine, Runner, Bodies, Composite, Constraint, Body, Events } =
+      Matter;
 
     const engine = Engine.create();
     engine.gravity.y = 1;
@@ -129,10 +122,16 @@ export default function InteractiveTetheredBall({
       isStatic: true,
       render: { visible: false },
     });
-    const rightWall = Bodies.rectangle(width + 60, height / 2, 100, height * 4, {
-      isStatic: true,
-      render: { visible: false },
-    });
+    const rightWall = Bodies.rectangle(
+      width + 60,
+      height / 2,
+      100,
+      height * 4,
+      {
+        isStatic: true,
+        render: { visible: false },
+      }
+    );
 
     Composite.add(engine.world, [ball, tether, floor, leftWall, rightWall]);
 
@@ -183,7 +182,13 @@ export default function InteractiveTetheredBall({
     };
 
     const checkBreak = () => {
-      if (isBroken || brokenRef.current || !isDraggingRef.current || !ballBodyRef.current) return;
+      if (
+        isBroken ||
+        brokenRef.current ||
+        !isDraggingRef.current ||
+        !ballBodyRef.current
+      )
+        return;
 
       const dx = ballBodyRef.current.position.x - anchorRef.current.x;
       const dy = ballBodyRef.current.position.y - anchorRef.current.y;
@@ -390,8 +395,6 @@ export default function InteractiveTetheredBall({
           {children}
         </div>
       </div>
-
-
     </div>
   );
 }

@@ -164,7 +164,10 @@ export default function Header() {
             </Link>
 
             {/* Desktop Nav */}
-            <nav className="hidden lg:flex items-center gap-1" aria-label="Основная навигация">
+            <nav
+              className="hidden lg:flex items-center gap-1"
+              aria-label="Основная навигация"
+            >
               {navLinks.map(link => {
                 const active = isActive(link.to);
                 return (

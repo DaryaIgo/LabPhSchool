@@ -530,3 +530,22 @@
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
 }
+
+/* Grade glow animation for completed student assignments */
+@keyframes gradeGlow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 3px var(--glow-color),
+      0 0 6px var(--glow-color);
+  }
+  50% {
+    box-shadow:
+      0 0 8px var(--glow-color),
+      0 0 14px var(--glow-color);
+  }
+}
+
+.lab-glow {
+  animation: gradeGlow 2.2s ease-in-out infinite;
+}

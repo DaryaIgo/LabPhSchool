@@ -85,21 +85,6 @@ export default function LabWorkPage() {
     onError: err => toast.error(err.message),
   });
 
-  const handleSaveProgress = () => {
-    if (!labWork || !user) {
-      toast.error("Необходимо авторизоваться");
-      return;
-    }
-    saveProgress.mutate({
-      labWorkId: labWork.id,
-      mode: "training",
-      status: measurements.length > 0 ? "in_progress" : "not_started",
-      data: {},
-      measurements,
-      conclusion,
-    });
-  };
-
   const handleSubmit = () => {
     if (!labWork || !user) {
       toast.error("Необходимо авторизоваться");
@@ -181,7 +166,9 @@ export default function LabWorkPage() {
           {/* Theory */}
           {theoryContent && (
             <section>
-              <SectionHeading icon={BookOpen}>Теоретические сведения</SectionHeading>
+              <SectionHeading icon={BookOpen}>
+                Теоретические сведения
+              </SectionHeading>
               {theoryTabs ? (
                 <div className="space-y-8">
                   {theoryTabs.map((tab, i) => (
@@ -226,7 +213,9 @@ export default function LabWorkPage() {
           {/* Instruction */}
           {labWork.instruction && (
             <section>
-              <SectionHeading icon={BookOpen}>Пошаговая инструкция</SectionHeading>
+              <SectionHeading icon={BookOpen}>
+                Пошаговая инструкция
+              </SectionHeading>
               {instructionTabs ? (
                 <div className="space-y-8">
                   {instructionTabs.map((tab, i) => (
@@ -265,17 +254,9 @@ export default function LabWorkPage() {
 
             <div className="flex flex-wrap gap-3 mt-4">
               <Button
-                onClick={handleSaveProgress}
-                disabled={saveProgress.isPending}
-                className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70]"
-              >
-                Сохранить
-              </Button>
-              <Button
                 onClick={handleSubmit}
                 disabled={saveProgress.isPending}
-                variant="outline"
-                className="border-[#37474f] text-[#c8cdd1] hover:text-white"
+                className="bg-[#2eff8c] text-[#0d1117] hover:bg-[#25cc70]"
               >
                 Отправить
               </Button>

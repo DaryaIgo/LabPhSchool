@@ -19,8 +19,9 @@ import {
   ExternalLink,
   Link2,
   MessageSquare,
-  Star,
 } from "lucide-react";
+import { getGradeVisuals } from "@/lib/grade-visuals";
+import { GradeIcon } from "@/components/GradeIcon";
 
 export default function StudentNotebookPage() {
   const { assignmentId } = useParams<{ assignmentId: string }>();
@@ -216,13 +217,10 @@ export default function StudentNotebookPage() {
                 </div>
               )}
 
-              {data.grade && (
+              {getGradeVisuals(data.grade) && (
                 <div className="flex items-center gap-3 p-4 bg-[#1e2529] rounded-lg border border-[#37474f]">
-                  <Star className="h-5 w-5 text-[#ffc832] fill-[#ffc832]" />
                   <span className="text-[#798389]">Оценка:</span>
-                  <span className="text-2xl font-bold text-[#ffc832]">
-                    {data.grade}
-                  </span>
+                  <GradeIcon grade={data.grade} size={24} />
                 </div>
               )}
 
