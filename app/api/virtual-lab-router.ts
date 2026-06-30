@@ -876,6 +876,7 @@ export const virtualLabRouter = createRouter({
         description: z.string().max(5000).optional(),
         category: z.string().max(50).optional(),
         thumbnail: z.string().max(500).optional(),
+        source: z.string().max(100).optional(),
         componentRef: z.string().min(1).max(100),
         kind: z.enum(["own", "external"]).optional(),
         isDynamic: z.boolean().optional(),
@@ -907,6 +908,7 @@ export const virtualLabRouter = createRouter({
         description: input.description ?? null,
         category: input.category ?? null,
         thumbnail: input.thumbnail ?? null,
+        source: input.source ?? null,
         componentRef: input.componentRef,
         kind: input.kind ?? "own",
         isDynamic: input.isDynamic ?? false,
@@ -933,6 +935,7 @@ export const virtualLabRouter = createRouter({
         description: z.string().max(5000).optional(),
         category: z.string().max(50).optional(),
         thumbnail: z.string().max(500).optional(),
+        source: z.string().max(100).optional(),
         componentRef: z.string().min(1).max(100).optional(),
         kind: z.enum(["own", "external"]).optional(),
         isDynamic: z.boolean().optional(),
@@ -965,12 +968,121 @@ export const virtualLabRouter = createRouter({
         updateData.description = data.description;
       if (data.category !== undefined) updateData.category = data.category;
       if (data.thumbnail !== undefined) updateData.thumbnail = data.thumbnail;
+      if (data.source !== undefined) updateData.source = data.source;
       if (data.componentRef !== undefined)
         updateData.componentRef = data.componentRef;
       if (data.kind !== undefined) updateData.kind = data.kind;
       if (data.isDynamic !== undefined) updateData.isDynamic = data.isDynamic;
       if (data.config !== undefined) updateData.config = data.config;
       if (data.isActive !== undefined) updateData.isActive = data.isActive;
+
+      await db
+        .update(simulations)
+        .set(updateData)
+        .where(eq(simulations.id, id));
+      await createAuditEntry({
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
+        action: "update",
+        resource: "simulations",
+        resourceId: id,
+        details: { fields: Object.keys(data) },
+      });
+      return { success: true };
+    }),
+
+  adminCreateExternalSimulation: adminQuery
+    .input(
+      z.object({
+        slug: z
+          .string()
+          .min(1)
+          .max(255)
+          .regex(/^[a-z0-9-]+$/),
+        title: z.string().min(1).max(255),
+        description: z.string().max(5000).optional(),
+        category: z.string().max(50).optional(),
+        source: z.string().max(100).optional(),
+        url: z.string().url().max(2000),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = getLabsDb();
+      const existing = await db
+        .select({ id: simulations.id })
+        .from(simulations)
+        .where(eq(simulations.slug, input.slug))
+        .limit(1);
+      if (existing[0]) {
+        throw new Error(`Simulation with slug "${input.slug}" already exists`);
+      }
+
+      const result = await db.insert(simulations).values({
+        slug: input.slug,
+        title: input.title,
+        description: input.description ?? null,
+        category: input.category ?? null,
+        source: input.source ?? null,
+        componentRef: "external-iframe",
+        kind: "external",
+        isDynamic: false,
+        config: [
+          {
+            key: "url",
+            label: "URL",
+            paramType: "url",
+            defaultValue: input.url,
+          },
+        ],
+        isActive: true,
+      });
+      const id = Number(result[0].insertId);
+      await createAuditEntry({
+        actorId: ctx.adminUser!.id,
+        actorType: "admin_user",
+        action: "create",
+        resource: "simulations",
+        resourceId: id,
+        details: {
+          slug: input.slug,
+          title: input.title,
+          kind: "external",
+          source: input.source,
+        },
+      });
+      return { id, success: true };
+    }),
+
+  adminUpdateExternalSimulation: adminQuery
+    .input(
+      z.object({
+        id: z.number().positive(),
+        title: z.string().min(1).max(255).optional(),
+        description: z.string().max(5000).optional(),
+        category: z.string().max(50).optional(),
+        source: z.string().max(100).optional(),
+        url: z.string().url().max(2000).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = getLabsDb();
+      const { id, ...data } = input;
+      const updateData: Record<string, unknown> = {};
+      if (data.title !== undefined) updateData.title = data.title;
+      if (data.description !== undefined)
+        updateData.description = data.description;
+      if (data.category !== undefined) updateData.category = data.category;
+      if (data.source !== undefined) updateData.source = data.source;
+      if (data.url !== undefined) {
+        updateData.config = [
+          {
+            key: "url",
+            label: "URL",
+            paramType: "url",
+            defaultValue: data.url,
+          },
+        ];
+      }
 
       await db
         .update(simulations)

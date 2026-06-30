@@ -26,6 +26,7 @@ import {
   History,
   Beaker,
   BarChart3,
+  Atom,
 } from "lucide-react";
 
 function StatCard({
@@ -286,6 +287,11 @@ export default function AdminDashboard() {
           label="Лабораторные"
           icon={Beaker}
           onClick={() => navigate("/admin/lab-management")}
+        />
+        <QuickAction
+          label="Симуляции"
+          icon={Atom}
+          onClick={() => navigate("/admin/simulations")}
         />
         <QuickAction
           label="Задачи"

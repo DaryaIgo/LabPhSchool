@@ -321,7 +321,14 @@ npm run db:push       # Push схемы (для разработки)
 
 Названия блоков задаются в манифесте симуляции (`wrapper.blockTitles`).
 
-### Реестр «своих» симуляций
+### Реестр симуляций
+
+В системе два вида симуляций:
+
+- **«Свои» (`own`)** — полноценные интерактивные симуляции с обвязкой (параметры, управление, измерения, графики). Регистрируются в коде.
+- **Встраиваемые (`external`)** — сторонние симуляции по ссылке (PhET, Electricity Maps и др.), отображаются через iframe. Управляются через админку `/admin/simulations`.
+
+#### Реестр «своих» симуляций
 
 «Свои» симуляции регистрируются в коде:
 
@@ -329,17 +336,26 @@ npm run db:push       # Push схемы (для разработки)
 - `src/components/lab/simulations/registry.ts` — реестр компонентов, манифестов и функций измерений.
 - `src/components/lab/simulations/<Name>.tsx` — React-компонент визуализации (только `default export`).
 - `src/components/lab/simulations/<Name>.manifest.ts` — манифест симуляции и функция `computeXxxMeasurement`.
-- `db/simulations-seed.ts` — заполнение таблицы `simulations`.
+- `db/simulations-seed.ts` — заполнение таблицы `simulations` **только для `own`-симуляций**.
+
+#### Реестр встраиваемых (`external`) симуляций
+
+Встраиваемые лаборатории создаются, редактируются и удаляются через админ-страницу `/admin/simulations`. Для них автоматически устанавливается:
+
+- `kind = "external"`
+- `componentRef = "external-iframe"`
+- `config` содержит один параметр `url`
 
 Таблица `simulations` содержит мета-информацию и параметры, используемые админкой и внешними симуляциями:
 
 | Поле | Назначение |
 |------|-----------|
-| `slug` | Уникальный идентификатор, совпадает с ключом в `registry.ts` |
+| `slug` | Уникальный идентификатор |
 | `title` | Название для админки |
 | `description` | Описание |
 | `category` | Раздел физики |
-| `componentRef` | Ключ в `registry.ts` (обычно совпадает со `slug`) |
+| `source` | Источник симуляции (PhET, Electricity Maps и т.п.; для `own` — обычно `null` или `own`) |
+| `componentRef` | Ключ в `registry.ts` для `own`; `"external-iframe"` для `external` |
 | `kind` | `own` — своя симуляция с обвязкой; `external` — iframe стороннего ресурса |
 | `isDynamic` | Нужна ли анимация (кнопка Старт/Сброс) |
 | `config` | JSON с параметрами симуляции (`SimulationParamConfig[]`) |
@@ -354,6 +370,8 @@ npm run db:push       # Push схемы (для разработки)
 - темами (`lab_subcategories`)
 - лабораторными работами (`lab_works`)
 - выбором симуляции из реестра (`simulations`)
+
+Отдельная админ-страница `/admin/simulations` предназначена для управления встраиваемыми (`external`) симуляциями: создание, редактирование, удаление по ссылке. «Свои» (`own`) симуляции отображаются в этом реестре только для просмотра.
 
 Параметры «своей» симуляции задаются в её манифесте и дублируются в `simulations.config` для отображения в админке. При подключении симуляции к работе обвязка подставляется автоматически.
 
@@ -373,10 +391,20 @@ npm run db:push       # Push схемы (для разработки)
 1. Создать `src/components/lab/simulations/<Name>.tsx` с React-компонентом.
 2. Создать `src/components/lab/simulations/<Name>.manifest.ts` с `xxxManifest` и `computeXxxMeasurement`.
 3. Зарегистрировать симуляцию в `src/components/lab/simulations/registry.ts`.
-4. Добавить seed-запись в `db/simulations-seed.ts`.
+4. Добавить seed-запись в `db/simulations-seed.ts` (только для `own`-симуляций).
 5. Запустить `npx tsx db/simulations-seed.ts`.
 
 Подробный формат описан в `docs/simulation-generation-prompt.md`.
+
+### Добавление новой встраиваемой (`external`) лаборатории
+
+1. Открыть `/admin/simulations`.
+2. Нажать «Добавить».
+3. Заполнить поля: slug, название, описание, категория физики, источник, URL.
+4. Сохранить.
+5. Перейти в `/admin/lab-management`, создать или отредактировать lab work с `cardType = "external"` и выбрать созданную симуляцию.
+
+Backup старых external-URL: `docs/external-labs-urls-backup.md`.
 
 ---
 

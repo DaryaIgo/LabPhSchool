@@ -132,6 +132,7 @@ export const simulations = mysqlTable("simulations", {
   description: text("description"),
   category: varchar("category", { length: 50 }),
   thumbnail: varchar("thumbnail", { length: 500 }),
+  source: varchar("source", { length: 100 }),
   componentRef: varchar("component_ref", { length: 100 }).notNull(),
   kind: mysqlEnum("kind", ["own", "external"]).default("own").notNull(),
   isDynamic: boolean("is_dynamic").default(false).notNull(),
