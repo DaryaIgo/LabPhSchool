@@ -81,7 +81,10 @@ export default function LabWorkPage() {
   }, []);
 
   const { data: labWork, isLoading: isLabWorkLoading } =
-    trpc.virtualLab.labWorkBySlug.useQuery({ slug: slug! }, { enabled: !!slug });
+    trpc.virtualLab.labWorkBySlug.useQuery(
+      { slug: slug! },
+      { enabled: !!slug }
+    );
 
   const { user } = useAuth();
   const isStudent = user?.type === "student";
@@ -151,8 +154,7 @@ function LabWorkContent({ labWork, existingProgress }: LabWorkContentProps) {
     });
 
     setExternalData(prev => {
-      const isEmpty =
-        prev.tables.length === 0 && prev.graphs.length === 0;
+      const isEmpty = prev.tables.length === 0 && prev.graphs.length === 0;
       if (!isEmpty) return prev;
 
       if (

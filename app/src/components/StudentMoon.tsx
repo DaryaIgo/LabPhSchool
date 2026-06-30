@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { MessageSquare, ChevronDown } from "lucide-react";
 import { trpc } from "@/providers/trpc";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
+import { Badge } from "@/components/ui/badge";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 function hasUnread(
   updatedAt: Date | string | null | undefined,
@@ -16,15 +24,27 @@ export default function StudentMoon() {
   const { data } = trpc.student.getMoonComment.useQuery(undefined, {
     refetchInterval: 15000,
   });
+  const { data: comments = [] } = trpc.student.getHomeworkComments.useQuery(
+    undefined,
+    {
+      refetchInterval: 15000,
+    }
+  );
   const utils = trpc.useUtils();
 
   const [isOpen, setIsOpen] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
   const [attention, setAttention] = useState(false);
 
-  const unread = hasUnread(
+  const unreadMoon = hasUnread(
     data?.moonCommentUpdatedAt,
     data?.moonCommentReadAt
   );
+  const unreadCommentsCount = comments.filter(c =>
+    hasUnread(c.completedAt, data?.homeworkCommentsReadAt)
+  ).length;
+  const unread = unreadMoon || unreadCommentsCount > 0;
+
   const hasComment = Boolean(data?.moonComment?.trim());
   const isFirstLogin = !data?.moonCommentFirstOpenedAt;
 
@@ -34,11 +54,24 @@ export default function StudentMoon() {
     },
   });
 
+  const markRead = trpc.student.markMoonCommentRead.useMutation({
+    onSuccess: () => {
+      utils.student.getMoonComment.invalidate();
+    },
+  });
+
+  const markCommentsRead = trpc.student.markHomeworkCommentsRead.useMutation({
+    onSuccess: () => {
+      utils.student.getMoonComment.invalidate();
+      utils.student.getHomeworkComments.invalidate();
+    },
+  });
+
   useEffect(() => {
-    if (!data || !hasComment) return;
+    if (!data) return;
 
     // Auto-open only on the very first login (welcome letter).
-    if (isFirstLogin) {
+    if (hasComment && isFirstLogin) {
       const openTimer = window.setTimeout(() => {
         setIsOpen(true);
         markFirstOpened.mutate();
@@ -63,12 +96,6 @@ export default function StudentMoon() {
     }
   }, [data, hasComment, isFirstLogin, markFirstOpened, unread]);
 
-  const markRead = trpc.student.markMoonCommentRead.useMutation({
-    onSuccess: () => {
-      utils.student.getMoonComment.invalidate();
-    },
-  });
-
   const closeMoon = () => {
     if (hasComment) {
       markRead.mutate();
@@ -85,6 +112,13 @@ export default function StudentMoon() {
       if (isFirstLogin && !markFirstOpened.isPending) {
         markFirstOpened.mutate();
       }
+    }
+  };
+
+  const handleCommentsOpen = (open: boolean) => {
+    setCommentsOpen(open);
+    if (open && unreadCommentsCount > 0 && !markCommentsRead.isPending) {
+      markCommentsRead.mutate();
     }
   };
 
@@ -129,6 +163,78 @@ export default function StudentMoon() {
                         Учитель пока не оставил сообщений.
                       </p>
                     )}
+
+                    {/* Homework comments aggregator */}
+                    <div className="mt-5 pt-4 border-t border-slate-200/60">
+                      <Collapsible
+                        open={commentsOpen}
+                        onOpenChange={handleCommentsOpen}
+                      >
+                        <CollapsibleTrigger asChild>
+                          <button
+                            type="button"
+                            className="flex items-center justify-between w-full text-left group"
+                          >
+                            <span className="flex items-center gap-2 text-sm font-semibold text-slate-700 group-hover:text-slate-900">
+                              <MessageSquare size={16} />
+                              Комментарии к ДЗ
+                            </span>
+                            <span className="flex items-center gap-2">
+                              {unreadCommentsCount > 0 && (
+                                <Badge className="bg-red-500 text-white hover:bg-red-500 border-transparent">
+                                  {unreadCommentsCount}
+                                </Badge>
+                              )}
+                              <ChevronDown
+                                size={16}
+                                className={`text-slate-400 transition-transform duration-200 ${
+                                  commentsOpen ? "rotate-180" : ""
+                                }`}
+                              />
+                            </span>
+                          </button>
+                        </CollapsibleTrigger>
+
+                        <CollapsibleContent>
+                          <ScrollArea className="h-[300px] mt-3 pr-2">
+                            {comments.length === 0 ? (
+                              <p className="text-sm text-slate-500">
+                                Пока нет комментариев
+                              </p>
+                            ) : (
+                              <div className="space-y-0">
+                                {comments.map((item, index) => (
+                                  <div
+                                    key={`${item.type}-${item.id}`}
+                                    className={`py-3 ${
+                                      index !== comments.length - 1
+                                        ? "border-b border-slate-200/60"
+                                        : ""
+                                    }`}
+                                  >
+                                    <a
+                                      href={
+                                        item.type === "problem"
+                                          ? `/#/student/problem/${item.id}`
+                                          : `/#/labs/work/${item.slug}`
+                                      }
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-sm font-medium text-blue-600 hover:underline"
+                                    >
+                                      {item.title}
+                                    </a>
+                                    <div className="mt-1 text-sm text-slate-600 whitespace-pre-wrap">
+                                      {item.teacherComment}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </ScrollArea>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </div>
                   </div>
                 </div>
               </motion.div>

@@ -47,6 +47,7 @@ export async function findLocalUserWithRole(id: number) {
       moonCommentUpdatedAt: localUsers.moonCommentUpdatedAt,
       moonCommentReadAt: localUsers.moonCommentReadAt,
       moonCommentFirstOpenedAt: localUsers.moonCommentFirstOpenedAt,
+      homeworkCommentsReadAt: localUsers.homeworkCommentsReadAt,
     })
     .from(localUsers)
     .innerJoin(roles, eq(localUsers.roleId, roles.id))

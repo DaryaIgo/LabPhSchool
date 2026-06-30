@@ -88,6 +88,7 @@ export async function createContext(opts: {
           moonCommentUpdatedAt: localUser.moonCommentUpdatedAt ?? null,
           moonCommentReadAt: localUser.moonCommentReadAt ?? null,
           moonCommentFirstOpenedAt: localUser.moonCommentFirstOpenedAt ?? null,
+          homeworkCommentsReadAt: localUser.homeworkCommentsReadAt ?? null,
           roleName: localUser.roleName,
         };
         ctx.localUser = userRecord;

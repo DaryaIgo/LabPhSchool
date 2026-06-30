@@ -22,10 +22,7 @@ export default function ExternalDataTables({
     onChange([...tables, createEmptyTable(tables.length)]);
   };
 
-  const updateTable = (
-    id: string,
-    updates: Partial<ExternalDataTable>
-  ) => {
+  const updateTable = (id: string, updates: Partial<ExternalDataTable>) => {
     onChange(tables.map(t => (t.id === id ? { ...t, ...updates } : t)));
   };
 
@@ -79,9 +76,7 @@ function TableEditor({
 
   const updateColumnName = (columnId: string, name: string) => {
     onUpdate({
-      columns: table.columns.map(c =>
-        c.id === columnId ? { ...c, name } : c
-      ),
+      columns: table.columns.map(c => (c.id === columnId ? { ...c, name } : c)),
     });
   };
 

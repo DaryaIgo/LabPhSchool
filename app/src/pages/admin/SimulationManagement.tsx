@@ -95,29 +95,31 @@ export default function SimulationManagement() {
       enabled: !!user && user.role === "admin",
     });
 
-  const createMutation = trpc.virtualLab.adminCreateExternalSimulation.useMutation({
-    onSuccess: () => {
-      toast.success("Встраиваемая лаборатория создана");
-      utils.virtualLab.adminListSimulations.invalidate();
-      setMode("list");
-      setForm(initialForm);
-    },
-    onError: err => {
-      toast.error(err.message || "Не удалось создать");
-    },
-  });
+  const createMutation =
+    trpc.virtualLab.adminCreateExternalSimulation.useMutation({
+      onSuccess: () => {
+        toast.success("Встраиваемая лаборатория создана");
+        utils.virtualLab.adminListSimulations.invalidate();
+        setMode("list");
+        setForm(initialForm);
+      },
+      onError: err => {
+        toast.error(err.message || "Не удалось создать");
+      },
+    });
 
-  const updateMutation = trpc.virtualLab.adminUpdateExternalSimulation.useMutation({
-    onSuccess: () => {
-      toast.success("Изменения сохранены");
-      utils.virtualLab.adminListSimulations.invalidate();
-      setMode("list");
-      setForm(initialForm);
-    },
-    onError: err => {
-      toast.error(err.message || "Не удалось сохранить");
-    },
-  });
+  const updateMutation =
+    trpc.virtualLab.adminUpdateExternalSimulation.useMutation({
+      onSuccess: () => {
+        toast.success("Изменения сохранены");
+        utils.virtualLab.adminListSimulations.invalidate();
+        setMode("list");
+        setForm(initialForm);
+      },
+      onError: err => {
+        toast.error(err.message || "Не удалось сохранить");
+      },
+    });
 
   const deleteMutation = trpc.virtualLab.adminDeleteSimulation.useMutation({
     onSuccess: () => {
@@ -247,8 +249,8 @@ export default function SimulationManagement() {
           <div>
             <h1 className="text-2xl font-bold text-white">Реестр симуляций</h1>
             <p className="text-sm text-[#798389]">
-              Управление встраиваемыми лабораториями. Внутренние (own)
-              симуляции редактируются только в коде.
+              Управление встраиваемыми лабораториями. Внутренние (own) симуляции
+              редактируются только в коде.
             </p>
           </div>
         </div>
@@ -504,9 +506,7 @@ export default function SimulationManagement() {
                     <Label className="text-xs text-[#798389]">URL</Label>
                     <Input
                       value={form.url}
-                      onChange={e =>
-                        setForm({ ...form, url: e.target.value })
-                      }
+                      onChange={e => setForm({ ...form, url: e.target.value })}
                       disabled={isViewOwn}
                       placeholder="https://phet.colorado.edu/..."
                       className="bg-[#1a1f22] border-[#37474f] mt-1 text-white disabled:opacity-60"

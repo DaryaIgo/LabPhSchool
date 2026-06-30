@@ -212,7 +212,9 @@ export default function EnrollmentManagement() {
                 moonDialog={
                   <MoonUpdateDialog
                     student={student}
-                    open={moonDialogOpen && selectedMoonStudentId === student.id}
+                    open={
+                      moonDialogOpen && selectedMoonStudentId === student.id
+                    }
                     onOpenChange={open => {
                       setMoonDialogOpen(open);
                       if (open) setSelectedMoonStudentId(student.id);
@@ -700,7 +702,9 @@ function MoonUpdateDialog({
                 height={400}
                 preview="live"
                 previewOptions={mdPreviewOptions}
-                textareaProps={{ placeholder: "Напишите комментарий ученику..." }}
+                textareaProps={{
+                  placeholder: "Напишите комментарий ученику...",
+                }}
               />
             </div>
           )}

@@ -10,10 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import SimulationChart from "./SimulationChart";
-import type {
-  ExternalDataTable,
-  ExternalGraphConfig,
-} from "./external-data";
+import type { ExternalDataTable, ExternalGraphConfig } from "./external-data";
 import {
   createEmptyGraph,
   getColumnName,
@@ -36,10 +33,7 @@ export default function ExternalGraphs({
     onChange([...graphs, createEmptyGraph(graphs.length)]);
   };
 
-  const updateGraph = (
-    id: string,
-    updates: Partial<ExternalGraphConfig>
-  ) => {
+  const updateGraph = (id: string, updates: Partial<ExternalGraphConfig>) => {
     onChange(graphs.map(g => (g.id === id ? { ...g, ...updates } : g)));
   };
 

@@ -10,7 +10,10 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { prepareChartData } from "@/components/lab/simulations/graph-utils";
-import type { GraphConfig, MeasurementRow } from "@/components/lab/simulations/types";
+import type {
+  GraphConfig,
+  MeasurementRow,
+} from "@/components/lab/simulations/types";
 
 interface SimulationChartProps {
   graph: GraphConfig;
@@ -82,11 +85,7 @@ export default function SimulationChart({
           />
           <Tooltip {...tooltipStyle} />
           {!isEmpty && (
-            <Scatter
-              name={seriesName}
-              data={chartData}
-              fill="#2eff8c"
-            />
+            <Scatter name={seriesName} data={chartData} fill="#2eff8c" />
           )}
         </ScatterChart>
       </ResponsiveContainer>

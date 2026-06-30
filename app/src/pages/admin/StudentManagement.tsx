@@ -174,15 +174,13 @@ export default function StudentManagement() {
     updateMutation.mutate({ id: editStudent.id, ...data });
   }
 
-  function renderStudentRow(
-    s: {
-      id: number;
-      login: string;
-      name: string;
-      status: string;
-      createdAt: Date | null;
-    }
-  ) {
+  function renderStudentRow(s: {
+    id: number;
+    login: string;
+    name: string;
+    status: string;
+    createdAt: Date | null;
+  }) {
     return (
       <tr
         key={s.id}
@@ -210,9 +208,7 @@ export default function StudentManagement() {
           </Badge>
         </td>
         <td className="p-4 text-gray-400">
-          {s.createdAt
-            ? new Date(s.createdAt).toLocaleDateString()
-            : "—"}
+          {s.createdAt ? new Date(s.createdAt).toLocaleDateString() : "—"}
         </td>
         <td className="p-4">
           <div className="flex items-center justify-end gap-1">
@@ -236,9 +232,7 @@ export default function StudentManagement() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() =>
-                setLinksDialogStudent({ id: s.id, name: s.name })
-              }
+              onClick={() => setLinksDialogStudent({ id: s.id, name: s.name })}
               title="Ссылки"
             >
               <Link className="h-4 w-4 text-sky-400" />
@@ -269,9 +263,7 @@ export default function StudentManagement() {
               size="sm"
               onClick={() => {
                 if (
-                  confirm(
-                    `Delete student "${s.name}"? This cannot be undone.`
-                  )
+                  confirm(`Delete student "${s.name}"? This cannot be undone.`)
                 ) {
                   deleteMutation.mutate({ id: s.id });
                 }
@@ -477,9 +469,7 @@ export default function StudentManagement() {
                       variant="outline"
                       size="sm"
                       onClick={() =>
-                        setPage(p =>
-                          Math.min(studentsData.totalPages, p + 1)
-                        )
+                        setPage(p => Math.min(studentsData.totalPages, p + 1))
                       }
                       disabled={page >= studentsData.totalPages}
                       className="border-[#37474f]"

@@ -86,11 +86,7 @@ export function StudentLinksDialog({
     });
   }
 
-  function startEdit(link: {
-    id: number;
-    url: string;
-    title: string | null;
-  }) {
+  function startEdit(link: { id: number; url: string; title: string | null }) {
     setEditingId(link.id);
     setEditUrl(link.url);
     setEditTitle(link.title ?? "");

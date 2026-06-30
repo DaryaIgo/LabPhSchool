@@ -1,12 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import {
-  Video,
-  Users,
-  MessageCircle,
-  Send,
-  Phone,
-  Link,
-} from "lucide-react";
+import { Video, Users, MessageCircle, Send, Phone, Link } from "lucide-react";
 import {
   detectPlatform,
   getPlatformDisplayTitle,

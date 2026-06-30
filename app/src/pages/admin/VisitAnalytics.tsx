@@ -64,10 +64,8 @@ export default function VisitAnalytics() {
 
   const isAdmin = !!user && user.role === "admin";
 
-  const { data: stats, isLoading: statsLoading } = trpc.analytics.stats.useQuery(
-    undefined,
-    { enabled: isAdmin }
-  );
+  const { data: stats, isLoading: statsLoading } =
+    trpc.analytics.stats.useQuery(undefined, { enabled: isAdmin });
   const { data: visitsByDay, isLoading: chartLoading } =
     trpc.analytics.visitsByDay.useQuery({ days: 30 }, { enabled: isAdmin });
   const { data: topPages, isLoading: topPagesLoading } =
@@ -119,22 +117,22 @@ export default function VisitAnalytics() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
           title="Всего визитов"
-          value={statsLoading ? "—" : stats?.totalVisits ?? 0}
+          value={statsLoading ? "—" : (stats?.totalVisits ?? 0)}
           icon={Activity}
         />
         <StatCard
           title="Сегодня"
-          value={statsLoading ? "—" : stats?.todayVisits ?? 0}
+          value={statsLoading ? "—" : (stats?.todayVisits ?? 0)}
           icon={Calendar}
         />
         <StatCard
           title="Вчера"
-          value={statsLoading ? "—" : stats?.yesterdayVisits ?? 0}
+          value={statsLoading ? "—" : (stats?.yesterdayVisits ?? 0)}
           icon={Calendar}
         />
         <StatCard
           title="Уникальные посетители"
-          value={statsLoading ? "—" : stats?.uniqueVisitors ?? 0}
+          value={statsLoading ? "—" : (stats?.uniqueVisitors ?? 0)}
           icon={Users}
         />
       </div>
@@ -155,11 +153,7 @@ export default function VisitAnalytics() {
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
                   <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} />
-                  <YAxis
-                    stroke="#94a3b8"
-                    fontSize={12}
-                    allowDecimals={false}
-                  />
+                  <YAxis stroke="#94a3b8" fontSize={12} allowDecimals={false} />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: "#1e2529",
@@ -229,7 +223,9 @@ export default function VisitAnalytics() {
 
       <Card className="bg-[#1e2529] border-[#37474f] text-white">
         <CardHeader>
-          <CardTitle className="text-base font-medium">Последние визиты</CardTitle>
+          <CardTitle className="text-base font-medium">
+            Последние визиты
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {recentLoading ? (

@@ -132,6 +132,7 @@ export const localUsers = mysqlTable(
     moonCommentUpdatedAt: timestamp("moon_comment_updated_at"),
     moonCommentReadAt: timestamp("moon_comment_read_at"),
     moonCommentFirstOpenedAt: timestamp("moon_comment_first_opened_at"),
+    homeworkCommentsReadAt: timestamp("homework_comments_read_at"),
   },
   table => ({
     statusIdx: index("local_user_status_idx").on(table.status),

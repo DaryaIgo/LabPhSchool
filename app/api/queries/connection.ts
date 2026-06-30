@@ -164,10 +164,7 @@ let analyticsDb:
   | undefined;
 export function getAnalyticsDb() {
   if (!analyticsDb) {
-    analyticsDb = createDomainDb(
-      env.databaseUrls.analytics,
-      analyticsSchema
-    );
+    analyticsDb = createDomainDb(env.databaseUrls.analytics, analyticsSchema);
   }
   return analyticsDb;
 }

@@ -121,7 +121,11 @@ export default function MarkdownRenderer({
           a: ({ children, href }) => (
             <a
               href={href}
-              className={light ? "text-blue-600 hover:underline" : "text-[#2eff8c] hover:underline"}
+              className={
+                light
+                  ? "text-blue-600 hover:underline"
+                  : "text-[#2eff8c] hover:underline"
+              }
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -141,7 +145,9 @@ export default function MarkdownRenderer({
             <blockquote className={c.blockquote}>{children}</blockquote>
           ),
           hr: () => (
-            <hr className={`my-6 ${light ? "border-slate-300" : "border-[#434e54]"}`} />
+            <hr
+              className={`my-6 ${light ? "border-slate-300" : "border-[#434e54]"}`}
+            />
           ),
           table: ({ children }) => (
             <div className="overflow-x-auto my-5">
@@ -149,7 +155,9 @@ export default function MarkdownRenderer({
             </div>
           ),
           thead: ({ children }) => (
-            <thead className={light ? "bg-slate-100" : "bg-[#1e2529]"}>{children}</thead>
+            <thead className={light ? "bg-slate-100" : "bg-[#1e2529]"}>
+              {children}
+            </thead>
           ),
           th: ({ children }) => <th className={c.th}>{children}</th>,
           td: ({ children }) => <td className={c.td}>{children}</td>,

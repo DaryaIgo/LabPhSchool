@@ -33,6 +33,7 @@ import {
   getAssignedJupyterNotebookById,
   updateAssignedJupyterNotebook,
 } from "./queries/assignedJupyterNotebooks";
+import { getHomeworkCommentsByStudent } from "./queries/homeworkComments";
 import {
   listStudentLinks,
   createStudentLink,
@@ -108,6 +109,7 @@ export const studentRouter = createRouter({
       moonCommentUpdatedAt: user.moonCommentUpdatedAt,
       moonCommentReadAt: user.moonCommentReadAt,
       moonCommentFirstOpenedAt: user.moonCommentFirstOpenedAt,
+      homeworkCommentsReadAt: user.homeworkCommentsReadAt,
     };
   }),
 
@@ -125,6 +127,20 @@ export const studentRouter = createRouter({
     await getAuthDb()
       .update(localUsers)
       .set({ moonCommentReadAt: new Date() })
+      .where(eq(localUsers.id, ctx.localUser!.id));
+    return { success: true };
+  }),
+
+  // ── Get aggregated teacher comments for homework ──
+  getHomeworkComments: studentQuery.query(async ({ ctx }) => {
+    return getHomeworkCommentsByStudent(ctx.localUser!.id);
+  }),
+
+  // ── Mark homework comments as read ──
+  markHomeworkCommentsRead: studentQuery.mutation(async ({ ctx }) => {
+    await getAuthDb()
+      .update(localUsers)
+      .set({ homeworkCommentsReadAt: new Date() })
       .where(eq(localUsers.id, ctx.localUser!.id));
     return { success: true };
   }),
@@ -999,7 +1015,10 @@ export const studentRouter = createRouter({
     .query(async ({ input }) => {
       const student = await findLocalUserById(input.localUserId);
       if (!student) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Student not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Student not found",
+        });
       }
 
       const links = await listStudentLinks(input.localUserId);
@@ -1027,7 +1046,10 @@ export const studentRouter = createRouter({
     .mutation(async ({ ctx, input }) => {
       const student = await findLocalUserById(input.localUserId);
       if (!student) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Student not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Student not found",
+        });
       }
 
       const platform = detectPlatform(input.url);

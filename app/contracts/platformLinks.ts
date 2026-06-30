@@ -101,7 +101,10 @@ interface PlatformRule {
 }
 
 const PLATFORM_RULES: PlatformRule[] = [
-  { platformKey: "zoom", domainPatterns: ["zoom.us", "zoom.com", "zoomgov.com"] },
+  {
+    platformKey: "zoom",
+    domainPatterns: ["zoom.us", "zoom.com", "zoomgov.com"],
+  },
   {
     platformKey: "yandex_telemost",
     domainPatterns: ["telemost.yandex.ru", "telemost.yandex.com"],
@@ -159,10 +162,7 @@ export function detectPlatform(url: string): PlatformInfo {
   for (const rule of PLATFORM_RULES) {
     for (const pattern of rule.domainPatterns) {
       const lowerPattern = pattern.toLowerCase();
-      if (
-        hostname === lowerPattern ||
-        hostname.endsWith(`.${lowerPattern}`)
-      ) {
+      if (hostname === lowerPattern || hostname.endsWith(`.${lowerPattern}`)) {
         return PLATFORM_META[rule.platformKey] ?? PLATFORM_META.other;
       }
     }

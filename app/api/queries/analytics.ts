@@ -14,13 +14,15 @@ export async function createPageVisit(data: {
   userAgent?: string | null;
   localUserId?: number | null;
 }) {
-  return getAnalyticsDb().insert(pageVisits).values({
-    path: data.path,
-    referrer: data.referrer ?? null,
-    ipAddress: data.ipAddress ?? null,
-    userAgent: data.userAgent ?? null,
-    localUserId: data.localUserId ?? null,
-  });
+  return getAnalyticsDb()
+    .insert(pageVisits)
+    .values({
+      path: data.path,
+      referrer: data.referrer ?? null,
+      ipAddress: data.ipAddress ?? null,
+      userAgent: data.userAgent ?? null,
+      localUserId: data.localUserId ?? null,
+    });
 }
 
 const uniqueVisitorExpr = sql<number>`COUNT(DISTINCT CONCAT(COALESCE(${pageVisits.ipAddress}, ""), "::", COALESCE(${pageVisits.userAgent}, "")))`;
@@ -31,9 +33,7 @@ export async function getPageVisitStats() {
   const todayStart = startOfDay(now);
   const yesterdayStart = startOfDay(subDays(now, 1));
 
-  const [totalResult] = await db
-    .select({ count: count() })
-    .from(pageVisits);
+  const [totalResult] = await db.select({ count: count() }).from(pageVisits);
 
   const [todayResult] = await db
     .select({ count: count() })

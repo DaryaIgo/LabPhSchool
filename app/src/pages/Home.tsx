@@ -553,7 +553,6 @@ export default function Home() {
                   <div className="absolute inset-y-0 left-0 w-5 bg-gradient-to-r from-[#e8ebed]/40 to-transparent z-20 pointer-events-none" />
                   <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#e8ebed]/40 to-transparent z-20 pointer-events-none" />
                 </div>
-
               </div>
             </div>
 

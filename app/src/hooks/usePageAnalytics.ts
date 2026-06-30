@@ -11,11 +11,7 @@ import { trpc } from "@/providers/trpc";
 
 declare global {
   interface Window {
-    ym?: (
-      counterId: number,
-      eventName: string,
-      ...args: unknown[]
-    ) => void;
+    ym?: (counterId: number, eventName: string, ...args: unknown[]) => void;
   }
 }
 
