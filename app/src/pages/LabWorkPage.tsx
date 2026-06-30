@@ -9,6 +9,19 @@ import SimulationWrapper from "@/components/lab/SimulationWrapper";
 import ConclusionPanel from "@/components/lab/ConclusionPanel";
 import { useAuth } from "@/hooks/useAuth";
 import type { MeasurementRow } from "@/components/lab/simulations/types";
+import {
+  DEFAULT_EXTERNAL_DATA,
+  type ExternalLabData,
+} from "@/components/lab/external-data";
+import type { inferRouterOutputs } from "@trpc/server";
+import type { AppRouter } from "../../api/router";
+
+type RouterOutput = inferRouterOutputs<AppRouter>;
+type LabWorkDetail = NonNullable<RouterOutput["virtualLab"]["labWorkBySlug"]>;
+type LabProgressDetail = Extract<
+  RouterOutput["virtualLab"]["getMyLabProgress"],
+  { labWorkId: number }
+>;
 
 interface TheoryTab {
   label: string;
@@ -53,7 +66,6 @@ function SectionHeading({
 }
 
 export default function LabWorkPage() {
-  const navigate = useNavigate();
   const { slug } = useParams<{ slug: string }>();
 
   useEffect(() => {
@@ -67,15 +79,100 @@ export default function LabWorkPage() {
       document.body.style.overflow = originalBody;
     };
   }, []);
-  const { data: labWork, isLoading } = trpc.virtualLab.labWorkBySlug.useQuery(
-    { slug: slug! },
-    { enabled: !!slug }
+
+  const { data: labWork, isLoading: isLabWorkLoading } =
+    trpc.virtualLab.labWorkBySlug.useQuery({ slug: slug! }, { enabled: !!slug });
+
+  const { user } = useAuth();
+  const isStudent = user?.type === "student";
+
+  const { data: existingProgress } = trpc.virtualLab.getMyLabProgress.useQuery(
+    { labWorkId: labWork?.id ?? 0 },
+    { enabled: !!labWork && isStudent }
   );
+
+  if (isLabWorkLoading) {
+    return (
+      <div className="min-h-screen bg-[#0b0d0f] pt-24 text-center">
+        <div className="animate-pulse h-8 w-64 bg-[#1a1f22] rounded mx-auto mb-4" />
+      </div>
+    );
+  }
+
+  if (!labWork) {
+    return (
+      <div className="min-h-screen bg-[#0b0d0f] pt-24 text-center text-[#798389]">
+        Лабораторная работа не найдена
+      </div>
+    );
+  }
+
+  return (
+    <LabWorkContent
+      key={labWork.id}
+      labWork={labWork}
+      existingProgress={existingProgress as LabProgressDetail | undefined}
+    />
+  );
+}
+
+interface LabWorkContentProps {
+  labWork: LabWorkDetail;
+  existingProgress: LabProgressDetail | undefined;
+}
+
+function LabWorkContent({ labWork, existingProgress }: LabWorkContentProps) {
+  const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const utils = trpc.useUtils();
 
   const [measurements, setMeasurements] = useState<MeasurementRow[]>([]);
   const [conclusion, setConclusion] = useState("");
+  const [externalData, setExternalData] = useState<ExternalLabData>(
+    DEFAULT_EXTERNAL_DATA
+  );
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (!existingProgress || Array.isArray(existingProgress)) return;
+
+    setMeasurements(prev => {
+      if (prev.length === 0 && existingProgress.measurements) {
+        return existingProgress.measurements as MeasurementRow[];
+      }
+      return prev;
+    });
+
+    setConclusion(prev => {
+      if (prev === "" && existingProgress.conclusion) {
+        return existingProgress.conclusion;
+      }
+      return prev;
+    });
+
+    setExternalData(prev => {
+      const isEmpty =
+        prev.tables.length === 0 && prev.graphs.length === 0;
+      if (!isEmpty) return prev;
+
+      if (
+        existingProgress.data &&
+        typeof existingProgress.data === "object" &&
+        "externalData" in existingProgress.data
+      ) {
+        const saved = (existingProgress.data as Record<string, unknown>)
+          .externalData as ExternalLabData | undefined;
+        if (saved) {
+          return {
+            tables: Array.isArray(saved.tables) ? saved.tables : [],
+            graphs: Array.isArray(saved.graphs) ? saved.graphs : [],
+          };
+        }
+      }
+      return prev;
+    });
+  }, [existingProgress]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const saveProgress = trpc.virtualLab.saveLabProgress.useMutation({
     onSuccess: () => {
@@ -94,27 +191,11 @@ export default function LabWorkPage() {
       labWorkId: labWork.id,
       mode: "training",
       status: "submitted",
-      data: {},
+      data: { externalData },
       measurements,
       conclusion,
     });
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#0b0d0f] pt-24 text-center">
-        <div className="animate-pulse h-8 w-64 bg-[#1a1f22] rounded mx-auto mb-4" />
-      </div>
-    );
-  }
-
-  if (!labWork) {
-    return (
-      <div className="min-h-screen bg-[#0b0d0f] pt-24 text-center text-[#798389]">
-        Лабораторная работа не найдена
-      </div>
-    );
-  }
 
   const theoryContent = (labWork.theory || labWork.topicNodeContent) ?? "";
   const theoryTabs = parseTheoryTabs(theoryContent);
@@ -240,9 +321,11 @@ export default function LabWorkPage() {
           <SimulationWrapper
             simulation={labWork.simulation}
             cardType={labWork.cardType ?? "own"}
-            slug={slug || ""}
+            slug={labWork.slug}
             measurements={measurements}
             onMeasurementsChange={setMeasurements}
+            externalData={externalData}
+            onExternalDataChange={setExternalData}
           />
         </section>
 

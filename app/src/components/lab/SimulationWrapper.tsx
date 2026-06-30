@@ -8,29 +8,19 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import LabControls from "@/components/lab/LabControls";
 import ResultsTable from "@/components/lab/ResultsTable";
 import ExternalIframeSimulation from "@/components/lab/simulations/ExternalIframeSimulation";
+import SimulationChart from "@/components/lab/SimulationChart";
+import ExternalDataTables from "@/components/lab/ExternalDataTables";
+import ExternalGraphs from "@/components/lab/ExternalGraphs";
 import { getRegisteredSimulation } from "@/components/lab/simulations/registry";
 import type { ControlItem } from "@/components/lab/LabControls";
 import type {
   MeasurementRow,
   RegisteredSimulation,
-  GraphConfig,
 } from "@/components/lab/simulations/types";
-import { prepareChartData } from "@/components/lab/simulations/graph-utils";
-import {
-  LineChart,
-  Line,
-  ScatterChart,
-  Scatter,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import type { ExternalLabData } from "@/components/lab/external-data";
 
 interface SimulationWrapperProps {
   simulation: {
@@ -44,7 +34,14 @@ interface SimulationWrapperProps {
   slug: string;
   measurements: MeasurementRow[];
   onMeasurementsChange: (measurements: MeasurementRow[]) => void;
+  externalData?: ExternalLabData;
+  onExternalDataChange?: (data: ExternalLabData) => void;
 }
+
+const DEFAULT_EXTERNAL_DATA: ExternalLabData = {
+  tables: [],
+  graphs: [],
+};
 
 export default function SimulationWrapper({
   simulation,
@@ -52,12 +49,20 @@ export default function SimulationWrapper({
   slug,
   measurements,
   onMeasurementsChange,
+  externalData,
+  onExternalDataChange,
 }: SimulationWrapperProps) {
   const registered = getRegisteredSimulation(simulation?.componentRef ?? slug);
   const isExternal = cardType === "external";
 
   if (isExternal || !registered) {
-    return <ExternalSimulationView simulation={simulation} />;
+    return (
+      <ExternalSimulationView
+        simulation={simulation}
+        externalData={externalData ?? DEFAULT_EXTERNAL_DATA}
+        onExternalDataChange={onExternalDataChange ?? (() => {})}
+      />
+    );
   }
 
   return (
@@ -70,13 +75,17 @@ export default function SimulationWrapper({
   );
 }
 
+interface ExternalSimulationViewProps {
+  simulation: SimulationWrapperProps["simulation"];
+  externalData: ExternalLabData;
+  onExternalDataChange: (data: ExternalLabData) => void;
+}
+
 function ExternalSimulationView({
   simulation,
-}: {
-  simulation: SimulationWrapperProps["simulation"];
-}) {
-  const [notes, setNotes] = useState("");
-
+  externalData,
+  onExternalDataChange,
+}: ExternalSimulationViewProps) {
   const params: Record<string, number | string> = useMemo(() => {
     const defaults: Record<string, number | string> = {};
     if (Array.isArray(simulation?.config)) {
@@ -95,6 +104,20 @@ function ExternalSimulationView({
     return defaults;
   }, [simulation]);
 
+  const updateTables = useCallback(
+    (tables: ExternalLabData["tables"]) => {
+      onExternalDataChange({ ...externalData, tables });
+    },
+    [externalData, onExternalDataChange]
+  );
+
+  const updateGraphs = useCallback(
+    (graphs: ExternalLabData["graphs"]) => {
+      onExternalDataChange({ ...externalData, graphs });
+    },
+    [externalData, onExternalDataChange]
+  );
+
   return (
     <div className="space-y-4">
       {simulation?.componentRef === "external-iframe" && (
@@ -107,17 +130,20 @@ function ExternalSimulationView({
           Симуляция для этой лабораторной работы в разработке.
         </div>
       )}
-      <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 space-y-3">
-        <h3 className="text-sm font-semibold text-white">Заметки</h3>
-        <Textarea
-          value={notes}
-          onChange={e => setNotes(e.target.value)}
-          placeholder="Ваши наблюдения и заметки по эксперименту..."
-          className="min-h-[160px] bg-[#1a1f22] border-[#37474f] text-white resize-y"
+
+      <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 space-y-6">
+        <ExternalDataTables
+          tables={externalData.tables}
+          onChange={updateTables}
         />
-        <p className="text-xs text-[#798389]">
-          Заметки не сохраняются и предназначены только для личного пользования.
-        </p>
+      </div>
+
+      <div className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-6 space-y-6">
+        <ExternalGraphs
+          graphs={externalData.graphs}
+          tables={externalData.tables}
+          onChange={updateGraphs}
+        />
       </div>
     </div>
   );
@@ -388,9 +414,7 @@ function OwnSimulationView({
           <div className="xl:col-span-2 space-y-4">
             {manifest.graphs.map(graph => (
               <GraphCard key={graph.title} title={graph.title}>
-                <ResponsiveContainer width="100%" height={280}>
-                  {renderChart(graph, measurements)}
-                </ResponsiveContainer>
+                <SimulationChart graph={graph} data={measurements} />
               </GraphCard>
             ))}
           </div>
@@ -446,91 +470,5 @@ function GraphCard({
       </div>
       {children}
     </div>
-  );
-}
-
-function renderChart(graph: GraphConfig, data: MeasurementRow[]) {
-  const isEmpty = data.length === 0;
-  const emptyData = [{ x: 0, y: 0 }];
-  const chartData = isEmpty ? emptyData : prepareChartData(graph, data);
-  const defaultDomain: [number, number] = [0, 1];
-
-  if (graph.type === "scatter") {
-    return (
-      <ScatterChart data={chartData}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
-        <XAxis
-          type="number"
-          dataKey="x"
-          stroke="#798389"
-          fontSize={11}
-          tickLine={false}
-          domain={isEmpty ? defaultDomain : ["auto", "auto"]}
-        />
-        <YAxis
-          type="number"
-          dataKey="y"
-          stroke="#798389"
-          fontSize={11}
-          tickLine={false}
-          domain={isEmpty ? defaultDomain : ["auto", "auto"]}
-        />
-        <Tooltip
-          contentStyle={{
-            backgroundColor: "#1a1f22",
-            border: "1px solid #37474f",
-            borderRadius: "8px",
-            color: "#fff",
-          }}
-        />
-        {!isEmpty && (
-          <Scatter
-            name={`${graph.yKey}(${graph.xKey})`}
-            data={chartData}
-            fill="#2eff8c"
-          />
-        )}
-      </ScatterChart>
-    );
-  }
-
-  return (
-    <LineChart data={chartData}>
-      <CartesianGrid strokeDasharray="3 3" stroke="#37474f" />
-      <XAxis
-        type="number"
-        dataKey="x"
-        stroke="#798389"
-        fontSize={11}
-        tickLine={false}
-        domain={isEmpty ? defaultDomain : ["auto", "auto"]}
-      />
-      <YAxis
-        type="number"
-        dataKey="y"
-        stroke="#798389"
-        fontSize={11}
-        tickLine={false}
-        domain={isEmpty ? defaultDomain : ["auto", "auto"]}
-      />
-      <Tooltip
-        contentStyle={{
-          backgroundColor: "#1a1f22",
-          border: "1px solid #37474f",
-          borderRadius: "8px",
-          color: "#fff",
-        }}
-      />
-      {!isEmpty && (
-        <Line
-          type="linear"
-          dataKey="y"
-          stroke="#2eff8c"
-          strokeWidth={2}
-          dot={{ r: 3, fill: "#2eff8c" }}
-          name={`${graph.yKey}(${graph.xKey})`}
-        />
-      )}
-    </LineChart>
   );
 }
