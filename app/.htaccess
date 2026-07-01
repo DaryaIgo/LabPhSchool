@@ -3,5 +3,5 @@ PassengerStartupFile dist/boot.cjs
 PassengerResolveSymlinksInDocumentRoot on
 Require all granted
 PassengerAppType node
-PassengerAppRoot /home/darigoshin/domains/igoshina-line.ru/app
+PassengerAppRoot /home/darigoshin/domains/nebuls.ru/app
 Options -MultiViews
