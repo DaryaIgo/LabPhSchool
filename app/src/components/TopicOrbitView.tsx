@@ -237,7 +237,7 @@ export default function TopicOrbitView({
   const mousePosRef = useRef({ x: 0, y: 0 });
 
   const accent = topic.color || "#2eff8c";
-  const isMobile = orbitWidth > 0 && orbitWidth < 640;
+  const isMobile = orbitWidth > 0 && orbitWidth < 768;
 
   const activeNode = useMemo(() => {
     const find = (nodes: TreeNode[]): TreeNode | null => {
@@ -437,118 +437,53 @@ export default function TopicOrbitView({
             />
           </div>
 
-          {/* Center topic node */}
-          <div className="absolute inset-0 flex items-center justify-center z-10">
-            <div
-              ref={centerRef}
-              className="flex flex-col items-center animate-snake-float"
-              style={{ animationDelay: "2.5s" }}
-            >
-              <div
-                onClick={onClose}
-                role="button"
-                tabIndex={0}
-                aria-label="Закрыть"
-                className="group relative flex flex-col items-center justify-center text-center w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 transition-all duration-500 hover:scale-110 cursor-pointer"
-                style={{
-                  borderColor: `${accent}40`,
-                  backgroundColor: `${accent}10`,
-                  boxShadow: `0 0 0 transparent`,
-                }}
-                onKeyDown={e => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onClose();
-                  }
-                }}
-              >
-                {/* Outer glow — hover only */}
-                <div
-                  className="absolute inset-0 rounded-full blur-xl opacity-0 transition-opacity duration-500 group-hover:opacity-70"
-                  style={{ backgroundColor: accent }}
-                />
-                {/* Rim + inset glow — hover only */}
-                <div
-                  className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                  style={{
-                    boxShadow: `0 0 48px ${accent}45, inset 0 0 28px ${accent}22`,
-                  }}
-                />
-                {/* Surface highlight */}
-                <div
-                  className="absolute inset-0 rounded-full opacity-30 group-hover:opacity-60 transition-opacity duration-500"
-                  style={{
-                    background:
-                      "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.3) 0%, transparent 45%)",
-                  }}
-                />
-                <div className="relative z-10 flex flex-col items-center gap-1">
-                  <CategoryIcon
-                    iconKey={topic.iconType}
-                    size={isMobile ? 20 : 28}
-                    color={accent}
-                  />
-                  <span
-                    className="text-xl sm:text-2xl font-bold font-mono-phys"
-                    style={{ color: accent }}
-                  >
-                    {String(topic.order).padStart(2, "0")}
-                  </span>
-                </div>
-              </div>
-              <h3
-                className="mt-5 text-xl sm:text-2xl font-bold text-white text-center max-w-[260px]"
-                style={{ textShadow: `0 0 24px ${accent}40` }}
-              >
-                {topic.title}
-              </h3>
+          {subtopics.length === 0 ? (
+            <div className="absolute inset-0 flex items-center justify-center z-20">
+              <p className="text-sm text-[#798389]">
+                Подтем пока нет. Добавьте их в панели администратора.
+              </p>
             </div>
-          </div>
-
-          {/* Subtopic orbit nodes */}
-          {orbitItems.map((item, index) => {
-            const sub = item.node;
-            const floatDelay = `${(index * 0.7) % 6}s`;
-            const popDelay = `${index * 0.08}s`;
-            const gravity = getGravityOffset(item.x, item.y);
-            const labelOnLeft = item.x < 0;
-
-            const planetOrder = sub.order || index + 1;
-            const planet = getPlanetStyle(planetOrder);
-
-            return (
-              <div
-                key={sub.id}
-                className="absolute left-1/2 top-1/2 z-20 will-change-transform"
-                style={{
-                  transform: `translate(-50%, -50%) translate(${item.x + gravity.x}px, ${item.y + gravity.y}px)`,
-                }}
-              >
+          ) : isMobile ? (
+            <div className="relative z-20 flex flex-col h-full w-full px-4 py-6 overflow-y-auto">
+              {/* Topic header */}
+              <div className="flex flex-col items-center mb-6 shrink-0">
                 <div
-                  className="animate-orbit-pop-in"
-                  style={{ animationDelay: popDelay }}
+                  className="flex flex-col items-center justify-center text-center w-16 h-16 rounded-full border-2"
+                  style={{
+                    borderColor: `${accent}40`,
+                    backgroundColor: `${accent}10`,
+                  }}
                 >
-                  <div
-                    className="relative flex items-center animate-snake-float"
-                    style={{ animationDelay: floatDelay }}
-                  >
+                  <CategoryIcon iconKey={topic.iconType} size={20} color={accent} />
+                </div>
+                <h3
+                  className="mt-3 text-lg font-bold text-white text-center max-w-[260px]"
+                  style={{ textShadow: `0 0 24px ${accent}40` }}
+                >
+                  {topic.title}
+                </h3>
+              </div>
+
+              {/* Vertical planet list */}
+              <div className="flex flex-col items-center gap-4 pb-8">
+                {subtopics.map((sub, index) => {
+                  const planetOrder = sub.order || index + 1;
+                  const planet = getPlanetStyle(planetOrder);
+
+                  return (
                     <button
+                      key={sub.id}
                       type="button"
-                      className="outline-none bg-transparent border-0 p-0 relative z-10 group"
                       onClick={() => onSelectNode(sub.id)}
+                      className="w-full max-w-sm flex items-center gap-4 rounded-2xl border border-white/10 bg-[#1a1f22]/80 p-4 text-left backdrop-blur-md transition-colors hover:border-[#2eff8c]/30"
                     >
                       <div
-                        className={`
-                          relative flex flex-col items-center justify-center text-center
-                          w-20 h-20 sm:w-28 sm:h-28 rounded-full transition-all duration-500 ease-out
-                          group-hover:scale-110
-                        `}
+                        className="relative shrink-0 w-14 h-14 rounded-full overflow-hidden"
                         style={{
                           background: planet.background,
                           boxShadow: planet.boxShadow,
                         }}
                       >
-                        {/* 3D sphere highlight */}
                         <div
                           className="absolute inset-0 rounded-full opacity-40"
                           style={{
@@ -556,46 +491,20 @@ export default function TopicOrbitView({
                               "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.35) 0%, transparent 45%)",
                           }}
                         />
-                        <div
-                          className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                          style={{
-                            boxShadow:
-                              "0 0 48px rgba(255,255,255,0.25), inset 0 0 24px rgba(255,255,255,0.15)",
-                          }}
-                        />
-
-                        {/* Saturn ring */}
                         {planet.ring && (
                           <div
                             className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none"
                             style={{
                               width: "140%",
                               height: "40%",
-                              border: "3px solid rgba(220, 200, 150, 0.6)",
-                              boxShadow: "0 0 10px rgba(220,200,150,0.4)",
+                              border: "2px solid rgba(220, 200, 150, 0.6)",
+                              boxShadow: "0 0 8px rgba(220,200,150,0.4)",
                               transform: "translate(-50%, -50%) rotate(-15deg)",
                             }}
                           />
                         )}
                       </div>
-                    </button>
-
-                    {/* Side label card */}
-                    <div
-                      className={`
-                        absolute top-1/2 -translate-y-1/2 z-20
-                        w-40 sm:w-52
-                        ${labelOnLeft ? "right-full mr-4 text-right" : "left-full ml-4 text-left"}
-                      `}
-                    >
-                      <div
-                        className="rounded-xl border p-3 backdrop-blur-md"
-                        style={{
-                          borderColor: `${accent}40`,
-                          backgroundColor: "rgba(26,31,34,0.92)",
-                          boxShadow: `0 10px 40px rgba(0,0,0,0.4), 0 0 24px ${accent}10`,
-                        }}
-                      >
+                      <div className="min-w-0 flex-1">
                         <h6
                           className="text-sm font-bold leading-tight mb-1"
                           style={{ color: accent }}
@@ -603,7 +512,7 @@ export default function TopicOrbitView({
                           {sub.title}
                         </h6>
                         {sub.content && (
-                          <p className="text-[11px] sm:text-xs text-[#a0a8ad] leading-relaxed line-clamp-2">
+                          <p className="text-[11px] text-[#a0a8ad] leading-relaxed line-clamp-2">
                             {sub.content
                               .replace(/[#*_`[\]]/g, "")
                               .slice(0, 100)}
@@ -611,19 +520,194 @@ export default function TopicOrbitView({
                           </p>
                         )}
                       </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Center topic node */}
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <div
+                  ref={centerRef}
+                  className="flex flex-col items-center animate-snake-float"
+                  style={{ animationDelay: "2.5s" }}
+                >
+                  <div
+                    onClick={onClose}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Закрыть"
+                    className="group relative flex flex-col items-center justify-center text-center w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 transition-all duration-500 hover:scale-110 cursor-pointer"
+                    style={{
+                      borderColor: `${accent}40`,
+                      backgroundColor: `${accent}10`,
+                      boxShadow: `0 0 0 transparent`,
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onClose();
+                      }
+                    }}
+                  >
+                    {/* Outer glow — hover only */}
+                    <div
+                      className="absolute inset-0 rounded-full blur-xl opacity-0 transition-opacity duration-500 group-hover:opacity-70"
+                      style={{ backgroundColor: accent }}
+                    />
+                    {/* Rim + inset glow — hover only */}
+                    <div
+                      className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                      style={{
+                        boxShadow: `0 0 48px ${accent}45, inset 0 0 28px ${accent}22`,
+                      }}
+                    />
+                    {/* Surface highlight */}
+                    <div
+                      className="absolute inset-0 rounded-full opacity-30 group-hover:opacity-60 transition-opacity duration-500"
+                      style={{
+                        background:
+                          "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.3) 0%, transparent 45%)",
+                      }}
+                    />
+                    <div className="relative z-10 flex flex-col items-center gap-1">
+                      <CategoryIcon
+                        iconKey={topic.iconType}
+                        size={28}
+                        color={accent}
+                      />
+                      <span
+                        className="text-xl sm:text-2xl font-bold font-mono-phys"
+                        style={{ color: accent }}
+                      >
+                        {String(topic.order).padStart(2, "0")}
+                      </span>
                     </div>
                   </div>
+                  <h3
+                    className="mt-5 text-xl sm:text-2xl font-bold text-white text-center max-w-[260px]"
+                    style={{ textShadow: `0 0 24px ${accent}40` }}
+                  >
+                    {topic.title}
+                  </h3>
                 </div>
               </div>
-            );
-          })}
 
-          {subtopics.length === 0 && (
-            <div className="absolute inset-0 flex items-center justify-center z-20">
-              <p className="text-sm text-[#798389]">
-                Подтем пока нет. Добавьте их в панели администратора.
-              </p>
-            </div>
+              {/* Subtopic orbit nodes */}
+              {orbitItems.map((item, index) => {
+                const sub = item.node;
+                const floatDelay = `${(index * 0.7) % 6}s`;
+                const popDelay = `${index * 0.08}s`;
+                const gravity = getGravityOffset(item.x, item.y);
+                const labelOnLeft = item.x < 0;
+
+                const planetOrder = sub.order || index + 1;
+                const planet = getPlanetStyle(planetOrder);
+
+                return (
+                  <div
+                    key={sub.id}
+                    className="absolute left-1/2 top-1/2 z-20 will-change-transform"
+                    style={{
+                      transform: `translate(-50%, -50%) translate(${item.x + gravity.x}px, ${item.y + gravity.y}px)`,
+                    }}
+                  >
+                    <div
+                      className="animate-orbit-pop-in"
+                      style={{ animationDelay: popDelay }}
+                    >
+                      <div
+                        className="relative flex items-center animate-snake-float"
+                        style={{ animationDelay: floatDelay }}
+                      >
+                        <button
+                          type="button"
+                          className="outline-none bg-transparent border-0 p-0 relative z-10 group"
+                          onClick={() => onSelectNode(sub.id)}
+                        >
+                          <div
+                            className={`
+                              relative flex flex-col items-center justify-center text-center
+                              w-20 h-20 sm:w-28 sm:h-28 rounded-full transition-all duration-500 ease-out
+                              group-hover:scale-110
+                            `}
+                            style={{
+                              background: planet.background,
+                              boxShadow: planet.boxShadow,
+                            }}
+                          >
+                            {/* 3D sphere highlight */}
+                            <div
+                              className="absolute inset-0 rounded-full opacity-40"
+                              style={{
+                                background:
+                                  "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.35) 0%, transparent 45%)",
+                              }}
+                            />
+                            <div
+                              className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                              style={{
+                                boxShadow:
+                                  "0 0 48px rgba(255,255,255,0.25), inset 0 0 24px rgba(255,255,255,0.15)",
+                              }}
+                            />
+
+                            {/* Saturn ring */}
+                            {planet.ring && (
+                              <div
+                                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none"
+                                style={{
+                                  width: "140%",
+                                  height: "40%",
+                                  border: "3px solid rgba(220, 200, 150, 0.6)",
+                                  boxShadow: "0 0 10px rgba(220,200,150,0.4)",
+                                  transform: "translate(-50%, -50%) rotate(-15deg)",
+                                }}
+                              />
+                            )}
+                          </div>
+                        </button>
+
+                        {/* Side label card */}
+                        <div
+                          className={`
+                            absolute top-1/2 -translate-y-1/2 z-20
+                            w-40 sm:w-52
+                            ${labelOnLeft ? "right-full mr-4 text-right" : "left-full ml-4 text-left"}
+                          `}
+                        >
+                          <div
+                            className="rounded-xl border p-3 backdrop-blur-md"
+                            style={{
+                              borderColor: `${accent}40`,
+                              backgroundColor: "rgba(26,31,34,0.92)",
+                              boxShadow: `0 10px 40px rgba(0,0,0,0.4), 0 0 24px ${accent}10`,
+                            }}
+                          >
+                            <h6
+                              className="text-sm font-bold leading-tight mb-1"
+                              style={{ color: accent }}
+                            >
+                              {sub.title}
+                            </h6>
+                            {sub.content && (
+                              <p className="text-[11px] sm:text-xs text-[#a0a8ad] leading-relaxed line-clamp-2">
+                                {sub.content
+                                  .replace(/[#*_`[\]]/g, "")
+                                  .slice(0, 100)}
+                                {sub.content.length > 100 ? "..." : ""}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </>
           )}
         </div>
       )}

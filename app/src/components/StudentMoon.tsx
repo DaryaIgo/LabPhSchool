@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageSquare, ChevronDown } from "lucide-react";
 import { trpc } from "@/providers/trpc";
@@ -35,6 +35,7 @@ export default function StudentMoon() {
   const [isOpen, setIsOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [attention, setAttention] = useState(false);
+  const hasAutoOpenedRef = useRef(false);
 
   const unreadMoon = hasUnread(
     data?.moonCommentUpdatedAt,
@@ -68,21 +69,18 @@ export default function StudentMoon() {
   });
 
   useEffect(() => {
-    if (!data) return;
+    if (!data || hasAutoOpenedRef.current) return;
 
     // Auto-open only on the very first login (welcome letter).
     if (hasComment && isFirstLogin) {
-      const openTimer = window.setTimeout(() => {
+      hasAutoOpenedRef.current = true;
+      queueMicrotask(() => {
         setIsOpen(true);
+        setAttention(true);
         markFirstOpened.mutate();
-      }, 0);
-      const attentionTimer = window.setTimeout(() => setAttention(true), 0);
+      });
       const stopTimer = window.setTimeout(() => setAttention(false), 4000);
-      return () => {
-        window.clearTimeout(openTimer);
-        window.clearTimeout(attentionTimer);
-        window.clearTimeout(stopTimer);
-      };
+      return () => window.clearTimeout(stopTimer);
     }
 
     // On subsequent updates just attract attention without opening.
@@ -241,34 +239,36 @@ export default function StudentMoon() {
             )}
           </AnimatePresence>
 
-          <motion.button
-            type="button"
-            onClick={handleToggle}
-            aria-label={isOpen ? "Скрыть Луну" : "Показать сообщение учителя"}
-            className="pointer-events-auto relative focus:outline-none"
-            animate={{
-              x: isOpen ? "0%" : "55%",
-              scale: attention ? [1, 1.08, 1, 1.04, 1] : 1,
-              rotate: attention ? [0, -5, 5, -3, 0] : 0,
-            }}
-            transition={{
-              x: { type: "spring", stiffness: 180, damping: 22 },
-              scale: { duration: 0.6, repeat: attention ? 3 : 0 },
-              rotate: { duration: 0.6, repeat: attention ? 3 : 0 },
-            }}
-            style={{
-              filter: isOpen
-                ? "brightness(1) grayscale(0) drop-shadow(0 0 22px rgba(255,255,255,0.45))"
-                : "brightness(0.55) grayscale(0.35) drop-shadow(0 0 6px rgba(255,255,255,0.15))",
-              transition: "filter 0.5s ease",
-            }}
-          >
-            <img
-              src="/images/moon.svg"
-              alt="Луна"
-              className="w-32 h-32 sm:w-44 sm:h-44"
-            />
-          </motion.button>
+          <div className="pointer-events-auto [clip-path:inset(-48px_0_-48px_-48px)]">
+            <motion.button
+              type="button"
+              onClick={handleToggle}
+              aria-label={isOpen ? "Скрыть Луну" : "Показать сообщение учителя"}
+              className="relative focus:outline-none"
+              animate={{
+                x: isOpen ? "0%" : "55%",
+                scale: attention ? [1, 1.08, 1, 1.04, 1] : 1,
+                rotate: attention ? [0, -5, 5, -3, 0] : 0,
+              }}
+              transition={{
+                x: { type: "spring", stiffness: 180, damping: 22 },
+                scale: { duration: 0.6, repeat: attention ? 3 : 0 },
+                rotate: { duration: 0.6, repeat: attention ? 3 : 0 },
+              }}
+              style={{
+                filter: isOpen
+                  ? "brightness(1) grayscale(0) drop-shadow(0 0 22px rgba(255,255,255,0.45))"
+                  : "brightness(0.55) grayscale(0.35) drop-shadow(0 0 6px rgba(255,255,255,0.15))",
+                transition: "filter 0.5s ease",
+              }}
+            >
+              <img
+                src="/images/moon.svg"
+                alt="Луна"
+                className="w-32 h-32 sm:w-44 sm:h-44"
+              />
+            </motion.button>
+          </div>
         </div>
       </div>
     </>

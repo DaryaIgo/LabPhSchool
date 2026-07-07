@@ -1,8 +1,9 @@
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useSearchParams } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { trpc } from "@/providers/trpc";
 import NebulaLogo from "@/components/NebulaLogo";
+import { STUDENT_TABS } from "@/lib/student-profile-tabs";
 import {
   Popover,
   PopoverContent,
@@ -127,6 +128,7 @@ export default function Header() {
   const { user, isAuthenticated, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   const navLinks = [
     { to: "/course", label: "Курс", icon: BookOpen },
@@ -190,6 +192,31 @@ export default function Header() {
               })}
             </nav>
           </div>
+
+          {/* Mobile student profile link */}
+          {isAuthenticated && user?.role === "student" && (
+            <Link
+              to="/profile"
+              className={`md:hidden absolute left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-all border ${
+                isActive("/profile") || isActive("/student/profile")
+                  ? "text-[#2eff8c] bg-gradient-to-r from-[#2eff8c]/15 to-[#01acff]/10 border-[#2eff8c]/25 shadow-[0_0_16px_rgba(46,255,140,0.12)]"
+                  : "text-[#c8cdd1] border-transparent hover:text-white hover:bg-white/5"
+              }`}
+            >
+              {user.avatar ? (
+                <img
+                  src={`/avatars/${user.avatar}.svg`}
+                  alt=""
+                  className="w-5 h-5 rounded-full"
+                />
+              ) : (
+                <User size={16} />
+              )}
+              <span className="hidden sm:inline max-w-[80px] truncate">
+                {user.name || "Кабинет"}
+              </span>
+            </Link>
+          )}
 
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center gap-2">
@@ -286,6 +313,37 @@ export default function Header() {
                     )}
                     {user.name || "Кабинет"}
                   </Link>
+                  {user.role === "student" &&
+                    (isActive("/profile") || isActive("/student/profile")) && (
+                      <div className="pt-2 space-y-1">
+                        {STUDENT_TABS.map(tab => {
+                          const Icon = tab.icon;
+                          const isTabActive =
+                            searchParams.get("tab") === tab.id ||
+                            (tab.id === "main" && !searchParams.get("tab"));
+
+                          return (
+                            <Link
+                              key={tab.id}
+                              to={
+                                tab.id === "main"
+                                  ? "/profile"
+                                  : `/profile?tab=${tab.id}`
+                              }
+                              onClick={() => setMobileOpen(false)}
+                              className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all ${
+                                isTabActive
+                                  ? "text-[#2eff8c] bg-gradient-to-r from-[#2eff8c]/15 to-[#01acff]/10 border border-[#2eff8c]/25"
+                                  : "text-[#c8cdd1] hover:text-white hover:bg-white/5"
+                              }`}
+                            >
+                              <Icon size={18} />
+                              {tab.label}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
                   <button
                     onClick={() => {
                       logout();

@@ -6,12 +6,8 @@
       <stop offset="80%" stop-color="#b0b8c1" />
       <stop offset="100%" stop-color="#7f8a96" />
     </radialGradient>
-    <filter id="moonGlow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="5" result="blur" />
-      <feComposite in="SourceGraphic" in2="blur" operator="over" />
-    </filter>
   </defs>
-  <circle cx="100" cy="100" r="92" fill="url(#moonGrad)" filter="url(#moonGlow)" />
+  <circle cx="100" cy="100" r="92" fill="url(#moonGrad)" />
   <circle cx="70" cy="75" r="16" fill="#9aa3ab" opacity="0.55" />
   <circle cx="130" cy="125" r="24" fill="#9aa3ab" opacity="0.5" />
   <circle cx="110" cy="55" r="11" fill="#9aa3ab" opacity="0.4" />

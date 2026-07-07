@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { trpc } from "@/providers/trpc";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { useEffect } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,16 +20,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
   User,
   Beaker,
   FileText,
   NotebookPen,
-  Home,
   BookOpen,
   Award,
   CheckCircle2,
@@ -41,6 +35,9 @@ import {
   ExternalLink,
   Loader2,
 } from "lucide-react";
+import { STUDENT_TABS } from "@/lib/student-profile-tabs";
+import { getGradeVisuals } from "@/lib/grade-visuals";
+import { GradeIcon } from "@/components/GradeIcon";
 
 const AVATARS = [
   { id: "avatar-1", src: "/avatars/avatar-1.svg", name: "Атом" },
@@ -70,28 +67,6 @@ const STATUS_CONFIG: Record<
     icon: <CheckCircle2 size={14} />,
   },
 };
-
-type TabDef = {
-  id: string;
-  label: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
-  badgeType: "lab" | "problem" | "jupyter_notebook" | null;
-};
-
-const TABS: TabDef[] = [
-  { id: "main", label: "Главная", icon: Home, badgeType: null },
-  { id: "tasks", label: "Мои Задачи", icon: FileText, badgeType: "problem" },
-  { id: "labs", label: "Мои Лабораторные", icon: Beaker, badgeType: "lab" },
-  {
-    id: "notebooks",
-    label: "Мои Тетради",
-    icon: NotebookPen,
-    badgeType: "jupyter_notebook",
-  },
-];
-
-import { getGradeVisuals } from "@/lib/grade-visuals";
-import { GradeIcon } from "@/components/GradeIcon";
 
 export default function StudentProfile() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -146,7 +121,8 @@ export default function StudentProfile() {
 
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
   const [expandedTopic, setExpandedTopic] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState("main");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "main";
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -155,14 +131,17 @@ export default function StudentProfile() {
   }, [authLoading, isAuthenticated, navigate]);
 
   const handleTabChange = (tabId: string) => {
-    setActiveTab(tabId);
-    const tab = TABS.find(t => t.id === tabId);
+    setSearchParams(prev => {
+      prev.set("tab", tabId);
+      return prev;
+    });
+    const tab = STUDENT_TABS.find(t => t.id === tabId);
     if (tab?.badgeType) {
       markReadByType.mutate({ type: tab.badgeType });
     }
   };
 
-  const getBadgeCount = (badgeType: (typeof TABS)[number]["badgeType"]) => {
+  const getBadgeCount = (badgeType: (typeof STUDENT_TABS)[number]["badgeType"]) => {
     if (!badgeType) return 0;
     if (badgesLoading || !badgeCounts) return 0;
     if (badgeType === "lab") return badgeCounts.lab;
@@ -339,64 +318,10 @@ export default function StudentProfile() {
           </section>
 
           {/* Left sidebar tabs */}
-          <aside className="order-2 lg:col-start-1 lg:row-start-2 lg:w-60 shrink-0">
-            <Collapsible
-              defaultOpen={false}
-              className="lg:hidden bg-[#2a3237] border border-[#434e54] rounded-2xl p-2"
-            >
-              <CollapsibleTrigger asChild>
-                <button className="flex items-center justify-between w-full px-4 py-3 rounded-xl text-left text-white hover:bg-[#1e2529]/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    {(() => {
-                      const ActiveIcon =
-                        TABS.find(t => t.id === activeTab)?.icon ?? Home;
-                      return <ActiveIcon size={18} />;
-                    })()}
-                    <span className="text-sm font-medium">
-                      {TABS.find(t => t.id === activeTab)?.label}
-                    </span>
-                  </div>
-                  <ChevronDown size={18} className="text-[#798389]" />
-                </button>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <div className="flex flex-col gap-1 pt-1">
-                  {TABS.map(tab => {
-                    const Icon = tab.icon;
-                    const count = getBadgeCount(tab.badgeType);
-                    const isActive = activeTab === tab.id;
-
-                    return (
-                      <button
-                        key={tab.id}
-                        onClick={() => handleTabChange(tab.id)}
-                        className={`relative flex items-center justify-between gap-3 w-full px-4 py-3 rounded-xl text-left transition-all ${
-                          isActive
-                            ? "bg-[#1e2529] text-[#2eff8c] border border-[#37474f]"
-                            : "text-[#c8cdd1] hover:bg-[#1e2529]/50 hover:text-white"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Icon size={18} />
-                          <span className="text-sm font-medium">
-                            {tab.label}
-                          </span>
-                        </div>
-                        {count > 0 && (
-                          <span className="shrink-0 h-5 min-w-[1.25rem] px-1.5 bg-[#ff6b6b] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                            {count > 99 ? "99+" : count}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-
-            <nav className="hidden lg:block lg:sticky lg:top-1/2 lg:-translate-y-1/2 bg-[#2a3237] border border-[#434e54] rounded-2xl p-2">
+          <aside className="hidden lg:block lg:col-start-1 lg:row-start-2 lg:w-60 shrink-0 lg:sticky lg:top-24 lg:self-start">
+            <nav className="bg-[#2a3237] border border-[#434e54] rounded-2xl p-2">
               <div className="flex flex-col gap-1">
-                {TABS.map(tab => {
+                {STUDENT_TABS.map(tab => {
                   const Icon = tab.icon;
                   const count = getBadgeCount(tab.badgeType);
                   const isActive = activeTab === tab.id;
@@ -823,7 +748,7 @@ function RecentAssignmentCard({
 
   return (
     <div
-      className={`relative flex items-center gap-2 px-3 py-2 bg-[#232b2f] rounded-lg border border-[#37474f] transition-colors ${
+      className={`relative flex items-center gap-2 px-3 py-2 bg-[#232b2f] rounded-lg border border-[#37474f] transition-colors overflow-hidden ${
         gradeVisuals?.hasGlow ? "lab-glow" : ""
       }`}
       style={

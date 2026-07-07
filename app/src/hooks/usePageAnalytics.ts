@@ -29,6 +29,10 @@ export function usePageAnalytics() {
     // Skip admin area completely — it shouldn't pollute public site analytics.
     if (pathname.startsWith("/admin")) return;
 
+    // Skip student profile — Yandex.Metrica cookies can cause 400 Bad Request
+    // on Yandex Browser mobile due to Passenger/Apache header size limits.
+    if (pathname === "/student/profile") return;
+
     // Yandex.Metrica: track SPA route change
     if (typeof window.ym === "function") {
       window.ym(YM_COUNTER_ID, "hit", `/#${pathname}`);
