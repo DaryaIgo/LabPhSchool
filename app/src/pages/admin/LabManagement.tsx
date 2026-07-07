@@ -628,14 +628,13 @@ export default function LabManagement() {
                     </p>
                     <Button
                       size="sm"
-                      variant="outline"
-                      className="border-[#37474f] text-white mt-auto"
+                      className="bg-[#2eff8c] text-black hover:bg-[#2eff8c]/90 h-7 text-xs mt-auto w-full"
                       onClick={() => {
                         navigator.clipboard.writeText(markdown);
                         toast.success("Ссылка скопирована");
                       }}
                     >
-                      Копировать
+                      Copy
                     </Button>
                   </div>
                 );
